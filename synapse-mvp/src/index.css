@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+}
+
+.react-flow__node {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+}
+
+.react-flow__background {
+  background-color: #0f172a;
+}
+
+.react-flow__node.selected {
+  box-shadow: 0 0 0 2px #f97316;
+}
+
+.react-flow__controls {
+  background-color: #1e293b;
+  border: 1px solid #475569;
+}
+
+.react-flow__controls button {
+  background-color: #334155;
+  color: white;
+  border: 1px solid #475569;
+}
+
+.react-flow__controls button:hover {
+  background-color: #475569;
+}
