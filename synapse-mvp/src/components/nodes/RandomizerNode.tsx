@@ -1,7 +1,7 @@
 import { Handle, Position } from '@xyflow/react';
-import { Dice5, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Dice5, ChevronDown, ChevronUp, Trash2, ListOrdered } from 'lucide-react';
 import { usePathStore } from '../../store';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 
 const spinnerHideStyles = `
   input[type="number"].hide-spinners::-webkit-outer-spin-button,
@@ -19,22 +19,39 @@ interface RandomizerNodeProps {
     tracks?: string[];
     weights?: number[];
     isCollapsed?: boolean;
+    playCount?: number;
+    isForever?: boolean;
+    mode?: 'sequence' | 'randomizer';
   };
   id: string;
 }
 
-export default function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
-  const { updateNodeData, nodes } = usePathStore();
+function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
+  const { updateNodeData, nodes, currentPlayingNodeId } = usePathStore();
   const [draggedTrack, setDraggedTrack] = useState<string | null>(null);
   const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const isPlaying = currentPlayingNodeId === id;
 
   const tracks = data?.tracks || [];
   const weights = data?.weights || Array(tracks.length).fill(100 / Math.max(tracks.length, 1));
   const isCollapsed = data?.isCollapsed || false;
-
+  const playCount = data?.playCount || 1;
+  const isForever = data?.isForever || false;
+  const mode = data?.mode || 'sequence';
   const toggleCollapse = () => {
-    updateNodeData(id, { isCollapsed: !isCollapsed });
+    const newCollapsed = !isCollapsed;
+    
+    // Adjust position so node collapses upwards
+    const currentHeight = isCollapsed ? 100 : 400; // rough heights
+    const newHeight = newCollapsed ? 400 : 100;
+    const heightDiff = newHeight - currentHeight;
+    
+    // Update node data with new position and collapse state
+    updateNodeData(id, { 
+      isCollapsed: newCollapsed,
+      position: { ...data?.position, y: (data?.position?.y || 0) - heightDiff }
+    });
   };
 
   const removeTrack = (index: number) => {
@@ -130,21 +147,46 @@ export default function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
       <style>{spinnerHideStyles}</style>
       <div
         className={`bg-slate-800 border-2 rounded-lg shadow-lg overflow-hidden w-56 transition ${
-          isDragOver ? 'border-purple-300 bg-slate-700' : 'border-purple-500 bg-slate-800'
-        }`}
+          isPlaying 
+            ? 'border-orange-500' 
+            : mode === 'randomizer'
+            ? 'border-purple-500'
+            : 'border-blue-500'
+        } ${isDragOver ? 'bg-slate-700' : 'bg-slate-800'}`}
         onDragOver={handleNodeDragOver}
         onDragLeave={handleNodeDragLeave}
         onDrop={handleNodeDrop}
       >
       {/* Header */}
       <div
-        className="flex items-center justify-between gap-2 bg-slate-700 p-3 cursor-pointer hover:bg-slate-600"
+        className={`flex items-center justify-between gap-2 p-3 cursor-pointer ${isPlaying ? 'bg-slate-600' : 'bg-slate-700 hover:bg-slate-600'}`}
         onClick={toggleCollapse}
       >
         <div className="flex items-center gap-2 flex-1">
-          <Dice5 className="w-4 h-4 text-purple-400" />
-          <strong className="text-sm text-slate-100">Randomizer</strong>
+          <div className="relative">
+            {mode === 'randomizer' ? (
+              <Dice5 className="w-4 h-4 text-purple-400" />
+            ) : (
+              <ListOrdered className="w-4 h-4 text-blue-400" />
+            )}
+            {isPlaying && <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full" />}
+          </div>
+          <strong className="text-sm text-slate-100">{mode === 'randomizer' ? 'Randomizer' : 'Sequence'}</strong>
         </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            updateNodeData(id, { mode: mode === 'sequence' ? 'randomizer' : 'sequence' });
+          }}
+          className={`text-xs px-2 py-1 rounded border transition ${
+            mode === 'randomizer'
+              ? 'bg-purple-600 border-purple-400 text-purple-100'
+              : 'bg-blue-600 border-blue-400 text-blue-100'
+          }`}
+          title={`Switch to ${mode === 'randomizer' ? 'Sequence' : 'Randomizer'} mode`}
+        >
+          {mode === 'randomizer' ? '🎲' : '→'}
+        </button>
         {isCollapsed ? (
           <ChevronDown className="w-4 h-4 text-slate-400" />
         ) : (
@@ -155,6 +197,33 @@ export default function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
       {/* Expanded Content */}
       {!isCollapsed && (
         <div className="p-3 space-y-2 bg-slate-750">
+          {/* Play Count Control */}
+          <div className="space-y-2 p-2 bg-slate-700 rounded border border-purple-400/30">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs text-slate-300 font-semibold">Play Count:</label>
+              <button
+                onClick={() => updateNodeData(id, { isForever: !isForever })}
+                className={`text-xs px-2 py-1 rounded border transition ${
+                  isForever 
+                    ? 'bg-purple-600 border-purple-400 text-purple-100' 
+                    : 'bg-slate-600 border-slate-400 text-slate-300 hover:bg-slate-500'
+                }`}
+              >
+                {isForever ? '∞' : 'Loop'}
+              </button>
+            </div>
+            {!isForever && (
+              <input
+                type="number"
+                min="1"
+                max="1000"
+                value={playCount}
+                onChange={(e) => updateNodeData(id, { playCount: Math.max(1, parseInt(e.target.value) || 1) })}
+                className="hide-spinners w-full text-xs px-2 py-1 bg-slate-600 border border-slate-400 rounded text-slate-100 text-center"
+              />
+            )}
+          </div>
+
           {/* Track List */}
           {tracks.length > 0 ? (
             <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -162,14 +231,15 @@ export default function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
                 const weight = weights[index] || 10;
                 const totalWeight = weights.reduce((a, b) => a + b, 0) || 1;
                 const percentage = Math.round((weight / totalWeight) * 100);
+                const borderColor = mode === 'randomizer' ? 'border-purple-400' : 'border-blue-400';
                 return (
                   <div
-                    key={index}
+                    key={`${trackId}-${index}`}
                     draggable
                     onDragStart={(e) => handleTrackDragStart(e, index)}
                     onDragOver={(e) => handleTrackDragOver(e, index)}
                     onDrop={(e) => handleTrackDrop(e, index)}
-                    className={`flex items-center gap-2 p-2 bg-slate-600 rounded border-l-2 border-purple-400 cursor-move hover:bg-slate-500 transition ${
+                    className={`flex items-center gap-2 p-2 bg-slate-600 rounded border-l-2 ${borderColor} cursor-move hover:bg-slate-500 transition ${
                       draggedOverIndex === index ? 'opacity-50' : ''
                     }`}
                   >
@@ -211,3 +281,5 @@ export default function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
     </>
   );
 }
+
+export default memo(RandomizerNode);

@@ -5,17 +5,21 @@ interface PathState {
   nodes: Node[];
   edges: Edge[];
   selectedNodeId: string | null;
+  commentLinkingId: string | null;
   isPlaying: boolean;
   currentTrackIndex: number;
+  currentPlayingNodeId: string | null;
   playbackQueue: string[]; // YouTube videoIds
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
   onConnect: (connection: Connection) => void;
   selectNode: (id: string | null) => void;
+  setCommentLinkingId: (id: string | null) => void;
   updateNodeData: (id: string, data: any) => void;
   setPlaybackQueue: (queue: string[]) => void;
   setIsPlaying: (playing: boolean) => void;
   setCurrentTrackIndex: (index: number) => void;
+  setCurrentPlayingNodeId: (id: string | null) => void;
   deleteEdge: (edgeId: string) => void;
   deleteNode: (nodeId: string) => void;
   initializeFromStorage: () => void;
@@ -33,9 +37,12 @@ const STORAGE_KEY = 'synapse_graph_state';
 
 const loadFromStorage = () => {
   try {
+    console.log('Loading from storage...');
     const stored = localStorage.getItem(STORAGE_KEY);
+    console.log('Stored data:', stored);
     if (stored) {
       const parsed = JSON.parse(stored);
+      console.log('Parsed data:', parsed);
       return {
         nodes: parsed.nodes || [defaultStartNode],
         edges: parsed.edges || [],
@@ -44,6 +51,7 @@ const loadFromStorage = () => {
   } catch (e) {
     console.error('Failed to load from localStorage:', e);
   }
+  console.log('Using default start node');
   return { nodes: [defaultStartNode], edges: [] };
 };
 
@@ -61,8 +69,10 @@ export const usePathStore = create<PathState>((set) => ({
   nodes: initialState.nodes,
   edges: initialState.edges,
   selectedNodeId: null,
+  commentLinkingId: null,
   isPlaying: false,
   currentTrackIndex: 0,
+  currentPlayingNodeId: null,
   playbackQueue: [],
 
   setNodes: (nodes) => {
@@ -78,9 +88,15 @@ export const usePathStore = create<PathState>((set) => ({
       const sourceNode = state.nodes.find((n) => n.id === connection.source);
       const targetNode = state.nodes.find((n) => n.id === connection.target);
 
+      // Prevent connections to/from comment nodes
+      if (sourceNode?.type === 'comment' || targetNode?.type === 'comment') {
+        console.warn('Cannot connect to/from comment nodes');
+        return state;
+      }
+
       // Prevent multiple outgoing edges from non-splitter/randomizer nodes
       const isSourceBranching =
-        sourceNode?.type === 'splitter' || sourceNode?.type === 'randomizer';
+        sourceNode?.type === 'splitter' || sourceNode?.type === 'conditional' || sourceNode?.type === 'randomizer';
       if (!isSourceBranching) {
         const existingOutgoing = state.edges.filter(
           (e) => e.source === connection.source
@@ -102,9 +118,14 @@ export const usePathStore = create<PathState>((set) => ({
         }
       }
 
-      // Prevent multiple incoming edges to non-track nodes
-      const isTargetTrack = targetNode?.type === 'track';
-      if (!isTargetTrack) {
+      // Allow multiple incoming edges only to track, end, randomizer, and transition nodes
+      const allowsMultipleInputs = 
+        targetNode?.type === 'track' || 
+        targetNode?.type === 'end' || 
+        targetNode?.type === 'randomizer' ||
+        targetNode?.type === 'transition';
+      
+      if (!allowsMultipleInputs) {
         const existingIncoming = state.edges.filter(
           (e) => e.target === connection.target
         );
@@ -126,17 +147,27 @@ export const usePathStore = create<PathState>((set) => ({
       return { edges: newEdges };
     }),
   selectNode: (id) => set({ selectedNodeId: id }),
+  setCommentLinkingId: (id) => set({ commentLinkingId: id }),
   updateNodeData: (id, data) =>
     set((state) => {
-      const updatedNodes = state.nodes.map((node) =>
-        node.id === id ? { ...node, data: { ...node.data, ...data } } : node
-      );
+      const updatedNodes = state.nodes.map((node) => {
+        if (node.id === id) {
+          const { position, ...restData } = data;
+          const updatedNode = { ...node, data: { ...node.data, ...restData } };
+          if (position) {
+            updatedNode.position = position;
+          }
+          return updatedNode;
+        }
+        return node;
+      });
       saveToStorage(updatedNodes, state.edges);
       return { nodes: updatedNodes };
     }),
   setPlaybackQueue: (queue) => set({ playbackQueue: queue }),
   setIsPlaying: (playing) => set({ isPlaying: playing }),
   setCurrentTrackIndex: (index) => set({ currentTrackIndex: index }),
+  setCurrentPlayingNodeId: (id) => set({ currentPlayingNodeId: id }),
   deleteEdge: (edgeId) => set((state) => {
     const newEdges = state.edges.filter((e) => e.id !== edgeId);
     saveToStorage(state.nodes, newEdges);
@@ -162,18 +193,18 @@ export const usePathStore = create<PathState>((set) => ({
       let newEdges = [...state.edges];
       let changed = false;
 
-      // Keep flattening until no more stacked splitters
+      // Keep flattening until no more stacked splitters/conditionals
       let hasStackedSplitters = true;
       while (hasStackedSplitters) {
         hasStackedSplitters = false;
 
-        // Find parent-child splitter pairs
-        for (const splitter of newNodes.filter((n) => n.type === 'splitter')) {
+        // Find parent-child splitter/conditional pairs
+        for (const splitter of newNodes.filter((n) => n.type === 'splitter' || n.type === 'conditional')) {
           const directChildren = newEdges
             .filter((e) => e.source === splitter.id)
             .map((e) => ({ edge: e, node: newNodes.find((n) => n.id === e.target) }));
 
-          const splitterChildren = directChildren.filter((item) => item.node?.type === 'splitter');
+          const splitterChildren = directChildren.filter((item) => item.node?.type === 'splitter' || item.node?.type === 'conditional');
 
           if (splitterChildren.length > 0) {
             hasStackedSplitters = true;
@@ -187,7 +218,7 @@ export const usePathStore = create<PathState>((set) => ({
               const childIndex = directChildren.findIndex((item) => item.node?.id === childSplitter?.id);
               const parentWeight = parentWeights[childIndex] || 10;
 
-              if (childSplitter?.type === 'splitter') {
+              if (childSplitter?.type === 'splitter' || childSplitter?.type === 'conditional') {
                 // Flatten: multiply weights proportionally
                 const childWeights = (childSplitter.data?.weights as number[]) || [];
                 const childTotalWeight = childWeights.reduce((a: number, b: number) => a + b, 0) || 1;
@@ -227,7 +258,7 @@ export const usePathStore = create<PathState>((set) => ({
             // Delete child splitter nodes
             for (let i = newNodes.length - 1; i >= 0; i--) {
               if (
-                newNodes[i].type === 'splitter' &&
+                (newNodes[i].type === 'splitter' || newNodes[i].type === 'conditional') &&
                 splitterChildren.some((item) => item.node?.id === newNodes[i].id)
               ) {
                 newNodes.splice(i, 1);
