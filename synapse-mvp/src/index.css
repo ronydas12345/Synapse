@@ -11,9 +11,20 @@ body {
   font-family: system-ui, sans-serif;
 }
 
+.react-flow {
+  /* Ensure proper stacking and clipping context */
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible !important;
+}
+
 .react-flow__node {
   border-radius: 8px;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+  /* Optimize for transform animations during dragging */
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .react-flow__background {

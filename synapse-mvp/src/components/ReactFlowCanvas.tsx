@@ -1,3 +1,4 @@
+import React from 'react';
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { usePathStore } from '../store';
@@ -30,47 +31,124 @@ const edgeTypes = {
 // Custom minimap component that syncs with camera
 function CustomMinimap() {
   const { getNodes, getViewport } = useReactFlow();
-  const nodes = getNodes();
-  const viewport = getViewport();
+  const [containerDims, setContainerDims] = React.useState({ width: 1200, height: 800 });
+  const [viewportState, setViewportState] = React.useState({ x: 0, y: 0, zoom: 1 });
+  const minimapRef = React.useRef<HTMLDivElement>(null);
+  const prevViewportRef = React.useRef({ x: 0, y: 0, zoom: 1 });
+  const prevNodePositionsRef = React.useRef<Map<string, { x: number; y: number }>>(new Map());
 
-  // Calculate bounds of all nodes
+  // Update minimap when changing, using React Flow's internal updates
+  React.useEffect(() => {
+    // Just initialize on mount
+    const viewport = getViewport();
+    prevViewportRef.current = viewport;
+    setViewportState(viewport);
+  }, []);
+
+  // Measure the actual React Flow container on mount and when it changes
+  React.useEffect(() => {
+    const updateDims = () => {
+      if (minimapRef.current?.parentElement) {
+        const parent = minimapRef.current.parentElement;
+        // Get the actual rendered size of the React Flow container
+        const rect = parent.getBoundingClientRect();
+        setContainerDims({
+          width: rect.width || 1200,
+          height: rect.height || 800,
+        });
+      }
+    };
+
+    updateDims();
+    
+    // Listen for window resize
+    const resizeObserver = new ResizeObserver(updateDims);
+    if (minimapRef.current?.parentElement) {
+      resizeObserver.observe(minimapRef.current.parentElement);
+    }
+
+    window.addEventListener('resize', updateDims);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateDims);
+    };
+  }, []);
+
+  const nodes = getNodes();
+  const viewport = viewportState;
+
+  // Default node sizes (in pixels)
+  const nodeSizes: Record<string, { width: number; height: number }> = {
+    start: { width: 128, height: 80 },
+    end: { width: 128, height: 80 },
+    track: { width: 288, height: 160 },
+    conditional: { width: 288, height: 160 },
+    splitter: { width: 288, height: 160 },
+    randomizer: { width: 224, height: 180 },
+    transition: { width: 256, height: 100 },
+    comment: { width: 256, height: 120 },
+  };
+
+  // Calculate bounds of all nodes with their actual dimensions
   let minX = 0, minY = 0, maxX = 1000, maxY = 800;
   if (nodes.length > 0) {
     minX = Math.min(...nodes.map((n) => n.position?.x || 0));
     minY = Math.min(...nodes.map((n) => n.position?.y || 0));
-    maxX = Math.max(...nodes.map((n) => (n.position?.x || 0) + 120));
-    maxY = Math.max(...nodes.map((n) => (n.position?.y || 0) + 120));
+    maxX = Math.max(
+      ...nodes.map((n) => {
+        const size = nodeSizes[n.type] || { width: 200, height: 150 };
+        return (n.position?.x || 0) + size.width;
+      })
+    );
+    maxY = Math.max(
+      ...nodes.map((n) => {
+        const size = nodeSizes[n.type] || { width: 200, height: 150 };
+        return (n.position?.y || 0) + size.height;
+      })
+    );
   }
 
   const boundsWidth = maxX - minX || 1000;
   const boundsHeight = maxY - minY || 800;
 
-  // Scale to fit minimap
+  // Scale to fit minimap with padding
   const minimapWidth = 250;
   const minimapHeight = 180;
-  const scaleX = minimapWidth / boundsWidth;
-  const scaleY = minimapHeight / boundsHeight;
-  const scale = Math.min(scaleX, scaleY) * 0.85; // Leave padding
+  const padding = 20;
+  const scaleX = (minimapWidth - padding * 2) / boundsWidth;
+  const scaleY = (minimapHeight - padding * 2) / boundsHeight;
+  const scale = Math.min(scaleX, scaleY);
 
+  // Border colors matching the actual node borders in workspace
   const typeColors: Record<string, string> = {
-    start: '#22c55e',
-    end: '#ef4444',
-    track: '#3b82f6',
-    conditional: '#a855f7',
-    splitter: '#a855f7',
-    randomizer: '#f59e0b',
-    transition: '#06b6d4',
-    comment: '#8b5cf6',
+    start: '#22c55e',      // border-green-500
+    end: '#ef4444',        // border-red-500
+    track: '#64748b',      // border-slate-600
+    conditional: '#6366f1', // border-indigo-500
+    splitter: '#6366f1',   // border-indigo-500
+    randomizer: '#a855f7', // border-purple-500
+    transition: '#b45309', // border-amber-600
+    comment: '#64748b',    // border-slate-500
   };
 
-  // Calculate viewport rect in minimap coordinates
-  const viewportX = -viewport.x * scale + 20;
-  const viewportY = -viewport.y * scale + 20;
-  const viewportWidth = (1200 / viewport.zoom) * scale; // Estimate of visible area
-  const viewportHeight = (800 / viewport.zoom) * scale;
+  // Calculate the visible area in world coordinates
+  // viewport.x and viewport.y are camera position (screen offset)
+  // viewport.zoom is the camera zoom level
+  // The visible area in canvas coordinates is:
+  const visibleLeft = -viewport.x / viewport.zoom;
+  const visibleTop = -viewport.y / viewport.zoom;
+  const visibleWidth = containerDims.width / viewport.zoom;
+  const visibleHeight = containerDims.height / viewport.zoom;
+
+  // Convert visible area to minimap coordinates
+  const viewportX = (visibleLeft - minX) * scale + padding;
+  const viewportY = (visibleTop - minY) * scale + padding;
+  const viewportWidth = visibleWidth * scale;
+  const viewportHeight = visibleHeight * scale;
 
   return (
     <div 
+      ref={minimapRef}
       style={{
         position: 'absolute',
         bottom: 10,
@@ -86,12 +164,13 @@ function CustomMinimap() {
       }}
     >
       <svg width="100%" height="100%" viewBox="0 0 250 180" style={{ display: 'block' }}>
-        {/* Render each node */}
+        {/* Render each node with actual dimensions */}
         {nodes.map((node) => {
-          const x = ((node.position?.x || 0) - minX) * scale + 20;
-          const y = ((node.position?.y || 0) - minY) * scale + 20;
-          const w = Math.max(3, 40 * scale);
-          const h = Math.max(3, 60 * scale);
+          const size = nodeSizes[node.type] || { width: 200, height: 150 };
+          const x = ((node.position?.x || 0) - minX) * scale + padding;
+          const y = ((node.position?.y || 0) - minY) * scale + padding;
+          const w = Math.max(2, size.width * scale);
+          const h = Math.max(2, size.height * scale);
           const color = typeColors[node.type] || '#64748b';
 
           return (
@@ -102,9 +181,10 @@ function CustomMinimap() {
                 width={w}
                 height={h}
                 fill={color}
-                stroke="#94a3b8"
-                strokeWidth="0.5"
-                rx="1"
+                fillOpacity="0.7"
+                stroke={color}
+                strokeWidth="1"
+                rx="2"
               />
             </g>
           );
@@ -114,18 +194,21 @@ function CustomMinimap() {
         <rect
           x={viewportX}
           y={viewportY}
-          width={Math.max(10, viewportWidth)}
-          height={Math.max(10, viewportHeight)}
+          width={Math.max(5, viewportWidth)}
+          height={Math.max(5, viewportHeight)}
           fill="none"
-          stroke="#94a3b8"
-          strokeWidth="1"
-          strokeDasharray="3,2"
-          opacity="0.8"
+          stroke="#f1f5f9"
+          strokeWidth="1.5"
+          strokeDasharray="4,3"
+          opacity="0.9"
         />
       </svg>
     </div>
   );
 }
+
+// Memoize the minimap to prevent constant rerenders of parent
+const MemoizedCustomMinimap = React.memo(CustomMinimap);
 
 function ReactFlowContent() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -135,12 +218,20 @@ function ReactFlowContent() {
   const reactFlowRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const dragCounterRef = useRef(0);
 
   // Custom handler that applies recursive movement to linked comments
   const handleNodesChange = useCallback(
     (changes: any) => {
       // Track if this is a drag change
       const isDragChange = changes.some((c: any) => c.type === 'position');
+      
+      if (isDragChange) {
+        dragCounterRef.current++;
+        if (dragCounterRef.current % 20 === 0) {
+          console.log(`📍 Drag update batch #${dragCounterRef.current} (${changes.length} changes)`);
+        }
+      }
       
       // Only log non-position changes to reduce console spam
       const nonPositionChanges = changes.filter((c: any) => c.type !== 'position');
@@ -156,7 +247,6 @@ function ReactFlowContent() {
         // Apply all non-position changes and track position movements
         for (const change of changes) {
           if (change.type === 'position' && change.position) {
-            console.log('Position change for node', change.id, 'to', change.position);
             // Track the movement delta
             const node = result.find((n) => n.id === change.id);
             if (node && node.position) {
@@ -223,6 +313,26 @@ function ReactFlowContent() {
   );
   const lastSyncedNodesRef = useRef<Node[]>(storeNodes);
   const lastSyncedEdgesRef = useRef<Edge[]>(storeEdges);
+  const dragEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Track when drag completes
+  useEffect(() => {
+    if (dragCounterRef.current > 0) {
+      if (dragEndTimeoutRef.current) {
+        clearTimeout(dragEndTimeoutRef.current);
+      }
+      dragEndTimeoutRef.current = setTimeout(() => {
+        console.log(`✅ Drag completed: ${dragCounterRef.current} update batches`);
+        dragCounterRef.current = 0;
+      }, 100);
+    }
+
+    return () => {
+      if (dragEndTimeoutRef.current) {
+        clearTimeout(dragEndTimeoutRef.current);
+      }
+    };
+  }, [nodes]);
 
   // Initialize from store on mount only
   useEffect(() => {
@@ -561,7 +671,7 @@ function ReactFlowContent() {
       </ReactFlow>
 
       {/* Minimap positioned outside ReactFlow but absolutely in parent container */}
-      <CustomMinimap />
+      <MemoizedCustomMinimap />
     </div>
   );
 }
