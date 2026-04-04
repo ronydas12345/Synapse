@@ -28,6 +28,9 @@ const edgeTypes = {
   dashedComment: DashedCommentEdge,
 };
 
+// Valid node type names for filtering
+const validNodeTypes = new Set(Object.keys(nodeTypes));
+
 // Custom minimap component that syncs with camera
 function CustomMinimap() {
   const { getNodes, getViewport } = useReactFlow();
@@ -213,7 +216,17 @@ const MemoizedCustomMinimap = React.memo(CustomMinimap);
 function ReactFlowContent() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { nodes: storeNodes, edges: storeEdges, setNodes: setStoreNodes, setEdges: setStoreEdges, deleteEdge, onConnect: storeOnConnect, updateNodeData } = usePathStore();
-  const [nodes, setNodes] = useNodesState(storeNodes as Node[]);
+  
+  // Filter out nodes with invalid types (like "dimensions" fallback nodes)
+  const validStoreNodes = storeNodes.filter((n: any) => validNodeTypes.has(n.type));
+  
+  // If we filtered out any nodes, update the store
+  if (validStoreNodes.length !== storeNodes.length) {
+    console.log('Filtered out invalid nodes:', storeNodes.length - validStoreNodes.length);
+    setStoreNodes(validStoreNodes);
+  }
+  
+  const [nodes, setNodes] = useNodesState(validStoreNodes as Node[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState(storeEdges as Edge[]);
   const reactFlowRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
