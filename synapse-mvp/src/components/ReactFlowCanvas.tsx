@@ -614,6 +614,14 @@ function ReactFlowContent() {
     [setEdges, deleteEdge]
   );
 
+  const handleRemoveAll = useCallback(() => {
+    if (!window.confirm('Remove all nodes and connections?')) return;
+    setNodes([]);
+    setEdges([]);
+    setStoreNodes([]);
+    setStoreEdges([]);
+  }, [setNodes, setEdges, setStoreNodes, setStoreEdges]);
+
   const onNodeClickHandler = useCallback(
     (_: any, node: any) => {
       const store = usePathStore.getState();
@@ -649,6 +657,14 @@ function ReactFlowContent() {
         <Background color="#1e293b" gap={16} size={1} />
         <Controls />
       </ReactFlow>
+
+      {/* Remove all nodes button */}
+      <button
+        onClick={handleRemoveAll}
+        className="absolute top-3 right-3 z-50 px-3 py-1.5 text-xs font-medium text-red-400 bg-slate-800 border border-slate-600 rounded hover:bg-red-900/40 hover:border-red-500 hover:text-red-300 transition-colors"
+      >
+        Remove All
+      </button>
 
       {/* Minimap positioned outside ReactFlow but absolutely in parent container */}
       <MemoizedCustomMinimap />
