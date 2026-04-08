@@ -84,7 +84,7 @@ export default function Player() {
           }
         }
       } else if (node.type === 'splitter' || node.type === 'conditional') {
-        // For conditionals, randomly select one path based on weights or check time ranges
+        // For conditionals/splitters, select one path based on mode
         const mode = (node.data?.mode as string) || 'random';
         const weights = (node.data?.weights as number[]) || [1, 1];
         const pathTimeRanges = (node.data?.pathTimeRanges as Array<Array<{start: number, end: number}>>) || 
@@ -167,6 +167,7 @@ export default function Player() {
     if (playbackQueue.length === 0) {
       setIsPlaying(false);
       setCurrentPlayingNodeId(null);
+      setPlaybackQueue([]);
       return;
     }
 
@@ -177,8 +178,9 @@ export default function Player() {
       setIsPlaying(false);
       setCurrentTrackIndex(0);
       setCurrentPlayingNodeId(null);
+      setPlaybackQueue([]);
     }
-  }, [currentTrackIndex, playbackQueue.length, setCurrentTrackIndex, setIsPlaying, setCurrentPlayingNodeId]);
+  }, [currentTrackIndex, playbackQueue.length, setCurrentTrackIndex, setIsPlaying, setCurrentPlayingNodeId, setPlaybackQueue]);
 
   // Initialize or rebuild playback queue when graph changes or play starts
   useEffect(() => {
@@ -190,6 +192,14 @@ export default function Player() {
       }
     }
   }, [isPlaying, playbackQueue.length, nodes, edges, setPlaybackQueue, setIsPlaying]);
+
+  // Clear queue when stopping to force rebuild on next play
+  useEffect(() => {
+    if (!isPlaying && playbackQueue.length > 0) {
+      setPlaybackQueue([]);
+      setCurrentTrackIndex(0);
+    }
+  }, [isPlaying, setPlaybackQueue, setCurrentTrackIndex, playbackQueue.length]);
 
   useEffect(() => {
     if (isPlaying && playbackQueue.length > 0 && playbackQueue[currentTrackIndex]) {
