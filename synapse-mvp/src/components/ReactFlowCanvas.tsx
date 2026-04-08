@@ -424,6 +424,19 @@ function ReactFlowContent() {
     }
   }, [storeNodes, setNodes]);
 
+  // Sync store edge changes to React Flow (e.g. when a new connection is added via the store)
+  useEffect(() => {
+    if (!isInitializedRef.current) return;
+
+    const storeChanged = storeEdges.length !== lastSyncedEdgesRef.current.length ||
+      JSON.stringify(storeEdges) !== JSON.stringify(lastSyncedEdgesRef.current);
+
+    if (storeChanged) {
+      setEdges(storeEdges as Edge[]);
+      lastSyncedEdgesRef.current = storeEdges;
+    }
+  }, [storeEdges, setEdges]);
+
   // Dashed edges for linked comment nodes are derived from node data only.
   // Important: do not set edges state on every node position update (dragging),
   // otherwise ReactFlow will re-render edges continuously and can "flash".
