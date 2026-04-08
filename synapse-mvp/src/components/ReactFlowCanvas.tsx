@@ -48,6 +48,25 @@ function CustomMinimap() {
     setViewportState(viewport);
   }, []);
 
+  // Keep viewport state in sync during panning and zooming
+  React.useEffect(() => {
+    const handleViewportChange = () => {
+      const viewport = getViewport();
+      // Validate that viewport has valid numbers
+      if (viewport && 
+          typeof viewport.x === 'number' && !isNaN(viewport.x) &&
+          typeof viewport.y === 'number' && !isNaN(viewport.y) &&
+          typeof viewport.zoom === 'number' && !isNaN(viewport.zoom)) {
+        setViewportState(viewport);
+      }
+    };
+
+    // Poll for viewport changes since there's no direct viewport change event
+    const interval = setInterval(handleViewportChange, 16); // ~60fps
+    
+    return () => clearInterval(interval);
+  }, []);
+
   // Measure the actual React Flow container on mount and when it changes
   React.useEffect(() => {
     const updateDims = () => {
@@ -120,7 +139,12 @@ function CustomMinimap() {
   const padding = 20;
   const scaleX = (minimapWidth - padding * 2) / boundsWidth;
   const scaleY = (minimapHeight - padding * 2) / boundsHeight;
-  const scale = Math.min(scaleX, scaleY);
+  let scale = Math.min(scaleX, scaleY);
+  
+  // Ensure scale is a valid finite number
+  if (!isFinite(scale)) {
+    scale = 0.5;
+  }
 
   // Border colors matching the actual node borders in workspace
   const typeColors: Record<string, string> = {
@@ -138,16 +162,50 @@ function CustomMinimap() {
   // viewport.x and viewport.y are camera position (screen offset)
   // viewport.zoom is the camera zoom level
   // The visible area in canvas coordinates is:
-  const visibleLeft = -viewport.x / viewport.zoom;
-  const visibleTop = -viewport.y / viewport.zoom;
-  const visibleWidth = containerDims.width / viewport.zoom;
-  const visibleHeight = containerDims.height / viewport.zoom;
+  const zoom = viewport?.zoom || 1;
+  const vpX = viewport?.x || 0;
+  const vpY = viewport?.y || 0;
+  
+  // Guard against NaN values
+  if (isNaN(zoom) || isNaN(vpX) || isNaN(vpY)) {
+    return (
+      <div 
+        ref={minimapRef}
+        style={{
+          position: 'absolute',
+          bottom: 10,
+          right: 10,
+          width: 250,
+          height: 180,
+          backgroundColor: '#0f172a',
+          border: '2px solid #475569',
+          borderRadius: 4,
+          zIndex: 50,
+          overflow: 'hidden',
+          pointerEvents: 'none',
+        }}
+      >
+        <div style={{ padding: '10px', color: '#999', fontSize: '12px' }}>Minimap loading...</div>
+      </div>
+    );
+  }
+  
+  const visibleLeft = -vpX / zoom;
+  const visibleTop = -vpY / zoom;
+  const visibleWidth = containerDims.width / zoom;
+  const visibleHeight = containerDims.height / zoom;
 
   // Convert visible area to minimap coordinates
-  const viewportX = (visibleLeft - minX) * scale + padding;
-  const viewportY = (visibleTop - minY) * scale + padding;
-  const viewportWidth = visibleWidth * scale;
-  const viewportHeight = visibleHeight * scale;
+  let viewportX = (visibleLeft - minX) * scale + padding;
+  let viewportY = (visibleTop - minY) * scale + padding;
+  let viewportWidth = visibleWidth * scale;
+  let viewportHeight = visibleHeight * scale;
+  
+  // Ensure all viewport dimensions are valid finite numbers
+  if (!isFinite(viewportX)) viewportX = padding;
+  if (!isFinite(viewportY)) viewportY = padding;
+  if (!isFinite(viewportWidth)) viewportWidth = 50;
+  if (!isFinite(viewportHeight)) viewportHeight = 50;
 
   return (
     <div 
@@ -170,11 +228,17 @@ function CustomMinimap() {
         {/* Render each node with actual dimensions */}
         {nodes.map((node) => {
           const size = nodeSizes[node.type] || { width: 200, height: 150 };
-          const x = ((node.position?.x || 0) - minX) * scale + padding;
-          const y = ((node.position?.y || 0) - minY) * scale + padding;
-          const w = Math.max(2, size.width * scale);
-          const h = Math.max(2, size.height * scale);
+          let x = ((node.position?.x || 0) - minX) * scale + padding;
+          let y = ((node.position?.y || 0) - minY) * scale + padding;
+          let w = Math.max(2, size.width * scale);
+          let h = Math.max(2, size.height * scale);
           const color = typeColors[node.type] || '#64748b';
+          
+          // Ensure all values are valid finite numbers
+          if (!isFinite(x)) x = padding;
+          if (!isFinite(y)) y = padding;
+          if (!isFinite(w)) w = 20;
+          if (!isFinite(h)) h = 20;
 
           return (
             <g key={node.id}>
