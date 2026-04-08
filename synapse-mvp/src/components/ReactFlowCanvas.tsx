@@ -1,5 +1,5 @@
 import React from 'react';
-import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider, useReactFlow } from '@xyflow/react';
+import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider, useReactFlow, applyNodeChanges } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { usePathStore } from '../store';
 import TrackNode from './nodes/TrackNode';
@@ -227,7 +227,6 @@ function ReactFlowContent() {
   const reactFlowRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const dragCounterRef = useRef(0);
 
   // If we filtered out any nodes, update the store (do this in an effect, not during render).
   useEffect(() => {
@@ -240,49 +239,29 @@ function ReactFlowContent() {
   // Custom handler that applies recursive movement to linked comments
   const handleNodesChange = useCallback(
     (changes: any) => {
-      // Track if this is a drag change
-      const isDragChange = changes.some((c: any) => c.type === 'position');
-      
-      if (isDragChange) {
-        dragCounterRef.current++;
-        if (dragCounterRef.current % 20 === 0) {
-          console.log(`📍 Drag update batch #${dragCounterRef.current} (${changes.length} changes)`);
-        }
-      }
-      
-      // Only log non-position changes to reduce console spam
-      const nonPositionChanges = changes.filter((c: any) => c.type !== 'position');
-      if (nonPositionChanges.length > 0) {
-        console.log('handleNodesChange (non-position):', nonPositionChanges.map((c: any) => ({ type: c.type, id: c.id })));
-      }
-      
       setNodes((currentNodes) => {
-        // Process all changes (selection, position, etc)
-        let result = currentNodes;
+        // Track position movements BEFORE applying changes so we can compute deltas
         const movements: Map<string, { deltaX: number; deltaY: number }> = new Map();
 
-        // Apply all non-position changes and track position movements
         for (const change of changes) {
           if (change.type === 'position' && change.position) {
-            // Track the movement delta
-            const node = result.find((n) => n.id === change.id);
+            const node = currentNodes.find((n) => n.id === change.id);
             if (node && node.position) {
               movements.set(change.id, {
                 deltaX: change.position.x - node.position.x,
                 deltaY: change.position.y - node.position.y,
               });
             }
-            // Apply the position change
-            result = result.map((n) =>
-              n.id === change.id ? { ...n, position: change.position } : n
-            );
-          } else if (change.type === 'select') {
-            // Selection changes are ignored here (handled by node click)
           }
         }
 
-        // Apply recursive movement to linked children for nodes that moved
+        // Apply ALL changes using React Flow's built-in handler
+        // This properly handles dimensions, position, select, add, remove, etc.
+        let result = applyNodeChanges(changes, currentNodes) as typeof currentNodes;
+
+        // Apply recursive movement to linked comment children
         for (const [movingNodeId, movement] of movements) {
+          if (movement.deltaX === 0 && movement.deltaY === 0) continue;
           result = applyMovementRecursive(result, movingNodeId, movement.deltaX, movement.deltaY, new Set());
         }
 
@@ -295,11 +274,9 @@ function ReactFlowContent() {
           deltaY: number,
           processed: Set<string>
         ): typeof currentNodes {
-          // Prevent infinite recursion
           if (processed.has(parentId)) return nodes;
           processed.add(parentId);
 
-          // Move direct children
           let updated = nodes.map((n) => {
             if (n.type === 'comment' && n.data?.linkedNodeId === parentId && n.position) {
               return {
@@ -313,7 +290,6 @@ function ReactFlowContent() {
             return n;
           });
 
-          // Find children that need their children moved too
           const childrenIds = updated
             .filter((n) => n.type === 'comment' && n.data?.linkedNodeId === parentId)
             .map((n) => n.id);
@@ -330,26 +306,6 @@ function ReactFlowContent() {
   );
   const lastSyncedNodesRef = useRef<Node[]>(storeNodes);
   const lastSyncedEdgesRef = useRef<Edge[]>(storeEdges);
-  const dragEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Track when drag completes
-  useEffect(() => {
-    if (dragCounterRef.current > 0) {
-      if (dragEndTimeoutRef.current) {
-        clearTimeout(dragEndTimeoutRef.current);
-      }
-      dragEndTimeoutRef.current = setTimeout(() => {
-        console.log(`✅ Drag completed: ${dragCounterRef.current} update batches`);
-        dragCounterRef.current = 0;
-      }, 100);
-    }
-
-    return () => {
-      if (dragEndTimeoutRef.current) {
-        clearTimeout(dragEndTimeoutRef.current);
-      }
-    };
-  }, [nodes]);
 
   // Initialize from store on mount only
   useEffect(() => {
