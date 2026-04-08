@@ -216,11 +216,8 @@ const MemoizedCustomMinimap = React.memo(CustomMinimap);
 function ReactFlowContent() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { nodes: storeNodes, edges: storeEdges, setNodes: setStoreNodes, setEdges: setStoreEdges, deleteEdge, onConnect: storeOnConnect, updateNodeData } = usePathStore();
-  
-  // Filter out nodes with invalid types (like "dimensions" fallback nodes)
-  const validStoreNodes = storeNodes.filter((n: any) => validNodeTypes.has(n.type));
 
-  const [nodes, setNodes] = useNodesState(validStoreNodes as Node[]);
+  const [nodes, setNodes] = useNodesState(storeNodes as Node[]);
   // Keep only "real" edges in state. Dashed comment-link edges are derived and should not
   // trigger state updates during node dragging.
   const [edges, setEdges, onEdgesChange] = useEdgesState(storeEdges as Edge[]);
@@ -228,13 +225,21 @@ function ReactFlowContent() {
   const isInitializedRef = useRef(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // If we filtered out any nodes, update the store (do this in an effect, not during render).
+  // Clean up invalid nodes on mount (only once)
   useEffect(() => {
-    if (validStoreNodes.length !== storeNodes.length) {
-      console.log('Filtered out invalid nodes:', storeNodes.length - validStoreNodes.length);
-      setStoreNodes(validStoreNodes);
+    if (!isInitializedRef.current) {
+      const validNodes = storeNodes.filter((n: any) => validNodeTypes.has(n.type));
+      
+      // If we filtered out any nodes, update the store
+      if (validNodes.length !== storeNodes.length) {
+        console.log('Filtered out invalid nodes:', storeNodes.length - validNodes.length);
+        setStoreNodes(validNodes);
+        setNodes(validNodes as Node[]);
+      }
+      
+      isInitializedRef.current = true;
     }
-  }, [storeNodes, validStoreNodes, setStoreNodes]);
+  }, []);
 
   // Custom handler that applies recursive movement to linked comments
   const handleNodesChange = useCallback(
@@ -260,8 +265,15 @@ function ReactFlowContent() {
         let result = applyNodeChanges(changes, currentNodes) as typeof currentNodes;
 
         // Apply recursive movement to linked comment children
+        // Only for nodes that still exist in the result (not deleted)
         for (const [movingNodeId, movement] of movements) {
           if (movement.deltaX === 0 && movement.deltaY === 0) continue;
+          
+          // Skip if the node was deleted
+          if (!result.find((n) => n.id === movingNodeId)) {
+            continue;
+          }
+          
           result = applyMovementRecursive(result, movingNodeId, movement.deltaX, movement.deltaY, new Set());
         }
 
@@ -359,6 +371,18 @@ function ReactFlowContent() {
       }
     }
   }, [storeNodes, setNodes]);
+
+  // Sync store edge changes to React Flow (when new edges are created via storeOnConnect)
+  useEffect(() => {
+    if (!isInitializedRef.current) return;
+
+    // Check if edges in store differ from what React Flow has
+    if (JSON.stringify(storeEdges) !== JSON.stringify(lastSyncedEdgesRef.current)) {
+      console.log('Store edges changed, syncing to React Flow. Edge count:', storeEdges.length);
+      setEdges(storeEdges as Edge[]);
+      lastSyncedEdgesRef.current = storeEdges;
+    }
+  }, [storeEdges, setEdges]);
 
   // Dashed edges for linked comment nodes are derived from node data only.
   // Important: do not set edges state on every node position update (dragging),

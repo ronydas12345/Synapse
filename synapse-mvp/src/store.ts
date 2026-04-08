@@ -178,7 +178,15 @@ export const usePathStore = create<PathState>((set) => ({
     if (nodeId === 'start') {
       return state;
     }
-    const newNodes = state.nodes.filter((n) => n.id !== nodeId);
+    const newNodes = state.nodes
+      .filter((n) => n.id !== nodeId)
+      // Also remove comment links to this deleted node
+      .map((n) => {
+        if (n.type === 'comment' && n.data?.linkedNodeId === nodeId) {
+          return { ...n, data: { ...n.data, linkedNodeId: null } };
+        }
+        return n;
+      });
     const newEdges = state.edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
     saveToStorage(newNodes, newEdges);
     return { 
