@@ -10,7 +10,7 @@ import RandomizerNode from './nodes/RandomizerNode';
 import TransitionNode from './nodes/TransitionNode';
 import CommentNode from './nodes/CommentNode';
 import DashedCommentEdge from './edges/DashedCommentEdge';
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useMemo } from 'react';
 import type { Node, Edge } from '@xyflow/react';
 
 const nodeTypes = {
@@ -219,19 +219,23 @@ function ReactFlowContent() {
   
   // Filter out nodes with invalid types (like "dimensions" fallback nodes)
   const validStoreNodes = storeNodes.filter((n: any) => validNodeTypes.has(n.type));
-  
-  // If we filtered out any nodes, update the store
-  if (validStoreNodes.length !== storeNodes.length) {
-    console.log('Filtered out invalid nodes:', storeNodes.length - validStoreNodes.length);
-    setStoreNodes(validStoreNodes);
-  }
-  
+
   const [nodes, setNodes] = useNodesState(validStoreNodes as Node[]);
+  // Keep only "real" edges in state. Dashed comment-link edges are derived and should not
+  // trigger state updates during node dragging.
   const [edges, setEdges, onEdgesChange] = useEdgesState(storeEdges as Edge[]);
   const reactFlowRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const dragCounterRef = useRef(0);
+
+  // If we filtered out any nodes, update the store (do this in an effect, not during render).
+  useEffect(() => {
+    if (validStoreNodes.length !== storeNodes.length) {
+      console.log('Filtered out invalid nodes:', storeNodes.length - validStoreNodes.length);
+      setStoreNodes(validStoreNodes);
+    }
+  }, [storeNodes, validStoreNodes, setStoreNodes]);
 
   // Custom handler that applies recursive movement to linked comments
   const handleNodesChange = useCallback(
@@ -400,10 +404,11 @@ function ReactFlowContent() {
     }
   }, [storeNodes, setNodes]);
 
-  // Combined edge sync - regular edges from store + dashed edges for comments
-  useEffect(() => {
-    // Generate dashed edges for linked comment nodes
-    const dashedEdges: Edge[] = nodes
+  // Dashed edges for linked comment nodes are derived from node data only.
+  // Important: do not set edges state on every node position update (dragging),
+  // otherwise ReactFlow will re-render edges continuously and can "flash".
+  const dashedEdges = useMemo((): Edge[] => {
+    return nodes
       .filter((n) => n.type === 'comment' && n.data?.linkedNodeId)
       .map((commentNode) => ({
         id: `dashed-${commentNode.id}`,
@@ -411,11 +416,17 @@ function ReactFlowContent() {
         target: commentNode.data.linkedNodeId as string,
         type: 'dashedComment',
       }));
+  }, [
+    // Depend only on the aspects that affect dashed edges, not full node objects.
+    nodes
+      .filter((n) => n.type === 'comment')
+      .map((n) => `${n.id}:${String((n.data as any)?.linkedNodeId ?? '')}`)
+      .join('|'),
+  ]);
 
-    // Combine regular edges with dashed edges
-    const allEdges = [...storeEdges, ...dashedEdges] as Edge[];
-    setEdges(allEdges);
-  }, [storeEdges, nodes, setEdges]);
+  const renderedEdges = useMemo(() => {
+    return [...(edges as Edge[]), ...dashedEdges] as Edge[];
+  }, [edges, dashedEdges]);
 
   // Sync React Flow changes back to store (debounced to avoid excessive updates during drag)
   // IMPORTANT: Only sync data changes, NOT position changes. Position is transient UI state.
@@ -467,7 +478,7 @@ function ReactFlowContent() {
 
   useEffect(() => {
     if (isInitializedRef.current) {
-      // Filter out dashed comment edges before syncing back to store
+      // Sync only the real edges back to the store (derived dashed edges are not persisted).
       const regularEdges = edges.filter((e) => !e.id.startsWith('dashed-'));
       
       // Only sync back if React Flow edges differ from what we synced TO the store
@@ -666,7 +677,7 @@ function ReactFlowContent() {
     <div ref={reactFlowRef} className="w-full h-full relative rounded-lg overflow-hidden border border-slate-700" style={{ minHeight: '100%' }}>
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={renderedEdges}
         onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={handleConnect}
