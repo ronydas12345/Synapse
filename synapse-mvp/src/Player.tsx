@@ -129,7 +129,9 @@ export default function Player() {
     const adapter = new YouTubeIframeAdapter();
     adapterRef.current = adapter;
     adapter.setOnEnded(() => advanceRef.current());
-    adapter.setOnError((message) => setStatusMessage(message));
+    adapter.setOnError((message) =>
+      setStatusMessage(`${message} — skipping`)
+    );
 
     let cancelled = false;
     const el = ytContainerRef.current;
@@ -322,7 +324,7 @@ export default function Player() {
     adapterRef.current.play(media).catch(() => {
       if (!cancelled) {
         setStatusMessage('Playback failed — skipping');
-        advance();
+        window.setTimeout(() => advance(), 400);
       }
     });
 

@@ -103,7 +103,6 @@ function clampRate(rate?: number): number {
 export class YouTubeIframeAdapter implements PlaybackAdapter {
   private player: YtPlayer | null = null;
   private host: HTMLElement | null = null;
-  private mountEl: HTMLDivElement | null = null;
   private onEnded: (() => void) | null = null;
   private onError: ((message: string) => void) | null = null;
   private readyPromise: Promise<void> | null = null;
@@ -159,7 +158,6 @@ export class YouTubeIframeAdapter implements PlaybackAdapter {
           mount.style.width = '100%';
           mount.style.height = '100%';
           container.appendChild(mount);
-          this.mountEl = mount;
 
           this.player = new window.YT!.Player(mount, {
             height: '100%',
@@ -200,10 +198,14 @@ export class YouTubeIframeAdapter implements PlaybackAdapter {
                   150: 'Embedding disabled by owner',
                 };
                 const session = this.playSession;
-                this.onError?.(messages[code] ?? `YouTube error ${code}`);
                 this.hasStarted = false;
-                // Only auto-advance for the active session
-                this.emitEndedForSession(session);
+                this.ignoreEnded = false;
+                this.onError?.(messages[code] ?? `YouTube error ${code}`);
+                // Bypass the load-suppress window so one bad video cannot stall the path.
+                window.setTimeout(() => {
+                  if (this.playSession !== session) return;
+                  this.onEnded?.();
+                }, 500);
               },
             },
           });
@@ -276,7 +278,6 @@ export class YouTubeIframeAdapter implements PlaybackAdapter {
     }
     this.player = null;
     this.readyPromise = null;
-    this.mountEl = null;
     if (this.host) {
       this.host.innerHTML = '';
     }

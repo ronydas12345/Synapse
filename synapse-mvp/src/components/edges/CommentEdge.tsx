@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { getBezierPath } from '@xyflow/react';
 
 export default function CommentEdge({

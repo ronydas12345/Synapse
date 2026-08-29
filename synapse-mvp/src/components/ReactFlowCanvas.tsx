@@ -38,7 +38,6 @@ function CustomMinimap() {
   const [viewportState, setViewportState] = React.useState({ x: 0, y: 0, zoom: 1 });
   const minimapRef = React.useRef<HTMLDivElement>(null);
   const prevViewportRef = React.useRef({ x: 0, y: 0, zoom: 1 });
-  const prevNodePositionsRef = React.useRef<Map<string, { x: number; y: number }>>(new Map());
 
   // Update minimap when changing, using React Flow's internal updates
   React.useEffect(() => {
@@ -118,13 +117,13 @@ function CustomMinimap() {
     minY = Math.min(...nodes.map((n) => n.position?.y || 0));
     maxX = Math.max(
       ...nodes.map((n) => {
-        const size = nodeSizes[n.type] || { width: 200, height: 150 };
+        const size = nodeSizes[n.type ?? ''] || { width: 200, height: 150 };
         return (n.position?.x || 0) + size.width;
       })
     );
     maxY = Math.max(
       ...nodes.map((n) => {
-        const size = nodeSizes[n.type] || { width: 200, height: 150 };
+        const size = nodeSizes[n.type ?? ''] || { width: 200, height: 150 };
         return (n.position?.y || 0) + size.height;
       })
     );
@@ -228,12 +227,12 @@ function CustomMinimap() {
       <svg width="100%" height="100%" viewBox="0 0 250 180" style={{ display: 'block' }}>
         {/* Render each node with actual dimensions */}
         {nodes.map((node) => {
-          const size = nodeSizes[node.type] || { width: 200, height: 150 };
+          const size = nodeSizes[node.type ?? ''] || { width: 200, height: 150 };
           let x = ((node.position?.x || 0) - minX) * scale + padding;
           let y = ((node.position?.y || 0) - minY) * scale + padding;
           let w = Math.max(2, size.width * scale);
           let h = Math.max(2, size.height * scale);
-          const color = typeColors[node.type] || '#64748b';
+          const color = typeColors[node.type ?? ''] || '#64748b';
           
           // Ensure all values are valid finite numbers
           if (!isFinite(x)) x = padding;
@@ -288,7 +287,7 @@ function ReactFlowContent() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(storeEdges as Edge[]);
   const reactFlowRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
-  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Clean up invalid nodes on mount (only once)
   useEffect(() => {
