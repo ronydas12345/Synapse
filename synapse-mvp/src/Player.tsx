@@ -1,7 +1,7 @@
 import { usePathStore } from './store';
 import { useEffect, useRef, useCallback, useState } from 'react';
 import type { Node } from '@xyflow/react';
-import { buildPlaybackQueueKeys, parseQueueKey } from './engine';
+import { buildPlaybackQueueResult, parseQueueKey } from './engine';
 import {
   YouTubeIframeAdapter,
   extractYouTubeId,
@@ -171,17 +171,26 @@ export default function Player() {
     if (!isPlaying) return;
     if (playbackQueue.length > 0) return;
 
-    const keys = buildPlaybackQueueKeys({ nodes, edges });
+    const result = buildPlaybackQueueResult({ nodes, edges });
+    const keys = result.items.map((item) => item.key);
     if (keys.length === 0) {
       setIsPlaying(false);
-      setStatusMessage('Nothing to play — connect tracks from Start');
+      setStatusMessage(
+        result.haltReason === 'no_start'
+          ? 'Nothing to play — add a Start node'
+          : 'Nothing to play — connect tracks from Start'
+      );
       return;
     }
     sessionActiveRef.current = true;
     activeItemKeyRef.current = null;
     setCurrentTrackIndex(0);
     setPlaybackQueue(keys);
-    setStatusMessage('');
+    setStatusMessage(
+      result.haltReason === 'max_queue' || result.haltReason === 'max_steps'
+        ? 'Path truncated to prevent a runaway graph'
+        : ''
+    );
   }, [
     isPlaying,
     playbackQueue.length,

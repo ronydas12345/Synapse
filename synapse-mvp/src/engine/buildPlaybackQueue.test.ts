@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildPlaybackQueue, buildPlaybackQueueKeys } from './buildPlaybackQueue';
+import {
+  buildPlaybackQueue,
+  buildPlaybackQueueKeys,
+  buildPlaybackQueueResult,
+} from './buildPlaybackQueue';
 import { graph, makeEdge, makeNode } from './graphFixtures';
 import { createSeededRng } from './rng';
 
@@ -249,5 +253,77 @@ describe('buildPlaybackQueue', () => {
     const q1 = buildPlaybackQueueKeys(g, { rng: createSeededRng(123) });
     const q2 = buildPlaybackQueueKeys(g, { rng: createSeededRng(123) });
     expect(q1).toEqual(q2);
+  });
+
+  it('does not loop forever through a splitter cycle', () => {
+    const splitter = makeNode('split', 'splitter', {
+      mode: 'random',
+      weights: [1],
+    });
+    const g = graph(
+      [start(), splitter, track('t1')],
+      [
+        makeEdge('start', 'split'),
+        makeEdge('split', 't1', 'A'),
+        makeEdge('t1', 'split'),
+      ]
+    );
+    const result = buildPlaybackQueueResult(g, { rng: () => 0 });
+    expect(result.items.map((i) => i.key)).toEqual(['track:t1']);
+    expect(result.haltReason).toBe('ok');
+  });
+
+  it('visits a conditional node only once, same as a splitter', () => {
+    const cond = makeNode('split', 'conditional', {
+      mode: 'random',
+      weights: [1, 0],
+    });
+    const g = graph(
+      [start(), cond, track('a'), track('b')],
+      [
+        makeEdge('start', 'split'),
+        makeEdge('split', 'a', 'A'),
+        makeEdge('split', 'b', 'B'),
+        makeEdge('a', 'split'),
+      ]
+    );
+    const result = buildPlaybackQueueResult(g, { rng: () => 0 });
+    expect(result.items.map((i) => i.key)).toEqual(['track:a']);
+  });
+
+  it('halts with max_queue instead of growing without bound', () => {
+    const g = graph(
+      [start(), track('t1', { playCount: 9999 })],
+      [makeEdge('start', 't1')]
+    );
+    const result = buildPlaybackQueueResult(g, {
+      maxQueueItems: 5,
+      maxPlayCount: 9999,
+    });
+    expect(result.items).toHaveLength(5);
+    expect(result.haltReason).toBe('max_queue');
+  });
+
+  it('halts with max_steps on a dense outgoing fan-out', () => {
+    const extraTracks = Array.from({ length: 8 }, (_, i) => track(`t${i}`));
+    const extraEdges = extraTracks.map((n) => makeEdge('start', n.id));
+    const g = graph([start(), ...extraTracks], extraEdges);
+    const result = buildPlaybackQueueResult(g, { maxTraverseSteps: 3 });
+    expect(result.haltReason).toBe('max_steps');
+    expect(result.items.length).toBeLessThan(8);
+  });
+
+  it('reports no_start without throwing', () => {
+    const result = buildPlaybackQueueResult(graph([track('t1')], []));
+    expect(result.items).toEqual([]);
+    expect(result.haltReason).toBe('no_start');
+  });
+
+  it('caps enormous track playCount', () => {
+    const g = graph(
+      [start(), track('t1', { playCount: 1_000_000 })],
+      [makeEdge('start', 't1')]
+    );
+    expect(buildPlaybackQueueKeys(g)).toHaveLength(100);
   });
 });

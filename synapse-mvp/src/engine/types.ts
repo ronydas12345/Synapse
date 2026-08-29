@@ -9,11 +9,28 @@ export interface QueueItem {
   key: string;
 }
 
+export type BuildQueueHaltReason =
+  | 'ok'
+  | 'no_start'
+  | 'max_steps'
+  | 'max_queue';
+
 export interface BuildQueueOptions {
   /** Optional seeded RNG for deterministic weighted picks. */
   rng?: () => number;
   /** Hour 0–23 for time-range conditionals; defaults to local now. */
   currentHour?: number;
+  /** Hard cap on queued items. Defaults to DEFAULT_MAX_QUEUE_ITEMS. */
+  maxQueueItems?: number;
+  /** Hard cap on traverse calls. Defaults to DEFAULT_MAX_TRAVERSE_STEPS. */
+  maxTraverseSteps?: number;
+  /** Cap for per-node playCount. Defaults to DEFAULT_MAX_PLAY_COUNT. */
+  maxPlayCount?: number;
+}
+
+export interface BuildQueueResult {
+  items: QueueItem[];
+  haltReason: BuildQueueHaltReason;
 }
 
 export interface GraphSnapshot {
