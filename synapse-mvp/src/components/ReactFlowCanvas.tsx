@@ -177,9 +177,9 @@ function CustomMinimap() {
           right: 10,
           width: 250,
           height: 180,
-          backgroundColor: '#0f172a',
-          border: '2px solid #475569',
-          borderRadius: 4,
+          backgroundColor: 'rgba(12, 14, 20, 0.92)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 8,
           zIndex: 50,
           overflow: 'hidden',
           pointerEvents: 'none',
@@ -216,12 +216,13 @@ function CustomMinimap() {
         right: 10,
         width: 250,
         height: 180,
-        backgroundColor: '#0f172a',
-        border: '2px solid #475569',
-        borderRadius: 4,
+        backgroundColor: 'rgba(12, 14, 20, 0.92)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: 8,
         zIndex: 50,
         overflow: 'hidden',
         pointerEvents: 'none',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
       }}
     >
       <svg width="100%" height="100%" viewBox="0 0 250 180" style={{ display: 'block' }}>
@@ -618,68 +619,69 @@ function ReactFlowContent() {
   // Wrapper for connect that validates through store
   const handleConnect = useCallback(
     (connection: any) => {
-      console.log('handleConnect called with:', {
-        source: connection.source,
-        sourceHandle: connection.sourceHandle,
-        target: connection.target,
-        targetHandle: connection.targetHandle,
-      });
-
-      // Use React Flow's nodes/edges (most current) not store nodes/edges (may be out of sync)
-      console.log('Available nodes in React Flow:', nodes.map((n) => ({ id: n.id, type: n.type })));
-
       const sourceNode = nodes.find((n) => n.id === connection.source);
       const targetNode = nodes.find((n) => n.id === connection.target);
 
-      console.log('Source node found?', !!sourceNode, 'type:', sourceNode?.type);
-      console.log('Target node found?', !!targetNode, 'type:', targetNode?.type);
+      if (!sourceNode || !targetNode) {
+        console.warn('Connect failed: source or target node not found');
+        return;
+      }
 
-      // Prevent multiple outgoing edges from non-splitter/randomizer nodes
+      if (sourceNode.type === 'comment' || targetNode.type === 'comment') {
+        window.alert('Comment nodes cannot be part of the play path.');
+        return;
+      }
+
+      // Prevent multiple outgoing edges from non-branching nodes
       const isSourceBranching =
-        sourceNode?.type === 'splitter' || sourceNode?.type === 'conditional' || sourceNode?.type === 'randomizer';
-      console.log('Is source branching?', isSourceBranching, 'sourceNode type:', sourceNode?.type);
+        sourceNode.type === 'splitter' ||
+        sourceNode.type === 'conditional' ||
+        sourceNode.type === 'randomizer';
 
       if (!isSourceBranching) {
         const existingOutgoing = edges.filter(
-          (e) => e.source === connection.source
+          (e) => e.source === connection.source && !e.id.startsWith('dashed-')
         );
-        console.log('Non-branching node existing outgoing edges:', existingOutgoing.length);
-        console.log('All edges from source:', edges.filter((e) => e.source === connection.source));
         if (existingOutgoing.length > 0) {
-          console.warn(
-            'Cannot create multiple outgoing edges from non-branching node',
-            { sourceType: sourceNode?.type, sourceId: connection.source }
+          window.alert(
+            `"${sourceNode.type}" already has an outgoing connection.\n\n` +
+              'For a chain like Start → Track 1 → Track 2:\n' +
+              '• Drag from Track 1’s RIGHT handle to Track 2’s LEFT handle\n' +
+              '• Or click the old line and press Delete, then reconnect'
           );
           return;
         }
       } else {
-        // For branching nodes, prevent multiple edges from the SAME handle
         const existingFromHandle = edges.filter(
-          (e) => e.source === connection.source && e.sourceHandle === connection.sourceHandle
+          (e) =>
+            e.source === connection.source &&
+            e.sourceHandle === connection.sourceHandle &&
+            !e.id.startsWith('dashed-')
         );
-        console.log('Branching node existing edges from handle:', existingFromHandle.length, 'Handle:', connection.sourceHandle);
-        console.log('All edges from this source:', edges.filter((e) => e.source === connection.source));
         if (existingFromHandle.length > 0) {
-          console.warn('This output handle is already connected');
+          window.alert('That output path is already connected. Delete the existing line first.');
           return;
         }
       }
 
-      // Allow multiple incoming edges to track nodes and end nodes
-      const isTargetTrack = targetNode?.type === 'track';
-      const isTargetEnd = targetNode?.type === 'end';
-      if (!isTargetTrack && !isTargetEnd) {
+      const allowsMultipleInputs =
+        targetNode.type === 'track' ||
+        targetNode.type === 'end' ||
+        targetNode.type === 'randomizer' ||
+        targetNode.type === 'transition';
+
+      if (!allowsMultipleInputs) {
         const existingIncoming = edges.filter(
-          (e) => e.target === connection.target
+          (e) => e.target === connection.target && !e.id.startsWith('dashed-')
         );
         if (existingIncoming.length > 0) {
-          console.warn('Cannot create multiple incoming edges to this node type');
+          window.alert(
+            `This ${targetNode.type} node already has an incoming connection. Delete it first, or use a Track/Randomizer as the target.`
+          );
           return;
         }
       }
 
-      // Valid connection - add through store which handles persistence
-      console.log('✓ Connection ACCEPTED - calling storeOnConnect');
       storeOnConnect(connection);
     },
     [storeOnConnect, nodes, edges]
@@ -726,35 +728,48 @@ function ReactFlowContent() {
   );
 
   return (
-    <div ref={reactFlowRef} className="w-full h-full relative rounded-lg overflow-hidden border border-slate-700" style={{ minHeight: '100%' }}>
+    <div ref={reactFlowRef} className="synapse-canvas-wrap" style={{ minHeight: '100%' }}>
       <ReactFlow
         nodes={nodes}
         edges={renderedEdges}
         onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={handleConnect}
+        onNodeDragStop={(_event, _node, draggedNodes) => {
+          const positions = new Map(
+            draggedNodes.map((n) => [n.id, n.position] as const)
+          );
+          setNodes((current) => {
+            const next = current.map((n) =>
+              positions.has(n.id) ? { ...n, position: positions.get(n.id)! } : n
+            );
+            setStoreNodes(next);
+            lastSyncedNodesRef.current = next;
+            return next;
+          });
+        }}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodeClick={onNodeClickHandler}
         onEdgeClick={onEdgeClick}
         onDragOver={onDragOver}
         onDrop={onDrop}
+        nodesDraggable={true}
+        nodesConnectable={true}
+        elementsSelectable={true}
+        selectNodesOnDrag={false}
         fitView
         deleteKeyCode={['Backspace', 'Delete']}
+        colorMode="dark"
       >
-        <Background color="#1e293b" gap={16} size={1} />
-        <Controls />
+        <Background color="rgba(255,255,255,0.045)" gap={24} size={1} />
+        <Controls showInteractive={false} />
       </ReactFlow>
 
-      {/* Remove all nodes button */}
-      <button
-        onClick={handleRemoveAll}
-        className="absolute top-3 right-3 z-50 px-3 py-1.5 text-xs font-medium text-red-400 bg-slate-800 border border-slate-600 rounded hover:bg-red-900/40 hover:border-red-500 hover:text-red-300 transition-colors"
-      >
+      <button type="button" onClick={handleRemoveAll} className="synapse-canvas-action">
         Remove All
       </button>
 
-      {/* Minimap positioned outside ReactFlow but absolutely in parent container */}
       <MemoizedCustomMinimap />
     </div>
   );
@@ -762,7 +777,7 @@ function ReactFlowContent() {
 
 export default function ReactFlowCanvas() {
   return (
-    <div className="flex-1 h-full">
+    <div className="flex-1 h-full min-w-0 bg-[var(--bg-deep)]">
       <ReactFlowProvider>
         <ReactFlowContent />
       </ReactFlowProvider>

@@ -11,16 +11,7 @@ export default function TransitionNode({ data = {}, id }: any) {
   const toggleCollapse = () => {
     const newCollapsed = !isCollapsed;
     setIsCollapsed(newCollapsed);
-    
-    // Adjust position so node collapses upwards
-    const currentHeight = isCollapsed ? 80 : 250;
-    const newHeight = newCollapsed ? 250 : 80;
-    const heightDiff = newHeight - currentHeight;
-    
-    updateNodeData(id, { 
-      isCollapsed: newCollapsed,
-      position: { ...data?.position, y: (data?.position?.y || 0) - heightDiff }
-    });
+    updateNodeData(id, { isCollapsed: newCollapsed });
   };
 
   const transitionType = data?.type || 'silence';
@@ -29,18 +20,20 @@ export default function TransitionNode({ data = {}, id }: any) {
   const videoId = data?.videoId || '';
 
   return (
-    <div className={`bg-slate-800 border rounded-lg shadow-lg overflow-hidden w-64 ${isPlaying ? 'border-orange-500' : 'border-amber-600'}`}>
+    <div className={`synapse-node w-64 overflow-hidden ${isPlaying ? 'border-[rgba(232,164,92,0.85)]' : 'border-[rgba(232,164,92,0.4)]'}`}>
       {/* Header */}
       <div
-        className={`flex items-center justify-between gap-2 p-3 cursor-pointer ${isPlaying ? 'bg-slate-600' : 'bg-slate-700 hover:bg-slate-600'}`}
+        className="synapse-node-header"
         onClick={toggleCollapse}
       >
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="relative">
-            <ArrowRight className="w-4 h-4 text-amber-500 flex-shrink-0" />
-            {isPlaying && <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full" />}
+            <ArrowRight className="w-4 h-4 text-[var(--accent-warm)] flex-shrink-0" />
+            {isPlaying && <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--accent-warm)]" />}
           </div>
-          <strong className="text-sm text-slate-100 truncate">Transition</strong>
+          <strong className="text-sm text-[var(--text)] truncate" style={{ fontFamily: 'var(--font-display)' }}>
+            Transition
+          </strong>
         </div>
         {isCollapsed ? (
           <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />

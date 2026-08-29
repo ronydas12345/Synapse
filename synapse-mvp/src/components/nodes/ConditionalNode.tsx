@@ -40,19 +40,8 @@ function ConditionalNode({ data = {}, id }: any) {
 
   const toggleCollapse = () => {
     const newCollapsed = !isCollapsed;
-    console.log('Toggling collapse on node', id, 'from', isCollapsed, 'to', newCollapsed);
     setIsCollapsed(newCollapsed);
-    
-    // Adjust position so node collapses upwards
-    const currentHeight = isCollapsed ? 80 : 300; // rough heights
-    const newHeight = newCollapsed ? 300 : 80;
-    const heightDiff = newHeight - currentHeight;
-    
-    // Update node data with new position
-    updateNodeData(id, { 
-      isCollapsed: newCollapsed,
-      position: { ...data?.position, y: (data?.position?.y || 0) - heightDiff }
-    });
+    updateNodeData(id, { isCollapsed: newCollapsed });
   };
 
   const handleWeightChange = (index: number, newWeight: number) => {
@@ -63,21 +52,21 @@ function ConditionalNode({ data = {}, id }: any) {
   };
 
   const getBorderColor = () => {
-    if (isPlaying) return 'border-orange-500';
-    return mode === 'timeRange' ? 'border-green-500' : 'border-indigo-500';
+    if (isPlaying) return 'border-[rgba(232,164,92,0.85)]';
+    return mode === 'timeRange' ? 'border-[rgba(125,206,160,0.55)]' : 'border-[rgba(62,207,191,0.45)]';
   };
 
   const getIconColor = () => {
-    return mode === 'timeRange' ? 'text-green-400' : 'text-indigo-400';
+    return mode === 'timeRange' ? 'text-[var(--ok)]' : 'text-[var(--accent)]';
   };
 
   return (
     <>
       <style>{spinnerHideStyles}</style>
-      <div className={`bg-slate-800 border rounded-lg shadow-lg overflow-hidden w-56 ${getBorderColor()}`}>
+      <div className={`synapse-node w-56 overflow-hidden ${getBorderColor()}`}>
         {/* Header */}
         <div
-          className={`flex items-center justify-between gap-2 p-3 cursor-pointer ${isPlaying ? 'bg-slate-600' : 'bg-slate-700 hover:bg-slate-600'}`}
+          className="synapse-node-header"
           onClick={toggleCollapse}
         >
           <div className="flex items-center gap-2 flex-1">
@@ -87,9 +76,9 @@ function ConditionalNode({ data = {}, id }: any) {
               ) : (
                 <GitBranch className={`w-4 h-4 ${getIconColor()}`} />
               )}
-              {isPlaying && <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full" />}
+              {isPlaying && <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--accent-warm)]" />}
             </div>
-            <strong className="text-sm text-slate-100">
+            <strong className="text-sm text-[var(--text)]" style={{ fontFamily: 'var(--font-display)' }}>
               {mode === 'timeRange' ? 'Conditional (Time)' : 'Conditional'}
             </strong>
           </div>
@@ -98,14 +87,14 @@ function ConditionalNode({ data = {}, id }: any) {
               e.stopPropagation();
               updateNodeData(id, { mode: mode === 'random' ? 'timeRange' : 'random' });
             }}
-            className={`text-xs px-2 py-1 rounded border transition ${
+            className={`text-[0.65rem] px-2 py-1 rounded-md border font-mono tracking-wide transition ${
               mode === 'timeRange'
-                ? 'bg-green-600 border-green-400 text-green-100'
-                : 'bg-indigo-600 border-indigo-400 text-indigo-100'
+                ? 'bg-[rgba(125,206,160,0.15)] border-[rgba(125,206,160,0.4)] text-[var(--ok)]'
+                : 'bg-[var(--accent-dim)] border-[rgba(62,207,191,0.4)] text-[var(--accent)]'
             }`}
             title={`Switch to ${mode === 'random' ? 'Time Range' : 'Random'} mode`}
           >
-            {mode === 'timeRange' ? '🕐' : '🎲'}
+            {mode === 'timeRange' ? 'TIME' : 'RND'}
           </button>
           {isCollapsed ? (
             <ChevronDown className="w-4 h-4 text-slate-400" />

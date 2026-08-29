@@ -41,17 +41,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
   const mode = data?.mode || 'sequence';
   const toggleCollapse = () => {
     const newCollapsed = !isCollapsed;
-    
-    // Adjust position so node collapses upwards
-    const currentHeight = isCollapsed ? 100 : 400; // rough heights
-    const newHeight = newCollapsed ? 400 : 100;
-    const heightDiff = newHeight - currentHeight;
-    
-    // Update node data with new position and collapse state
-    updateNodeData(id, { 
-      isCollapsed: newCollapsed,
-      position: { ...data?.position, y: (data?.position?.y || 0) - heightDiff }
-    });
+    updateNodeData(id, { isCollapsed: newCollapsed });
   };
 
   const removeTrack = (index: number) => {
@@ -146,46 +136,48 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
     <>
       <style>{spinnerHideStyles}</style>
       <div
-        className={`bg-slate-800 border-2 rounded-lg shadow-lg overflow-hidden w-56 transition ${
+        className={`synapse-node w-56 overflow-hidden transition ${
           isPlaying 
-            ? 'border-orange-500' 
+            ? 'border-[rgba(232,164,92,0.85)]' 
             : mode === 'randomizer'
-            ? 'border-purple-500'
-            : 'border-blue-500'
-        } ${isDragOver ? 'bg-slate-700' : 'bg-slate-800'}`}
+            ? 'border-[rgba(62,207,191,0.5)]'
+            : 'border-[rgba(120,160,255,0.45)]'
+        } ${isDragOver ? 'bg-[var(--bg-hover)]' : ''}`}
         onDragOver={handleNodeDragOver}
         onDragLeave={handleNodeDragLeave}
         onDrop={handleNodeDrop}
       >
       {/* Header */}
       <div
-        className={`flex items-center justify-between gap-2 p-3 cursor-pointer ${isPlaying ? 'bg-slate-600' : 'bg-slate-700 hover:bg-slate-600'}`}
+        className="synapse-node-header"
         onClick={toggleCollapse}
       >
         <div className="flex items-center gap-2 flex-1">
           <div className="relative">
             {mode === 'randomizer' ? (
-              <Dice5 className="w-4 h-4 text-purple-400" />
+              <Dice5 className="w-4 h-4 text-[var(--accent)]" />
             ) : (
-              <ListOrdered className="w-4 h-4 text-blue-400" />
+              <ListOrdered className="w-4 h-4 text-[rgb(120,160,255)]" />
             )}
-            {isPlaying && <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full" />}
+            {isPlaying && <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--accent-warm)]" />}
           </div>
-          <strong className="text-sm text-slate-100">{mode === 'randomizer' ? 'Randomizer' : 'Sequence'}</strong>
+          <strong className="text-sm text-[var(--text)]" style={{ fontFamily: 'var(--font-display)' }}>
+            {mode === 'randomizer' ? 'Randomizer' : 'Sequence'}
+          </strong>
         </div>
         <button
           onClick={(e) => {
             e.stopPropagation();
             updateNodeData(id, { mode: mode === 'sequence' ? 'randomizer' : 'sequence' });
           }}
-          className={`text-xs px-2 py-1 rounded border transition ${
+          className={`text-[0.65rem] px-2 py-1 rounded-md border font-mono tracking-wide transition ${
             mode === 'randomizer'
-              ? 'bg-purple-600 border-purple-400 text-purple-100'
-              : 'bg-blue-600 border-blue-400 text-blue-100'
+              ? 'bg-[var(--accent-dim)] border-[rgba(62,207,191,0.4)] text-[var(--accent)]'
+              : 'bg-[rgba(120,160,255,0.12)] border-[rgba(120,160,255,0.35)] text-[rgb(160,190,255)]'
           }`}
           title={`Switch to ${mode === 'randomizer' ? 'Sequence' : 'Randomizer'} mode`}
         >
-          {mode === 'randomizer' ? '🎲' : '→'}
+          {mode === 'randomizer' ? 'RND' : 'SEQ'}
         </button>
         {isCollapsed ? (
           <ChevronDown className="w-4 h-4 text-slate-400" />

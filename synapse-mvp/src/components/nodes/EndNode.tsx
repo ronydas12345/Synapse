@@ -3,10 +3,18 @@ import { Square } from 'lucide-react';
 
 export default function EndNode() {
   return (
-    <div className="bg-slate-800 border-2 border-red-500 p-3 rounded-lg w-32 shadow-lg flex flex-col items-center gap-2">
-      <Square className="w-5 h-5 text-red-400" />
-      <strong className="text-sm">End</strong>
-      <Handle type="target" position={Position.Left} />
+    <div className="synapse-node w-36 flex flex-col items-center gap-2 p-3 border-[rgba(240,113,120,0.55)]">
+      <div className="w-9 h-9 rounded-lg grid place-items-center bg-[rgba(240,113,120,0.12)]">
+        <Square className="w-4 h-4 text-[var(--danger)]" />
+      </div>
+      <strong className="text-sm tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+        End
+      </strong>
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="synapse-handle !bg-[var(--danger)]"
+      />
     </div>
   );
 }
