@@ -10,23 +10,25 @@ export default function CommentNode({ data = {}, id }: any) {
   const isLinking = commentLinkingId === id;
 
   return (
-    <div className="bg-slate-800 border border-slate-500 rounded-lg shadow-lg overflow-hidden w-64">
+    <div className="synapse-node w-64 overflow-hidden border-[rgba(255,255,255,0.12)]">
       {/* Handles for edges */}
-      <Handle type="target" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
+      <Handle type="target" position={Position.Left} className="synapse-handle !bg-[var(--text-faint)]" />
+      <Handle type="source" position={Position.Right} className="synapse-handle !bg-[var(--text-faint)]" />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 bg-slate-700 p-3">
+      <div className="synapse-node-header">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="w-3 h-3 rounded-full bg-slate-500 flex-shrink-0" />
-          <strong className="text-sm text-slate-100 truncate">Comment</strong>
+          <div className="w-2.5 h-2.5 rounded-full bg-[var(--text-faint)] flex-shrink-0" />
+          <strong className="text-sm text-[var(--text)] truncate" style={{ fontFamily: 'var(--font-display)' }}>
+            Comment
+          </strong>
         </div>
         <button
           onClick={() => setCommentLinkingId(isLinking ? null : id)}
-          className={`p-1 rounded transition-colors ${
+          className={`p-1 rounded-md transition-colors ${
             isLinking
-              ? 'bg-blue-600 text-white'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-600'
+              ? 'bg-[var(--accent-dim)] text-[var(--accent)]'
+              : 'text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)]'
           }`}
           title={isLinking ? 'Cancel linking' : 'Link to a node'}
         >

@@ -1,338 +1,373 @@
 import { usePathStore } from './store';
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
+import type { Node } from '@xyflow/react';
+import { buildPlaybackQueueKeys, parseQueueKey } from './engine';
+import {
+  YouTubeIframeAdapter,
+  extractYouTubeId,
+  type PlayableMedia,
+} from './playback';
+
+function nodeToPlayable(node: Node | undefined, nodeId: string): PlayableMedia | null {
+  if (!node) return null;
+  const videoId = extractYouTubeId(String(node.data?.videoId || ''));
+  if (!videoId) return null;
+
+  const startTime = Number(node.data?.startTime) || 0;
+  const endTime = Number(node.data?.endTime) || 0;
+  const volume = node.data?.volume != null ? Number(node.data.volume) : 100;
+  const speedPct = node.data?.speed != null ? Number(node.data.speed) : 100;
+
+  return {
+    videoId,
+    startTime,
+    endTime: endTime > startTime ? endTime : undefined,
+    volume,
+    playbackRate: speedPct / 100,
+    nodeId,
+  };
+}
 
 export default function Player() {
-  const { nodes, edges, isPlaying, playbackQueue, currentTrackIndex, setCurrentTrackIndex, setIsPlaying, setCurrentPlayingNodeId, setPlaybackQueue } = usePathStore();
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const oscillatorRef = useRef<OscillatorNode | null>(null);
+  const {
+    nodes,
+    edges,
+    isPlaying,
+    playbackQueue,
+    currentTrackIndex,
+    skipRequestId,
+    setCurrentTrackIndex,
+    setIsPlaying,
+    setCurrentPlayingNodeId,
+    setPlaybackQueue,
+  } = usePathStore();
+
+  const [statusMessage, setStatusMessage] = useState<string>('');
+  const [playerReady, setPlayerReady] = useState(false);
+
+  const ytContainerRef = useRef<HTMLDivElement>(null);
+  const adapterRef = useRef<YouTubeIframeAdapter | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const silenceTimerRef = useRef<number | null>(null);
+  const advancingRef = useRef(false);
+  /** Mid-path session: pause keeps queue; finish/clear ends session. */
+  const sessionActiveRef = useRef(false);
+  /** Last queue key we started loading (not merely resumed). */
+  const activeItemKeyRef = useRef<string | null>(null);
+  const advanceRef = useRef<() => void>(() => {});
 
-  // Helper function to randomly select a track from a randomizer based on weights
-  const selectFromRandomizer = (randomizerId: string): string | null => {
-    const randomizerNode = nodes.find((n) => n.id === randomizerId);
-    if (!randomizerNode || !randomizerNode.data?.tracks) {
-      return null;
+  const clearSilenceTimer = () => {
+    if (silenceTimerRef.current != null) {
+      window.clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
     }
-
-    const tracks = (randomizerNode.data.tracks as string[]) || [];
-    if (tracks.length === 0) return null;
-
-    const weights = (randomizerNode.data.weights as number[]) || Array(tracks.length).fill(100 / tracks.length);
-
-    // Create weighted random selection
-    const totalWeight = weights.reduce((a: number, b: number) => a + b, 0);
-    let random = Math.random() * totalWeight;
-
-    for (let i = 0; i < tracks.length; i++) {
-      random -= (weights[i] as number);
-      if (random <= 0) {
-        return tracks[i];
-      }
-    }
-
-    return tracks[tracks.length - 1];
   };
 
-  // Build playback queue by traversing the graph
-  const buildPlaybackQueue = (): string[] => {
-    const queue: string[] = [];
-    const visited = new Set<string>();
-
-    const traverse = (nodeId: string) => {
-      const node = nodes.find((n) => n.id === nodeId);
-      if (!node) return;
-
-      // Only mark nodes as visited if they're not splitters (splitters can be entered from different paths)
-      const isSplitter = node.type === 'splitter';
-      if (!isSplitter && visited.has(nodeId)) return;
-      if (!isSplitter) visited.add(nodeId);
-
-      if (node.type === 'track') {
-        const playCount = Math.max(1, (node.data?.playCount as number) || 1);
-        // Add track to queue playCount times
-        for (let i = 0; i < playCount; i++) {
-          queue.push(`track:${nodeId}`);
-        }
-      } else if (node.type === 'randomizer') {
-        const mode = (node.data?.mode as string) || 'sequence';
-        const tracks = (node.data?.tracks as string[]) || [];
-        let playCount = (node.data?.playCount as number) || 1;
-        const isForever = node.data?.isForever as boolean;
-        
-        // If forever, limit to reasonable number (otherwise we'd loop forever)
-        if (isForever) {
-          playCount = 1;
-        }
-        
-        // Cap playCount to prevent massive queues
-        playCount = Math.min(playCount, 100);
-        
-        if (mode === 'sequence') {
-          // Play tracks in order, repeated playCount times
-          for (let i = 0; i < playCount; i++) {
-            tracks.forEach((trackId) => {
-              queue.push(`track:${trackId}`);
-            });
-          }
-        } else {
-          // Randomizer mode: randomly select tracks based on weights
-          for (let i = 0; i < playCount; i++) {
-            const selectedTrack = selectFromRandomizer(nodeId);
-            if (selectedTrack) {
-              queue.push(`track:${selectedTrack}`);
-            }
-          }
-        }
-      } else if (node.type === 'splitter' || node.type === 'conditional') {
-        // For conditionals/splitters, select one path based on mode
-        const mode = (node.data?.mode as string) || 'random';
-        const weights = (node.data?.weights as number[]) || [1, 1];
-        const pathTimeRanges = (node.data?.pathTimeRanges as Array<Array<{start: number, end: number}>>) || 
-          Array(weights.length).fill(null).map(() => [{ start: 0, end: 23 }]);
-        const totalWeight = weights.reduce((a: number, b: number) => a + b, 0) || 1;
-        
-        let selectedPathIndex = -1;
-        
-        if (mode === 'timeRange') {
-          // Check current hour against each path's time ranges
-          const currentHour = new Date().getHours();
-          
-          // Find first matching path based on time ranges
-          for (let i = 0; i < pathTimeRanges.length; i++) {
-            const ranges = pathTimeRanges[i] || [];
-            const isInRange = ranges.some((range) => {
-              if (range.start <= range.end) {
-                return currentHour >= range.start && currentHour <= range.end;
-              } else {
-                // Handle wrap-around (e.g., 22:00 to 06:00)
-                return currentHour >= range.start || currentHour <= range.end;
-              }
-            });
-            
-            if (isInRange) {
-              selectedPathIndex = i;
-              break;
-            }
-          }
-          
-          // If no path matches, default to first path
-          if (selectedPathIndex === -1) {
-            selectedPathIndex = 0;
-          }
-        } else {
-          // Weighted random selection
-          let random = Math.random() * totalWeight;
-          selectedPathIndex = 0;
-          
-          for (let i = 0; i < weights.length; i++) {
-            random -= (weights[i] as number);
-            if (random <= 0) {
-              selectedPathIndex = i;
-              break;
-            }
-          }
-        }
-        
-        // Find the outgoing edge for this specific path
-        const pathId = String.fromCharCode(65 + selectedPathIndex); // A, B, C, etc.
-        const outgoingEdge = edges.find((e) => e.source === nodeId && e.sourceHandle === pathId);
-        
-        if (outgoingEdge) {
-          traverse(outgoingEdge.target);
-        }
-      } else if (node.type === 'transition') {
-        queue.push(`transition:${nodeId}`);
-      }
-
-      // Find outgoing edges and continue traversal (skip for splitters/conditionals since they handle their own path)
-      if (node.type !== 'splitter' && node.type !== 'conditional') {
-        edges.forEach((edge) => {
-          if (edge.source === nodeId) {
-            traverse(edge.target);
-          }
-        });
-      }
-    };
-
-    // Start from the start node
-    const startNode = nodes.find((n) => n.type === 'start');
-    if (startNode) {
-      traverse(startNode.id);
+  const stopLocalAudio = () => {
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+      audioElementRef.current.onended = null;
+      audioElementRef.current.currentTime = 0;
     }
-
-    return queue;
   };
 
-  const playNext = useCallback(() => {
-    if (playbackQueue.length === 0) {
-      setIsPlaying(false);
-      setCurrentPlayingNodeId(null);
-      setPlaybackQueue([]);
+  const advance = useCallback(() => {
+    if (advancingRef.current) return;
+    advancingRef.current = true;
+    activeItemKeyRef.current = null;
+
+    const state = usePathStore.getState();
+    const { playbackQueue: queue, currentTrackIndex: index } = state;
+
+    if (queue.length === 0) {
+      state.setIsPlaying(false);
+      state.setCurrentPlayingNodeId(null);
+      advancingRef.current = false;
       return;
     }
 
-    if (currentTrackIndex < playbackQueue.length - 1) {
-      setCurrentTrackIndex(currentTrackIndex + 1);
+    if (index < queue.length - 1) {
+      state.setCurrentTrackIndex(index + 1);
     } else {
-      // Reached end - stop playback
-      setIsPlaying(false);
-      setCurrentTrackIndex(0);
-      setCurrentPlayingNodeId(null);
-      setPlaybackQueue([]);
+      sessionActiveRef.current = false;
+      state.setIsPlaying(false);
+      state.setCurrentTrackIndex(0);
+      state.setCurrentPlayingNodeId(null);
+      state.setPlaybackQueue([]);
+      adapterRef.current?.stop();
+      setStatusMessage('Path finished');
     }
-  }, [currentTrackIndex, playbackQueue.length, setCurrentTrackIndex, setIsPlaying, setCurrentPlayingNodeId, setPlaybackQueue]);
 
-  // Initialize or rebuild playback queue when graph changes or play starts
+    window.setTimeout(() => {
+      advancingRef.current = false;
+    }, 50);
+  }, []);
+
+  advanceRef.current = advance;
+
+  // Skip button: stop current media first (kills stale YouTube ENDED), then advance once
   useEffect(() => {
-    if (isPlaying && playbackQueue.length === 0) {
-      const queue = buildPlaybackQueue();
-      setPlaybackQueue(queue);
-      if (queue.length === 0) {
-        setIsPlaying(false);
-      }
+    if (skipRequestId === 0) return;
+
+    clearSilenceTimer();
+    stopLocalAudio();
+    adapterRef.current?.stop();
+    activeItemKeyRef.current = null;
+    advancingRef.current = false;
+
+    const state = usePathStore.getState();
+    if (state.playbackQueue.length === 0) return;
+
+    if (!state.isPlaying) {
+      state.setIsPlaying(true);
     }
-  }, [isPlaying, playbackQueue.length, nodes, edges, setPlaybackQueue, setIsPlaying]);
+    advanceRef.current();
+  }, [skipRequestId]);
 
-  // Clear queue when stopping to force rebuild on next play
+  // Mount YouTube once (do not recreate when callbacks change)
   useEffect(() => {
-    if (!isPlaying && playbackQueue.length > 0) {
-      setPlaybackQueue([]);
-      setCurrentTrackIndex(0);
-    }
-  }, [isPlaying, setPlaybackQueue, setCurrentTrackIndex, playbackQueue.length]);
+    const adapter = new YouTubeIframeAdapter();
+    adapterRef.current = adapter;
+    adapter.setOnEnded(() => advanceRef.current());
+    adapter.setOnError((message) => setStatusMessage(message));
 
-  useEffect(() => {
-    if (isPlaying && playbackQueue.length > 0 && playbackQueue[currentTrackIndex]) {
-      // Create audio context for demo playback
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      }
-
-      const ctx = audioContextRef.current;
-      // Resume context if needed
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
-
-      // Stop any existing oscillator
-      if (oscillatorRef.current) {
-        try {
-          oscillatorRef.current.stop();
-        } catch (e) {}
-      }
-
-      const queueItem = playbackQueue[currentTrackIndex];
-      const [itemType, itemId] = queueItem.split(':');
-      
-      // Update the currently playing node
-      setCurrentPlayingNodeId(itemId);
-      
-      let trackDuration = 2000; // default 2 seconds
-
-      if (itemType === 'transition') {
-        // Handle transition node
-        const transitionNode = nodes.find((n) => n.id === itemId);
-        if (transitionNode?.data?.type === 'silence') {
-          trackDuration = ((transitionNode.data.duration as number) || 1) * 1000;
-        } else if (transitionNode?.data?.type === 'youtube') {
-          // YouTube transition - use default duration or could be estimated from actual video
-          trackDuration = 2000; // default 2 seconds for YouTube transition
-          // Create demo audio signal for YouTube transition
-          const now = ctx.currentTime;
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-
-          oscillatorRef.current = osc;
-
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-
-          // Different frequency for transition audio
-          osc.frequency.setValueAtTime(540 + currentTrackIndex * 40, now);
-          gain.gain.setValueAtTime(0.08, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 2);
-
-          osc.start(now);
-          osc.stop(now + Math.min(2, trackDuration / 1000));
-        } else if (transitionNode?.data?.type === 'audio') {
-          // Handle custom audio file
-          if (transitionNode?.data?.audioFile) {
-            // Create audio element for playing the custom audio file
-            if (!audioElementRef.current) {
-              audioElementRef.current = new Audio();
-            }
-            audioElementRef.current.src = transitionNode.data.audioFile as string;
-            audioElementRef.current.play().catch(err => console.error('Failed to play audio:', err));
-            
-            // Use audio element's duration if available
-            audioElementRef.current.onloadedmetadata = () => {
-              trackDuration = (audioElementRef.current?.duration || 2) * 1000;
-            };
-            
-            // Fallback if metadata isn't loaded
-            trackDuration = 2000;
-          } else {
-            trackDuration = 2000;
+    let cancelled = false;
+    const el = ytContainerRef.current;
+    if (el) {
+      adapter
+        .ready(el)
+        .then(() => {
+          if (!cancelled) setPlayerReady(true);
+        })
+        .catch((err) => {
+          if (!cancelled) {
+            setStatusMessage(
+              err instanceof Error ? err.message : 'YouTube player failed to load'
+            );
           }
-        }
-        // Silence transition - no audio needed, just wait
-      } else if (itemType === 'track') {
-        // Handle track node - demo audio
-        const trackNode = nodes.find((n) => n.id === itemId);
-        const duration = (trackNode?.data?.duration as number) || 0;
-        if (duration > 0) {
-          trackDuration = duration * 1000;
-        } else {
-          trackDuration = 2000;
-        }
+        });
+    }
 
-        // For demo purposes, create a simple audio signal
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+    return () => {
+      cancelled = true;
+      setPlayerReady(false);
+      clearSilenceTimer();
+      stopLocalAudio();
+      adapter.destroy();
+      adapterRef.current = null;
+    };
+  }, []);
 
-        oscillatorRef.current = osc;
+  // Reset session flags when queue is cleared externally (e.g. Skip on last item)
+  useEffect(() => {
+    if (playbackQueue.length === 0) {
+      sessionActiveRef.current = false;
+      activeItemKeyRef.current = null;
+    }
+  }, [playbackQueue.length]);
 
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+  // Build queue when Play starts with an empty queue
+  useEffect(() => {
+    if (!isPlaying) return;
+    if (playbackQueue.length > 0) return;
 
-        // Vary frequency based on track index for distinction
-        osc.frequency.setValueAtTime(440 + currentTrackIndex * 50, now);
-        gain.gain.setValueAtTime(0.1, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 2);
+    const keys = buildPlaybackQueueKeys({ nodes, edges });
+    if (keys.length === 0) {
+      setIsPlaying(false);
+      setStatusMessage('Nothing to play — connect tracks from Start');
+      return;
+    }
+    sessionActiveRef.current = true;
+    activeItemKeyRef.current = null;
+    setCurrentTrackIndex(0);
+    setPlaybackQueue(keys);
+    setStatusMessage('');
+  }, [
+    isPlaying,
+    playbackQueue.length,
+    nodes,
+    edges,
+    setPlaybackQueue,
+    setIsPlaying,
+    setCurrentTrackIndex,
+  ]);
 
-        osc.start(now);
-        osc.stop(now + Math.min(2, trackDuration / 1000));
-      }
+  // Pause without wiping queue; clear only when session ended
+  useEffect(() => {
+    if (isPlaying) return;
 
-      // Schedule next track
-      const timeout = setTimeout(() => {
-        playNext();
-      }, trackDuration);
+    clearSilenceTimer();
+    stopLocalAudio();
+    adapterRef.current?.pause();
 
-      return () => {
-        clearTimeout(timeout);
-        // Stop any audio element
-        if (audioElementRef.current) {
-          audioElementRef.current.pause();
-          audioElementRef.current.currentTime = 0;
-        }
-      };
-    } else if (!isPlaying) {
-      // When paused, stop the oscillator and audio element
-      if (oscillatorRef.current) {
-        try {
-          oscillatorRef.current.stop();
-        } catch (e) {}
-      }
-      if (audioElementRef.current) {
-        audioElementRef.current.pause();
-        audioElementRef.current.currentTime = 0;
+    if (!sessionActiveRef.current) {
+      activeItemKeyRef.current = null;
+      if (playbackQueue.length > 0) {
+        setPlaybackQueue([]);
+        setCurrentTrackIndex(0);
+        setCurrentPlayingNodeId(null);
       }
     }
-  }, [currentTrackIndex, isPlaying, playbackQueue, playNext, nodes, setCurrentPlayingNodeId]);
+  }, [
+    isPlaying,
+    playbackQueue.length,
+    setPlaybackQueue,
+    setCurrentTrackIndex,
+    setCurrentPlayingNodeId,
+  ]);
 
-  // For actual audio playback, return an empty fragment
-  // Real implementation would need valid audio sources
-  return null;
+  // Drive / resume current queue item
+  useEffect(() => {
+    if (!isPlaying || playbackQueue.length === 0) return;
+
+    const key = playbackQueue[currentTrackIndex];
+    if (!key) return;
+
+    // Same item after Pause → Resume
+    if (activeItemKeyRef.current === key) {
+      const parsedSame = parseQueueKey(key);
+      if (parsedSame?.kind === 'track') {
+        adapterRef.current?.resume();
+        setStatusMessage((prev) => prev || 'Resumed');
+      }
+      return;
+    }
+
+    const parsed = parseQueueKey(key);
+    if (!parsed) {
+      advance();
+      return;
+    }
+
+    const { kind, nodeId } = parsed;
+    setCurrentPlayingNodeId(nodeId);
+    clearSilenceTimer();
+    stopLocalAudio();
+    advancingRef.current = false;
+    activeItemKeyRef.current = key;
+
+    const node = nodes.find((n) => n.id === nodeId);
+
+    if (kind === 'transition') {
+      adapterRef.current?.stop();
+      const tType = (node?.data?.type as string) || 'silence';
+
+      if (tType === 'silence') {
+        const ms = Math.max(0.1, Number(node?.data?.duration) || 1) * 1000;
+        setStatusMessage(`Silence (${(ms / 1000).toFixed(1)}s)`);
+        silenceTimerRef.current = window.setTimeout(() => advance(), ms);
+        return () => clearSilenceTimer();
+      }
+
+      if (tType === 'audio' && node?.data?.audioFile) {
+        setStatusMessage('Playing transition audio');
+        if (!audioElementRef.current) {
+          audioElementRef.current = new Audio();
+        }
+        const audio = audioElementRef.current;
+        audio.src = String(node.data.audioFile);
+        audio.onended = () => advance();
+        audio.play().catch(() => {
+          setStatusMessage('Transition audio failed — skipping');
+          advance();
+        });
+        return () => stopLocalAudio();
+      }
+
+      const media = nodeToPlayable(node, nodeId);
+      if (media && adapterRef.current && playerReady) {
+        setStatusMessage('Playing transition');
+        adapterRef.current.play(media).catch(() => {
+          setStatusMessage('Transition video failed — skipping');
+          advance();
+        });
+        return;
+      }
+
+      setStatusMessage('Empty transition — skipping');
+      silenceTimerRef.current = window.setTimeout(() => advance(), 400);
+      return () => clearSilenceTimer();
+    }
+
+    const media = nodeToPlayable(node, nodeId);
+    if (!media) {
+      setStatusMessage('Track missing video ID — skipping');
+      silenceTimerRef.current = window.setTimeout(() => advance(), 400);
+      return () => clearSilenceTimer();
+    }
+
+    if (!adapterRef.current || !playerReady) {
+      // Allow retry when player becomes ready
+      activeItemKeyRef.current = null;
+      setStatusMessage('Waiting for YouTube player…');
+      return;
+    }
+
+    const title =
+      (node?.data?.songTitle as string) ||
+      (node?.data?.label as string) ||
+      media.videoId;
+    setStatusMessage(`Playing: ${title}`);
+
+    let cancelled = false;
+    adapterRef.current.play(media).catch(() => {
+      if (!cancelled) {
+        setStatusMessage('Playback failed — skipping');
+        advance();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isPlaying,
+    playbackQueue,
+    currentTrackIndex,
+    nodes,
+    playerReady,
+    advance,
+    setCurrentPlayingNodeId,
+  ]);
+
+  const currentNode = (() => {
+    const key = playbackQueue[currentTrackIndex];
+    const parsed = key ? parseQueueKey(key) : null;
+    if (!parsed) return null;
+    return nodes.find((n) => n.id === parsed.nodeId) ?? null;
+  })();
+
+  const displayTitle =
+    (currentNode?.data?.songTitle as string) ||
+    (currentNode?.data?.label as string) ||
+    (currentNode?.data?.videoId as string) ||
+    '';
+  const displayArtist = (currentNode?.data?.artist as string) || '';
+
+  return (
+    <div className="synapse-deck">
+      <div
+        ref={ytContainerRef}
+        className="synapse-deck-screen"
+        aria-label="YouTube player"
+      />
+      <div className="synapse-deck-meta">
+        <p className="synapse-deck-title">
+          {displayTitle || (isPlaying ? 'Starting…' : 'Ready')}
+        </p>
+        {displayArtist ? (
+          <p className="synapse-deck-sub">{displayArtist}</p>
+        ) : null}
+        <p className="synapse-deck-status">
+          {statusMessage ||
+            (playerReady ? 'YouTube player ready' : 'Loading YouTube player…')}
+        </p>
+        {playbackQueue.length > 0 ? (
+          <div className="synapse-deck-queue">
+            Queue {currentTrackIndex + 1} / {playbackQueue.length}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
 }

@@ -9,7 +9,9 @@ interface PathState {
   isPlaying: boolean;
   currentTrackIndex: number;
   currentPlayingNodeId: string | null;
-  playbackQueue: string[]; // YouTube videoIds
+  playbackQueue: string[]; // Queue keys: `track:{nodeId}` | `transition:{nodeId}`
+  /** Incremented when user hits Skip — Player owns the actual advance. */
+  skipRequestId: number;
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
   onConnect: (connection: Connection) => void;
@@ -20,6 +22,7 @@ interface PathState {
   setIsPlaying: (playing: boolean) => void;
   setCurrentTrackIndex: (index: number) => void;
   setCurrentPlayingNodeId: (id: string | null) => void;
+  requestSkip: () => void;
   deleteEdge: (edgeId: string) => void;
   deleteNode: (nodeId: string) => void;
   initializeFromStorage: () => void;
@@ -74,6 +77,7 @@ export const usePathStore = create<PathState>((set) => ({
   currentTrackIndex: 0,
   currentPlayingNodeId: null,
   playbackQueue: [],
+  skipRequestId: 0,
 
   setNodes: (nodes) => {
     set({ nodes });
@@ -143,8 +147,28 @@ export const usePathStore = create<PathState>((set) => ({
           markerEnd: { type: 'arrowclosed' as const },
         } as Edge,
       ];
-      saveToStorage(state.nodes, newEdges);
-      return { edges: newEdges };
+
+      // Track → Randomizer: auto-add that track into the randomizer's play list
+      let newNodes = state.nodes;
+      if (sourceNode?.type === 'track' && targetNode?.type === 'randomizer') {
+        newNodes = state.nodes.map((n) => {
+          if (n.id !== targetNode.id) return n;
+          const tracks = (n.data?.tracks as string[]) || [];
+          if (tracks.includes(sourceNode.id)) return n;
+          const weights = (n.data?.weights as number[]) || [];
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              tracks: [...tracks, sourceNode.id],
+              weights: [...weights, 10],
+            },
+          };
+        });
+      }
+
+      saveToStorage(newNodes, newEdges);
+      return { nodes: newNodes, edges: newEdges };
     }),
   selectNode: (id) => set({ selectedNodeId: id }),
   setCommentLinkingId: (id) => set({ commentLinkingId: id }),
@@ -168,22 +192,68 @@ export const usePathStore = create<PathState>((set) => ({
   setIsPlaying: (playing) => set({ isPlaying: playing }),
   setCurrentTrackIndex: (index) => set({ currentTrackIndex: index }),
   setCurrentPlayingNodeId: (id) => set({ currentPlayingNodeId: id }),
+  requestSkip: () =>
+    set((state) => ({ skipRequestId: state.skipRequestId + 1 })),
   deleteEdge: (edgeId) => set((state) => {
+    const edge = state.edges.find((e) => e.id === edgeId);
     const newEdges = state.edges.filter((e) => e.id !== edgeId);
-    saveToStorage(state.nodes, newEdges);
-    return { edges: newEdges };
+
+    let newNodes = state.nodes;
+    if (edge) {
+      const sourceNode = state.nodes.find((n) => n.id === edge.source);
+      const targetNode = state.nodes.find((n) => n.id === edge.target);
+      // Removing Track → Randomizer also removes it from the randomizer list
+      if (sourceNode?.type === 'track' && targetNode?.type === 'randomizer') {
+        newNodes = state.nodes.map((n) => {
+          if (n.id !== targetNode.id) return n;
+          const tracks = (n.data?.tracks as string[]) || [];
+          const idx = tracks.indexOf(sourceNode.id);
+          if (idx < 0) return n;
+          const weights = [...((n.data?.weights as number[]) || [])];
+          weights.splice(idx, 1);
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              tracks: tracks.filter((id) => id !== sourceNode.id),
+              weights,
+            },
+          };
+        });
+      }
+    }
+
+    saveToStorage(newNodes, newEdges);
+    return { nodes: newNodes, edges: newEdges };
   }),
   deleteNode: (nodeId) => set((state) => {
     // Don't allow deleting the start node
     if (nodeId === 'start') {
       return state;
     }
+    const deleted = state.nodes.find((n) => n.id === nodeId);
     const newNodes = state.nodes
       .filter((n) => n.id !== nodeId)
       // Also remove comment links to this deleted node
       .map((n) => {
         if (n.type === 'comment' && n.data?.linkedNodeId === nodeId) {
           return { ...n, data: { ...n.data, linkedNodeId: null } };
+        }
+        // If a track was deleted, scrub it from randomizer lists
+        if (deleted?.type === 'track' && n.type === 'randomizer') {
+          const tracks = (n.data?.tracks as string[]) || [];
+          const idx = tracks.indexOf(nodeId);
+          if (idx < 0) return n;
+          const weights = [...((n.data?.weights as number[]) || [])];
+          weights.splice(idx, 1);
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              tracks: tracks.filter((id) => id !== nodeId),
+              weights,
+            },
+          };
         }
         return n;
       });

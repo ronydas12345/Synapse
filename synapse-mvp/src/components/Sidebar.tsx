@@ -1,6 +1,7 @@
-import { Music, GitBranch, Plus, Play, Square, Trash2, Dice5, MessageSquare, ListOrdered, ArrowRight } from 'lucide-react';
+import { Music, GitBranch, Plus, Play, Square, Trash2, Dice5, MessageSquare, ArrowRight } from 'lucide-react';
 import { usePathStore } from '../store';
 import { useCallback } from 'react';
+import { extractYouTubeId } from '../playback';
 
 interface NodeType {
   type: string;
@@ -20,7 +21,18 @@ const NODE_TYPES: NodeType[] = [
     type: 'track',
     label: 'Track Node',
     icon: <Music className="w-4 h-4" />,
-    defaultData: { videoId: '', startTime: 0, duration: 0, label: 'Track', playCount: 1 },
+    defaultData: {
+      videoId: '',
+      songTitle: '',
+      artist: '',
+      album: '',
+      startTime: 0,
+      endTime: 0,
+      duration: 0,
+      volume: 100,
+      label: 'Track',
+      playCount: 1,
+    },
   },
   {
     type: 'conditional',
@@ -66,8 +78,8 @@ interface SliderInputProps {
 
 function SliderInput({ label, value, min = 0, max = 100, step = 1, suffix = '', onChange }: SliderInputProps) {
   return (
-    <div className="space-y-1">
-      <label className="text-slate-300 block text-xs">{label}</label>
+    <div className="space-y-1.5">
+      <label>{label}</label>
       <div className="flex gap-2 items-center">
         <input
           type="range"
@@ -76,7 +88,7 @@ function SliderInput({ label, value, min = 0, max = 100, step = 1, suffix = '', 
           step={step}
           value={value}
           onChange={(e) => onChange(parseFloat(e.target.value))}
-          className="flex-1 h-2 bg-slate-700 rounded appearance-none cursor-pointer accent-purple-500"
+          className="flex-1 cursor-pointer"
         />
         <div className="flex items-center gap-1 min-w-fit">
           <input
@@ -86,9 +98,9 @@ function SliderInput({ label, value, min = 0, max = 100, step = 1, suffix = '', 
             step={step}
             value={value}
             onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-            className="w-16 p-1 bg-slate-700 border border-slate-600 rounded text-white text-xs text-center"
+            className="w-14 p-1 text-center text-xs"
           />
-          <span className="text-xs text-slate-400">{suffix}</span>
+          <span className="text-[0.65rem] text-[var(--text-faint)] font-mono">{suffix}</span>
         </div>
       </div>
     </div>
@@ -135,8 +147,16 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-80 bg-slate-900 border border-slate-700 rounded-lg p-4 flex flex-col gap-3 h-full overflow-y-auto shadow-lg">
-      <h2 className="text-lg font-bold text-white">Nodes</h2>
+    <aside className="synapse-sidebar">
+      <div>
+        <p className="synapse-section-label">Module rack</p>
+        <h2
+          className="text-lg font-semibold tracking-tight m-0"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
+          Nodes
+        </h2>
+      </div>
       
       <div className="space-y-2">
         {NODE_TYPES.map((nodeType, idx) => (
@@ -145,24 +165,26 @@ export default function Sidebar() {
               draggable
               onDragStart={(e) => onDragStart(e, nodeType)}
               onClick={() => handleAddNode(nodeType)}
-              className="flex items-center gap-3 p-3 bg-slate-800 border border-slate-600 rounded-lg cursor-move hover:bg-slate-700 hover:border-slate-500 transition-colors group"
+              className="synapse-rack-item group"
             >
-              <div className="text-amber-500 group-hover:text-amber-400">{nodeType.icon}</div>
+              <div className="synapse-rack-icon">{nodeType.icon}</div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white">{nodeType.label}</p>
-                <p className="text-xs text-slate-400">Drag or click</p>
+                <p className="text-sm font-medium text-[var(--text)] m-0">{nodeType.label}</p>
+                <p className="text-[0.65rem] text-[var(--text-faint)] m-0 mt-0.5 font-mono tracking-wide">
+                  Drag or click
+                </p>
               </div>
-              <Plus className="w-4 h-4 text-slate-400 group-hover:text-slate-200" />
+              <Plus className="w-4 h-4 text-[var(--text-faint)] group-hover:text-[var(--accent)] transition-colors" />
             </div>
           </div>
         ))}
       </div>
 
       {nodes.some((n) => n.type === 'conditional') && (
-        <div className="mt-2">
+        <div className="mt-1">
           <button
             onClick={normalizeSplitters}
-            className="w-full py-2 px-3 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm text-white font-medium transition-colors"
+            className="synapse-btn-secondary"
             title="Flatten stacked conditionals into one with preserved probabilities"
           >
             Normalize Conditionals
@@ -173,33 +195,83 @@ export default function Sidebar() {
       {selectedNode && (
         <>
           <div className="flex-1" />
-          <div className="mt-4 pt-4 border-t border-slate-700">
+          <div className="synapse-inspector">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-white">Node Settings</h3>
+              <div>
+                <p className="synapse-section-label">Inspector</p>
+                <h3
+                  className="font-semibold text-[var(--text)] m-0 tracking-tight"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  Node Settings
+                </h3>
+              </div>
               <button
                 onClick={handleDeleteNode}
-                className="p-1 hover:bg-slate-700 rounded text-red-400 hover:text-red-300"
+                className="synapse-btn-danger-ghost"
                 title="Delete node"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
-            <div className="bg-slate-800 rounded p-3 space-y-3 text-sm">
+            <div className="synapse-inspector-card space-y-3 text-sm">
               <div>
-                <label className="text-slate-300 block mb-1">Node Type</label>
-                <p className="text-slate-400 capitalize">{selectedNode.type}</p>
+                <label>Node Type</label>
+                <p className="text-[var(--text-muted)] capitalize font-mono text-xs m-0">{selectedNode.type}</p>
               </div>
               {selectedNode.type === 'track' && (
                 <>
-                  <div>
-                    <label className="text-slate-300 block mb-1">Video ID</label>
-                    <input
-                      type="text"
-                      placeholder="dQw4w9wgxcq"
-                      className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500"
-                      value={selectedNode.data?.videoId || ''}
-                      onChange={(e) => updateNodeData(selectedNode.id, { videoId: e.target.value })}
-                    />
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-slate-300 block mb-1">Song Title</label>
+                      <input
+                        type="text"
+                        placeholder="Song title"
+                        className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500"
+                        value={selectedNode.data?.songTitle || ''}
+                        onChange={(e) => updateNodeData(selectedNode.id, { songTitle: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-300 block mb-1">Artist</label>
+                      <input
+                        type="text"
+                        placeholder="Artist"
+                        className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500"
+                        value={selectedNode.data?.artist || ''}
+                        onChange={(e) => updateNodeData(selectedNode.id, { artist: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-300 block mb-1">Album</label>
+                      <input
+                        type="text"
+                        placeholder="Album"
+                        className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500"
+                        value={selectedNode.data?.album || ''}
+                        onChange={(e) => updateNodeData(selectedNode.id, { album: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-300 block mb-1">YouTube Video ID or URL</label>
+                      <input
+                        type="text"
+                        placeholder="dQw4w9wgVcQ or youtube.com/watch?v=…"
+                        className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500"
+                        value={selectedNode.data?.videoId || ''}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const id = extractYouTubeId(raw);
+                          updateNodeData(selectedNode.id, {
+                            videoId: id || raw,
+                          });
+                        }}
+                        onBlur={(e) => {
+                          const id = extractYouTubeId(e.target.value);
+                          if (id) updateNodeData(selectedNode.id, { videoId: id });
+                        }}
+                      />
+                    </div>
                   </div>
                   
                   <div className="border-t border-slate-700 pt-3">
@@ -752,7 +824,8 @@ export default function Sidebar() {
             </div>
             <button
               onClick={() => selectNode(null)}
-              className="w-full mt-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm text-slate-300"
+              className="w-full mt-3 synapse-btn synapse-btn-ghost"
+              style={{ borderRadius: '8px', width: '100%' }}
             >
               Deselect
             </button>
@@ -763,21 +836,26 @@ export default function Sidebar() {
       {!selectedNode && (
         <>
           <div className="flex-1" />
-          <div className="mt-4 pt-4 border-t border-slate-700">
-            <p className="text-xs text-slate-400 mb-3">Tip: Click nodes on canvas to edit. Click edges to delete.</p>
-            <div className="bg-slate-800 rounded p-3 text-xs text-slate-300">
-              <p className="font-semibold mb-2 text-slate-200">Building paths:</p>
-              <ul className="space-y-1 list-disc list-inside">
-                <li>Start with Start node</li>
-                <li>Add Track nodes</li>
-                <li>Use Conditionals to branch</li>
-                <li>End with End nodes</li>
-                <li>Click edges to delete</li>
+          <div className="mt-2 pt-3 border-t border-[var(--border)]">
+            <p className="synapse-section-label">Guide</p>
+            <p className="text-xs text-[var(--text-muted)] mb-3 m-0 leading-relaxed">
+              Tip: Click nodes on canvas to edit. Click edges to delete.
+            </p>
+            <div className="synapse-inspector-card text-xs text-[var(--text-muted)]">
+              <p className="font-semibold mb-2 text-[var(--text)] m-0" style={{ fontFamily: 'var(--font-display)' }}>
+                Building paths
+              </p>
+              <ul className="space-y-1.5 list-none p-0 m-0 font-mono text-[0.65rem] tracking-wide">
+                <li className="flex gap-2"><span className="text-[var(--accent)]">01</span> Start with Start node</li>
+                <li className="flex gap-2"><span className="text-[var(--accent)]">02</span> Add Track nodes</li>
+                <li className="flex gap-2"><span className="text-[var(--accent)]">03</span> Use Conditionals to branch</li>
+                <li className="flex gap-2"><span className="text-[var(--accent)]">04</span> Randomizer for pools</li>
+                <li className="flex gap-2"><span className="text-[var(--accent)]">05</span> Click edges to delete</li>
               </ul>
             </div>
           </div>
         </>
       )}
-    </div>
+    </aside>
   );
 }
