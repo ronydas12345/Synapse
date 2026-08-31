@@ -4,6 +4,16 @@ All notable changes to the Synapse app (`synapse-mvp`) are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-08-30
+
+Now-playing credits. Local feature branch `feature/now-playing-metadata`; not pushed unless requested.
+
+### Added
+
+- Track nodes always show title, artist, and album in both collapsed and expanded states.
+- Bottom player bar shows title, artist, and album for the current queue item.
+- Shared `getTrackDisplayMeta` helper so node canvas and player stay consistent.
+
 ## [0.2.0] — 2026-08-29
 
 V2.1 Reliability. Local tag only; not pushed unless requested.

@@ -497,6 +497,36 @@ body {
   margin-top: 0.15rem;
 }
 
+.synapse-deck-album {
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.1rem;
+}
+
+.synapse-deck-sub.is-empty,
+.synapse-deck-album.is-empty,
+.synapse-track-credit-empty {
+  font-style: italic;
+  opacity: 0.72;
+}
+
+.synapse-now-playing-pill {
+  display: inline-block;
+  margin-top: 0.15rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-warm);
+  background: var(--accent-warm-dim);
+  border: 1px solid rgba(232, 164, 92, 0.35);
+}
+
 .synapse-deck-status {
   font-family: var(--font-mono);
   font-size: 0.68rem;

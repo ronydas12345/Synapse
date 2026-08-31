@@ -7,6 +7,7 @@ import {
   extractYouTubeId,
   type PlayableMedia,
 } from './playback';
+import { getTrackDisplayMeta } from './trackMetadata';
 
 function nodeToPlayable(node: Node | undefined, nodeId: string): PlayableMedia | null {
   if (!node) return null;
@@ -314,10 +315,7 @@ export default function Player() {
       return;
     }
 
-    const title =
-      (node?.data?.songTitle as string) ||
-      (node?.data?.label as string) ||
-      media.videoId;
+    const title = getTrackDisplayMeta(node?.data).title || media.videoId;
     setStatusMessage(`Playing: ${title}`);
 
     let cancelled = false;
@@ -341,19 +339,24 @@ export default function Player() {
     setCurrentPlayingNodeId,
   ]);
 
-  const currentNode = (() => {
+  const currentParsed = (() => {
     const key = playbackQueue[currentTrackIndex];
-    const parsed = key ? parseQueueKey(key) : null;
-    if (!parsed) return null;
-    return nodes.find((n) => n.id === parsed.nodeId) ?? null;
+    return key ? parseQueueKey(key) : null;
   })();
+  const currentNode = currentParsed
+    ? nodes.find((n) => n.id === currentParsed.nodeId) ?? null
+    : null;
 
-  const displayTitle =
-    (currentNode?.data?.songTitle as string) ||
-    (currentNode?.data?.label as string) ||
-    (currentNode?.data?.videoId as string) ||
-    '';
-  const displayArtist = (currentNode?.data?.artist as string) || '';
+  const nowPlaying =
+    currentParsed?.kind === 'transition'
+      ? {
+          title: 'Transition',
+          artist: String(currentNode?.data?.type || 'silence'),
+          album: '',
+        }
+      : currentNode
+        ? getTrackDisplayMeta(currentNode.data)
+        : null;
 
   return (
     <div className="synapse-deck">
@@ -364,10 +367,23 @@ export default function Player() {
       />
       <div className="synapse-deck-meta">
         <p className="synapse-deck-title">
-          {displayTitle || (isPlaying ? 'Starting…' : 'Ready')}
+          {nowPlaying?.title || (isPlaying ? 'Starting…' : 'Ready')}
         </p>
-        {displayArtist ? (
-          <p className="synapse-deck-sub">{displayArtist}</p>
+        {nowPlaying && currentParsed?.kind === 'track' ? (
+          <>
+            <p
+              className={`synapse-deck-sub ${nowPlaying.artist ? '' : 'is-empty'}`}
+            >
+              {nowPlaying.artist || 'No artist'}
+            </p>
+            <p
+              className={`synapse-deck-album ${nowPlaying.album ? '' : 'is-empty'}`}
+            >
+              {nowPlaying.album || 'No album'}
+            </p>
+          </>
+        ) : nowPlaying?.artist ? (
+          <p className="synapse-deck-sub">{nowPlaying.artist}</p>
         ) : null}
         <p className="synapse-deck-status">
           {statusMessage ||

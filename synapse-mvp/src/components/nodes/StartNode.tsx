@@ -14,6 +14,7 @@ export default function StartNode() {
         type="source"
         position={Position.Right}
         className="synapse-handle !bg-[var(--ok)]"
+        aria-label="Connect from Start"
       />
     </div>
   );
