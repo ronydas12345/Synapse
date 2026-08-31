@@ -30,7 +30,7 @@ const NODE_TYPES: NodeType[] = [
       endTime: 0,
       duration: 0,
       volume: 100,
-      label: 'Track',
+      label: '',
       playCount: 1,
     },
   },
@@ -271,6 +271,34 @@ export default function Sidebar() {
                           if (id) updateNodeData(selectedNode.id, { videoId: id });
                         }}
                       />
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          type="button"
+                          className="synapse-btn synapse-btn-ghost text-xs"
+                          disabled={
+                            !extractYouTubeId(String(selectedNode.data?.videoId || '')) ||
+                            selectedNode.data?.metadataStatus === 'loading'
+                          }
+                          onClick={() =>
+                            updateNodeData(selectedNode.id, {
+                              metadataVideoId: '',
+                              metadataRefreshRequested: true,
+                              metadataStatus: 'idle',
+                            })
+                          }
+                        >
+                          Autofill credits
+                        </button>
+                        <span className="text-[0.65rem] text-[var(--text-faint)] font-mono">
+                          {selectedNode.data?.metadataStatus === 'loading'
+                            ? 'Looking up…'
+                            : selectedNode.data?.metadataStatus === 'ready'
+                              ? 'Filled from video'
+                              : selectedNode.data?.metadataStatus === 'error'
+                                ? 'Lookup failed'
+                                : ''}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   

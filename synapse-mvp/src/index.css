@@ -439,25 +439,27 @@ body {
 .synapse-deck {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  padding: 0.85rem 1.1rem;
-  background: rgba(10, 12, 18, 0.94);
+  gap: 1rem;
+  padding: 1.15rem 1.35rem 1.25rem;
+  background: rgba(10, 12, 18, 0.96);
   border-top: 1px solid var(--border);
   backdrop-filter: blur(18px);
-  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.4);
+  min-height: 11.5rem;
 }
 
 @media (min-width: 640px) {
   .synapse-deck {
     flex-direction: row;
-    align-items: center;
-    gap: 1.1rem;
+    align-items: stretch;
+    gap: 1.4rem;
+    min-height: 13.5rem;
   }
 }
 
 .synapse-deck-screen {
   width: 100%;
-  height: 7.5rem;
+  height: 11rem;
   flex-shrink: 0;
   border-radius: var(--radius);
   overflow: hidden;
@@ -468,42 +470,46 @@ body {
 
 @media (min-width: 640px) {
   .synapse-deck-screen {
-    width: 14rem;
-    height: 7rem;
+    width: 22rem;
+    height: 12.25rem;
   }
 }
 
 .synapse-deck-meta {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .synapse-deck-title {
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 1.45rem;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .synapse-deck-sub {
-  font-size: 0.75rem;
+  font-size: 1rem;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 0.15rem;
+  margin-top: 0.35rem;
 }
 
 .synapse-deck-album {
-  font-size: 0.68rem;
+  font-size: 0.88rem;
   color: var(--text-faint);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 0.1rem;
+  margin-top: 0.2rem;
 }
 
 .synapse-deck-sub.is-empty,
@@ -529,9 +535,9 @@ body {
 
 .synapse-deck-status {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--text-faint);
-  margin-top: 0.35rem;
+  margin-top: 0.55rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -541,13 +547,13 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  margin-top: 0.45rem;
-  padding: 0.2rem 0.55rem;
+  margin-top: 0.55rem;
+  padding: 0.3rem 0.7rem;
   border-radius: 999px;
   background: var(--accent-dim);
   border: 1px solid rgba(62, 207, 191, 0.25);
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   color: var(--accent);
   letter-spacing: 0.04em;
 }

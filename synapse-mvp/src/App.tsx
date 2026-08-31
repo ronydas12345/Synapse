@@ -1,6 +1,7 @@
 ﻿import ReactFlowCanvas from './components/ReactFlowCanvas';
 import Sidebar from './components/Sidebar';
 import Player from './Player';
+import TrackMetadataAutofill from './TrackMetadataAutofill';
 import { usePathStore } from './store';
 
 export default function App() {
@@ -41,6 +42,7 @@ export default function App() {
         <ReactFlowCanvas />
       </div>
 
+      <TrackMetadataAutofill />
       <Player />
     </div>
   );

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getTrackDisplayMeta } from './trackMetadata';
 
 describe('getTrackDisplayMeta', () => {
-  it('prefers songTitle over label and videoId', () => {
+  it('uses songTitle and ignores the generic Track label', () => {
     expect(
       getTrackDisplayMeta({
         songTitle: 'Bohemian Rhapsody',
@@ -19,17 +19,17 @@ describe('getTrackDisplayMeta', () => {
     });
   });
 
-  it('falls back to label, then videoId, then Untitled track', () => {
-    expect(getTrackDisplayMeta({ label: 'Track' }).title).toBe('Track');
-    expect(getTrackDisplayMeta({ label: 'Track' }).titleSource).toBe('label');
-    expect(getTrackDisplayMeta({ videoId: 'dQw4w9wgVcQ' })).toMatchObject({
-      title: 'dQw4w9wgVcQ',
-      titleSource: 'videoId',
-    });
-    expect(getTrackDisplayMeta({})).toMatchObject({
-      title: 'Untitled track',
-      titleSource: 'fallback',
-    });
+  it('does not display Track, the video ID, or the default label as a title', () => {
+    expect(getTrackDisplayMeta({ label: 'Track' }).title).toBe('No title');
+    expect(getTrackDisplayMeta({ songTitle: 'Track' }).title).toBe('No title');
+    expect(getTrackDisplayMeta({ videoId: 'dQw4w9wgVcQ' }).title).toBe('No title');
+    expect(getTrackDisplayMeta({}).title).toBe('No title');
+  });
+
+  it('shows a lookup placeholder while metadata is loading', () => {
+    expect(
+      getTrackDisplayMeta({ metadataStatus: 'loading', videoId: 'abc' }).title
+    ).toBe('Looking up…');
   });
 
   it('trims whitespace and treats blank strings as empty', () => {
@@ -44,7 +44,7 @@ describe('getTrackDisplayMeta', () => {
   });
 
   it('survives missing or non-string data', () => {
-    expect(getTrackDisplayMeta(undefined).title).toBe('Untitled track');
+    expect(getTrackDisplayMeta(undefined).title).toBe('No title');
     expect(
       getTrackDisplayMeta({
         songTitle: 12,
@@ -52,7 +52,7 @@ describe('getTrackDisplayMeta', () => {
         album: { name: 'nope' },
       })
     ).toEqual({
-      title: 'Untitled track',
+      title: 'No title',
       artist: '',
       album: '',
       titleSource: 'fallback',
