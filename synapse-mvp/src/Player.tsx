@@ -5,9 +5,12 @@ import { buildPlaybackQueueResult, parseQueueKey } from './engine';
 import {
   YouTubeIframeAdapter,
   extractYouTubeId,
+  clampSeek,
   type PlayableMedia,
 } from './playback';
 import { getTrackDisplayMeta } from './trackMetadata';
+import DeckTransport from './components/DeckTransport';
+import AudioVisualizer from './components/AudioVisualizer';
 
 function nodeToPlayable(node: Node | undefined, nodeId: string): PlayableMedia | null {
   if (!node) return null;
@@ -37,14 +40,20 @@ export default function Player() {
     playbackQueue,
     currentTrackIndex,
     skipRequestId,
+    previousRequestId,
     setCurrentTrackIndex,
     setIsPlaying,
     setCurrentPlayingNodeId,
     setPlaybackQueue,
+    requestSkip,
+    requestPrevious,
   } = usePathStore();
 
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [playerReady, setPlayerReady] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [vizAudio, setVizAudio] = useState<HTMLAudioElement | null>(null);
 
   const ytContainerRef = useRef<HTMLDivElement>(null);
   const adapterRef = useRef<YouTubeIframeAdapter | null>(null);
@@ -70,6 +79,7 @@ export default function Player() {
       audioElementRef.current.onended = null;
       audioElementRef.current.currentTime = 0;
     }
+    setVizAudio(null);
   };
 
   const advance = useCallback(() => {
@@ -124,6 +134,43 @@ export default function Player() {
     }
     advanceRef.current();
   }, [skipRequestId]);
+
+  useEffect(() => {
+    if (previousRequestId === 0) return;
+
+    const state = usePathStore.getState();
+    if (state.playbackQueue.length === 0) return;
+
+    const key = state.playbackQueue[state.currentTrackIndex];
+    const parsed = key ? parseQueueKey(key) : null;
+    const node = parsed
+      ? state.nodes.find((n) => n.id === parsed.nodeId)
+      : undefined;
+    const start = Number(node?.data?.startTime) || 0;
+    const audio = audioElementRef.current;
+    const current = audio?.src
+      ? audio.currentTime
+      : adapterRef.current?.getCurrentTime() ?? 0;
+
+    if (current - start > 3 || state.currentTrackIndex <= 0) {
+      if (audio?.src) {
+        audio.currentTime = start;
+        setCurrentTime(start);
+      } else {
+        adapterRef.current?.seekTo(start);
+        setCurrentTime(start);
+      }
+      return;
+    }
+
+    clearSilenceTimer();
+    stopLocalAudio();
+    adapterRef.current?.stop();
+    activeItemKeyRef.current = null;
+    advancingRef.current = false;
+    if (!state.isPlaying) state.setIsPlaying(true);
+    state.setCurrentTrackIndex(state.currentTrackIndex - 1);
+  }, [previousRequestId]);
 
   // Mount YouTube once (do not recreate when callbacks change)
   useEffect(() => {
@@ -279,6 +326,7 @@ export default function Player() {
         const audio = audioElementRef.current;
         audio.src = String(node.data.audioFile);
         audio.onended = () => advance();
+        setVizAudio(audio);
         audio.play().catch(() => {
           setStatusMessage('Transition audio failed — skipping');
           advance();
@@ -339,6 +387,24 @@ export default function Player() {
     setCurrentPlayingNodeId,
   ]);
 
+  useEffect(() => {
+    const tick = () => {
+      const audio = audioElementRef.current;
+      if (audio?.src && !Number.isNaN(audio.duration)) {
+        setCurrentTime(audio.currentTime);
+        setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
+        return;
+      }
+      const adapter = adapterRef.current;
+      if (!adapter) return;
+      setCurrentTime(adapter.getCurrentTime());
+      setDuration(adapter.getDuration());
+    };
+    tick();
+    const id = window.setInterval(tick, 250);
+    return () => window.clearInterval(id);
+  }, [isPlaying, currentTrackIndex, playerReady]);
+
   const currentParsed = (() => {
     const key = playbackQueue[currentTrackIndex];
     return key ? parseQueueKey(key) : null;
@@ -358,6 +424,38 @@ export default function Player() {
         ? getTrackDisplayMeta(currentNode.data)
         : null;
 
+  const seekStart = Number(currentNode?.data?.startTime) || 0;
+  const seekEnd = Number(currentNode?.data?.endTime) || 0;
+  const queueActive = playbackQueue.length > 0;
+
+  const handleSeekBy = (delta: number) => {
+    const audio = audioElementRef.current;
+    if (audio?.src) {
+      audio.currentTime = clampSeek(
+        audio.currentTime,
+        delta,
+        audio.duration || 0,
+        seekStart,
+        seekEnd
+      );
+      setCurrentTime(audio.currentTime);
+      return;
+    }
+    adapterRef.current?.seekBy(delta, seekStart, seekEnd);
+    setCurrentTime(adapterRef.current?.getCurrentTime() ?? 0);
+  };
+
+  const handleSeekTo = (seconds: number) => {
+    const audio = audioElementRef.current;
+    if (audio?.src) {
+      audio.currentTime = seconds;
+      setCurrentTime(seconds);
+      return;
+    }
+    adapterRef.current?.seekTo(seconds);
+    setCurrentTime(seconds);
+  };
+
   return (
     <div className="synapse-deck">
       <div
@@ -365,36 +463,50 @@ export default function Player() {
         className="synapse-deck-screen"
         aria-label="YouTube player"
       />
-      <div className="synapse-deck-meta">
-        <p className="synapse-deck-title">
-          {nowPlaying?.title || (isPlaying ? 'Starting…' : 'Ready')}
-        </p>
-        {nowPlaying && currentParsed?.kind === 'track' ? (
-          <>
-            <p
-              className={`synapse-deck-sub ${nowPlaying.artist ? '' : 'is-empty'}`}
-            >
-              {nowPlaying.artist || 'No artist'}
-            </p>
-            <p
-              className={`synapse-deck-album ${nowPlaying.album ? '' : 'is-empty'}`}
-            >
-              {nowPlaying.album || 'No album'}
-            </p>
-          </>
-        ) : nowPlaying?.artist ? (
-          <p className="synapse-deck-sub">{nowPlaying.artist}</p>
-        ) : null}
-        <p className="synapse-deck-status">
-          {statusMessage ||
-            (playerReady ? 'YouTube player ready' : 'Loading YouTube player…')}
-        </p>
-        {playbackQueue.length > 0 ? (
-          <div className="synapse-deck-queue">
-            Queue {currentTrackIndex + 1} / {playbackQueue.length}
-          </div>
-        ) : null}
+      <div className="synapse-deck-main">
+        <div className="synapse-deck-meta">
+          <p className="synapse-deck-title">
+            {nowPlaying?.title || (isPlaying ? 'Starting…' : 'Ready')}
+          </p>
+          {nowPlaying && currentParsed?.kind === 'track' ? (
+            <>
+              <p
+                className={`synapse-deck-sub ${nowPlaying.artist ? '' : 'is-empty'}`}
+              >
+                {nowPlaying.artist || 'No artist'}
+              </p>
+              <p
+                className={`synapse-deck-album ${nowPlaying.album ? '' : 'is-empty'}`}
+              >
+                {nowPlaying.album || 'No album'}
+              </p>
+            </>
+          ) : nowPlaying?.artist ? (
+            <p className="synapse-deck-sub">{nowPlaying.artist}</p>
+          ) : null}
+          <p className="synapse-deck-status">
+            {statusMessage ||
+              (playerReady ? 'YouTube player ready' : 'Loading YouTube player…')}
+          </p>
+          {queueActive ? (
+            <div className="synapse-deck-queue">
+              Queue {currentTrackIndex + 1} / {playbackQueue.length}
+            </div>
+          ) : null}
+        </div>
+        <DeckTransport
+          isPlaying={isPlaying}
+          disabled={!queueActive}
+          currentTime={currentTime}
+          duration={duration}
+          onTogglePlay={() => setIsPlaying(!isPlaying)}
+          onPrevious={() => requestPrevious()}
+          onNext={() => requestSkip()}
+          onSeekBy={handleSeekBy}
+          onSeekTo={handleSeekTo}
+        />
       </div>
+      <AudioVisualizer isPlaying={isPlaying} mediaElement={vizAudio} />
     </div>
   );
 }

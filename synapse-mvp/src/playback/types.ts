@@ -19,6 +19,10 @@ export interface PlaybackAdapter {
   resume(): void;
   stop(): void;
   destroy(): void;
+  getCurrentTime?(): number;
+  getDuration?(): number;
+  seekTo?(seconds: number): void;
+  seekBy?(delta: number, start?: number, end?: number): void;
   setOnEnded(cb: (() => void) | null): void;
   setOnError(cb: ((message: string) => void) | null): void;
 }

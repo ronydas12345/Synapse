@@ -12,6 +12,8 @@ interface PathState {
   playbackQueue: string[]; // Queue keys: `track:{nodeId}` | `transition:{nodeId}`
   /** Incremented when user hits Skip — Player owns the actual advance. */
   skipRequestId: number;
+  /** Incremented when user hits Previous — Player owns restart vs prior item. */
+  previousRequestId: number;
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
   onConnect: (connection: Connection) => void;
@@ -23,6 +25,7 @@ interface PathState {
   setCurrentTrackIndex: (index: number) => void;
   setCurrentPlayingNodeId: (id: string | null) => void;
   requestSkip: () => void;
+  requestPrevious: () => void;
   deleteEdge: (edgeId: string) => void;
   deleteNode: (nodeId: string) => void;
   initializeFromStorage: () => void;
@@ -78,6 +81,7 @@ export const usePathStore = create<PathState>((set) => ({
   currentPlayingNodeId: null,
   playbackQueue: [],
   skipRequestId: 0,
+  previousRequestId: 0,
 
   setNodes: (nodes) => {
     set({ nodes });
@@ -194,6 +198,8 @@ export const usePathStore = create<PathState>((set) => ({
   setCurrentPlayingNodeId: (id) => set({ currentPlayingNodeId: id }),
   requestSkip: () =>
     set((state) => ({ skipRequestId: state.skipRequestId + 1 })),
+  requestPrevious: () =>
+    set((state) => ({ previousRequestId: state.previousRequestId + 1 })),
   deleteEdge: (edgeId) => set((state) => {
     const edge = state.edges.find((e) => e.id === edgeId);
     const newEdges = state.edges.filter((e) => e.id !== edgeId);

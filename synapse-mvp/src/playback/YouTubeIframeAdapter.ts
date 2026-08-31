@@ -1,4 +1,5 @@
 import type { PlaybackAdapter, PlayableMedia } from './types';
+import { clampSeek } from './seek';
 
 declare global {
   interface Window {
@@ -28,8 +29,11 @@ interface YtPlayer {
   }): void;
   setVolume(volume: number): void;
   setPlaybackRate(rate: number): void;
-  destroy(): void;
+  seekTo(seconds: number, allowSeekAhead?: boolean): void;
+  getCurrentTime(): number;
+  getDuration(): number;
   getPlayerState(): number;
+  destroy(): void;
 }
 
 let apiPromise: Promise<void> | null = null;
@@ -253,6 +257,42 @@ export class YouTubeIframeAdapter implements PlaybackAdapter {
 
   resume(): void {
     this.player?.playVideo();
+  }
+
+  getCurrentTime(): number {
+    try {
+      return this.player?.getCurrentTime() ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  getDuration(): number {
+    try {
+      return this.player?.getDuration() ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  seekTo(seconds: number): void {
+    if (!this.player) return;
+    try {
+      this.player.seekTo(Math.max(0, seconds), true);
+    } catch {
+      // ignore
+    }
+  }
+
+  seekBy(delta: number, start = 0, end = 0): void {
+    const next = clampSeek(
+      this.getCurrentTime(),
+      delta,
+      this.getDuration(),
+      start,
+      end
+    );
+    this.seekTo(next);
   }
 
   stop(): void {
