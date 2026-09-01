@@ -1,4 +1,5 @@
 import React from 'react';
+import { Map as MapIcon, Minimize2 } from 'lucide-react';
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider, useReactFlow, applyNodeChanges } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { usePathStore } from '../store';
@@ -36,6 +37,7 @@ function CustomMinimap() {
   const { getNodes, getViewport } = useReactFlow();
   const [containerDims, setContainerDims] = React.useState({ width: 1200, height: 800 });
   const [viewportState, setViewportState] = React.useState({ x: 0, y: 0, zoom: 1 });
+  const [collapsed, setCollapsed] = React.useState(false);
   const minimapRef = React.useRef<HTMLDivElement>(null);
   const prevViewportRef = React.useRef({ x: 0, y: 0, zoom: 1 });
 
@@ -165,26 +167,37 @@ function CustomMinimap() {
   const vpX = viewport?.x || 0;
   const vpY = viewport?.y || 0;
   
+  const wrapStyle: React.CSSProperties = {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    zIndex: 50,
+  };
+
+  const collapseBtn = (
+    <button
+      type="button"
+      className="synapse-minimap-toggle"
+      title={collapsed ? 'Show minimap' : 'Hide minimap'}
+      aria-label={collapsed ? 'Show minimap' : 'Hide minimap'}
+      onClick={() => setCollapsed((v) => !v)}
+    >
+      {collapsed ? <MapIcon className="w-4 h-4" /> : <Minimize2 className="w-3.5 h-3.5" />}
+    </button>
+  );
+
   // Guard against NaN values
   if (isNaN(zoom) || isNaN(vpX) || isNaN(vpY)) {
     return (
-      <div 
-        ref={minimapRef}
-        style={{
-          position: 'absolute',
-          bottom: 10,
-          right: 10,
-          width: 250,
-          height: 180,
-          backgroundColor: 'rgba(12, 14, 20, 0.92)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 8,
-          zIndex: 50,
-          overflow: 'hidden',
-          pointerEvents: 'none',
-        }}
-      >
-        <div style={{ padding: '10px', color: '#999', fontSize: '12px' }}>Minimap loading...</div>
+      <div ref={minimapRef} className="synapse-minimap-wrap" style={wrapStyle}>
+        {collapsed ? (
+          collapseBtn
+        ) : (
+          <div className="synapse-minimap synapse-minimap-panel">
+            <div className="synapse-minimap-toolbar">{collapseBtn}</div>
+            <div style={{ padding: '10px', color: '#999', fontSize: '12px' }}>Minimap loading...</div>
+          </div>
+        )}
       </div>
     );
   }
@@ -207,23 +220,12 @@ function CustomMinimap() {
   if (!isFinite(viewportHeight)) viewportHeight = 50;
 
   return (
-    <div 
-      ref={minimapRef}
-      style={{
-        position: 'absolute',
-        bottom: 10,
-        right: 10,
-        width: 250,
-        height: 180,
-        backgroundColor: 'rgba(12, 14, 20, 0.92)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: 8,
-        zIndex: 50,
-        overflow: 'hidden',
-        pointerEvents: 'none',
-        boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
-      }}
-    >
+    <div ref={minimapRef} className="synapse-minimap-wrap" style={wrapStyle}>
+      {collapsed ? (
+        collapseBtn
+      ) : (
+    <div className="synapse-minimap synapse-minimap-panel">
+      <div className="synapse-minimap-toolbar">{collapseBtn}</div>
       <svg width="100%" height="100%" viewBox="0 0 250 180" style={{ display: 'block' }}>
         {/* Render each node with actual dimensions */}
         {nodes.map((node) => {
@@ -270,6 +272,8 @@ function CustomMinimap() {
           opacity="0.9"
         />
       </svg>
+    </div>
+      )}
     </div>
   );
 }

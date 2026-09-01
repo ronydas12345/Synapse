@@ -1,47 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AudioWaveform } from 'lucide-react';
+import { AudioWaveform, ChevronDown, Mic, Monitor } from 'lucide-react';
+import {
+  browserCaptureProfile,
+  capturePlaybackAudio,
+  type CaptureMode,
+} from '../playback/captureAudio';
 
 interface AudioVisualizerProps {
   isPlaying: boolean;
   mediaElement: HTMLAudioElement | null;
 }
 
-type DisplayMediaExtra = DisplayMediaStreamOptions & {
-  preferCurrentTab?: boolean;
-  selfBrowserSurface?: string;
-  systemAudio?: string;
-};
-
-async function captureTabAudio(): Promise<MediaStream> {
-  const stream = await navigator.mediaDevices.getDisplayMedia({
-    video: { width: 16, height: 16, frameRate: 1 },
-    audio: {
-      echoCancellation: false,
-      noiseSuppression: false,
-      autoGainControl: false,
-    },
-    preferCurrentTab: true,
-    selfBrowserSurface: 'include',
-    systemAudio: 'include',
-  } as DisplayMediaExtra);
-
-  for (const track of stream.getVideoTracks()) {
-    track.stop();
-    stream.removeTrack(track);
-  }
-
-  if (stream.getAudioTracks().length === 0) {
-    stream.getTracks().forEach((t) => t.stop());
-    throw new Error('Share this tab and turn on audio');
-  }
-
-  return stream;
-}
-
 /**
  * Frequency bars from a real AnalyserNode.
- * YouTube iframes block CORS audio tap, so YouTube uses tab-audio capture
- * (the same mix the speakers play). Local HTMLAudioElement connects directly.
+ * YouTube iframes block CORS audio tap. Chromium can share tab audio;
+ * Firefox/Safari fall back to the microphone. Collapse the in-app
+ * sharing message; Stop ends capture so the browser sharing bar goes away.
  */
 export default function AudioVisualizer({
   isPlaying,
@@ -56,9 +30,14 @@ export default function AudioVisualizer({
   const rafRef = useRef<number>(0);
   const [error, setError] = useState('');
   const [listening, setListening] = useState(false);
+  const [captureMode, setCaptureMode] = useState<CaptureMode | null>(null);
+  const [statusCollapsed, setStatusCollapsed] = useState(false);
+  const profile = browserCaptureProfile();
 
   const ensureGraph = useCallback(async () => {
-    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const Ctx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!ctxRef.current) {
       ctxRef.current = new Ctx();
       const analyser = ctxRef.current.createAnalyser();
@@ -81,9 +60,18 @@ export default function AudioVisualizer({
     sourceRef.current = null;
   }, []);
 
+  const stopCapture = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    detachSource();
+    setListening(false);
+    setCaptureMode(null);
+    setStatusCollapsed(false);
+  }, [detachSource]);
+
   const attachStream = useCallback(
-    async (stream: MediaStream) => {
-      const { ctx, analyser } = await ensureGraph();
+    async (stream: MediaStream, mode: CaptureMode) => {
+        const { ctx, analyser } = await ensureGraph();
       detachSource();
       const source = ctx.createMediaStreamSource(stream);
       try {
@@ -95,34 +83,38 @@ export default function AudioVisualizer({
       sourceRef.current = source;
       streamRef.current = stream;
       setListening(true);
+      setCaptureMode(mode);
+      setStatusCollapsed(false);
       setError('');
     },
     [detachSource, ensureGraph]
   );
 
-  const enableCapture = useCallback(async () => {
-    try {
-      setError('');
-      const stream = await captureTabAudio();
-      stream.getAudioTracks().forEach((track) => {
-        track.addEventListener('ended', () => {
-          setListening(false);
-          streamRef.current = null;
+  const enableCapture = useCallback(
+    async (mode: CaptureMode) => {
+      try {
+        setError('');
+        const stream = await capturePlaybackAudio(mode);
+        stream.getAudioTracks().forEach((track) => {
+          track.addEventListener('ended', () => {
+            setListening(false);
+            setCaptureMode(null);
+            streamRef.current = null;
+          });
         });
-      });
-      await attachStream(stream);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Could not capture tab audio';
-      setError(
-        message.toLowerCase().includes('denied') ||
-          message.toLowerCase().includes('not allowed')
-          ? 'Permission denied'
-          : message
-      );
-      setListening(false);
-    }
-  }, [attachStream]);
+        await attachStream(stream, mode);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Could not start visualizer';
+        const denied =
+          message.toLowerCase().includes('denied') ||
+          message.toLowerCase().includes('not allowed');
+        setError(denied ? 'Permission denied' : message);
+        setListening(false);
+      }
+    },
+    [attachStream]
+  );
 
   useEffect(() => {
     if (!mediaElement) return;
@@ -132,13 +124,17 @@ export default function AudioVisualizer({
         const { ctx, analyser } = await ensureGraph();
         if (cancelled) return;
         detachSource();
-        if (!elementSourceRef.current || elementSourceRef.current.mediaElement !== mediaElement) {
+        if (
+          !elementSourceRef.current ||
+          elementSourceRef.current.mediaElement !== mediaElement
+        ) {
           elementSourceRef.current = ctx.createMediaElementSource(mediaElement);
         }
         elementSourceRef.current.connect(analyser);
         analyser.connect(ctx.destination);
         sourceRef.current = elementSourceRef.current;
         setListening(true);
+        setCaptureMode(null);
       } catch {
         // createMediaElementSource throws if called twice on the same element
       }
@@ -209,29 +205,80 @@ export default function AudioVisualizer({
   useEffect(() => {
     return () => {
       window.cancelAnimationFrame(rafRef.current);
-      detachSource();
-      streamRef.current?.getTracks().forEach((t) => t.stop());
+      stopCapture();
       void ctxRef.current?.close();
     };
-  }, [detachSource]);
+  }, [stopCapture]);
+
+    const shareLabel =
+    captureMode === 'microphone'
+      ? 'Listening via microphone'
+      : 'Sharing tab audio with Synapse';
 
   return (
     <div className="synapse-visualizer">
       <canvas ref={canvasRef} className="synapse-visualizer-canvas" />
-      {!listening ? (
+      {listening && captureMode && !statusCollapsed ? (
+        <div className="synapse-share-status">
+          <span className="synapse-share-status-text">{shareLabel}</span>
+          <button
+            type="button"
+            className="synapse-share-status-btn"
+            title="Collapse this message"
+            aria-label="Collapse sharing message"
+            onClick={() => setStatusCollapsed(true)}
+          >
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            className="synapse-share-status-btn"
+            title="Stop sharing (also hides the browser sharing bar)"
+            aria-label="Stop sharing"
+            onClick={stopCapture}
+          >
+            Stop
+          </button>
+        </div>
+      ) : null}
+      {listening && captureMode && statusCollapsed ? (
         <button
           type="button"
-          className="synapse-visualizer-arm"
-          onClick={() => void enableCapture()}
+          className="synapse-share-status is-chip"
+          title="Show sharing message"
+          onClick={() => setStatusCollapsed(false)}
         >
+          Sharing
+        </button>
+      ) : null}
+      {!listening ? (
+        <div className="synapse-visualizer-arm">
           <AudioWaveform className="w-4 h-4" />
           <span>
             {error ||
               (isPlaying
-                ? 'Click to visualize this tab’s audio'
-                : 'Visualizer — click when playing')}
+                ? profile.label
+                : 'Visualizer — start playback, then connect audio')}
           </span>
-        </button>
+          <div className="synapse-visualizer-actions">
+            <button
+              type="button"
+              className="synapse-ctrl synapse-ctrl-seek"
+              onClick={() => void enableCapture('display')}
+            >
+              <Monitor className="w-3.5 h-3.5" />
+              {profile.preferMic ? 'Window' : 'Tab'}
+            </button>
+            <button
+              type="button"
+              className="synapse-ctrl synapse-ctrl-seek"
+              onClick={() => void enableCapture('microphone')}
+            >
+              <Mic className="w-3.5 h-3.5" />
+              Mic
+            </button>
+          </div>
+        </div>
       ) : null}
     </div>
   );

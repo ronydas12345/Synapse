@@ -17,6 +17,7 @@ Now-playing credits. Local feature branch `feature/now-playing-metadata`; not pu
 - Auto-fill song title, artist, and album from a YouTube ID (oEmbed + iTunes album lookup, optional `VITE_YOUTUBE_API_KEY`, local cache). Track nodes no longer display the generic “Track” label as a title.
 - Deck transport beside now-playing credits: play/pause, previous/next, ±5/±10 second seek, and a progress scrubber.
 - Audio visualizer using a real AnalyserNode. YouTube iframes block CORS audio tap, so the visualizer listens to this tab’s audio after a one-click share (the same mix coming out of the video).
+- Visualizer capture works in Firefox/Safari via microphone fallback (those browsers cannot capture tab audio). Sharing status in the visualizer is collapsible; Stop ends capture so the browser sharing bar goes away. Canvas minimap can be minimized.
 
 ## [0.2.0] — 2026-08-29
 
