@@ -1,108 +1,82 @@
 import { useMemo } from 'react';
-import { useReactFlow } from '@xyflow/react';
+import { createPortal } from 'react-dom';
+import { useStore } from '@xyflow/react';
 import type { Node } from '@xyflow/react';
 
 interface CommentConnectionsProps {
   nodes: Node[];
 }
 
-// Get approximate center point of a node based on its type
-function getNodeCenter(node: Node): [number, number] {
+const FALLBACK: Record<string, { width: number; height: number }> = {
+  comment: { width: 256, height: 200 },
+  track: { width: 288, height: 160 },
+  splitter: { width: 288, height: 160 },
+  conditional: { width: 288, height: 160 },
+  randomizer: { width: 224, height: 220 },
+  transition: { width: 256, height: 100 },
+  start: { width: 128, height: 80 },
+  end: { width: 128, height: 80 },
+};
+
+function nodeCenter(node: Node): [number, number] {
+  const fallback = FALLBACK[node.type || ''] || { width: 160, height: 100 };
+  const w = node.measured?.width ?? node.width ?? fallback.width;
+  const h = node.measured?.height ?? node.height ?? fallback.height;
   const x = node.position?.x || 0;
   const y = node.position?.y || 0;
-
-  // Approximate dimensions for each node type (based on Tailwind w-* classes)
-  const widths: Record<string, number> = {
-    comment: 256,      // w-64
-    track: 288,        // w-72
-    splitter: 224,     // w-56
-    randomizer: 224,   // w-56
-    transition: 224,   // w-56
-    start: 120,        // smaller
-    end: 120,          // smaller
-  };
-
-  const heights: Record<string, number> = {
-    comment: 240,      // header + buttons + textarea
-    track: 500,        // expanded, can collapse to ~140
-    splitter: 160,     // paths section + header
-    randomizer: 240,   // tracks + weights + header
-    transition: 160,   // type selector + settings
-    start: 80,         // minimal
-    end: 80,           // minimal
-  };
-
-  const nodeType = node.type || 'comment';
-  const w = widths[nodeType] || 100;
-  const h = heights[nodeType] || 80;
-
   return [x + w / 2, y + h / 2];
 }
 
+/**
+ * Center-to-center dotted annotation lines, portaled into React Flow's edges
+ * pane so they render behind nodes (same layer as playback edges, not above).
+ * Uses data.linkedNodeId — not play-path connectivity.
+ */
 export default function CommentConnections({ nodes }: CommentConnectionsProps) {
-  const { getViewport } = useReactFlow();
-  const viewport = getViewport();
+  const edgesPane = useStore(
+    (s) => s.domNode?.querySelector('.react-flow__edges') ?? null
+  );
 
   const lines = useMemo(() => {
-    const lineList = [];
+    const lineList: { pathData: string; key: string }[] = [];
     for (const commentNode of nodes) {
-      if (commentNode.type === 'comment' && commentNode.data?.linkedNodeId) {
-        const linkedNode = nodes.find((n) => n.id === commentNode.data?.linkedNodeId);
-        if (!linkedNode) continue;
+      if (commentNode.type !== 'comment' || commentNode.hidden) continue;
+      const linkedId = commentNode.data?.linkedNodeId;
+      if (!linkedId || typeof linkedId !== 'string') continue;
+      const linkedNode = nodes.find((n) => n.id === linkedId);
+      if (!linkedNode || linkedNode.hidden) continue;
 
-        // Get world coordinates
-        const [commentWorldX, commentWorldY] = getNodeCenter(commentNode);
-        const [linkedWorldX, linkedWorldY] = getNodeCenter(linkedNode);
-
-        // Create bezier path with world coordinates
-        const dx = linkedWorldX - commentWorldX;
-        const dy = linkedWorldY - commentWorldY;
-        const cx = commentWorldX + dx * 0.3;
-        const cy = commentWorldY + dy * 0.5;
-
-        const pathData = `M ${commentWorldX} ${commentWorldY} Q ${cx} ${cy} ${linkedWorldX} ${linkedWorldY}`;
-
-        lineList.push({
-          pathData,
-          key: `${commentNode.id}-${linkedNode.id}`,
-        });
-      }
+      const [cx0, cy0] = nodeCenter(commentNode);
+      const [cx1, cy1] = nodeCenter(linkedNode);
+      const dx = cx1 - cx0;
+      const dy = cy1 - cy0;
+      const qx = cx0 + dx * 0.3;
+      const qy = cy0 + dy * 0.5;
+      lineList.push({
+        key: `${commentNode.id}-${linkedNode.id}`,
+        pathData: `M ${cx0} ${cy0} Q ${qx} ${qy} ${cx1} ${cy1}`,
+      });
     }
     return lineList;
   }, [nodes]);
 
-  // Apply React Flow's viewport transform to the SVG
-  const transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`;
+  if (!edgesPane || lines.length === 0) return null;
 
-  return (
-    <svg
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        pointerEvents: 'none',
-        zIndex: 5,
-        transform,
-        transformOrigin: '0 0',
-      }}
-    >
-      {lines.map((line) =>
-        line ? (
-          <path
-            key={line.key}
-            d={line.pathData}
-            stroke="#6b7280"
-            strokeWidth="2"
-            strokeDasharray="6,4"
-            fill="none"
-            opacity="0.6"
-            vectorEffect="non-scaling-stroke"
-          />
-        ) : null
-      )}
-    </svg>
+  return createPortal(
+    <svg aria-hidden="true">
+      {lines.map((line) => (
+        <path
+          key={line.key}
+          d={line.pathData}
+          stroke="#94a3b8"
+          strokeWidth="2"
+          strokeDasharray="6,4"
+          fill="none"
+          opacity="0.7"
+          vectorEffect="non-scaling-stroke"
+        />
+      ))}
+    </svg>,
+    edgesPane
   );
 }
-

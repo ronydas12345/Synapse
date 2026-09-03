@@ -1,7 +1,10 @@
-import { Music, GitBranch, Plus, Play, Square, Trash2, Dice5, MessageSquare, ArrowRight } from 'lucide-react';
+import { Music, GitBranch, Plus, Play, Square, Trash2, Dice5, MessageSquare, ArrowRight, ChevronDown } from 'lucide-react';
 import { usePathStore } from '../store';
 import { useCallback } from 'react';
-import { extractYouTubeId } from '../playback';
+import { extractYouTubeId, formatClock } from '../playback';
+import { getTrackDisplayMeta } from '../trackMetadata';
+import { restoreTrackFromRandomizer } from '../randomizerDrop';
+import { clampTrackTimes, displayEndTime, parseClock } from '../playback/trackTimes';
 
 interface NodeType {
   type: string;
@@ -76,6 +79,93 @@ interface SliderInputProps {
   onChange: (value: number) => void;
 }
 
+function TimeRangeFields({
+  startTime,
+  endTime,
+  duration,
+  onChange,
+}: {
+  startTime: number;
+  endTime: number;
+  duration: number;
+  onChange: (next: { startTime: number; endTime: number }) => void;
+}) {
+  const known = duration > 0;
+  const max = known ? duration : 0;
+  const start = known ? Math.min(startTime, duration) : startTime;
+  const endDisplay = known ? displayEndTime(endTime, duration) : endTime;
+
+  const commit = (nextStart: number, nextEnd: number) => {
+    const clamped = clampTrackTimes(nextStart, nextEnd, duration);
+    onChange({ startTime: clamped.startTime, endTime: clamped.endTime });
+  };
+
+  const onClockBlur = (raw: string, which: 'start' | 'end') => {
+    const parsed = parseClock(raw);
+    if (parsed == null) return;
+    if (which === 'start') commit(parsed, endTime);
+    else commit(startTime, parsed);
+  };
+
+  return (
+    <div className="space-y-3">
+      {!known ? (
+        <p className="text-xs text-[var(--text-faint)] m-0">
+          Duration unknown until this video plays. End means “full length” until then.
+        </p>
+      ) : (
+        <p className="text-xs text-[var(--text-faint)] m-0">
+          Duration: {formatClock(duration)}
+        </p>
+      )}
+      <div className="space-y-1.5">
+        <label>Start</label>
+        <div className="flex gap-2 items-center">
+          <input
+            type="range"
+            min={0}
+            max={known ? max : Math.max(start, 1)}
+            step={0.1}
+            disabled={!known}
+            value={start}
+            onChange={(e) => commit(parseFloat(e.target.value), endTime)}
+            className="flex-1 cursor-pointer"
+          />
+          <input
+            type="text"
+            className="w-16 p-1 text-center text-xs font-mono"
+            defaultValue={formatClock(start)}
+            key={`start-${start.toFixed(1)}-${duration}`}
+            onBlur={(e) => onClockBlur(e.target.value, 'start')}
+          />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <label>End</label>
+        <div className="flex gap-2 items-center">
+          <input
+            type="range"
+            min={0}
+            max={known ? max : Math.max(endDisplay, 1)}
+            step={0.1}
+            disabled={!known}
+            value={endDisplay}
+            onChange={(e) => commit(startTime, parseFloat(e.target.value))}
+            className="flex-1 cursor-pointer"
+          />
+          <input
+            type="text"
+            className="w-16 p-1 text-center text-xs font-mono"
+            defaultValue={formatClock(endDisplay)}
+            key={`end-${endDisplay.toFixed(1)}-${duration}`}
+            onBlur={(e) => onClockBlur(e.target.value, 'end')}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SliderInput({ label, value, min = 0, max = 100, step = 1, suffix = '', onChange }: SliderInputProps) {
   return (
     <div className="space-y-1.5">
@@ -108,7 +198,7 @@ function SliderInput({ label, value, min = 0, max = 100, step = 1, suffix = '', 
 }
 
 export default function Sidebar() {
-  const { nodes, setNodes, selectedNodeId, selectNode, updateNodeData, deleteNode, normalizeSplitters } = usePathStore();
+  const { nodes, edges, setNodes, setEdges, selectedNodeId, selectNode, updateNodeData, deleteNode, normalizeSplitters } = usePathStore();
   const selectedNode = nodes.find(n => n.id === selectedNodeId) as any;
 
   const handleAddNode = useCallback(
@@ -328,32 +418,25 @@ export default function Sidebar() {
                   
                   <div className="border-t border-slate-700 pt-3">
                     <h4 className="text-xs font-semibold text-slate-200 uppercase mb-2">Time Range</h4>
-                    <div className="space-y-3">
-                      <SliderInput
-                        label="Start Time (s)"
-                        value={selectedNode.data?.startTime ?? 0}
-                        min={0}
-                        max={3600}
-                        step={0.5}
-                        suffix="s"
-                        onChange={(v) => updateNodeData(selectedNode.id, { startTime: v })}
-                      />
-                      <SliderInput
-                        label="End Time (s)"
-                        value={selectedNode.data?.endTime ?? 0}
-                        min={0}
-                        max={3600}
-                        step={0.5}
-                        suffix="s"
-                        onChange={(v) => updateNodeData(selectedNode.id, { endTime: v })}
-                      />
-                      <div className="text-xs text-slate-300 pt-2">
-                        <strong>Duration:</strong> {selectedNode.data?.duration || 0}s
-                      </div>
-                    </div>
+                    <TimeRangeFields
+                      startTime={Number(selectedNode.data?.startTime) || 0}
+                      endTime={Number(selectedNode.data?.endTime) || 0}
+                      duration={Number(selectedNode.data?.duration) || 0}
+                      onChange={(next) => updateNodeData(selectedNode.id, next)}
+                    />
                   </div>
                   
-                  <div className="border-t border-slate-700 pt-3">
+                  <details className="group border-t border-slate-700 pt-3">
+                    <summary className="flex items-center justify-between gap-2 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                      <h4 className="text-xs font-semibold text-slate-200 uppercase m-0">
+                        Experimental / not yet applied
+                      </h4>
+                      <ChevronDown className="w-3.5 h-3.5 text-[var(--text-faint)] flex-shrink-0 transition-transform group-open:rotate-180" />
+                    </summary>
+                    <p className="text-[0.7rem] text-[var(--accent-warm)] mt-2 mb-3 leading-relaxed">
+                      These settings currently do nothing in playback. YouTube’s player cannot apply EQ
+                      or pitch-shift; only Speed % is used. They will be implemented eventually.
+                    </p>
                     <h4 className="text-xs font-semibold text-slate-200 uppercase mb-2">EQ</h4>
                     <div className="space-y-3">
                       <SliderInput
@@ -373,10 +456,7 @@ export default function Sidebar() {
                         onChange={(v) => updateNodeData(selectedNode.id, { treble: v })}
                       />
                     </div>
-                  </div>
-                  
-                  <div className="border-t border-slate-700 pt-3">
-                    <h4 className="text-xs font-semibold text-slate-200 uppercase mb-2">Pitch & Tempo</h4>
+                    <h4 className="text-xs font-semibold text-slate-200 uppercase mb-2 mt-4">Pitch & Tempo</h4>
                     <div className="space-y-3">
                       <SliderInput
                         label="Pitch (semitones)"
@@ -396,7 +476,7 @@ export default function Sidebar() {
                         onChange={(v) => updateNodeData(selectedNode.id, { tempo: v })}
                       />
                     </div>
-                  </div>
+                  </details>
                   
                   <div className="border-t border-slate-700 pt-3">
                     <h4 className="text-xs font-semibold text-slate-200 uppercase mb-2">Playback Count</h4>
@@ -716,87 +796,49 @@ export default function Sidebar() {
                     />
                     <p className="text-xs text-slate-500 mt-1 mb-3">How many times to play all tracks</p>
                   </div>
-                  <div>
-                    <label className="text-slate-300 block mb-2">Add Tracks</label>
-                    {nodes
-                      .filter((n) => n.type === 'track')
-                      .map((trackNode) => {
-                        const isAdded = selectedNode.data?.tracks?.includes(trackNode.id);
-                        return (
-                          <div
-                            key={trackNode.id}
-                            className="flex items-center gap-2 p-2 bg-slate-700 rounded mb-2 hover:bg-slate-600 cursor-pointer transition"
-                            onClick={() => {
-                              const currentTracks = selectedNode.data?.tracks || [];
-                              let newTracks, newWeights;
-                              if (isAdded) {
-                                const idx = currentTracks.indexOf(trackNode.id);
-                                newTracks = currentTracks.filter((id: string) => id !== trackNode.id);
-                                newWeights = (selectedNode.data?.weights || []).filter(
-                                  (_: number, i: number) => i !== idx
-                                );
-                              } else {
-                                newTracks = [...currentTracks, trackNode.id];
-                                newWeights = [...(selectedNode.data?.weights || []), 10];
-                              }
-                              updateNodeData(selectedNode.id, {
-                                tracks: newTracks,
-                                weights: newWeights,
-                              });
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isAdded}
-                              readOnly
-                              className="w-4 h-4 cursor-pointer"
-                            />
-                            <span className="text-xs text-slate-200 flex-1">
-                              {(trackNode.data?.videoId as string)?.substring(0, 8) || 'Track'}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    {nodes.filter((n) => n.type === 'track').length === 0 && (
-                      <p className="text-xs text-slate-500 italic">No track nodes created yet</p>
-                    )}
-                  </div>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed m-0 mb-3">
+                    Drag a track onto this {selectedNode.data?.mode === 'randomizer' ? 'randomizer' : 'sequence'} to move it in. The track leaves the canvas and appears in the list. Drag a list item out to restore it.
+                  </p>
                   {selectedNode.data?.tracks && selectedNode.data.tracks.length > 0 && (
                     <div>
-                      <label className="text-slate-300 block mb-2">Tracks & Weights</label>
+                      <label className="text-slate-300 block mb-2">
+                        {selectedNode.data?.mode === 'randomizer' ? 'Tracks & Weights' : 'Order'}
+                      </label>
                       <div className="bg-slate-700 rounded p-2 space-y-3 max-h-48 overflow-y-auto">
                         {selectedNode.data.tracks.map((trackId: string, i: number) => {
                           const trackNode = nodes.find((n) => n.id === trackId);
+                          const meta = getTrackDisplayMeta(trackNode?.data);
                           const weight = selectedNode.data?.weights?.[i] || 10;
                           const totalWeight = (selectedNode.data?.weights || []).reduce((a: number, b: number) => a + b, 0) || 1;
                           const percentage = Math.round((weight / totalWeight) * 100);
                           
                           return (
-                            <div key={i} className="space-y-1">
+                            <div key={trackId} className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <input
-                                  type="text"
-                                  placeholder="YouTube ID"
-                                  value={(trackNode?.data?.videoId as string) || ''}
-                                  onChange={(e) => {
-                                    // Update the track node's videoId directly
-                                    updateNodeData(trackId, { videoId: e.target.value });
-                                  }}
-                                  className="flex-1 text-xs px-2 py-1 bg-slate-600 border border-slate-500 rounded text-slate-100 placeholder-slate-500"
-                                />
+                                <span className="flex-1 text-xs text-slate-100 truncate">
+                                  {i + 1}. {meta.title}
+                                </span>
                                 <button
+                                  type="button"
                                   onClick={() => {
-                                    const idx = selectedNode.data.tracks.indexOf(trackId);
-                                    const newTracks = selectedNode.data.tracks.filter((id: string) => id !== trackId);
-                                    const newWeights = (selectedNode.data?.weights || []).filter((_: number, j: number) => j !== idx);
-                                    updateNodeData(selectedNode.id, { tracks: newTracks, weights: newWeights });
+                                    const restored = restoreTrackFromRandomizer(
+                                      nodes,
+                                      edges,
+                                      selectedNode.id,
+                                      trackId
+                                    );
+                                    if (restored) {
+                                      setNodes(restored.nodes);
+                                      setEdges(restored.edges);
+                                    }
                                   }}
                                   className="p-1 text-red-400 hover:bg-red-600 hover:text-white rounded transition"
-                                  title="Remove track"
+                                  title="Remove from sequence and restore to canvas"
                                 >
                                   <Trash2 className="w-3 h-3" />
                                 </button>
                               </div>
+                              {selectedNode.data?.mode === 'randomizer' ? (
                               <div className="flex items-center gap-2 px-1">
                                 <label className="text-xs text-slate-400">Weight:</label>
                                 <input
@@ -812,6 +854,7 @@ export default function Sidebar() {
                                 />
                                 <span className="text-xs text-slate-400 flex-1">({percentage}%)</span>
                               </div>
+                              ) : null}
                             </div>
                           );
                         })}

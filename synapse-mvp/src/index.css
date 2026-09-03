@@ -772,6 +772,17 @@ body {
   cursor: grabbing;
 }
 
+.synapse-randomizer-shell {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.synapse-track-embedded {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
 .synapse-handle {
   width: 10px !important;
   height: 10px !important;

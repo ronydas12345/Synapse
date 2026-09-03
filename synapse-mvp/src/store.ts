@@ -1,3 +1,9 @@
+import {
+  addTrackToRandomizerList,
+  normalizeWorkspaceGraph,
+  reconcileAfterNodeRemovals,
+  syncParkedTracks,
+} from './randomizerDrop';
 import { create } from 'zustand';
 import type { Node, Edge, Connection } from '@xyflow/react';
 
@@ -49,10 +55,10 @@ const loadFromStorage = () => {
     if (stored) {
       const parsed = JSON.parse(stored);
       console.log('Parsed data:', parsed);
-      return {
-        nodes: parsed.nodes || [defaultStartNode],
-        edges: parsed.edges || [],
-      };
+      return normalizeWorkspaceGraph<Node, Edge>(
+        (parsed.nodes as Node[] | undefined) || [defaultStartNode],
+        (parsed.edges as Edge[] | undefined) || []
+      );
     }
   } catch (e) {
     console.error('Failed to load from localStorage:', e);
@@ -143,7 +149,7 @@ export const usePathStore = create<PathState>((set) => ({
         }
       }
 
-      const newEdges = [
+      let newEdges = [
         ...state.edges,
         {
           ...connection,
@@ -152,23 +158,17 @@ export const usePathStore = create<PathState>((set) => ({
         } as Edge,
       ];
 
-      // Track → Randomizer: auto-add that track into the randomizer's play list
       let newNodes = state.nodes;
       if (sourceNode?.type === 'track' && targetNode?.type === 'randomizer') {
         newNodes = state.nodes.map((n) => {
           if (n.id !== targetNode.id) return n;
-          const tracks = (n.data?.tracks as string[]) || [];
-          if (tracks.includes(sourceNode.id)) return n;
-          const weights = (n.data?.weights as number[]) || [];
-          return {
-            ...n,
-            data: {
-              ...n.data,
-              tracks: [...tracks, sourceNode.id],
-              weights: [...weights, 10],
-            },
-          };
+          const added = addTrackToRandomizerList(n.data, sourceNode.id);
+          if (!added) return n;
+          return { ...n, data: { ...n.data, ...added } };
         });
+        const parked = syncParkedTracks(newNodes, newEdges);
+        newNodes = parked.nodes;
+        newEdges = parked.edges;
       }
 
       saveToStorage(newNodes, newEdges);
@@ -203,12 +203,10 @@ export const usePathStore = create<PathState>((set) => ({
   deleteEdge: (edgeId) => set((state) => {
     const edge = state.edges.find((e) => e.id === edgeId);
     const newEdges = state.edges.filter((e) => e.id !== edgeId);
-
     let newNodes = state.nodes;
     if (edge) {
       const sourceNode = state.nodes.find((n) => n.id === edge.source);
       const targetNode = state.nodes.find((n) => n.id === edge.target);
-      // Removing Track → Randomizer also removes it from the randomizer list
       if (sourceNode?.type === 'track' && targetNode?.type === 'randomizer') {
         newNodes = state.nodes.map((n) => {
           if (n.id !== targetNode.id) return n;
@@ -228,9 +226,9 @@ export const usePathStore = create<PathState>((set) => ({
         });
       }
     }
-
-    saveToStorage(newNodes, newEdges);
-    return { nodes: newNodes, edges: newEdges };
+    const parked = syncParkedTracks(newNodes, newEdges);
+    saveToStorage(parked.nodes, parked.edges);
+    return { nodes: parked.nodes, edges: parked.edges };
   }),
   deleteNode: (nodeId) => set((state) => {
     // Don't allow deleting the start node
@@ -238,36 +236,24 @@ export const usePathStore = create<PathState>((set) => ({
       return state;
     }
     const deleted = state.nodes.find((n) => n.id === nodeId);
-    const newNodes = state.nodes
+    const remaining = state.nodes
       .filter((n) => n.id !== nodeId)
-      // Also remove comment links to this deleted node
       .map((n) => {
         if (n.type === 'comment' && n.data?.linkedNodeId === nodeId) {
           return { ...n, data: { ...n.data, linkedNodeId: null } };
         }
-        // If a track was deleted, scrub it from randomizer lists
-        if (deleted?.type === 'track' && n.type === 'randomizer') {
-          const tracks = (n.data?.tracks as string[]) || [];
-          const idx = tracks.indexOf(nodeId);
-          if (idx < 0) return n;
-          const weights = [...((n.data?.weights as number[]) || [])];
-          weights.splice(idx, 1);
-          return {
-            ...n,
-            data: {
-              ...n.data,
-              tracks: tracks.filter((id) => id !== nodeId),
-              weights,
-            },
-          };
-        }
         return n;
       });
-    const newEdges = state.edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
-    saveToStorage(newNodes, newEdges);
-    return { 
-      nodes: newNodes, 
-      edges: newEdges,
+    const remainingEdges = state.edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
+    const reconciled = reconcileAfterNodeRemovals(
+      remaining,
+      remainingEdges,
+      deleted ? [deleted] : []
+    );
+    saveToStorage(reconciled.nodes, reconciled.edges);
+    return {
+      nodes: reconciled.nodes,
+      edges: reconciled.edges,
       selectedNodeId: state.selectedNodeId === nodeId ? null : state.selectedNodeId,
     };
   }),

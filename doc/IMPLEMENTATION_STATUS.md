@@ -1,7 +1,7 @@
 # Synapse — Implementation Status
 
 **Audit date:** 2026-08-26  
-**Last implementation update:** 2026-08-26 — MusicPathEngine + YouTube IFrame playback (local only, not pushed)  
+**Last implementation update:** 2026-09-02 — additional UI fixes: Sequence **move** in/out (parked hidden nodes) and comment lines behind nodes. See `doc/SYNAPSE_CURSOR_ADDITIONAL_FIX_HANDOFF.md`.  
 **Scope:** `synapse-mvp/` (primary app). Root `package.json` is leftover deps only — not the runnable app.  
 **Method:** Code inspection of `src/`, `package.json`, config, and absences (no backend/env/tests/deploy).
 
@@ -16,6 +16,20 @@ Implemented without pushing:
 - `Player.tsx` — drives queue through adapter; bottom YouTube embed + now-playing
 - `App.tsx` — Play / Pause / Skip
 - Track node + sidebar — `songTitle`, `artist`, `album`; start/end/volume/speed applied on play
+
+**2026-09-02 additional fix pass** (see `doc/SYNAPSE_CURSOR_ADDITIONAL_FIX_HANDOFF.md`):
+
+- Drag a track onto a Sequence/Randomizer **moves** it: id is appended to `data.tracks`, the Track node stays in Zustand but is `hidden` on the canvas, and graph edges to it are stripped. Drag a list item out to restore it at the drop point. Deleting a Sequence restores its tracks nearby. No `parentId` nesting and no second track store.
+- Comment → parent dotted lines are portaled into React Flow’s edges pane so they render **behind** nodes. Playback graph edges are unchanged.
+- Sequence mode still hides weight UI; engine sequence order is `data.tracks`.
+
+**2026-09-02 UI bug-fix pass** (see `doc/SYNAPSE_CURSOR_BUGFIX_HANDOFF.md`):
+
+- Sequence mode hides weight UI; switching back to RND restores saved weights.
+- Comment nodes have no graph handles; annotation links are center-to-center dotted lines (now behind nodes — additional pass).
+- Track sidebar start/end use duration-aware clocks; `endTime === 0` means full length.
+- Track node collapse/dropdown chevron removed.
+- Visualizer uses log-frequency peak mapping (`fftSize` 2048). YouTube iframe audio cannot be tapped (CORS); no fake FFT; mic is user-initiated only.
 
 **How to verify:** Start → Track (paste a YouTube URL/ID) → Play. Real video should play in the bottom bar.
 
@@ -34,7 +48,7 @@ Implemented without pushing:
 | Styling | Tailwind CSS 4 + PostCSS |
 | Backend / DB / Auth | None |
 | Env / secrets | None |
-| Tests | None |
+| Tests | Vitest (`npm test`) |
 | Deployment config | None |
 
 ### Area status matrix
@@ -50,12 +64,12 @@ Implemented without pushing:
 | Database | **MISSING** | `localStorage` key `synapse_graph_state` only | Server DB, Song table with title/artist/album |
 | Authentication | **MISSING** | — | User accounts, YouTube login |
 | Weighting | **PARTIAL** | Engine `pickWeightedIndex` + UI weights; `normalizeSplitters()` | Wire seed from UI/tests; edge-level model |
-| Track controls | **PARTIAL** | Sidebar fields; Player applies start/end/volume/speed on YouTube | Pitch/tempo/EQ still unused |
+| Track controls | **PARTIAL** | Sidebar start/end use duration-aware clocks (`endTime === 0` = full length); volume/speed applied | Pitch/tempo/EQ still unused |
 | Conditional logic | **PARTIAL** | Conditional `mode: timeRange` (hour-based) implemented in Player | Skip-penalty, cooldown |
 | Analytics | **MISSING** | — | Execution events + dashboard |
 | Export/import | **MISSING** | Auto local save only; no versioned path file/export/import/share | Versioned JSON format, named paths |
 | Billing | **MISSING** | — | Ads / premium (Phase 3) |
-| Testing | **MISSING** | No `*.test.*` / `*.spec.*` | Engine unit tests first |
+| Testing | **PARTIAL** | Vitest: engine, randomizer drop-add, track times, spectrum mapping (`npm test`) | Broader UI/e2e coverage |
 | Deployment | **MISSING** | No Vercel/Docker/CI | Hosting + env for API keys later |
 
 ### What already works (do not rebuild)
@@ -63,9 +77,9 @@ Implemented without pushing:
 - Workspace layout: toolbox ↔ inspector, React Flow canvas.
 - Node CRUD: add (click/drag), select, delete, connect with branching rules.
 - Conditional = Path Splitter: weighted random **or** time-of-day ranges.
-- Randomizer: sequence vs weighted random over linked track node IDs; play count.
+- Randomizer: sequence vs weighted random over linked track node IDs; play count. Tracks listed on a randomizer are parked (`hidden`) until dragged out.
 - Transition node UI: silence / custom audio / YouTube videoId (execution is demo-level).
-- Comment nodes + dashed link edges.
+- Comment nodes + center-to-center dotted annotation lines drawn in the edges pane (behind nodes; not play-path edges; no graph handles).
 - Graph persistence to `localStorage` on change; reload restores graph.
 - Play/Pause toggles a demo “playback” queue traversal with node highlight.
 

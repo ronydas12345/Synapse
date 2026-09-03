@@ -10,9 +10,19 @@ import EndNode from './nodes/EndNode';
 import RandomizerNode from './nodes/RandomizerNode';
 import TransitionNode from './nodes/TransitionNode';
 import CommentNode from './nodes/CommentNode';
-import DashedCommentEdge from './edges/DashedCommentEdge';
-import { useEffect, useCallback, useRef, useMemo } from 'react';
+import CommentConnections from './CommentConnections';
+import { useEffect, useCallback, useRef } from 'react';
 import type { Node, Edge } from '@xyflow/react';
+import {
+  applyTrackMovesIntoRandomizers,
+  dataTransferHasSequenceItem,
+  moveSequenceItemBetweenRandomizers,
+  normalizeWorkspaceGraph,
+  reconcileAfterNodeRemovals,
+  restoreTrackFromRandomizer,
+  sequenceItemFromDataTransfer,
+  worldPosition,
+} from '../randomizerDrop';
 
 const nodeTypes = {
   track: TrackNode,
@@ -23,10 +33,6 @@ const nodeTypes = {
   randomizer: RandomizerNode,
   transition: TransitionNode,
   comment: CommentNode,
-};
-
-const edgeTypes = {
-  dashedComment: DashedCommentEdge,
 };
 
 // Valid node type names for filtering
@@ -99,6 +105,9 @@ function CustomMinimap() {
 
   const nodes = getNodes();
   const viewport = viewportState;
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+
+  const nodeWorld = (n: (typeof nodes)[number]) => worldPosition(n, byId as Map<string, typeof n>);
 
   // Default node sizes (in pixels)
   const nodeSizes: Record<string, { width: number; height: number }> = {
@@ -107,26 +116,30 @@ function CustomMinimap() {
     track: { width: 288, height: 160 },
     conditional: { width: 288, height: 160 },
     splitter: { width: 288, height: 160 },
-    randomizer: { width: 224, height: 180 },
+    randomizer: { width: 292, height: 220 },
     transition: { width: 256, height: 100 },
     comment: { width: 256, height: 120 },
   };
 
+  const visibleNodes = nodes.filter((n) => !n.hidden);
+
   // Calculate bounds of all nodes with their actual dimensions
   let minX = 0, minY = 0, maxX = 1000, maxY = 800;
-  if (nodes.length > 0) {
-    minX = Math.min(...nodes.map((n) => n.position?.x || 0));
-    minY = Math.min(...nodes.map((n) => n.position?.y || 0));
+  if (visibleNodes.length > 0) {
+    minX = Math.min(...visibleNodes.map((n) => nodeWorld(n).x));
+    minY = Math.min(...visibleNodes.map((n) => nodeWorld(n).y));
     maxX = Math.max(
-      ...nodes.map((n) => {
+      ...visibleNodes.map((n) => {
         const size = nodeSizes[n.type ?? ''] || { width: 200, height: 150 };
-        return (n.position?.x || 0) + size.width;
+        const w = n.measured?.width ?? n.width ?? size.width;
+        return nodeWorld(n).x + w;
       })
     );
     maxY = Math.max(
-      ...nodes.map((n) => {
+      ...visibleNodes.map((n) => {
         const size = nodeSizes[n.type ?? ''] || { width: 200, height: 150 };
-        return (n.position?.y || 0) + size.height;
+        const h = n.measured?.height ?? n.height ?? size.height;
+        return nodeWorld(n).y + h;
       })
     );
   }
@@ -228,12 +241,15 @@ function CustomMinimap() {
       <div className="synapse-minimap-toolbar">{collapseBtn}</div>
       <svg width="100%" height="100%" viewBox="0 0 250 180" style={{ display: 'block' }}>
         {/* Render each node with actual dimensions */}
-        {nodes.map((node) => {
+        {visibleNodes.map((node) => {
           const size = nodeSizes[node.type ?? ''] || { width: 200, height: 150 };
-          let x = ((node.position?.x || 0) - minX) * scale + padding;
-          let y = ((node.position?.y || 0) - minY) * scale + padding;
-          let w = Math.max(2, size.width * scale);
-          let h = Math.max(2, size.height * scale);
+          const world = nodeWorld(node);
+          const nw = node.measured?.width ?? node.width ?? size.width;
+          const nh = node.measured?.height ?? node.height ?? size.height;
+          let x = (world.x - minX) * scale + padding;
+          let y = (world.y - minY) * scale + padding;
+          let w = Math.max(2, nw * scale);
+          let h = Math.max(2, nh * scale);
           const color = typeColors[node.type ?? ''] || '#64748b';
           
           // Ensure all values are valid finite numbers
@@ -284,6 +300,7 @@ const MemoizedCustomMinimap = React.memo(CustomMinimap);
 function ReactFlowContent() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { nodes: storeNodes, edges: storeEdges, setNodes: setStoreNodes, setEdges: setStoreEdges, deleteEdge, onConnect: storeOnConnect, updateNodeData } = usePathStore();
+  const { screenToFlowPosition } = useReactFlow();
 
   const [nodes, setNodes] = useNodesState(storeNodes as Node[]);
   // Keep only "real" edges in state. Dashed comment-link edges are derived and should not
@@ -293,21 +310,7 @@ function ReactFlowContent() {
   const isInitializedRef = useRef(false);
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Clean up invalid nodes on mount (only once)
-  useEffect(() => {
-    if (!isInitializedRef.current) {
-      const validNodes = storeNodes.filter((n: any) => validNodeTypes.has(n.type));
-      
-      // If we filtered out any nodes, update the store
-      if (validNodes.length !== storeNodes.length) {
-        console.log('Filtered out invalid nodes:', storeNodes.length - validNodes.length);
-        setStoreNodes(validNodes);
-        setNodes(validNodes as Node[]);
-      }
-      
-      isInitializedRef.current = true;
-    }
-  }, []);
+  // Full init (filter + flatten/park) runs after refs are declared.
 
   // Custom handler that applies recursive movement to linked comments
   const handleNodesChange = useCallback(
@@ -332,6 +335,26 @@ function ReactFlowContent() {
         // This properly handles dimensions, position, select, add, remove, etc.
         let result = applyNodeChanges(changes, currentNodes) as typeof currentNodes;
 
+        const removedIds = new Set(
+          (changes as { type?: string; id?: string }[])
+            .filter((change) => change.type === 'remove' && change.id)
+            .map((change) => change.id as string)
+        );
+        if (removedIds.size > 0) {
+          const removedNodes = currentNodes.filter((n) => removedIds.has(n.id));
+          const currentEdges = usePathStore.getState().edges as Edge[];
+          const remainingEdges = currentEdges.filter(
+            (e) => !removedIds.has(e.source) && !removedIds.has(e.target)
+          );
+          const reconciled = reconcileAfterNodeRemovals(result, remainingEdges, removedNodes);
+          result = reconciled.nodes as typeof currentNodes;
+          setEdges(reconciled.edges as Edge[]);
+          setStoreNodes(result);
+          setStoreEdges(reconciled.edges as Edge[]);
+          lastSyncedNodesRef.current = result;
+          lastSyncedEdgesRef.current = reconciled.edges as Edge[];
+        }
+
         // Apply recursive movement to linked comment children
         // Only for nodes that still exist in the result (not deleted)
         for (const [movingNodeId, movement] of movements) {
@@ -343,6 +366,10 @@ function ReactFlowContent() {
           }
           
           result = applyMovementRecursive(result, movingNodeId, movement.deltaX, movement.deltaY, new Set());
+          const nested = result.filter((n) => n.parentId === movingNodeId);
+          for (const child of nested) {
+            result = applyMovementRecursive(result, child.id, movement.deltaX, movement.deltaY, new Set());
+          }
         }
 
         return result;
@@ -389,13 +416,18 @@ function ReactFlowContent() {
 
   // Initialize from store on mount only
   useEffect(() => {
-    if (!isInitializedRef.current) {
-      setNodes(storeNodes as Node[]);
-      setEdges(storeEdges as Edge[]);
-      lastSyncedNodesRef.current = storeNodes;
-      lastSyncedEdgesRef.current = storeEdges;
-      isInitializedRef.current = true;
+    if (isInitializedRef.current) return;
+    const validNodes = storeNodes.filter((n: any) => validNodeTypes.has(n.type));
+    const normalized = normalizeWorkspaceGraph(validNodes as Node[], storeEdges as Edge[]);
+    setNodes(normalized.nodes);
+    setEdges(normalized.edges as Edge[]);
+    lastSyncedNodesRef.current = normalized.nodes;
+    lastSyncedEdgesRef.current = normalized.edges as Edge[];
+    if (normalized.nodes !== storeNodes || normalized.edges !== storeEdges) {
+      setStoreNodes(normalized.nodes);
+      setStoreEdges(normalized.edges as Edge[]);
     }
+    isInitializedRef.current = true;
   }, []);
 
   // Sync store changes to React Flow (when settings are updated or nodes deleted from sidebar)
@@ -412,7 +444,12 @@ function ReactFlowContent() {
         const synced = lastSyncedNodesRef.current.find((s) => s.id === n.id);
         if (!synced) return true;
         // Only compare type and data, ignore position
-        return n.type !== synced.type || JSON.stringify(n.data) !== JSON.stringify(synced.data);
+        return (
+          n.type !== synced.type ||
+          JSON.stringify(n.data) !== JSON.stringify(synced.data) ||
+          n.parentId !== synced.parentId ||
+          Boolean(n.hidden) !== Boolean(synced.hidden)
+        );
       });
     }
 
@@ -429,11 +466,22 @@ function ReactFlowContent() {
         setNodes((prevNodes) =>
           prevNodes.map((pn) => {
             const sn = storeNodes.find((s) => s.id === pn.id);
-            if (sn && sn.data !== pn.data) {
-              console.log('Data updated for node', pn.id);
-              return { ...pn, data: sn.data };
-            }
-            return pn;
+            if (!sn) return pn;
+            const nestingChanged =
+              pn.parentId !== sn.parentId || Boolean(pn.hidden) !== Boolean(sn.hidden);
+            const nodeDataChanged =
+              sn.data !== pn.data && JSON.stringify(sn.data) !== JSON.stringify(pn.data);
+            if (!nestingChanged && !nodeDataChanged) return pn;
+            return {
+              ...pn,
+              data: sn.data,
+              parentId: sn.parentId,
+              hidden: sn.hidden,
+              style: sn.style ?? pn.style,
+              width: sn.width ?? pn.width,
+              height: sn.height ?? pn.height,
+              ...(nestingChanged || sn.parentId ? { position: sn.position } : {}),
+            };
           })
         );
       }
@@ -452,29 +500,7 @@ function ReactFlowContent() {
     }
   }, [storeEdges, setEdges]);
 
-  // Dashed edges for linked comment nodes are derived from node data only.
-  // Important: do not set edges state on every node position update (dragging),
-  // otherwise ReactFlow will re-render edges continuously and can "flash".
-  const dashedEdges = useMemo((): Edge[] => {
-    return nodes
-      .filter((n) => n.type === 'comment' && n.data?.linkedNodeId)
-      .map((commentNode) => ({
-        id: `dashed-${commentNode.id}`,
-        source: commentNode.id,
-        target: commentNode.data.linkedNodeId as string,
-        type: 'dashedComment',
-      }));
-  }, [
-    // Depend only on the aspects that affect dashed edges, not full node objects.
-    nodes
-      .filter((n) => n.type === 'comment')
-      .map((n) => `${n.id}:${String((n.data as any)?.linkedNodeId ?? '')}`)
-      .join('|'),
-  ]);
-
-  const renderedEdges = useMemo(() => {
-    return [...(edges as Edge[]), ...dashedEdges] as Edge[];
-  }, [edges, dashedEdges]);
+  const renderedEdges = edges as Edge[];
 
   // Sync React Flow changes back to store (debounced to avoid excessive updates during drag)
   // IMPORTANT: Only sync data changes, NOT position changes. Position is transient UI state.
@@ -495,6 +521,7 @@ function ReactFlowContent() {
         position: n.position,
         data: n.data,
         selected: n.selected,
+        hidden: n.hidden,
       }));
 
       // Compare only data, not position
@@ -506,7 +533,10 @@ function ReactFlowContent() {
           const synced = lastSyncedNodesRef.current.find((s) => s.id === n.id);
           if (!synced) return true;
           // Compare only data, ignore position changes
-          return JSON.stringify(synced.data) !== JSON.stringify(n.data);
+          return (
+            JSON.stringify(synced.data) !== JSON.stringify(n.data) ||
+            Boolean(synced.hidden) !== Boolean(n.hidden)
+          );
         });
       }
 
@@ -553,42 +583,29 @@ function ReactFlowContent() {
       try {
         const nodeData = JSON.parse(data);
         
-        // Check if dropping a track node onto a randomizer
+        // Palette HTML5 drop of an existing track (nodeId) onto a randomizer.
+        // Canvas node drags use onNodeDragStop instead — React Flow does not set dataTransfer.
         if (nodeData.nodeId && nodeData.type === 'track') {
-          const rect = reactFlowRef.current.getBoundingClientRect();
-          const dropX = event.clientX - rect.left;
-          const dropY = event.clientY - rect.top;
-
-          // Find which randomizer node (if any) is closest to drop position
-          const randomizers = nodes.filter((n) => n.type === 'randomizer');
-          let closestRandomizer: Node | null = null;
-          let minDistance = 100; // pixels threshold
-
-          for (const randomizer of randomizers) {
-            const distance = Math.hypot(
-              dropX - (randomizer.position.x + 112),
-              dropY - (randomizer.position.y + 50)
-            );
-            if (distance < minDistance) {
-              minDistance = distance;
-              closestRandomizer = randomizer;
-            }
+          const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+          const pointer = {
+            id: nodeData.nodeId,
+            type: 'track' as const,
+            position: { x: flowPos.x - 8, y: flowPos.y - 8 },
+            width: 16,
+            height: 16,
+            data: {},
+          };
+          const currentEdges = (usePathStore.getState().edges as Edge[]) ?? edges;
+          const next = applyTrackMovesIntoRandomizers(nodes, currentEdges, [pointer]);
+          if (next) {
+            setNodes(next.nodes);
+            setEdges(next.edges as Edge[]);
+            setStoreNodes(next.nodes);
+            setStoreEdges(next.edges as Edge[]);
+            lastSyncedNodesRef.current = next.nodes;
+            lastSyncedEdgesRef.current = next.edges as Edge[];
           }
-
-          // If dropped on a randomizer, add the track
-          if (closestRandomizer) {
-            const currentTracks = (closestRandomizer.data?.tracks as string[]) || [];
-            if (!currentTracks.includes(nodeData.nodeId)) {
-              const newTracks = [...currentTracks, nodeData.nodeId];
-              const currentWeights = (closestRandomizer.data?.weights as number[]) || [];
-              const newWeights = [...currentWeights, 10];
-              updateNodeData(closestRandomizer.id, {
-                tracks: newTracks,
-                weights: newWeights,
-              });
-            }
-            return;
-          }
+          return;
         }
 
         // Otherwise, create new node from palette
@@ -616,8 +633,75 @@ function ReactFlowContent() {
         console.error('Error parsing dropped node', e);
       }
     },
-    [nodes, setNodes, updateNodeData]
+    [nodes, setNodes, setEdges, setStoreNodes, setStoreEdges, screenToFlowPosition]
   );
+
+  useEffect(() => {
+    const root = reactFlowRef.current;
+    if (!root) return;
+
+    const applyGraph = (next: { nodes: Node[]; edges: Edge[] }) => {
+      setNodes(next.nodes);
+      setEdges(next.edges);
+      setStoreNodes(next.nodes);
+      setStoreEdges(next.edges);
+      lastSyncedNodesRef.current = next.nodes;
+      lastSyncedEdgesRef.current = next.edges;
+    };
+
+    const onDragOverCapture = (event: DragEvent) => {
+      if (dataTransferHasSequenceItem(event.dataTransfer)) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+      }
+    };
+
+    const onDropCapture = (event: DragEvent) => {
+      const payload = sequenceItemFromDataTransfer(event.dataTransfer);
+      if (!payload) return;
+
+      const over = (event.target as HTMLElement | null)?.closest?.('[data-randomizer-id]');
+      const overId = over?.getAttribute('data-randomizer-id');
+      if (overId === payload.randomizerId) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const currentNodes = usePathStore.getState().nodes as Node[];
+      const currentEdges = usePathStore.getState().edges as Edge[];
+
+      if (overId) {
+        const moved = moveSequenceItemBetweenRandomizers(
+          currentNodes,
+          currentEdges,
+          payload.randomizerId,
+          overId,
+          payload.trackId
+        );
+        if (moved) applyGraph(moved as { nodes: Node[]; edges: Edge[] });
+        return;
+      }
+
+      const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      const restored = restoreTrackFromRandomizer(
+        currentNodes,
+        currentEdges,
+        payload.randomizerId,
+        payload.trackId,
+        flowPos
+      );
+      if (restored) applyGraph(restored as { nodes: Node[]; edges: Edge[] });
+    };
+
+    root.addEventListener('dragover', onDragOverCapture, true);
+    root.addEventListener('drop', onDropCapture, true);
+    return () => {
+      root.removeEventListener('dragover', onDragOverCapture, true);
+      root.removeEventListener('drop', onDropCapture, true);
+    };
+  }, [screenToFlowPosition, setNodes, setEdges, setStoreNodes, setStoreEdges]);
 
   // Wrapper for connect that validates through store
   const handleConnect = useCallback(
@@ -743,16 +827,29 @@ function ReactFlowContent() {
             draggedNodes.map((n) => [n.id, n.position] as const)
           );
           setNodes((current) => {
-            const next = current.map((n) =>
+            const moved = current.map((n) =>
               positions.has(n.id) ? { ...n, position: positions.get(n.id)! } : n
             );
-            setStoreNodes(next);
-            lastSyncedNodesRef.current = next;
-            return next;
+            const currentEdges = (usePathStore.getState().edges as Edge[]) ?? edges;
+            const next = applyTrackMovesIntoRandomizers(moved, currentEdges, draggedNodes);
+            if (!next) {
+              setStoreNodes(moved);
+              lastSyncedNodesRef.current = moved;
+              return moved;
+            }
+            setEdges(next.edges as Edge[]);
+            setStoreNodes(next.nodes);
+            setStoreEdges(next.edges as Edge[]);
+            lastSyncedNodesRef.current = next.nodes;
+            lastSyncedEdgesRef.current = next.edges as Edge[];
+            const selected = usePathStore.getState().selectedNodeId;
+            if (selected && next.nodes.find((n) => n.id === selected)?.hidden) {
+              usePathStore.getState().selectNode(null);
+            }
+            return next.nodes;
           });
         }}
         nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
         onNodeClick={onNodeClickHandler}
         onEdgeClick={onEdgeClick}
         onDragOver={onDragOver}
@@ -767,6 +864,7 @@ function ReactFlowContent() {
       >
         <Background color="rgba(255,255,255,0.045)" gap={24} size={1} />
         <Controls showInteractive={false} />
+        <CommentConnections nodes={nodes} />
       </ReactFlow>
 
       <button type="button" onClick={handleRemoveAll} className="synapse-canvas-action">

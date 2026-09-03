@@ -5,6 +5,11 @@ import {
   capturePlaybackAudio,
   type CaptureMode,
 } from '../playback/captureAudio';
+import {
+  mapSpectrumBars,
+  VISUALIZER_BAR_COUNT,
+  VISUALIZER_FFT_SIZE,
+} from '../playback/spectrumBars';
 
 interface AudioVisualizerProps {
   isPlaying: boolean;
@@ -41,8 +46,10 @@ export default function AudioVisualizer({
     if (!ctxRef.current) {
       ctxRef.current = new Ctx();
       const analyser = ctxRef.current.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.72;
+      analyser.fftSize = VISUALIZER_FFT_SIZE;
+      analyser.smoothingTimeConstant = 0.55;
+      analyser.minDecibels = -90;
+      analyser.maxDecibels = -28;
       analyserRef.current = analyser;
     }
     if (ctxRef.current.state === 'suspended') {
@@ -150,12 +157,16 @@ export default function AudioVisualizer({
     const gfx = canvas.getContext('2d');
     if (!gfx) return;
 
-    const bins = new Uint8Array(128);
+    const analyser = analyserRef.current;
+    const bins = new Uint8Array(analyser?.frequencyBinCount ?? 1024);
     const draw = () => {
       rafRef.current = window.requestAnimationFrame(draw);
-      const analyser = analyserRef.current;
-      if (analyser && listening) {
-        analyser.getByteFrequencyData(bins);
+      const an = analyserRef.current;
+      if (an && listening) {
+        if (bins.length !== an.frequencyBinCount) {
+          // analyser fft size changed
+        }
+        an.getByteFrequencyData(bins);
       } else {
         bins.fill(0);
       }
@@ -165,17 +176,18 @@ export default function AudioVisualizer({
       gfx.fillStyle = 'rgba(8, 10, 16, 0.92)';
       gfx.fillRect(0, 0, width, height);
 
-      const barCount = 28;
+      const sampleRate = an?.context.sampleRate || 44100;
+      const fftSize = an?.fftSize || VISUALIZER_FFT_SIZE;
+      const bars = mapSpectrumBars(bins, VISUALIZER_BAR_COUNT, sampleRate, fftSize);
       const gap = 3;
-      const barW = (width - gap * (barCount + 1)) / barCount;
-      const step = Math.max(1, Math.floor(bins.length / barCount));
+      const barW = (width - gap * (VISUALIZER_BAR_COUNT + 1)) / VISUALIZER_BAR_COUNT;
 
-      for (let i = 0; i < barCount; i++) {
-        const value = listening && isPlaying ? bins[i * step] ?? 0 : 0;
+      for (let i = 0; i < VISUALIZER_BAR_COUNT; i++) {
+        const value = listening && isPlaying ? bars[i] ?? 0 : 0;
         const h = Math.max(2, (value / 255) * (height - 8));
         const x = gap + i * (barW + gap);
         const y = height - h - 4;
-        const t = i / barCount;
+        const t = i / VISUALIZER_BAR_COUNT;
         gfx.fillStyle = `rgba(${Math.round(62 + t * 170)}, ${Math.round(207 - t * 40)}, ${Math.round(191 - t * 80)}, 0.92)`;
         if (typeof gfx.roundRect === 'function') {
           gfx.beginPath();

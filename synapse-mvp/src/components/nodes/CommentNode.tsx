@@ -1,4 +1,3 @@
-import { Handle, Position } from '@xyflow/react';
 import { usePathStore } from '../../store';
 import { Link2 } from 'lucide-react';
 
@@ -11,9 +10,7 @@ export default function CommentNode({ data = {}, id }: any) {
 
   return (
     <div className="synapse-node w-64 overflow-hidden border-[rgba(255,255,255,0.12)]">
-      {/* Handles for edges */}
-      <Handle type="target" position={Position.Left} className="synapse-handle !bg-[var(--text-faint)]" />
-      <Handle type="source" position={Position.Right} className="synapse-handle !bg-[var(--text-faint)]" />
+      {/* Annotation node: no playback graph handles. Link via the header button. */}
 
       {/* Header */}
       <div className="synapse-node-header">

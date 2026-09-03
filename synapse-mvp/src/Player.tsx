@@ -9,6 +9,7 @@ import {
   type PlayableMedia,
 } from './playback';
 import { getTrackDisplayMeta } from './trackMetadata';
+import { clampTrackTimes } from './playback/trackTimes';
 import DeckTransport from './components/DeckTransport';
 import AudioVisualizer from './components/AudioVisualizer';
 
@@ -47,6 +48,7 @@ export default function Player() {
     setPlaybackQueue,
     requestSkip,
     requestPrevious,
+    updateNodeData,
   } = usePathStore();
 
   const [statusMessage, setStatusMessage] = useState<string>('');
@@ -307,6 +309,12 @@ export default function Player() {
 
     const node = nodes.find((n) => n.id === nodeId);
 
+    if (!node) {
+      setStatusMessage(kind === 'transition' ? 'Transition missing — skipping' : 'Track missing — skipping');
+      silenceTimerRef.current = window.setTimeout(() => advance(), 400);
+      return () => clearSilenceTimer();
+    }
+
     if (kind === 'transition') {
       adapterRef.current?.stop();
       const tType = (node?.data?.type as string) || 'silence';
@@ -412,6 +420,34 @@ export default function Player() {
   const currentNode = currentParsed
     ? nodes.find((n) => n.id === currentParsed.nodeId) ?? null
     : null;
+  const currentNodeId = currentNode?.id;
+  const nodeStartTime = Number(currentNode?.data?.startTime) || 0;
+  const nodeEndTime = Number(currentNode?.data?.endTime) || 0;
+  const storedDuration = Number(currentNode?.data?.duration) || 0;
+
+  useEffect(() => {
+    if (currentParsed?.kind !== 'track' || !currentNodeId) return;
+    if (!(duration > 0)) return;
+    const clamped = clampTrackTimes(nodeStartTime, nodeEndTime, duration);
+    const durationDrift = Math.abs(storedDuration - duration) > 0.5;
+    const startDrift = Math.abs(clamped.startTime - nodeStartTime) > 0.05;
+    const endDrift =
+      nodeEndTime > 0 && Math.abs((clamped.endTime || 0) - nodeEndTime) > 0.05;
+    if (!durationDrift && !startDrift && !endDrift) return;
+    updateNodeData(currentNodeId, {
+      duration,
+      startTime: clamped.startTime,
+      ...(nodeEndTime > 0 ? { endTime: clamped.endTime } : {}),
+    });
+  }, [
+    duration,
+    currentParsed?.kind,
+    currentNodeId,
+    nodeStartTime,
+    nodeEndTime,
+    storedDuration,
+    updateNodeData,
+  ]);
 
   const nowPlaying =
     currentParsed?.kind === 'transition'

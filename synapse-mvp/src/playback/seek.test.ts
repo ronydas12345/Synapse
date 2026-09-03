@@ -21,6 +21,7 @@ describe('formatClock', () => {
   it('formats mm:ss', () => {
     expect(formatClock(0)).toBe('0:00');
     expect(formatClock(65)).toBe('1:05');
+    expect(formatClock(3737)).toBe('1:02:17');
     expect(formatClock(-4)).toBe('0:00');
   });
 });

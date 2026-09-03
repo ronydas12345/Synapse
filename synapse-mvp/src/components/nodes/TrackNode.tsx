@@ -1,7 +1,6 @@
 import { Handle, Position } from '@xyflow/react';
-import { Music, ChevronDown, ChevronUp } from 'lucide-react';
+import { Music } from 'lucide-react';
 import { usePathStore } from '../../store';
-import { useState } from 'react';
 import { getTrackDisplayMeta } from '../../trackMetadata';
 
 function CreditLine({
@@ -21,16 +20,9 @@ function CreditLine({
 }
 
 export default function TrackNode({ data = {}, id }: any) {
-  const { updateNodeData, currentPlayingNodeId } = usePathStore();
-  const [isCollapsed, setIsCollapsed] = useState(data?.isCollapsed || false);
+  const { currentPlayingNodeId } = usePathStore();
   const isPlaying = currentPlayingNodeId === id;
   const meta = getTrackDisplayMeta(data);
-
-  const toggleCollapse = () => {
-    const newCollapsed = !isCollapsed;
-    setIsCollapsed(newCollapsed);
-    updateNodeData(id, { isCollapsed: newCollapsed });
-  };
 
   return (
     <div
@@ -38,7 +30,7 @@ export default function TrackNode({ data = {}, id }: any) {
         isPlaying ? 'border-[rgba(232,164,92,0.85)]' : ''
       }`}
     >
-      <div className="synapse-node-header" onClick={toggleCollapse}>
+      <div className="synapse-node-header">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="relative">
             <div className="w-7 h-7 rounded-md grid place-items-center bg-[var(--accent-warm-dim)]">
@@ -60,18 +52,9 @@ export default function TrackNode({ data = {}, id }: any) {
             ) : null}
           </div>
         </div>
-        {isCollapsed ? (
-          <ChevronDown className="w-4 h-4 text-[var(--text-faint)] flex-shrink-0" />
-        ) : (
-          <ChevronUp className="w-4 h-4 text-[var(--text-faint)] flex-shrink-0" />
-        )}
       </div>
 
-      <div
-        className={`px-3 space-y-0.5 ${
-          isCollapsed ? 'py-2' : 'pb-3 pt-2 border-t border-[var(--border)]'
-        }`}
-      >
+      <div className="px-3 pb-3 pt-2 space-y-0.5 border-t border-[var(--border)]">
         <CreditLine
           value={meta.artist}
           emptyLabel="No artist"
@@ -88,11 +71,6 @@ export default function TrackNode({ data = {}, id }: any) {
         <p className="text-[0.65rem] text-[var(--text-faint)] m-0 font-mono">
           Play ×{data?.playCount || 1}
         </p>
-        {!isCollapsed ? (
-          <p className="text-[0.65rem] text-[var(--text-faint)] mt-2 m-0 italic">
-            Edit in inspector →
-          </p>
-        ) : null}
       </div>
 
       <Handle type="target" position={Position.Left} className="synapse-handle" aria-label="Connect into Track" />
