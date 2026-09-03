@@ -326,4 +326,76 @@ describe('buildPlaybackQueue', () => {
     );
     expect(buildPlaybackQueueKeys(g)).toHaveLength(100);
   });
+
+  it('rebuilds the queue from a chosen start node', () => {
+    const g = graph(
+      [start(), track('t1'), track('t2'), track('t3')],
+      [
+        makeEdge('start', 't1'),
+        makeEdge('t1', 't2'),
+        makeEdge('t2', 't3'),
+      ]
+    );
+    expect(buildPlaybackQueueKeys(g)).toEqual([
+      'track:t1',
+      'track:t2',
+      'track:t3',
+    ]);
+    expect(buildPlaybackQueueKeys(g, { startNodeId: 't2' })).toEqual([
+      'track:t2',
+      'track:t3',
+    ]);
+    expect(buildPlaybackQueueKeys(g, { startNodeId: 't3' })).toEqual([
+      'track:t3',
+    ]);
+  });
+
+  it('starts from a conditional when that node is the origin', () => {
+    const g = graph(
+      [
+        start(),
+        track('before'),
+        makeNode('spl', 'conditional', {
+          mode: 'random',
+          weights: [1, 1],
+          numPaths: 2,
+        }),
+        track('a'),
+        track('b'),
+      ],
+      [
+        makeEdge('start', 'before'),
+        makeEdge('before', 'spl'),
+        makeEdge('spl', 'a', 'A'),
+        makeEdge('spl', 'b', 'B'),
+      ]
+    );
+    expect(
+      buildPlaybackQueueKeys(g, { startNodeId: 'spl', rng: () => 0 })
+    ).toEqual(['track:a']);
+  });
+
+  it('does not use a comment as a playback start', () => {
+    const g = graph(
+      [
+        start(),
+        track('t1'),
+        makeNode('note', 'comment', { text: 'no' }),
+      ],
+      [makeEdge('start', 't1')]
+    );
+    const result = buildPlaybackQueueResult(g, { startNodeId: 'note' });
+    expect(result.items).toEqual([]);
+    expect(result.haltReason).toBe('no_start');
+  });
+
+  it('falls back to Start when the requested start id is missing', () => {
+    const g = graph(
+      [start(), track('t1')],
+      [makeEdge('start', 't1')]
+    );
+    expect(buildPlaybackQueueKeys(g, { startNodeId: 'gone' })).toEqual([
+      'track:t1',
+    ]);
+  });
 });

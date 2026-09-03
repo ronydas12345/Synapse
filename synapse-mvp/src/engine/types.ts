@@ -26,6 +26,12 @@ export interface BuildQueueOptions {
   maxTraverseSteps?: number;
   /** Cap for per-node playCount. Defaults to DEFAULT_MAX_PLAY_COUNT. */
   maxPlayCount?: number;
+  /**
+   * Walk from this node instead of the graph Start node.
+   * Invalid types (e.g. comment) yield an empty queue.
+   * Missing ids fall back to Start.
+   */
+  startNodeId?: string;
 }
 
 export interface BuildQueueResult {

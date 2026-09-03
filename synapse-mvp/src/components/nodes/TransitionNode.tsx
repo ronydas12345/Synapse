@@ -68,7 +68,7 @@ export default function TransitionNode({ data = {}, id }: any) {
           {transitionType === 'youtube' && videoId && (
             <p className="text-xs text-slate-400 break-all">ID: {videoId}</p>
           )}
-          <p className="text-xs text-slate-500 mt-2 italic">Edit in sidebar →</p>
+          <p className="text-xs text-slate-500 mt-2 italic">Edit in inspector →</p>
         </div>
       )}
 

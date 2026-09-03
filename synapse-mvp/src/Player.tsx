@@ -49,6 +49,7 @@ export default function Player() {
     requestSkip,
     requestPrevious,
     updateNodeData,
+    playbackOriginRequestId,
   } = usePathStore();
 
   const [statusMessage, setStatusMessage] = useState<string>('');
@@ -223,7 +224,9 @@ export default function Player() {
     if (!isPlaying) return;
     if (playbackQueue.length > 0) return;
 
-    const result = buildPlaybackQueueResult({ nodes, edges });
+    const startNodeId =
+      usePathStore.getState().selectedPlaybackStartNodeId ?? undefined;
+    const result = buildPlaybackQueueResult({ nodes, edges }, { startNodeId });
     const keys = result.items.map((item) => item.key);
     if (keys.length === 0) {
       setIsPlaying(false);
@@ -252,6 +255,46 @@ export default function Player() {
     setIsPlaying,
     setCurrentTrackIndex,
   ]);
+
+  // Marker drop: rebuild origin. Playing → restart; paused → stay paused; stopped → remember only.
+  useEffect(() => {
+    if (playbackOriginRequestId === 0) return;
+
+    const state = usePathStore.getState();
+    const startId = state.selectedPlaybackStartNodeId;
+    if (!startId) return;
+
+    clearSilenceTimer();
+    stopLocalAudio();
+    adapterRef.current?.stop();
+    activeItemKeyRef.current = null;
+    advancingRef.current = false;
+
+    if (!state.isPlaying && !sessionActiveRef.current) {
+      return;
+    }
+
+    const result = buildPlaybackQueueResult(
+      { nodes: state.nodes, edges: state.edges },
+      { startNodeId: startId }
+    );
+    const keys = result.items.map((item) => item.key);
+    const first = keys[0] ? parseQueueKey(keys[0]) : null;
+
+    sessionActiveRef.current = keys.length > 0 ? true : sessionActiveRef.current;
+    state.setCurrentTrackIndex(0);
+    state.setPlaybackQueue(keys);
+    state.setCurrentPlayingNodeId(first?.nodeId ?? (keys.length > 0 ? startId : null));
+    setStatusMessage(
+      result.haltReason === 'max_queue' || result.haltReason === 'max_steps'
+        ? 'Path truncated to prevent a runaway graph'
+        : keys.length === 0
+          ? 'Nothing to play from that node'
+          : state.isPlaying
+            ? 'Starting from selected node'
+            : 'Start position updated'
+    );
+  }, [playbackOriginRequestId]);
 
   // Pause without wiping queue; clear only when session ended
   useEffect(() => {

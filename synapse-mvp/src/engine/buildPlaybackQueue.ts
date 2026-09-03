@@ -7,6 +7,7 @@ import type {
   QueueItem,
 } from './types';
 import { toQueueKey } from './types';
+import { isPlaybackStartNodeType } from './startNode';
 
 export const DEFAULT_MAX_QUEUE_ITEMS = 500;
 export const DEFAULT_MAX_TRAVERSE_STEPS = 2000;
@@ -50,9 +51,9 @@ function clampPlayCount(raw: unknown, maxPlayCount: number): number {
 }
 
 /**
- * Walk the Music Path graph from the Start node and produce an ordered
- * playback queue. Pure aside from optional clock/rng inputs — no DOM / YouTube.
- * Never throws; runaway graphs halt via step/queue caps.
+ * Walk the Music Path graph from the Start node (or `options.startNodeId`)
+ * and produce an ordered playback queue. Pure aside from optional clock/rng
+ * inputs — no DOM / YouTube. Never throws; runaway graphs halt via caps.
  */
 export function buildPlaybackQueueResult(
   graph: GraphSnapshot,
@@ -77,7 +78,20 @@ function walkGraph(
     options.maxTraverseSteps ?? DEFAULT_MAX_TRAVERSE_STEPS;
   const maxPlayCount = options.maxPlayCount ?? DEFAULT_MAX_PLAY_COUNT;
 
-  const startNode = nodes.find((n) => n.type === 'start');
+  const requested = options.startNodeId
+    ? nodes.find((n) => n.id === options.startNodeId)
+    : undefined;
+  if (
+    options.startNodeId &&
+    requested &&
+    !isPlaybackStartNodeType(requested.type)
+  ) {
+    return { items: [], haltReason: 'no_start' };
+  }
+  const startNode =
+    requested && isPlaybackStartNodeType(requested.type)
+      ? requested
+      : nodes.find((n) => n.type === 'start');
   if (!startNode) {
     return { items: [], haltReason: 'no_start' };
   }

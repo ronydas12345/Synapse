@@ -18,6 +18,10 @@ Now-playing credits. Local feature branch `feature/now-playing-metadata`; not pu
 - Deck transport beside now-playing credits: play/pause, previous/next, ±5/±10 second seek, and a progress scrubber.
 - Audio visualizer using a real AnalyserNode. YouTube iframes block CORS audio tap, so the visualizer listens to this tab’s audio after a one-click share (the same mix coming out of the video).
 - Visualizer capture works in Firefox/Safari via microphone fallback (those browsers cannot capture tab audio). Sharing status in the visualizer is collapsible; Stop ends capture so the browser sharing bar goes away. Canvas minimap can be minimized.
+- Conditional and Sequence/Randomizer mode pickers are `<select>` dropdowns (inspector + compact on-node).
+- Right-side node inspector: slides in for a single selected node, closes on empty canvas or delete, updates in place when the selection changes.
+- Yellow-orange playback marker on the current Player node; drag it onto a playable node to rebuild the queue from that origin (`buildPlaybackQueue` `startNodeId`).
+- Off-screen Start direction arrow near the minimap; click pans to the closest Start.
 
 ### Changed
 
@@ -26,6 +30,7 @@ Now-playing credits. Local feature branch `feature/now-playing-metadata`; not pu
 - Track nodes no longer have an expand/collapse control. Comment annotations are center-to-center dotted lines with no graph handles, drawn in the React Flow edges pane **behind** nodes.
 - Start/end inspectors use the real video duration (once known) with clock-style fields. Unset end still means play to the end.
 - Visualizer bars use log-frequency peak mapping (`fftSize` 2048) so high-frequency bins are not skipped. Firefox still cannot tap YouTube iframe audio (CORS); tab share or mic remains the real FFT source — no fake spectrum.
+- Node settings moved out of the left sidebar into a dedicated right inspector. MiniMap is bottom-left; Remove All is top-left so they do not compete with the inspector.
 
 ### Fixed
 

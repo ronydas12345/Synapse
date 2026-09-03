@@ -345,6 +345,45 @@ body {
   background: rgba(62, 207, 191, 0.22);
 }
 
+.synapse-inspector-rail {
+  width: 0;
+  flex-shrink: 0;
+  align-self: stretch;
+  height: 100%;
+  overflow: hidden;
+  border-left: 0 solid var(--border);
+  background: linear-gradient(180deg, rgba(17, 20, 28, 0.98), rgba(12, 14, 20, 0.98));
+  box-shadow: var(--shadow-panel);
+  transition: width 180ms ease;
+}
+
+.synapse-inspector-rail.is-open {
+  width: 20rem;
+  border-left-width: 1px;
+}
+
+.synapse-inspector-rail-inner {
+  width: 20rem;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.9rem;
+  transform: translateX(12px);
+  opacity: 0;
+  transition: transform 180ms ease, opacity 140ms ease;
+}
+
+.synapse-inspector-rail.is-open .synapse-inspector-rail-inner {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.synapse-inspector-rail .synapse-inspector {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
 /* ——— Canvas ——— */
 .synapse-canvas-wrap {
   position: relative;
@@ -414,7 +453,7 @@ body {
 .synapse-canvas-action {
   position: absolute;
   top: 0.75rem;
-  right: 0.75rem;
+  left: 0.75rem;
   z-index: 50;
   padding: 0.4rem 0.75rem;
   font-family: var(--font-mono);
@@ -795,7 +834,8 @@ body {
 }
 
 .synapse-minimap-wrap .synapse-minimap-toggle,
-.synapse-minimap-wrap .synapse-minimap-panel {
+.synapse-minimap-wrap .synapse-minimap-panel,
+.synapse-minimap-wrap .synapse-start-arrow {
   pointer-events: auto;
 }
 
@@ -836,4 +876,65 @@ body {
   overflow: hidden;
   background: rgba(12, 14, 20, 0.92) !important;
   box-shadow: var(--shadow-panel);
+}
+
+.synapse-start-arrow {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 164, 92, 0.55);
+  background: rgba(17, 20, 28, 0.95);
+  color: var(--accent-warm);
+  box-shadow: 0 0 12px rgba(232, 164, 92, 0.35);
+  cursor: pointer;
+}
+
+.synapse-start-arrow:hover {
+  background: var(--accent-warm-dim);
+}
+
+.synapse-playback-marker-toolbar.react-flow__node-toolbar {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+}
+
+.synapse-playback-marker {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #f0a14a;
+  border: 2px solid #ffe0b8;
+  box-shadow: 0 0 12px rgba(240, 161, 74, 0.95), 0 0 0 1px rgba(0, 0, 0, 0.45);
+  cursor: grab;
+}
+
+.synapse-playback-marker:active {
+  cursor: grabbing;
+}
+
+.react-flow__node.synapse-playback-drop-ok {
+  box-shadow: 0 0 0 2px rgba(232, 164, 92, 0.7), 0 8px 28px rgba(0, 0, 0, 0.4);
+}
+
+.synapse-node-mode-select {
+  max-width: 7.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem !important;
+  letter-spacing: 0.02em;
+  padding: 0.15rem 0.25rem !important;
+  border-radius: 6px !important;
+  background: var(--bg-deep) !important;
+  border: 1px solid var(--border-strong) !important;
+  color: var(--text) !important;
+  cursor: pointer;
 }

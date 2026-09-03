@@ -1,5 +1,6 @@
 ﻿import ReactFlowCanvas from './components/ReactFlowCanvas';
 import Sidebar from './components/Sidebar';
+import InspectorPanel from './components/InspectorPanel';
 import Player from './Player';
 import TrackMetadataAutofill from './TrackMetadataAutofill';
 import { usePathStore } from './store';
@@ -40,6 +41,7 @@ export default function App() {
       <div className="flex flex-1 overflow-hidden min-h-0">
         <Sidebar />
         <ReactFlowCanvas />
+        <InspectorPanel />
       </div>
 
       <TrackMetadataAutofill />

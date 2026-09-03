@@ -2,6 +2,7 @@ import { Handle, Position } from '@xyflow/react';
 import { GitBranch, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePathStore } from '../../store';
 import { useState, memo } from 'react';
+import { CONDITIONAL_MODE_OPTIONS, conditionalModePatch } from '../../nodeMode';
 
 const spinnerHideStyles = `
   input[type="number"].hide-spinners::-webkit-outer-spin-button,
@@ -82,20 +83,22 @@ function ConditionalNode({ data = {}, id }: any) {
               {mode === 'timeRange' ? 'Conditional (Time)' : 'Conditional'}
             </strong>
           </div>
-          <button
-            onClick={(e) => {
+          <select
+            className="nodrag nopan nowheel synapse-node-mode-select"
+            value={mode === 'timeRange' ? 'timeRange' : 'random'}
+            title="Conditional type"
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
               e.stopPropagation();
-              updateNodeData(id, { mode: mode === 'random' ? 'timeRange' : 'random' });
+              updateNodeData(id, conditionalModePatch(data, e.target.value));
             }}
-            className={`text-[0.65rem] px-2 py-1 rounded-md border font-mono tracking-wide transition ${
-              mode === 'timeRange'
-                ? 'bg-[rgba(125,206,160,0.15)] border-[rgba(125,206,160,0.4)] text-[var(--ok)]'
-                : 'bg-[var(--accent-dim)] border-[rgba(62,207,191,0.4)] text-[var(--accent)]'
-            }`}
-            title={`Switch to ${mode === 'random' ? 'Time Range' : 'Random'} mode`}
           >
-            {mode === 'timeRange' ? 'TIME' : 'RND'}
-          </button>
+            {CONDITIONAL_MODE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
           {isCollapsed ? (
             <ChevronDown className="w-4 h-4 text-slate-400" />
           ) : (

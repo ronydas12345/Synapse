@@ -11,6 +11,8 @@ import RandomizerNode from './nodes/RandomizerNode';
 import TransitionNode from './nodes/TransitionNode';
 import CommentNode from './nodes/CommentNode';
 import CommentConnections from './CommentConnections';
+import PlaybackMarker from './PlaybackMarker';
+import StartDirectionArrow from './StartDirectionArrow';
 import { useEffect, useCallback, useRef } from 'react';
 import type { Node, Edge } from '@xyflow/react';
 import {
@@ -23,6 +25,11 @@ import {
   sequenceItemFromDataTransfer,
   worldPosition,
 } from '../randomizerDrop';
+import {
+  canDropPlaybackMarkerOn,
+  dataTransferIsPlaybackMarker,
+  isPlaybackMarkerDrag,
+} from '../playbackMarker';
 
 const nodeTypes = {
   track: TrackNode,
@@ -183,7 +190,7 @@ function CustomMinimap() {
   const wrapStyle: React.CSSProperties = {
     position: 'absolute',
     bottom: 10,
-    right: 10,
+    left: 52,
     zIndex: 50,
   };
 
@@ -211,6 +218,7 @@ function CustomMinimap() {
             <div style={{ padding: '10px', color: '#999', fontSize: '12px' }}>Minimap loading...</div>
           </div>
         )}
+        <StartDirectionArrow />
       </div>
     );
   }
@@ -290,6 +298,7 @@ function CustomMinimap() {
       </svg>
     </div>
       )}
+      <StartDirectionArrow />
     </div>
   );
 }
@@ -649,7 +658,32 @@ function ReactFlowContent() {
       lastSyncedEdgesRef.current = next.edges;
     };
 
+    const clearPlaybackDropHighlights = () => {
+      root
+        .querySelectorAll('.synapse-playback-drop-ok')
+        .forEach((el) => el.classList.remove('synapse-playback-drop-ok'));
+    };
+
+    const highlightPlaybackDrop = (event: DragEvent) => {
+      clearPlaybackDropHighlights();
+      const nodeEl = (event.target as HTMLElement | null)?.closest?.(
+        '.react-flow__node'
+      ) as HTMLElement | null;
+      const id = nodeEl?.getAttribute('data-id');
+      if (!id) return;
+      const node = usePathStore.getState().nodes.find((n) => n.id === id);
+      if (nodeEl && node && !node.hidden && canDropPlaybackMarkerOn(node.type)) {
+        nodeEl.classList.add('synapse-playback-drop-ok');
+      }
+    };
+
     const onDragOverCapture = (event: DragEvent) => {
+      if (isPlaybackMarkerDrag(event.dataTransfer)) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        highlightPlaybackDrop(event);
+        return;
+      }
       if (dataTransferHasSequenceItem(event.dataTransfer)) {
         event.preventDefault();
         if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
@@ -657,6 +691,22 @@ function ReactFlowContent() {
     };
 
     const onDropCapture = (event: DragEvent) => {
+      if (isPlaybackMarkerDrag(event.dataTransfer) || dataTransferIsPlaybackMarker(event.dataTransfer)) {
+        event.preventDefault();
+        event.stopPropagation();
+        clearPlaybackDropHighlights();
+        const nodeEl = (event.target as HTMLElement | null)?.closest?.(
+          '.react-flow__node'
+        );
+        const id = nodeEl?.getAttribute('data-id');
+        const node = id
+          ? usePathStore.getState().nodes.find((n) => n.id === id)
+          : undefined;
+        if (node && !node.hidden && canDropPlaybackMarkerOn(node.type)) {
+          usePathStore.getState().setPlaybackStartNode(node.id);
+        }
+        return;
+      }
       const payload = sequenceItemFromDataTransfer(event.dataTransfer);
       if (!payload) return;
 
@@ -695,11 +745,15 @@ function ReactFlowContent() {
       if (restored) applyGraph(restored as { nodes: Node[]; edges: Edge[] });
     };
 
+    const onDragEndCapture = () => clearPlaybackDropHighlights();
+
     root.addEventListener('dragover', onDragOverCapture, true);
     root.addEventListener('drop', onDropCapture, true);
+    window.addEventListener('dragend', onDragEndCapture);
     return () => {
       root.removeEventListener('dragover', onDragOverCapture, true);
       root.removeEventListener('drop', onDropCapture, true);
+      window.removeEventListener('dragend', onDragEndCapture);
     };
   }, [screenToFlowPosition, setNodes, setEdges, setStoreNodes, setStoreEdges]);
 
@@ -797,6 +851,8 @@ function ReactFlowContent() {
     setEdges([]);
     setStoreNodes([]);
     setStoreEdges([]);
+    usePathStore.getState().setSelection([]);
+    usePathStore.getState().setPlaybackStartNode(null);
   }, [setNodes, setEdges, setStoreNodes, setStoreEdges]);
 
   const onNodeClickHandler = useCallback(
@@ -844,13 +900,20 @@ function ReactFlowContent() {
             lastSyncedEdgesRef.current = next.edges as Edge[];
             const selected = usePathStore.getState().selectedNodeId;
             if (selected && next.nodes.find((n) => n.id === selected)?.hidden) {
-              usePathStore.getState().selectNode(null);
+              usePathStore.getState().setSelection([]);
             }
             return next.nodes;
           });
         }}
         nodeTypes={nodeTypes}
         onNodeClick={onNodeClickHandler}
+        onPaneClick={() => usePathStore.getState().setSelection([])}
+        onSelectionChange={({ nodes: selected }) => {
+          const ids = selected.filter((n) => !n.hidden).map((n) => n.id);
+          const prev = usePathStore.getState().selectedNodeIds;
+          if (ids.length === prev.length && ids.every((id) => prev.includes(id))) return;
+          usePathStore.getState().setSelection(ids);
+        }}
         onEdgeClick={onEdgeClick}
         onDragOver={onDragOver}
         onDrop={onDrop}
@@ -863,7 +926,8 @@ function ReactFlowContent() {
         colorMode="dark"
       >
         <Background color="rgba(255,255,255,0.045)" gap={24} size={1} />
-        <Controls showInteractive={false} />
+        <Controls showInteractive={false} position="bottom-left" />
+        <PlaybackMarker />
         <CommentConnections nodes={nodes} />
       </ReactFlow>
 

@@ -1,7 +1,7 @@
 # Synapse — Implementation Status
 
 **Audit date:** 2026-08-26  
-**Last implementation update:** 2026-09-02 — additional UI fixes: Sequence **move** in/out (parked hidden nodes) and comment lines behind nodes. See `doc/SYNAPSE_CURSOR_ADDITIONAL_FIX_HANDOFF.md`.  
+**Last implementation update:** 2026-09-02 — UI/playback marker pass: mode dropdowns, right-side inspector, draggable playback marker, off-screen Start arrow. See `doc/SYNAPSE_CURSOR_UI_PLAYBACK_FIX_HANDOFF.md`.  
 **Scope:** `synapse-mvp/` (primary app). Root `package.json` is leftover deps only — not the runnable app.  
 **Method:** Code inspection of `src/`, `package.json`, config, and absences (no backend/env/tests/deploy).
 
@@ -31,7 +31,14 @@ Implemented without pushing:
 - Track node collapse/dropdown chevron removed.
 - Visualizer uses log-frequency peak mapping (`fftSize` 2048). YouTube iframe audio cannot be tapped (CORS); no fake FFT; mic is user-initiated only.
 
-**How to verify:** Start → Track (paste a YouTube URL/ID) → Play. Real video should play in the bottom bar.
+**2026-09-02 UI/playback marker pass** (see `doc/SYNAPSE_CURSOR_UI_PLAYBACK_FIX_HANDOFF.md`):
+
+- Conditional and Sequence/Randomizer modes use `<select>` dropdowns (inspector + compact on-node). Weights stay on the node when switching SEQ ↔ RND.
+- Selected-node settings live in a right-side inspector that slides in for a single selection and closes on empty canvas / delete. Left sidebar is palette + tools only. MiniMap and Remove All sit on the left of the canvas.
+- Yellow-orange playback marker follows the current Player node (or chosen start / Start when stopped). Drag onto a playable node rebuilds `buildPlaybackQueue` from that origin; comments are invalid. Start-from is not persisted.
+- Off-screen Start nodes show a directional arrow at the minimap edge; click pans to the closest Start.
+
+**How to verify:** Start → Track (paste a YouTube URL/ID) → Play. Real video should play in the bottom bar. Select a node to open the right inspector. Drag the yellow-orange marker onto another track while paused, then Play.
 
 ---
 
@@ -55,7 +62,7 @@ Implemented without pushing:
 
 | Area | Status | Evidence | Missing work |
 |---|---|---|---|
-| App shell | **PARTIAL** | `App.tsx`: top bar (title + Play/Pause), left `Sidebar`, main canvas, bottom `Player` (renders `null`) | Account, OAuth status, Skip, global settings, theme, crossfade, API sync |
+| App shell | **PARTIAL** | `App.tsx`: top bar, left `Sidebar` (palette), canvas, right `InspectorPanel`, bottom `Player` | Account, OAuth status, global settings, theme, crossfade, API sync |
 | Node canvas | **DONE** | `ReactFlowCanvas.tsx`: zoom/pan, drag-drop add, connect, select, delete, minimap, connection rules | Minor polish; “Remove All” can wipe Start |
 | Node types | **PARTIAL** | Toolbox: start, track, conditional, randomizer, transition, comment, end | Artist, Genre nodes; dedicated Splitter label (conditional fills role) |
 | Path execution | **PARTIAL** | `src/engine/buildPlaybackQueue.ts` — pure graph walk, weighted + time-range, optional seed | More node types; unit tests |
@@ -103,7 +110,7 @@ Implemented without pushing:
 |---|---|---|---|---|
 | Top bar (account, OAuth, play/pause/skip, settings, theme) | `App.tsx` Play/Pause only | PARTIAL | Rest of controls | P1 |
 | Left toolbox | `Sidebar.tsx` `NODE_TYPES` | PARTIAL | Artist, Genre | P1 |
-| Contextual inspector | `Sidebar.tsx` selected-node panels | PARTIAL | Structured song metadata; wire controls to player | P1 |
+| Contextual inspector | `InspectorPanel.tsx` + `NodeInspector.tsx` | PARTIAL | Structured song metadata; wire remaining unused controls | P1 |
 | Zoomable node canvas | `ReactFlowCanvas.tsx` | DONE | — | — |
 | Track node | `TrackNode.tsx` + inspector | PARTIAL | title/artist/album; real playback | P0 |
 | Artist node | — | MISSING | New node type + resolve-to-track behavior | P2 |

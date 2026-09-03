@@ -17,3 +17,8 @@ export type {
   GraphSnapshot,
 } from './types';
 export { parseQueueKey, toQueueKey } from './types';
+export {
+  isPlaybackStartNodeType,
+  PLAYBACK_START_NODE_TYPES,
+} from './startNode';
+export type { PlaybackStartNodeType } from './startNode';

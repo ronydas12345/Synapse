@@ -11,25 +11,35 @@ interface PathState {
   nodes: Node[];
   edges: Edge[];
   selectedNodeId: string | null;
+  selectedNodeIds: string[];
   commentLinkingId: string | null;
   isPlaying: boolean;
   currentTrackIndex: number;
   currentPlayingNodeId: string | null;
   playbackQueue: string[]; // Queue keys: `track:{nodeId}` | `transition:{nodeId}`
+  /**
+   * Chosen playback origin from the marker. Transient — not persisted.
+   * Null means walk from the graph Start node.
+   */
+  selectedPlaybackStartNodeId: string | null;
   /** Incremented when user hits Skip — Player owns the actual advance. */
   skipRequestId: number;
   /** Incremented when user hits Previous — Player owns restart vs prior item. */
   previousRequestId: number;
+  /** Incremented when the playback marker is dropped on a new origin. */
+  playbackOriginRequestId: number;
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
   onConnect: (connection: Connection) => void;
   selectNode: (id: string | null) => void;
+  setSelection: (ids: string[]) => void;
   setCommentLinkingId: (id: string | null) => void;
   updateNodeData: (id: string, data: any) => void;
   setPlaybackQueue: (queue: string[]) => void;
   setIsPlaying: (playing: boolean) => void;
   setCurrentTrackIndex: (index: number) => void;
   setCurrentPlayingNodeId: (id: string | null) => void;
+  setPlaybackStartNode: (id: string | null) => void;
   requestSkip: () => void;
   requestPrevious: () => void;
   deleteEdge: (edgeId: string) => void;
@@ -81,13 +91,16 @@ export const usePathStore = create<PathState>((set) => ({
   nodes: initialState.nodes,
   edges: initialState.edges,
   selectedNodeId: null,
+  selectedNodeIds: [],
   commentLinkingId: null,
   isPlaying: false,
   currentTrackIndex: 0,
   currentPlayingNodeId: null,
   playbackQueue: [],
+  selectedPlaybackStartNodeId: null,
   skipRequestId: 0,
   previousRequestId: 0,
+  playbackOriginRequestId: 0,
 
   setNodes: (nodes) => {
     set({ nodes });
@@ -174,7 +187,16 @@ export const usePathStore = create<PathState>((set) => ({
       saveToStorage(newNodes, newEdges);
       return { nodes: newNodes, edges: newEdges };
     }),
-  selectNode: (id) => set({ selectedNodeId: id }),
+  selectNode: (id) =>
+    set({
+      selectedNodeId: id,
+      selectedNodeIds: id ? [id] : [],
+    }),
+  setSelection: (ids) =>
+    set({
+      selectedNodeIds: ids,
+      selectedNodeId: ids.length === 1 ? ids[0] : null,
+    }),
   setCommentLinkingId: (id) => set({ commentLinkingId: id }),
   updateNodeData: (id, data) =>
     set((state) => {
@@ -196,6 +218,11 @@ export const usePathStore = create<PathState>((set) => ({
   setIsPlaying: (playing) => set({ isPlaying: playing }),
   setCurrentTrackIndex: (index) => set({ currentTrackIndex: index }),
   setCurrentPlayingNodeId: (id) => set({ currentPlayingNodeId: id }),
+  setPlaybackStartNode: (id) =>
+    set((state) => ({
+      selectedPlaybackStartNodeId: id,
+      playbackOriginRequestId: state.playbackOriginRequestId + 1,
+    })),
   requestSkip: () =>
     set((state) => ({ skipRequestId: state.skipRequestId + 1 })),
   requestPrevious: () =>
@@ -251,10 +278,16 @@ export const usePathStore = create<PathState>((set) => ({
       deleted ? [deleted] : []
     );
     saveToStorage(reconciled.nodes, reconciled.edges);
+    const remainingIds = state.selectedNodeIds.filter((id) => id !== nodeId);
     return {
       nodes: reconciled.nodes,
       edges: reconciled.edges,
-      selectedNodeId: state.selectedNodeId === nodeId ? null : state.selectedNodeId,
+      selectedNodeIds: remainingIds,
+      selectedNodeId: remainingIds.length === 1 ? remainingIds[0] : null,
+      selectedPlaybackStartNodeId:
+        state.selectedPlaybackStartNodeId === nodeId
+          ? null
+          : state.selectedPlaybackStartNodeId,
     };
   }),
   normalizeSplitters: () =>

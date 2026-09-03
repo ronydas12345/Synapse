@@ -4,6 +4,7 @@ import { usePathStore } from '../../store';
 import { useState, memo } from 'react';
 import { addTrackToRandomizerList, moveSequenceItemBetweenRandomizers, parseSequenceItemPayload, reorderRandomizerTracks, restoreTrackFromRandomizer, SEQUENCE_ITEM_MIME, syncParkedTracks } from '../../randomizerDrop';
 import { getTrackDisplayMeta } from '../../trackMetadata';
+import { RANDOMIZER_MODE_OPTIONS, randomizerModePatch } from '../../nodeMode';
 
 const spinnerHideStyles = `
   input[type="number"].hide-spinners::-webkit-outer-spin-button,
@@ -191,23 +192,22 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
               </span>
             ) : null}
           </div>
-          <button
-            type="button"
-            onClick={(e) => {
+          <select
+            className="nodrag nopan nowheel synapse-node-mode-select"
+            value={mode === 'randomizer' ? 'randomizer' : 'sequence'}
+            title="Playback mode"
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
               e.stopPropagation();
-              updateNodeData(id, {
-                mode: mode === 'sequence' ? 'randomizer' : 'sequence',
-              });
+              updateNodeData(id, randomizerModePatch(data, e.target.value));
             }}
-            className={`nodrag nopan text-[0.65rem] px-2 py-1 rounded-md border font-mono tracking-wide transition ${
-              mode === 'randomizer'
-                ? 'bg-[var(--accent-dim)] border-[rgba(62,207,191,0.4)] text-[var(--accent)]'
-                : 'bg-[rgba(120,160,255,0.12)] border-[rgba(120,160,255,0.35)] text-[rgb(160,190,255)]'
-            }`}
-            title={`Switch to ${mode === 'randomizer' ? 'Sequence' : 'Randomizer'} mode`}
           >
-            {mode === 'randomizer' ? 'RND' : 'SEQ'}
-          </button>
+            {RANDOMIZER_MODE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
           {isCollapsed ? (
             <ChevronDown className="w-4 h-4 text-slate-400" />
           ) : (
