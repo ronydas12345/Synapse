@@ -247,11 +247,11 @@ The following classification is the starting point for Version 2.
 | Cloud playlist storage | MISSING | P2 |
 | Settings | MISSING / PARTIAL | P1/P2 |
 | Light/dark mode | PARTIAL / current dark theme | P1 |
-| Playing/editing screen separation | MISSING | P2 |
-| Future-song visualization | MISSING | P2 |
-| Audio visualizer | MISSING | P2 |
-| Large play button | MISSING | P2 |
-| Song controls in playing screen | PARTIAL | P2 |
+| Playing/editing screen separation | DONE | P2 |
+| Future-song visualization | DONE | P2 |
+| Audio visualizer | DONE | P2 |
+| Large play button | DONE | P2 |
+| Song controls in playing screen | DONE | P2 |
 | Analytics | MISSING | P3 |
 | Banner ads | MISSING | P3 |
 | Mid-roll ads | MISSING | P3 |
@@ -1256,13 +1256,13 @@ Cursor should work through the following order unless repository inspection reve
 
 ## P2 — Listening experience
 
-- [ ] Separate editing and playing screens.
-- [ ] Future-path visualization.
-- [ ] Improved player.
-- [ ] Progress controls.
-- [ ] Audio visualizer.
-- [ ] Large play button.
-- [ ] Improved queue/path display.
+- [x] Separate editing and playing screens.
+- [x] Future-path visualization.
+- [x] Improved player.
+- [x] Progress controls.
+- [x] Audio visualizer.
+- [x] Large play button.
+- [x] Improved queue/path display.
 
 ## P2 — Social/cloud
 

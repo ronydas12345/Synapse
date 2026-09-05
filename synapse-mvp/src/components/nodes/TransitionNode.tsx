@@ -20,7 +20,7 @@ export default function TransitionNode({ data = {}, id }: any) {
   const videoId = data?.videoId || '';
 
   return (
-    <div className={`synapse-node w-64 overflow-hidden ${isPlaying ? 'border-[rgba(232,164,92,0.85)]' : 'border-[rgba(232,164,92,0.4)]'}`}>
+    <div className={`synapse-node w-64 overflow-hidden is-transition ${isPlaying ? 'is-playing' : ''}`}>
       {/* Header */}
       <div
         className="synapse-node-header"

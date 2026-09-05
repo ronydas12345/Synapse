@@ -1,5 +1,5 @@
 import { usePathStore } from './store';
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import type { Node } from '@xyflow/react';
 import { buildPlaybackQueueResult, parseQueueKey } from './engine';
 import {
@@ -12,6 +12,8 @@ import { getTrackDisplayMeta } from './trackMetadata';
 import { clampTrackTimes } from './playback/trackTimes';
 import DeckTransport from './components/DeckTransport';
 import AudioVisualizer from './components/AudioVisualizer';
+import PlayingScreen from './components/PlayingScreen';
+import { buildListenRows } from './listenPath';
 
 function nodeToPlayable(node: Node | undefined, nodeId: string): PlayableMedia | null {
   if (!node) return null;
@@ -50,6 +52,9 @@ export default function Player() {
     requestPrevious,
     updateNodeData,
     playbackOriginRequestId,
+    uiMode,
+    selectedPlaybackStartNodeId,
+    setPlaybackStartNode,
   } = usePathStore();
 
   const [statusMessage, setStatusMessage] = useState<string>('');
@@ -506,6 +511,26 @@ export default function Player() {
   const seekStart = Number(currentNode?.data?.startTime) || 0;
   const seekEnd = Number(currentNode?.data?.endTime) || 0;
   const queueActive = playbackQueue.length > 0;
+  const listen = uiMode === 'listen';
+
+  const previewQueue = useMemo(() => {
+    if (playbackQueue.length > 0) return playbackQueue;
+    const startNodeId = selectedPlaybackStartNodeId ?? undefined;
+    return buildPlaybackQueueResult({ nodes, edges }, { startNodeId }).items.map(
+      (item) => item.key
+    );
+  }, [playbackQueue, nodes, edges, selectedPlaybackStartNodeId]);
+
+  const listenRows = useMemo(
+    () =>
+      buildListenRows({
+        nodes,
+        edges,
+        queue: previewQueue,
+        currentIndex: playbackQueue.length > 0 ? currentTrackIndex : -1,
+      }),
+    [nodes, edges, previewQueue, playbackQueue.length, currentTrackIndex]
+  );
 
   const handleSeekBy = (delta: number) => {
     const audio = audioElementRef.current;
@@ -536,56 +561,83 @@ export default function Player() {
   };
 
   return (
-    <div className="synapse-deck">
+    <div className={`synapse-deck ${listen ? 'is-listen' : ''}`}>
       <div
         ref={ytContainerRef}
         className="synapse-deck-screen"
         aria-label="YouTube player"
       />
-      <div className="synapse-deck-main">
-        <div className="synapse-deck-meta">
-          <p className="synapse-deck-title">
-            {nowPlaying?.title || (isPlaying ? 'Starting…' : 'Ready')}
-          </p>
-          {nowPlaying && currentParsed?.kind === 'track' ? (
-            <>
-              <p
-                className={`synapse-deck-sub ${nowPlaying.artist ? '' : 'is-empty'}`}
-              >
-                {nowPlaying.artist || 'No artist'}
-              </p>
-              <p
-                className={`synapse-deck-album ${nowPlaying.album ? '' : 'is-empty'}`}
-              >
-                {nowPlaying.album || 'No album'}
-              </p>
-            </>
-          ) : nowPlaying?.artist ? (
-            <p className="synapse-deck-sub">{nowPlaying.artist}</p>
-          ) : null}
-          <p className="synapse-deck-status">
-            {statusMessage ||
-              (playerReady ? 'YouTube player ready' : 'Loading YouTube player…')}
-          </p>
-          {queueActive ? (
-            <div className="synapse-deck-queue">
-              Queue {currentTrackIndex + 1} / {playbackQueue.length}
-            </div>
-          ) : null}
-        </div>
-        <DeckTransport
+      {listen ? (
+        <PlayingScreen
+          nowPlaying={nowPlaying}
           isPlaying={isPlaying}
-          disabled={!queueActive}
+          queueActive={queueActive}
           currentTime={currentTime}
           duration={duration}
+          statusMessage={statusMessage}
+          queueLabel={
+            queueActive
+              ? `Queue ${currentTrackIndex + 1} / ${playbackQueue.length}`
+              : ''
+          }
+          pathHeading={queueActive ? 'Path' : 'Upcoming'}
+          rows={listenRows}
+          vizAudio={vizAudio}
           onTogglePlay={() => setIsPlaying(!isPlaying)}
           onPrevious={() => requestPrevious()}
           onNext={() => requestSkip()}
           onSeekBy={handleSeekBy}
           onSeekTo={handleSeekTo}
+          onJump={(id) => setPlaybackStartNode(id)}
         />
-      </div>
-      <AudioVisualizer isPlaying={isPlaying} mediaElement={vizAudio} />
+      ) : (
+        <>
+          <div className="synapse-deck-main">
+            <div className="synapse-deck-meta">
+              <p className="synapse-deck-title">
+                {nowPlaying?.title || (isPlaying ? 'Starting…' : 'Ready')}
+              </p>
+              {nowPlaying && currentParsed?.kind === 'track' ? (
+                <>
+                  <p
+                    className={`synapse-deck-sub ${nowPlaying.artist ? '' : 'is-empty'}`}
+                  >
+                    {nowPlaying.artist || 'No artist'}
+                  </p>
+                  <p
+                    className={`synapse-deck-album ${nowPlaying.album ? '' : 'is-empty'}`}
+                  >
+                    {nowPlaying.album || 'No album'}
+                  </p>
+                </>
+              ) : nowPlaying?.artist ? (
+                <p className="synapse-deck-sub">{nowPlaying.artist}</p>
+              ) : null}
+              <p className="synapse-deck-status">
+                {statusMessage ||
+                  (playerReady ? 'YouTube player ready' : 'Loading YouTube player…')}
+              </p>
+              {queueActive ? (
+                <div className="synapse-deck-queue">
+                  Queue {currentTrackIndex + 1} / {playbackQueue.length}
+                </div>
+              ) : null}
+            </div>
+            <DeckTransport
+              isPlaying={isPlaying}
+              disabled={!queueActive}
+              currentTime={currentTime}
+              duration={duration}
+              onTogglePlay={() => setIsPlaying(!isPlaying)}
+              onPrevious={() => requestPrevious()}
+              onNext={() => requestSkip()}
+              onSeekBy={handleSeekBy}
+              onSeekTo={handleSeekTo}
+            />
+          </div>
+          <AudioVisualizer isPlaying={isPlaying} mediaElement={vizAudio} />
+        </>
+      )}
     </div>
   );
 }

@@ -17,13 +17,31 @@
   --accent-warm-dim: rgba(232, 164, 92, 0.14);
   --danger: #f07178;
   --ok: #7dcea0;
+  --warning: #e8a45c;
   --font-ui: "Outfit", "Segoe UI", sans-serif;
   --font-display: "Syne", "Outfit", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-node: "Outfit", "Segoe UI", sans-serif;
   --radius: 10px;
   --radius-sm: 6px;
+  --border-width: 1px;
+  --node-bg: #161b27;
+  --node-border: #3a4254;
+  --node-header: #1a2030;
+  --node-track: #8b93a7;
+  --node-conditional: #3ecfbf;
+  --node-randomizer: #78a0ff;
+  --node-transition: #e8a45c;
+  --node-comment: #8b93a7;
+  --node-start: #7dcea0;
+  --node-end: #f07178;
+  --edge-color: #8b93a7;
+  --player-bg: #0a0c12;
+  --input-bg: #0c0e14;
+  --grid-line: rgba(154, 163, 184, 0.16);
   --shadow-panel: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
     0 12px 40px rgba(0, 0, 0, 0.35);
+  --inspector-rail-width: 20rem;
 }
 
 html,
@@ -77,10 +95,12 @@ body {
 /* ——— App shell ——— */
 .synapse-app {
   background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(62, 207, 191, 0.07), transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, rgba(232, 164, 92, 0.05), transparent 50%),
-    linear-gradient(180deg, #0d1018 0%, var(--bg-void) 40%, #08090d 100%);
+    radial-gradient(1200px 600px at 10% -10%, var(--accent-dim), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, var(--accent-warm-dim), transparent 50%),
+    linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-void) 40%, var(--bg-void) 100%);
   color: var(--text);
+  container-type: inline-size;
+  container-name: synapse-shell;
 }
 
 .synapse-topbar {
@@ -92,7 +112,7 @@ body {
   width: 100%;
   box-sizing: border-box;
   padding: 0.85rem 1.75rem;
-  background: rgba(12, 14, 20, 0.92);
+  background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03);
@@ -124,6 +144,35 @@ body {
   text-transform: uppercase;
   color: var(--text-faint);
   margin-top: 0.2rem;
+}
+
+.synapse-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+}
+
+.synapse-mode-btn {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: none;
+  border-radius: 999px;
+  padding: 0.4rem 0.95rem;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.synapse-mode-btn.is-active {
+  background: var(--accent-dim);
+  color: var(--accent);
 }
 
 .synapse-transport {
@@ -208,7 +257,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0.9rem;
-  background: linear-gradient(180deg, rgba(17, 20, 28, 0.98), rgba(12, 14, 20, 0.98));
+  background: var(--bg-panel);
   border-right: 1px solid var(--border);
   box-shadow: var(--shadow-panel);
 }
@@ -352,18 +401,18 @@ body {
   height: 100%;
   overflow: hidden;
   border-left: 0 solid var(--border);
-  background: linear-gradient(180deg, rgba(17, 20, 28, 0.98), rgba(12, 14, 20, 0.98));
+  background: var(--bg-panel);
   box-shadow: var(--shadow-panel);
   transition: width 180ms ease;
 }
 
 .synapse-inspector-rail.is-open {
-  width: 20rem;
+  width: var(--inspector-rail-width);
   border-left-width: 1px;
 }
 
 .synapse-inspector-rail-inner {
-  width: 20rem;
+  width: var(--inspector-rail-width);
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
@@ -394,8 +443,8 @@ body {
   border-radius: 0;
   overflow: hidden;
   background:
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
     var(--bg-deep);
   background-size: 48px 48px, 48px 48px, auto;
 }
@@ -453,7 +502,7 @@ body {
 .synapse-canvas-action {
   position: absolute;
   top: 0.75rem;
-  left: 0.75rem;
+  right: 0.75rem;
   z-index: 50;
   padding: 0.4rem 0.75rem;
   font-family: var(--font-mono);
@@ -461,7 +510,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--danger);
-  background: rgba(17, 20, 28, 0.9);
+  background: color-mix(in srgb, var(--bg-panel) 90%, transparent);
   border: 1px solid rgba(240, 113, 120, 0.35);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -480,7 +529,7 @@ body {
   flex-direction: column;
   gap: 1rem;
   padding: 1.15rem 1.35rem 1.25rem;
-  background: rgba(10, 12, 18, 0.96);
+  background: var(--player-bg, rgba(10, 12, 18, 0.96));
   border-top: 1px solid var(--border);
   backdrop-filter: blur(18px);
   box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.4);
@@ -789,12 +838,22 @@ body {
 
 /* ——— Node surface polish (shared) ——— */
 .synapse-node {
-  background: linear-gradient(165deg, #1a1f2c 0%, #12151e 100%);
-  border: 1px solid var(--border-strong);
+  background: var(--node-bg);
+  border: 1px solid var(--node-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-panel);
-  font-family: var(--font-ui);
+  font-family: var(--font-node, var(--font-ui));
 }
+
+.synapse-node.is-start { border-color: var(--node-start); }
+.synapse-node.is-end { border-color: var(--node-end); }
+.synapse-node.is-track { border-color: var(--node-track); }
+.synapse-node.is-conditional { border-color: var(--node-conditional); }
+.synapse-node.is-randomizer { border-color: var(--node-randomizer); }
+.synapse-node.is-sequence { border-color: var(--node-randomizer); }
+.synapse-node.is-transition { border-color: var(--node-transition); }
+.synapse-node.is-comment { border-color: var(--node-comment); }
+.synapse-node.is-playing { border-color: var(--accent-warm); }
 
 .synapse-node-header {
   display: flex;
@@ -802,13 +861,23 @@ body {
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.65rem 0.75rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--node-header);
   border-bottom: 1px solid var(--border);
   cursor: grab;
 }
 
 .synapse-node-header:active {
   cursor: grabbing;
+}
+
+.synapse-node-header-with-mode {
+  flex-wrap: wrap;
+  row-gap: 0.4rem;
+}
+
+.synapse-node-header-with-mode .synapse-node-mode-select {
+  flex: 1 1 100%;
+  width: 100%;
 }
 
 .synapse-randomizer-shell {
@@ -830,6 +899,10 @@ body {
 }
 
 .synapse-minimap-wrap {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 50;
   pointer-events: none;
 }
 
@@ -860,7 +933,7 @@ body {
   height: 28px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
-  background: rgba(12, 14, 20, 0.92);
+  background: var(--bg-panel);
   color: var(--text-muted);
   box-shadow: var(--shadow-panel);
   cursor: pointer;
@@ -874,7 +947,7 @@ body {
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-sm) !important;
   overflow: hidden;
-  background: rgba(12, 14, 20, 0.92) !important;
+  background: var(--bg-panel) !important;
   box-shadow: var(--shadow-panel);
 }
 
@@ -890,7 +963,7 @@ body {
   padding: 0;
   border-radius: 999px;
   border: 1px solid rgba(232, 164, 92, 0.55);
-  background: rgba(17, 20, 28, 0.95);
+  background: var(--bg-panel);
   color: var(--accent-warm);
   box-shadow: 0 0 12px rgba(232, 164, 92, 0.35);
   cursor: pointer;
@@ -927,14 +1000,743 @@ body {
 }
 
 .synapse-node-mode-select {
-  max-width: 7.75rem;
+  min-width: 0;
+  max-width: none;
   font-family: var(--font-mono);
-  font-size: 0.62rem !important;
+  font-size: 0.72rem !important;
   letter-spacing: 0.02em;
-  padding: 0.15rem 0.25rem !important;
+  padding: 0.28rem 0.45rem !important;
   border-radius: 6px !important;
   background: var(--bg-deep) !important;
   border: 1px solid var(--border-strong) !important;
   color: var(--text) !important;
   cursor: pointer;
 }
+
+.synapse-deck.is-listen {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
+  gap: 1.25rem;
+  padding: 1.5rem 1.25rem 2.75rem;
+  border-top: none;
+  background: var(--bg-deep);
+  box-shadow: none;
+}
+
+.synapse-deck.is-listen .synapse-deck-screen {
+  width: min(32rem, 100%);
+  height: 11.5rem;
+  flex-shrink: 0;
+}
+
+.synapse-listen-list {
+  width: min(32rem, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.25rem;
+}
+
+.synapse-listen-paths {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.synapse-listen-now {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.synapse-listen-title {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin: 0.15rem 0 0;
+}
+
+.synapse-listen-artist {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  margin: 0.4rem 0 0;
+}
+
+.synapse-listen-album {
+  font-size: 0.9rem;
+  color: var(--text-faint);
+  margin: 0.2rem 0 0;
+}
+
+.synapse-listen-artist.is-empty,
+.synapse-listen-album.is-empty {
+  font-style: italic;
+  opacity: 0.72;
+}
+
+.synapse-listen-now .synapse-deck-queue,
+.synapse-listen-now .synapse-deck-status {
+  display: inline-flex;
+  margin-top: 0.65rem;
+}
+
+.synapse-listen-live {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.synapse-deck.is-listen .synapse-transport-deck {
+  width: 100%;
+  align-items: center;
+}
+
+.synapse-deck.is-listen .synapse-transport-row {
+  justify-content: center;
+}
+
+.synapse-listen-play {
+  display: grid;
+  place-items: center;
+  align-self: center;
+  flex: 0 0 5.75rem;
+  width: 5.75rem;
+  height: 5.75rem;
+  min-width: 5.75rem;
+  min-height: 5.75rem;
+  padding: 0;
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1px solid rgba(62, 207, 191, 0.45);
+  background: var(--accent);
+  color: #07120f;
+  cursor: pointer;
+  box-shadow: 0 12px 36px rgba(62, 207, 191, 0.28);
+  transition: transform 120ms ease, background 150ms ease;
+}
+
+.synapse-listen-play:hover {
+  transform: scale(1.04);
+}
+
+.synapse-listen-play.is-active {
+  background: var(--bg-elevated);
+  color: var(--accent);
+}
+
+.synapse-listen-path {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.synapse-listen-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.synapse-listen-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.synapse-listen-timeline {
+  position: relative;
+  padding-left: 1.15rem;
+}
+
+.synapse-listen-timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.28rem;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.synapse-listen-timeline > li {
+  position: relative;
+}
+
+.synapse-listen-timeline > li::before {
+  content: '';
+  position: absolute;
+  left: -1.02rem;
+  top: 1.05rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 2px solid var(--text-faint);
+  z-index: 1;
+}
+
+.synapse-listen-timeline > li:has(.phase-now)::before {
+  background: var(--accent-warm);
+  border-color: #ffe0b8;
+  box-shadow: 0 0 8px rgba(240, 161, 74, 0.7);
+}
+
+.synapse-listen-timeline > li:has(.synapse-listen-split)::before {
+  border-radius: 3px;
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: rotate(45deg);
+}
+
+.synapse-listen-item,
+.synapse-listen-split {
+  width: 100%;
+  text-align: left;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.synapse-listen-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.synapse-listen-item.phase-played {
+  opacity: 0.72;
+}
+
+.synapse-listen-item.is-start {
+  opacity: 1;
+  border-color: var(--node-start);
+}
+
+.synapse-listen-item.is-start:hover {
+  background: var(--bg-hover);
+}
+
+.synapse-listen-item.is-now {
+  border-color: rgba(232, 164, 92, 0.55);
+  box-shadow: 0 0 0 1px rgba(232, 164, 92, 0.2);
+}
+
+.synapse-listen-item-kind {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.synapse-listen-item-title {
+  font-weight: 600;
+}
+
+.synapse-listen-item-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.synapse-listen-split {
+  padding: 0.55rem;
+  border-style: dashed;
+  border-color: rgba(62, 207, 191, 0.4);
+  background: linear-gradient(180deg, rgba(62, 207, 191, 0.08), var(--bg-elevated));
+}
+
+.synapse-listen-split.phase-played {
+  opacity: 0.8;
+}
+
+.synapse-listen-split-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.35rem 0.4rem 0.55rem;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.synapse-listen-split-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid rgba(62, 207, 191, 0.35);
+  color: var(--accent);
+}
+
+.synapse-listen-leave {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0.4rem 0.45rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(62, 207, 191, 0.45);
+  background: var(--bg-deep);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.synapse-listen-leave:hover:not(:disabled) {
+  background: var(--accent-dim);
+}
+
+.synapse-listen-leave:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.synapse-listen-split.phase-played:has(.synapse-listen-leave) {
+  opacity: 1;
+}
+
+.synapse-listen-fork {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-left: 0.55rem;
+  padding: 0.15rem 0 0.15rem 0.85rem;
+  border-left: 2px solid rgba(62, 207, 191, 0.45);
+}
+
+.synapse-listen-branch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-deep);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.synapse-listen-branch-arm {
+  position: absolute;
+  left: -0.9rem;
+  top: 50%;
+  width: 0.85rem;
+  height: 2px;
+  background: rgba(62, 207, 191, 0.45);
+}
+
+.synapse-listen-branch.is-chosen {
+  border-color: rgba(62, 207, 191, 0.45);
+  background: var(--accent-dim);
+}
+
+.synapse-listen-branch.is-alt {
+  border-style: dashed;
+  opacity: 0.88;
+}
+
+.synapse-listen-branch-label {
+  font-size: 0.88rem;
+}
+
+.synapse-listen-branch-detail {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.synapse-deck.is-listen .synapse-visualizer {
+  width: 100%;
+  min-height: 8.5rem;
+}
+
+/*
+  Two-column Listen layout when the app shell can fit:
+  ~22rem controls + ~22rem path + padding/gap. Below this, keep the stacked
+  controls-then-path column.
+*/
+@container synapse-shell (min-width: 56rem) {
+  .synapse-deck.is-listen {
+    display: grid;
+    grid-template-columns: minmax(22rem, 34rem) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    align-items: stretch;
+    justify-items: stretch;
+    justify-content: stretch;
+    column-gap: 2.75rem;
+    row-gap: 1.1rem;
+    overflow: hidden;
+    padding: 1.5rem 2.5rem 1.75rem;
+    transition: grid-template-columns 180ms ease, column-gap 180ms ease, padding 180ms ease;
+  }
+
+  .synapse-deck.is-listen .synapse-deck-screen {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    max-height: 13.5rem;
+  }
+
+  .synapse-listen-list {
+    display: contents;
+    width: auto;
+    margin: 0;
+  }
+
+  .synapse-listen-live {
+    grid-column: 1;
+    grid-row: 2;
+    min-width: 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    align-items: center;
+  }
+
+  .synapse-listen-play {
+    align-self: center;
+  }
+
+  .synapse-listen-paths {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    min-width: 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .synapse-deck.is-listen {
+    transition: none;
+  }
+
+  .synapse-listen-play {
+    transition: none;
+  }
+
+  .synapse-listen-play:hover {
+    transform: none;
+  }
+}
+
+.synapse-settings {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 1.25rem 1.75rem 2rem;
+}
+
+.synapse-settings-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1.25rem;
+}
+
+.synapse-settings-title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  margin: 0.15rem 0 0;
+}
+
+.synapse-settings-search {
+  max-width: 18rem;
+}
+
+.synapse-settings-layout {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.synapse-settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  position: sticky;
+  top: 0.5rem;
+}
+
+.synapse-settings-nav-item {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 0.4rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.synapse-settings-nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.synapse-settings-section {
+  margin-bottom: 2rem;
+}
+
+.synapse-settings-section h2 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  margin: 0 0 0.4rem;
+}
+
+.synapse-settings-lead,
+.synapse-settings-hint {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.synapse-settings-error {
+  color: var(--danger);
+  font-size: 0.82rem;
+}
+
+.synapse-settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0.65rem 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.synapse-settings-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--input-bg, var(--bg-deep));
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+
+.synapse-theme-combobox {
+  position: relative;
+}
+
+.synapse-theme-menu {
+  position: absolute;
+  z-index: 30;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  max-height: 16rem;
+  overflow: auto;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-panel);
+}
+
+.synapse-theme-menu button {
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.55rem;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.synapse-theme-menu button.is-active,
+.synapse-theme-menu button:hover {
+  background: var(--accent-dim);
+}
+
+.synapse-theme-empty {
+  padding: 0.5rem;
+  color: var(--text-faint);
+}
+
+.synapse-theme-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.synapse-theme-lock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.8rem;
+  margin-bottom: 1rem;
+  border: 1px dashed var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-dim);
+}
+
+.synapse-theme-lock-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.synapse-theme-color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.55rem;
+}
+
+.synapse-theme-color {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.synapse-theme-preview {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-void);
+  color: var(--text);
+  margin: 0.75rem 0 1.25rem;
+  font-family: var(--font-ui);
+}
+
+.synapse-theme-preview-chrome,
+.synapse-theme-preview-deck {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.72rem;
+}
+
+.synapse-theme-preview-deck {
+  border-bottom: none;
+  border-top: 1px solid var(--border);
+  background: var(--player-bg, var(--bg-panel));
+}
+
+.synapse-theme-preview-body {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  min-height: 8.5rem;
+}
+
+.synapse-theme-preview-rail {
+  padding: 0.5rem;
+  background: var(--bg-elevated);
+  border-right: 1px solid var(--border);
+  font-size: 0.68rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.synapse-theme-preview-chip {
+  padding: 0.2rem 0.35rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+}
+
+.synapse-theme-preview-canvas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem;
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    var(--bg-deep);
+  background-size: 16px 16px, 16px 16px, auto;
+}
+
+.synapse-theme-preview-node {
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--node-border);
+  background: var(--node-bg);
+  font-size: 0.68rem;
+}
+
+.synapse-theme-preview-node.is-start { border-color: var(--node-start); }
+.synapse-theme-preview-node.is-track { border-color: var(--node-track); }
+.synapse-theme-preview-node.is-conditional { border-color: var(--node-conditional); }
+.synapse-theme-preview-node.is-randomizer { border-color: var(--node-randomizer); }
+.synapse-theme-preview-node.is-comment { border-color: var(--node-comment); }
+
+.synapse-theme-preview-edge {
+  width: 2rem;
+  height: 0.75rem;
+  color: var(--edge-color);
+}
+
+.synapse-theme-preview-btn {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--bg-void);
+  font-size: 0.68rem;
+}
+
+.synapse-theme-preview-screen {
+  width: 2.8rem;
+  height: 1.6rem;
+  border-radius: 4px;
+  background: #000;
+}
+
+@media (max-width: 800px) {
+  .synapse-settings-layout {
+    grid-template-columns: 1fr;
+  }
+}
+

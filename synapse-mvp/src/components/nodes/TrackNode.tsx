@@ -26,8 +26,8 @@ export default function TrackNode({ data = {}, id }: any) {
 
   return (
     <div
-      className={`synapse-node w-72 relative ${
-        isPlaying ? 'border-[rgba(232,164,92,0.85)]' : ''
+      className={`synapse-node w-72 relative is-track ${
+        isPlaying ? 'is-playing' : ''
       }`}
     >
       <div className="synapse-node-header">

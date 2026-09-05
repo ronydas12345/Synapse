@@ -121,9 +121,9 @@ function CustomMinimap() {
     start: { width: 128, height: 80 },
     end: { width: 128, height: 80 },
     track: { width: 288, height: 160 },
-    conditional: { width: 288, height: 160 },
-    splitter: { width: 288, height: 160 },
-    randomizer: { width: 292, height: 220 },
+    conditional: { width: 320, height: 160 },
+    splitter: { width: 320, height: 160 },
+    randomizer: { width: 320, height: 220 },
     transition: { width: 256, height: 100 },
     comment: { width: 256, height: 120 },
   };
@@ -187,13 +187,6 @@ function CustomMinimap() {
   const vpX = viewport?.x || 0;
   const vpY = viewport?.y || 0;
   
-  const wrapStyle: React.CSSProperties = {
-    position: 'absolute',
-    bottom: 10,
-    left: 52,
-    zIndex: 50,
-  };
-
   const collapseBtn = (
     <button
       type="button"
@@ -209,7 +202,7 @@ function CustomMinimap() {
   // Guard against NaN values
   if (isNaN(zoom) || isNaN(vpX) || isNaN(vpY)) {
     return (
-      <div ref={minimapRef} className="synapse-minimap-wrap" style={wrapStyle}>
+      <div ref={minimapRef} className="synapse-minimap-wrap">
         {collapsed ? (
           collapseBtn
         ) : (
@@ -241,7 +234,7 @@ function CustomMinimap() {
   if (!isFinite(viewportHeight)) viewportHeight = 50;
 
   return (
-    <div ref={minimapRef} className="synapse-minimap-wrap" style={wrapStyle}>
+    <div ref={minimapRef} className="synapse-minimap-wrap">
       {collapsed ? (
         collapseBtn
       ) : (
@@ -922,10 +915,13 @@ function ReactFlowContent() {
         elementsSelectable={true}
         selectNodesOnDrag={false}
         fitView
+        defaultEdgeOptions={{
+          style: { stroke: 'var(--edge-color)', strokeWidth: 2 },
+        }}
         deleteKeyCode={['Backspace', 'Delete']}
         colorMode="dark"
       >
-        <Background color="rgba(255,255,255,0.045)" gap={24} size={1} />
+        <Background color="var(--grid-line)" gap={24} size={1} />
         <Controls showInteractive={false} position="bottom-left" />
         <PlaybackMarker />
         <CommentConnections nodes={nodes} />

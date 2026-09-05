@@ -52,11 +52,6 @@ function ConditionalNode({ data = {}, id }: any) {
     updateNodeData(id, { weights: newWeights });
   };
 
-  const getBorderColor = () => {
-    if (isPlaying) return 'border-[rgba(232,164,92,0.85)]';
-    return mode === 'timeRange' ? 'border-[rgba(125,206,160,0.55)]' : 'border-[rgba(62,207,191,0.45)]';
-  };
-
   const getIconColor = () => {
     return mode === 'timeRange' ? 'text-[var(--ok)]' : 'text-[var(--accent)]';
   };
@@ -64,13 +59,13 @@ function ConditionalNode({ data = {}, id }: any) {
   return (
     <>
       <style>{spinnerHideStyles}</style>
-      <div className={`synapse-node w-56 overflow-hidden ${getBorderColor()}`}>
+      <div className={`synapse-node w-80 overflow-hidden is-conditional ${isPlaying ? 'is-playing' : ''}`}>
         {/* Header */}
         <div
-          className="synapse-node-header"
+          className="synapse-node-header synapse-node-header-with-mode"
           onClick={toggleCollapse}
         >
-          <div className="flex items-center gap-2 flex-1">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             <div className="relative">
               {mode === 'timeOfDay' ? (
                 <Clock className={`w-4 h-4 ${getIconColor()}`} />
@@ -79,10 +74,15 @@ function ConditionalNode({ data = {}, id }: any) {
               )}
               {isPlaying && <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--accent-warm)]" />}
             </div>
-            <strong className="text-sm text-[var(--text)]" style={{ fontFamily: 'var(--font-display)' }}>
-              {mode === 'timeRange' ? 'Conditional (Time)' : 'Conditional'}
+            <strong className="text-sm text-[var(--text)] truncate" style={{ fontFamily: 'var(--font-display)' }}>
+              Conditional
             </strong>
           </div>
+          {isCollapsed ? (
+            <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
+          ) : (
+            <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
+          )}
           <select
             className="nodrag nopan nowheel synapse-node-mode-select"
             value={mode === 'timeRange' ? 'timeRange' : 'random'}
@@ -99,11 +99,6 @@ function ConditionalNode({ data = {}, id }: any) {
               </option>
             ))}
           </select>
-          {isCollapsed ? (
-            <ChevronDown className="w-4 h-4 text-slate-400" />
-          ) : (
-            <ChevronUp className="w-4 h-4 text-slate-400" />
-          )}
         </div>
 
         {/* Expanded Content */}

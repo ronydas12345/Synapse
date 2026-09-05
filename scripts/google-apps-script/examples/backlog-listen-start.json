@@ -1,0 +1,14 @@
+{
+  "ID": "SYN-010",
+  "Type": "Feature",
+  "Epic/Area": "Listen",
+  "User Story / Item": "As a listener, I want a Start row on the path bar so I can restart the path.",
+  "Why / Value": "Jump back without opening Studio.",
+  "Priority": "Must",
+  "Status": "Done",
+  "Story Points": 2,
+  "Acceptance Criteria": "Start row at top of path; click rebuilds queue from Start node.",
+  "Owner": "Roni",
+  "Target Sprint": "Sprint 01",
+  "Notes": "Shipped in Listen path bar"
+}

@@ -13,6 +13,7 @@ interface DeckTransportProps {
   onNext: () => void;
   onSeekBy: (delta: number) => void;
   onSeekTo: (seconds: number) => void;
+  showPlayButton?: boolean;
 }
 
 export default function DeckTransport({
@@ -25,6 +26,7 @@ export default function DeckTransport({
   onNext,
   onSeekBy,
   onSeekTo,
+  showPlayButton = true,
 }: DeckTransportProps) {
   const max = duration > 0 ? duration : 0;
 
@@ -54,6 +56,7 @@ export default function DeckTransport({
             {delta}
           </button>
         ))}
+        {showPlayButton ? (
         <button
           type="button"
           className={`synapse-ctrl synapse-ctrl-play ${isPlaying ? 'is-active' : ''}`}
@@ -63,6 +66,7 @@ export default function DeckTransport({
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
         </button>
+        ) : null}
         {SEEK_STEPS.filter((n) => n > 0).map((delta) => (
           <button
             key={delta}

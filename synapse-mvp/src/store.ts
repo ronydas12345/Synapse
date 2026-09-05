@@ -28,6 +28,8 @@ interface PathState {
   previousRequestId: number;
   /** Incremented when the playback marker is dropped on a new origin. */
   playbackOriginRequestId: number;
+  /** Studio canvas vs Listen screen. Transient — not persisted. */
+  uiMode: 'studio' | 'listen' | 'settings';
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
   onConnect: (connection: Connection) => void;
@@ -40,6 +42,7 @@ interface PathState {
   setCurrentTrackIndex: (index: number) => void;
   setCurrentPlayingNodeId: (id: string | null) => void;
   setPlaybackStartNode: (id: string | null) => void;
+  setUiMode: (mode: 'studio' | 'listen' | 'settings') => void;
   requestSkip: () => void;
   requestPrevious: () => void;
   deleteEdge: (edgeId: string) => void;
@@ -101,6 +104,7 @@ export const usePathStore = create<PathState>((set) => ({
   skipRequestId: 0,
   previousRequestId: 0,
   playbackOriginRequestId: 0,
+  uiMode: 'studio',
 
   setNodes: (nodes) => {
     set({ nodes });
@@ -223,6 +227,7 @@ export const usePathStore = create<PathState>((set) => ({
       selectedPlaybackStartNodeId: id,
       playbackOriginRequestId: state.playbackOriginRequestId + 1,
     })),
+  setUiMode: (mode) => set({ uiMode: mode }),
   requestSkip: () =>
     set((state) => ({ skipRequestId: state.skipRequestId + 1 })),
   requestPrevious: () =>

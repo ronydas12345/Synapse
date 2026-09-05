@@ -9,7 +9,7 @@ export default function CommentNode({ data = {}, id }: any) {
   const isLinking = commentLinkingId === id;
 
   return (
-    <div className="synapse-node w-64 overflow-hidden border-[rgba(255,255,255,0.12)]">
+    <div className="synapse-node w-64 overflow-hidden is-comment">
       {/* Annotation node: no playback graph handles. Link via the header button. */}
 
       {/* Header */}

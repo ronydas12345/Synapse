@@ -1,7 +1,7 @@
 # Synapse — Implementation Status
 
 **Audit date:** 2026-08-26  
-**Last implementation update:** 2026-09-02 — UI/playback marker pass: mode dropdowns, right-side inspector, draggable playback marker, off-screen Start arrow. See `doc/SYNAPSE_CURSOR_UI_PLAYBACK_FIX_HANDOFF.md`.  
+**Last implementation update:** 2026-09-04 — Themes + Settings tab. See `doc/SYNAPSE_EXTENSIVE_FEATURES_HANDOFF.md` completion notes.  
 **Scope:** `synapse-mvp/` (primary app). Root `package.json` is leftover deps only — not the runnable app.  
 **Method:** Code inspection of `src/`, `package.json`, config, and absences (no backend/env/tests/deploy).
 
@@ -38,6 +38,18 @@ Implemented without pushing:
 - Yellow-orange playback marker follows the current Player node (or chosen start / Start when stopped). Drag onto a playable node rebuilds `buildPlaybackQueue` from that origin; comments are invalid. Start-from is not persisted.
 - Off-screen Start nodes show a directional arrow at the minimap edge; click pans to the closest Start.
 
+**2026-09-02 Listen screen** (V2.6 / V2.7 in `doc/SYNAPSE_CURSOR_HANDOFF_V2.md`):
+
+- Header **Studio / Listen** switch. Listen hides the graph editor. Playback stays on the existing engine/adapter.
+- Listen is a centered vertical list: now playing, video, large play, song controls, visualizer, upcoming path + split branches. Click a row/branch to jump (`setPlaybackStartNode`).
+- Listen mode is not persisted.
+
+**2026-09-04 Themes** (Phase 2 of `doc/SYNAPSE_EXTENSIVE_FEATURES_HANDOFF.md`):
+
+- Header **Settings** tab. Themes: 25 presets, searchable picker, custom editor (preview isolated from the live workspace), Save/Cancel/Reset/Duplicate, JSON import/export, `localStorage` `synapse_theme_state`.
+- Schema `{ schemaVersion: 1, type: "synapse-theme" }`. Fonts are allowlisted; imported JSON cannot run code.
+- Deferred: Style node, overlays, Workshop publish, connection-style setting, remaining Settings categories.
+
 **How to verify:** Start → Track (paste a YouTube URL/ID) → Play. Real video should play in the bottom bar. Select a node to open the right inspector. Drag the yellow-orange marker onto another track while paused, then Play.
 
 ---
@@ -62,7 +74,7 @@ Implemented without pushing:
 
 | Area | Status | Evidence | Missing work |
 |---|---|---|---|
-| App shell | **PARTIAL** | `App.tsx`: top bar, left `Sidebar` (palette), canvas, right `InspectorPanel`, bottom `Player` | Account, OAuth status, global settings, theme, crossfade, API sync |
+| App shell | **PARTIAL** | `App.tsx`: Studio / Listen / Settings tabs, canvas, inspector, `Player` | Account, OAuth |
 | Node canvas | **DONE** | `ReactFlowCanvas.tsx`: zoom/pan, drag-drop add, connect, select, delete, minimap, connection rules | Minor polish; “Remove All” can wipe Start |
 | Node types | **PARTIAL** | Toolbox: start, track, conditional, randomizer, transition, comment, end | Artist, Genre nodes; dedicated Splitter label (conditional fills role) |
 | Path execution | **PARTIAL** | `src/engine/buildPlaybackQueue.ts` — pure graph walk, weighted + time-range, optional seed | More node types; unit tests |
@@ -76,7 +88,7 @@ Implemented without pushing:
 | Analytics | **MISSING** | — | Execution events + dashboard |
 | Export/import | **MISSING** | Auto local save only; no versioned path file/export/import/share | Versioned JSON format, named paths |
 | Billing | **MISSING** | — | Ads / premium (Phase 3) |
-| Testing | **PARTIAL** | Vitest: engine, randomizer drop-add, track times, spectrum mapping (`npm test`) | Broader UI/e2e coverage |
+| Testing | **PARTIAL** | Vitest: engine, randomizer, track times, spectrum, listen path, theme parse (`npm test`) | Broader UI/e2e coverage |
 | Deployment | **MISSING** | No Vercel/Docker/CI | Hosting + env for API keys later |
 
 ### What already works (do not rebuild)
@@ -108,7 +120,7 @@ Implemented without pushing:
 
 | PDD requirement | Existing code | Status | Missing work | Priority |
 |---|---|---|---|---|
-| Top bar (account, OAuth, play/pause/skip, settings, theme) | `App.tsx` Play/Pause only | PARTIAL | Rest of controls | P1 |
+| Top bar (account, OAuth, play/pause/skip, settings, theme) | `App.tsx` Studio/Listen/Settings + Play/Pause/Skip | PARTIAL | Account, OAuth | P1 |
 | Left toolbox | `Sidebar.tsx` `NODE_TYPES` | PARTIAL | Artist, Genre | P1 |
 | Contextual inspector | `InspectorPanel.tsx` + `NodeInspector.tsx` | PARTIAL | Structured song metadata; wire remaining unused controls | P1 |
 | Zoomable node canvas | `ReactFlowCanvas.tsx` | DONE | — | — |

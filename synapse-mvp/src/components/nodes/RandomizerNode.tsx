@@ -156,20 +156,16 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
     <>
       <style>{spinnerHideStyles}</style>
       <div
-        className={`synapse-node w-56 overflow-hidden transition ${
-          isPlaying
-            ? 'border-[rgba(232,164,92,0.85)]'
-            : mode === 'randomizer'
-              ? 'border-[rgba(62,207,191,0.5)]'
-              : 'border-[rgba(120,160,255,0.45)]'
+        className={`synapse-node w-80 overflow-hidden transition is-randomizer ${
+          isPlaying ? 'is-playing' : mode === 'sequence' ? 'is-sequence' : ''
         } ${isDragOver ? 'bg-[var(--bg-hover)]' : ''}`}
         data-randomizer-id={id}
         onDragOver={handleNodeDragOver}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleNodeDrop}
       >
-        <div className="synapse-node-header" onClick={toggleCollapse}>
-          <div className="flex items-center gap-2 flex-1">
+        <div className="synapse-node-header synapse-node-header-with-mode" onClick={toggleCollapse}>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             <div className="relative">
               {mode === 'randomizer' ? (
                 <Dice5 className="w-4 h-4 text-[var(--accent)]" />
@@ -181,7 +177,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
               )}
             </div>
             <strong
-              className="text-sm text-[var(--text)]"
+              className="text-sm text-[var(--text)] truncate"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               {mode === 'randomizer' ? 'Randomizer' : 'Sequence'}
@@ -192,6 +188,11 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
               </span>
             ) : null}
           </div>
+          {isCollapsed ? (
+            <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
+          ) : (
+            <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
+          )}
           <select
             className="nodrag nopan nowheel synapse-node-mode-select"
             value={mode === 'randomizer' ? 'randomizer' : 'sequence'}
@@ -208,11 +209,6 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
               </option>
             ))}
           </select>
-          {isCollapsed ? (
-            <ChevronDown className="w-4 h-4 text-slate-400" />
-          ) : (
-            <ChevronUp className="w-4 h-4 text-slate-400" />
-          )}
         </div>
 
         {!isCollapsed && (

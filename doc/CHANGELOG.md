@@ -22,6 +22,8 @@ Now-playing credits. Local feature branch `feature/now-playing-metadata`; not pu
 - Right-side node inspector: slides in for a single selected node, closes on empty canvas or delete, updates in place when the selection changes.
 - Yellow-orange playback marker on the current Player node; drag it onto a playable node to rebuild the queue from that origin (`buildPlaybackQueue` `startNodeId`).
 - Off-screen Start direction arrow near the minimap; click pans to the closest Start.
+- Separate **Listen** screen (header Studio / Listen): centered vertical list with now playing, large play/pause, song controls, audio visualizer, upcoming songs, and split branches. Click a song or branch to start playback from that node. Wide windows place player controls on the left and the Music Path on the right; narrow windows keep controls stacked above the path.
+- Theme engine: 25 searchable presets, custom editor with isolated live preview, Save/Cancel/Reset lock, local custom themes, JSON import/export (`synapse-theme` schema v1). Settings tab hosts Themes; other settings sections are stubs.
 
 ### Changed
 
