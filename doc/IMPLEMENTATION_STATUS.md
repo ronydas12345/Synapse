@@ -1,7 +1,7 @@
 # Synapse — Implementation Status
 
 **Audit date:** 2026-08-26  
-**Last implementation update:** 2026-09-04 — Themes + Settings tab. See `doc/SYNAPSE_EXTENSIVE_FEATURES_HANDOFF.md` completion notes.  
+**Last implementation update:** 2026-09-05 — Pages + local profile. See `doc/SYNAPSE_CURSOR_HANDOFF_V2.md` V2.6 / V2.8.  
 **Scope:** `synapse-mvp/` (primary app). Root `package.json` is leftover deps only — not the runnable app.  
 **Method:** Code inspection of `src/`, `package.json`, config, and absences (no backend/env/tests/deploy).
 
@@ -48,6 +48,11 @@ Implemented without pushing:
 
 - Header **Settings** tab. Themes: 25 presets, searchable picker, custom editor (preview isolated from the live workspace), Save/Cancel/Reset/Duplicate, JSON import/export, `localStorage` `synapse_theme_state`.
 - Schema `{ schemaVersion: 1, type: "synapse-theme" }`. Fonts are allowlisted; imported JSON cannot run code.
+
+**2026-09-05 pages + profile** (V2.6 / V2.8 in `doc/SYNAPSE_CURSOR_HANDOFF_V2.md`):
+
+- URLs: `/edit`, `/listen`, `/settings`, `/profile` (`/` redirects to `/edit`). Player stays mounted across pages.
+- Local profile: `@username`, display name, optional sections, public/private flag, listen counts from playback. No Firebase yet.
 - Deferred: Style node, overlays, Workshop publish, connection-style setting, remaining Settings categories.
 
 **How to verify:** Start → Track (paste a YouTube URL/ID) → Play. Real video should play in the bottom bar. Select a node to open the right inspector. Drag the yellow-orange marker onto another track while paused, then Play.
@@ -74,7 +79,7 @@ Implemented without pushing:
 
 | Area | Status | Evidence | Missing work |
 |---|---|---|---|
-| App shell | **PARTIAL** | `App.tsx`: Studio / Listen / Settings tabs, canvas, inspector, `Player` | Account, OAuth |
+| App shell | **PARTIAL** | `App.tsx`: `/edit`, `/listen`, `/settings`, `/profile`; canvas, inspector, `Player` | OAuth, public profiles |
 | Node canvas | **DONE** | `ReactFlowCanvas.tsx`: zoom/pan, drag-drop add, connect, select, delete, minimap, connection rules | Minor polish; “Remove All” can wipe Start |
 | Node types | **PARTIAL** | Toolbox: start, track, conditional, randomizer, transition, comment, end | Artist, Genre nodes; dedicated Splitter label (conditional fills role) |
 | Path execution | **PARTIAL** | `src/engine/buildPlaybackQueue.ts` — pure graph walk, weighted + time-range, optional seed | More node types; unit tests |

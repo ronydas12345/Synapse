@@ -31,11 +31,24 @@ describe('theme schema', () => {
     expect(parsed?.colors.workspaceBackground).toBe('#112233');
   });
 
+  it('gives pretty pink a softer display face', () => {
+    const pink = BUILTIN_THEMES.find((t) => t.id === 'pretty-pink');
+    expect(pink?.typography.display).toBe('Fraunces');
+    expect(pink?.typography.ui).toBe('Space Grotesk');
+  });
+
   it('maps theme tokens to CSS variables', () => {
     const vars = themeCssVars(BUILTIN_THEMES[0]);
     expect(vars['--accent']).toBe(BUILTIN_THEMES[0].colors.accent);
     expect(vars['--bg-void']).toBe(BUILTIN_THEMES[0].colors.workspaceBackground);
+    expect(vars['--brand-from']).toBe('#ffffff');
     expect(vars['--font-ui']).toContain('Outfit');
+  });
+
+  it('uses dark Synapse lettering on light themes', () => {
+    const light = BUILTIN_THEMES.find((t) => t.id === 'standard-light');
+    expect(light).toBeTruthy();
+    expect(themeCssVars(light!)['--brand-from']).toBe(light!.colors.textPrimary);
   });
 
   it('filters the preset list by name', () => {
@@ -46,8 +59,9 @@ describe('theme schema', () => {
     ]);
   });
 
-  it('ships about 25 builtin presets', () => {
-    expect(BUILTIN_THEMES).toHaveLength(25);
-    expect(new Set(BUILTIN_THEMES.map((t) => t.id)).size).toBe(25);
+  it('ships cherry tree as the light pretty-pink pair', () => {
+    expect(BUILTIN_THEMES.some((t) => t.id === 'cherry-tree')).toBe(true);
+    expect(BUILTIN_THEMES).toHaveLength(26);
+    expect(new Set(BUILTIN_THEMES.map((t) => t.id)).size).toBe(26);
   });
 });

@@ -170,7 +170,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
               {mode === 'randomizer' ? (
                 <Dice5 className="w-4 h-4 text-[var(--accent)]" />
               ) : (
-                <ListOrdered className="w-4 h-4 text-[rgb(120,160,255)]" />
+                <ListOrdered className="w-4 h-4 text-[var(--node-randomizer)]" />
               )}
               {isPlaying && (
                 <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--accent-warm)]" />
@@ -189,9 +189,9 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
             ) : null}
           </div>
           {isCollapsed ? (
-            <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
+            <ChevronDown className="w-4 h-4 text-[var(--text-faint)] shrink-0" />
           ) : (
-            <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
+            <ChevronUp className="w-4 h-4 text-[var(--text-faint)] shrink-0" />
           )}
           <select
             className="nodrag nopan nowheel synapse-node-mode-select"
@@ -213,17 +213,13 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
 
         {!isCollapsed && (
           <div className="p-3 space-y-2">
-            <div className="nodrag nopan space-y-2 p-2 bg-slate-700 rounded border border-purple-400/30">
+            <div className="nodrag nopan synapse-node-count space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <label className="text-xs text-slate-300 font-semibold">Play Count:</label>
+                <label className="synapse-node-row-title">Play Count:</label>
                 <button
                   type="button"
                   onClick={() => updateNodeData(id, { isForever: !isForever })}
-                  className={`text-xs px-2 py-1 rounded border transition ${
-                    isForever
-                      ? 'bg-purple-600 border-purple-400 text-purple-100'
-                      : 'bg-slate-600 border-slate-400 text-slate-300 hover:bg-slate-500'
-                  }`}
+                  className={`synapse-node-chip ${isForever ? 'is-on' : ''}`}
                 >
                   {isForever ? '∞' : 'Loop'}
                 </button>
@@ -239,7 +235,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
                       playCount: Math.max(1, parseInt(e.target.value) || 1),
                     })
                   }
-                  className="hide-spinners w-full text-xs px-2 py-1 bg-slate-600 border border-slate-400 rounded text-slate-100 text-center"
+                  className="hide-spinners synapse-node-field is-wide"
                 />
               )}
             </div>
@@ -250,8 +246,6 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
                   const weight = weights[index] || 10;
                   const totalWeight = weights.reduce((a, b) => a + b, 0) || 1;
                   const percentage = Math.round((weight / totalWeight) * 100);
-                  const borderColor =
-                    mode === 'randomizer' ? 'border-purple-400' : 'border-blue-400';
                   return (
                     <div
                       key={`${trackId}-${index}`}
@@ -263,12 +257,12 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
                         setDraggedIndex(null);
                         setDraggedOverIndex(null);
                       }}
-                      className={`nodrag nopan flex items-center gap-2 p-2 bg-slate-600 rounded border-l-2 ${borderColor} cursor-move hover:bg-slate-500 transition ${
-                        draggedOverIndex === index ? 'opacity-50' : ''
+                      className={`nodrag nopan synapse-node-row is-seq is-item cursor-move ${
+                        draggedOverIndex === index ? 'is-drag' : ''
                       }`}
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs text-slate-200 font-semibold truncate">
+                        <div className="synapse-node-row-title truncate">
                           {index + 1}. {getTrackLabel(trackId)}
                         </div>
                         {showWeights ? (
@@ -281,16 +275,16 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
                                 handleWeightChange(index, parseInt(e.target.value) || 1)
                               }
                               onClick={(e) => e.stopPropagation()}
-                              className="hide-spinners w-8 text-xs px-1 py-0 bg-slate-500 border border-slate-400 rounded text-slate-100 text-center"
+                              className="hide-spinners synapse-node-field w-8"
                             />
-                            <span className="text-xs text-slate-400">({percentage}%)</span>
+                            <span className="synapse-node-muted">({percentage}%)</span>
                           </div>
                         ) : null}
                       </div>
                       <button
                         type="button"
                         onClick={() => removeTrack(index)}
-                        className="nodrag nopan p-1 text-red-400 hover:bg-red-600 hover:text-white rounded transition"
+                        className="nodrag nopan p-1 text-[var(--danger)] hover:bg-[var(--danger)] hover:text-[var(--bg-void)] rounded transition self-start"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
@@ -299,7 +293,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
                 })}
               </div>
             ) : (
-              <div className="text-xs text-slate-400 italic py-2 text-center">
+              <div className="synapse-node-muted italic py-2 text-center">
                 Drag track nodes onto this {mode === 'randomizer' ? 'randomizer' : 'sequence'}
               </div>
             )}

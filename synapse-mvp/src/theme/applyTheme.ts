@@ -46,6 +46,7 @@ export function themeCssVars(theme: SynapseTheme): Record<string, string> {
     '--input-bg': c.inputBackground,
     '--grid-line': withAlpha(c.gridLine, s.gridIntensity * 4),
     '--shadow-panel': `0 1px 0 ${withAlpha(c.textPrimary, 0.04)} inset, 0 12px 40px ${withAlpha('#000000', s.shadowIntensity)}`,
+    '--brand-from': luminance(c.workspaceBackground) > 0.55 ? c.textPrimary : '#ffffff',
   };
 }
 
@@ -57,7 +58,9 @@ export function applyThemeToElement(
   for (const [key, value] of Object.entries(vars)) {
     el.style.setProperty(key, value);
   }
-  el.style.colorScheme = luminance(theme.colors.workspaceBackground) > 0.55 ? 'light' : 'dark';
+  const light = luminance(theme.colors.workspaceBackground) > 0.55;
+  el.style.colorScheme = light ? 'light' : 'dark';
+  el.dataset.themeScheme = light ? 'light' : 'dark';
 }
 
 export function applyTheme(theme: SynapseTheme): void {

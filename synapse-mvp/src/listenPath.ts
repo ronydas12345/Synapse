@@ -5,11 +5,18 @@ import { getTrackDisplayMeta } from './trackMetadata';
 export type ListenPhase = 'played' | 'now' | 'upcoming';
 export type ListenRowKind = 'item' | 'split';
 
+export interface ListenPathItem {
+  nodeId: string;
+  title: string;
+  subtitle: string;
+}
+
 export interface ListenBranchOption {
   nodeId: string;
   label: string;
   detail: string;
   chosen: boolean;
+  items?: ListenPathItem[];
 }
 
 export interface ListenRow {
@@ -21,10 +28,10 @@ export interface ListenRow {
   type: string;
   modeLabel?: string;
   options?: ListenBranchOption[];
-  /** True when the playhead is on this split's current arm. */
+  /** Playhead is still on an arm of this split. */
   inside?: boolean;
-  /** First node after this split's remaining branch content. */
-  leaveTargetId?: string | null;
+  /** Nesting level, like a code indent (Start is 0). */
+  depth: number;
 }
 
 export function weightPercents(weights: number[]): number[] {
@@ -149,25 +156,6 @@ export function branchesFromNode(
   return null;
 }
 
-/** Randomizer that lists this track, or conditional that edges into it. */
-export function findSplitOwner(
-  nodeId: string,
-  nodes: Node[],
-  edges: Edge[]
-): Node | undefined {
-  const owner = nodes.find(
-    (n) =>
-      n.type === 'randomizer' &&
-      ((n.data?.tracks as string[]) || []).includes(nodeId)
-  );
-  if (owner) return owner;
-  const incoming = edges.find((e) => e.target === nodeId && !String(e.id).startsWith('dashed-'));
-  if (!incoming) return undefined;
-  const src = nodes.find((n) => n.id === incoming.source);
-  if (src?.type === 'conditional' || src?.type === 'splitter') return src;
-  return undefined;
-}
-
 function realEdges(edges: Edge[]): Edge[] {
   return edges.filter((e) => !String(e.id).startsWith('dashed-'));
 }
@@ -190,111 +178,101 @@ function reachableFrom(
   return out;
 }
 
-/** Nodes that still count as this split's current arm (skip these when leaving). */
-export function branchMemberIds(
-  splitNode: Node,
-  chosenId: string | undefined,
+/** Songs on this arm until a merge with another arm. */
+export function collectArmItems(
+  startId: string,
+  otherStarts: string[],
+  splitId: string,
   nodes: Node[],
   edges: Edge[]
-): Set<string> {
-  if (splitNode.type === 'randomizer') {
-    return new Set(((splitNode.data?.tracks as string[]) || []).filter(Boolean));
-  }
-  if (
-    (splitNode.type === 'conditional' || splitNode.type === 'splitter') &&
-    chosenId
-  ) {
-    const split = branchesFromNode(splitNode, nodes, edges);
-    const others = (split?.options || [])
-      .map((o) => o.nodeId)
-      .filter((id) => id !== chosenId);
-    const reals = realEdges(edges);
-    const otherReach = new Set<string>();
-    for (const other of others) {
-      for (const id of reachableFrom(other, reals, new Set([splitNode.id]))) {
-        otherReach.add(id);
-      }
-    }
-    const members = new Set<string>();
-    const stack = [chosenId];
-    while (stack.length) {
-      const id = stack.pop();
-      if (!id || members.has(id) || id === splitNode.id) continue;
-      if (id !== chosenId && otherReach.has(id)) continue;
-      members.add(id);
-      for (const edge of reals) {
-        if (edge.source === id && edge.target) stack.push(edge.target);
-      }
-    }
-    return members;
-  }
-  return new Set();
-}
-
-export function resolveLeaveBranchTarget(args: {
-  splitNode: Node;
-  members: Set<string>;
-  parsed: Array<{ nodeId: string }>;
-  currentIndex: number;
-  edges: Edge[];
-}): string | null {
-  const { splitNode, members, parsed, currentIndex, edges } = args;
-  if (currentIndex >= 0) {
-    for (let i = currentIndex + 1; i < parsed.length; i++) {
-      if (!members.has(parsed[i].nodeId)) return parsed[i].nodeId;
-    }
-  }
-
+): ListenPathItem[] {
   const reals = realEdges(edges);
-  if (splitNode.type === 'randomizer') {
-    const out = reals.find(
-      (e) =>
-        e.source === splitNode.id && Boolean(e.target) && !members.has(e.target)
-    );
-    return out?.target ?? null;
-  }
-
-  const currentId = currentIndex >= 0 ? parsed[currentIndex]?.nodeId : undefined;
-  if (!currentId) return null;
-  const seen = new Set<string>([currentId]);
-  const queue = [currentId];
-  while (queue.length) {
-    const id = queue.shift();
-    if (!id) continue;
-    for (const edge of reals) {
-      if (edge.source !== id || !edge.target || edge.target === splitNode.id) {
-        continue;
-      }
-      if (!members.has(edge.target)) return edge.target;
-      if (!seen.has(edge.target)) {
-        seen.add(edge.target);
-        queue.push(edge.target);
-      }
+  const otherReach = new Set<string>();
+  for (const other of otherStarts) {
+    for (const id of reachableFrom(other, reals, new Set([splitId]))) {
+      otherReach.add(id);
     }
   }
-  return null;
+  const items: ListenPathItem[] = [];
+  const seen = new Set<string>();
+  const visit = (id: string) => {
+    if (!id || seen.has(id) || id === splitId) return;
+    if (id !== startId && otherReach.has(id)) return;
+    seen.add(id);
+    const node = nodes.find((n) => n.id === id);
+    const label = nodeListLabel(node);
+    items.push({ nodeId: id, title: label.title, subtitle: label.subtitle });
+    if (node?.type === 'randomizer') {
+      for (const trackId of ((node.data?.tracks as string[]) || []).filter(Boolean)) {
+        if (seen.has(trackId)) continue;
+        seen.add(trackId);
+        const track = nodes.find((n) => n.id === trackId);
+        const trackLabel = nodeListLabel(track);
+        items.push({
+          nodeId: trackId,
+          title: trackLabel.title,
+          subtitle: trackLabel.subtitle,
+        });
+      }
+    }
+    for (const edge of reals) {
+      if (edge.source === id && edge.target) visit(edge.target);
+    }
+  };
+  visit(startId);
+  return items;
 }
 
-function chosenOptionId(
-  owner: Node,
-  split: { options: ListenBranchOption[] },
-  remainingIds: string[],
-  playheadId: string | undefined,
+function nearestConditional(
+  fromId: string,
   nodes: Node[],
   edges: Edge[]
-): string | undefined {
-  if (playheadId && split.options.some((o) => o.nodeId === playheadId)) {
-    return playheadId;
+): Node | undefined {
+  const seen = new Set<string>();
+  let current: string | undefined = fromId;
+  while (current && !seen.has(current)) {
+    seen.add(current);
+    const incoming = realEdges(edges).find((e) => e.target === current);
+    if (!incoming) return undefined;
+    const src = nodes.find((n) => n.id === incoming.source);
+    if (!src) return undefined;
+    if (src.type === 'conditional' || src.type === 'splitter') return src;
+    if (src.type === 'start') return undefined;
+    current = src.id;
   }
-  if (playheadId) {
-    for (const option of split.options) {
-      const members = branchMemberIds(owner, option.nodeId, nodes, edges);
-      if (members.has(playheadId)) return option.nodeId;
-    }
-  }
-  return remainingIds.find((id) =>
-    split.options.some((o) => o.nodeId === id)
+  return undefined;
+}
+
+/** Conditional/splitter and/or randomizer that owns this queue node. */
+export function findSplitOwners(
+  nodeId: string,
+  nodes: Node[],
+  edges: Edge[]
+): Node[] {
+  const owners: Node[] = [];
+  const push = (node: Node | undefined) => {
+    if (node && !owners.some((o) => o.id === node.id)) owners.push(node);
+  };
+  const randomizer = nodes.find(
+    (n) =>
+      n.type === 'randomizer' &&
+      ((n.data?.tracks as string[]) || []).includes(nodeId)
   );
+  push(nearestConditional(nodeId, nodes, edges));
+  if (randomizer) {
+    push(nearestConditional(randomizer.id, nodes, edges));
+    push(randomizer);
+  }
+  return owners;
+}
+
+/** Randomizer that lists this track, or nearest conditional that reaches it. */
+export function findSplitOwner(
+  nodeId: string,
+  nodes: Node[],
+  edges: Edge[]
+): Node | undefined {
+  return findSplitOwners(nodeId, nodes, edges)[0];
 }
 
 function describeItem(
@@ -311,7 +289,42 @@ function describeItem(
     title: label.title,
     subtitle: label.subtitle,
     type: node?.type || itemKind,
+    depth: 0,
   };
+}
+
+function rowBelongsToFrame(row: ListenRow, ids: Set<string>): boolean {
+  if (ids.has(row.nodeId)) return true;
+  if (row.kind !== 'split') return false;
+  return (row.options || []).some(
+    (option) =>
+      ids.has(option.nodeId) ||
+      (option.items || []).some((item) => ids.has(item.nodeId))
+  );
+}
+
+export function assignListenDepths(rows: ListenRow[]): ListenRow[] {
+  const stack: Array<{ ids: Set<string>; depth: number }> = [];
+  return rows.map((row) => {
+    if (row.type === 'start') {
+      return { ...row, depth: 0 };
+    }
+    while (stack.length > 0) {
+      const top = stack[stack.length - 1];
+      if (rowBelongsToFrame(row, top.ids)) break;
+      stack.pop();
+    }
+    const depth = stack.length === 0 ? 1 : stack[stack.length - 1].depth + 1;
+    if (row.kind === 'split') {
+      const ids = new Set<string>();
+      for (const option of row.options || []) {
+        if (option.nodeId) ids.add(option.nodeId);
+        for (const item of option.items || []) ids.add(item.nodeId);
+      }
+      stack.push({ ids, depth });
+    }
+    return { ...row, depth };
+  });
 }
 
 export function buildListenRows(args: {
@@ -336,6 +349,7 @@ export function buildListenRows(args: {
       title: 'Start',
       subtitle: 'Play from beginning',
       type: 'start',
+      depth: 0,
     });
   }
 
@@ -344,46 +358,53 @@ export function buildListenRows(args: {
     remainingIds: string[],
     phase: ListenPhase
   ) => {
-    const owner = findSplitOwner(itemNodeId, nodes, edges);
-    if (!owner || shownSplits.has(owner.id)) return;
-    const split = branchesFromNode(owner, nodes, edges);
-    if (!split) return;
-    shownSplits.add(owner.id);
     const playheadId =
       currentIndex >= 0 ? parsed[currentIndex]?.nodeId : undefined;
-    const chosenId = chosenOptionId(
-      owner,
-      split,
-      remainingIds,
-      playheadId,
-      nodes,
-      edges
-    );
-    const members = branchMemberIds(owner, chosenId, nodes, edges);
-    const inside = Boolean(playheadId && members.has(playheadId));
-    rows.push({
-      kind: 'split',
-      phase,
-      nodeId: owner.id,
-      title: split.title,
-      subtitle: split.modeLabel,
-      type: owner.type || 'split',
-      modeLabel: split.modeLabel,
-      inside,
-      leaveTargetId: inside
-        ? resolveLeaveBranchTarget({
-            splitNode: owner,
-            members,
-            parsed,
-            currentIndex,
-            edges,
-          })
-        : null,
-      options: split.options.map((o) => ({
-        ...o,
-        chosen: chosenId ? o.nodeId === chosenId : false,
-      })),
-    });
+    for (const owner of findSplitOwners(itemNodeId, nodes, edges)) {
+      if (shownSplits.has(owner.id)) continue;
+      const split = branchesFromNode(owner, nodes, edges);
+      if (!split) continue;
+      shownSplits.add(owner.id);
+      const options = split.options.map((option) => {
+        const others = split.options
+          .map((o) => o.nodeId)
+          .filter((id) => id !== option.nodeId);
+        return {
+          ...option,
+          items: collectArmItems(option.nodeId, others, owner.id, nodes, edges),
+        };
+      });
+      const chosenId =
+        (playheadId &&
+          options.find(
+            (o) =>
+              o.nodeId === playheadId ||
+              o.items.some((item) => item.nodeId === playheadId)
+          )?.nodeId) ||
+        remainingIds.find((id) =>
+          options.some(
+            (o) => o.nodeId === id || o.items.some((item) => item.nodeId === id)
+          )
+        );
+      const armIds = new Set(
+        options.flatMap((o) => o.items.map((item) => item.nodeId))
+      );
+      rows.push({
+        kind: 'split',
+        phase,
+        nodeId: owner.id,
+        title: split.title,
+        subtitle: split.modeLabel,
+        type: owner.type || 'split',
+        modeLabel: split.modeLabel,
+        inside: Boolean(playheadId && armIds.has(playheadId)),
+        options: options.map((o) => ({
+          ...o,
+          chosen: chosenId ? o.nodeId === chosenId : false,
+        })),
+        depth: 0,
+      });
+    }
   };
 
   const emitItem = (index: number, phase: ListenPhase) => {
@@ -403,5 +424,5 @@ export function buildListenRows(args: {
     for (let i = 0; i < parsed.length; i++) emitItem(i, 'upcoming');
   }
 
-  return rows;
+  return assignListenDepths(rows);
 }

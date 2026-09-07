@@ -11,7 +11,7 @@ export default function ThemePreview({ theme }: { theme: SynapseTheme }) {
   return (
     <div ref={ref} className="synapse-theme-preview" aria-hidden="true">
       <div className="synapse-theme-preview-chrome">
-        <span>Synapse</span>
+        <span className="synapse-theme-preview-brand">{theme.name}</span>
         <span className="synapse-theme-preview-btn">Play</span>
       </div>
       <div className="synapse-theme-preview-body">

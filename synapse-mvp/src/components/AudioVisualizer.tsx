@@ -10,6 +10,7 @@ import {
   VISUALIZER_BAR_COUNT,
   VISUALIZER_FFT_SIZE,
 } from '../playback/spectrumBars';
+import { cssToRgb, lerpRgb, rgba } from '../theme/color';
 
 interface AudioVisualizerProps {
   isPlaying: boolean;
@@ -172,8 +173,15 @@ export default function AudioVisualizer({
       }
 
       const { width, height } = canvas;
+      const theme = getComputedStyle(canvas);
+      const bg = cssToRgb(
+        theme.getPropertyValue('--player-bg') || theme.getPropertyValue('--bg-deep'),
+        '#080a10'
+      );
+      const accent = cssToRgb(theme.getPropertyValue('--accent'), '#3ecfbf');
+      const warm = cssToRgb(theme.getPropertyValue('--accent-warm'), '#e8a45c');
       gfx.clearRect(0, 0, width, height);
-      gfx.fillStyle = 'rgba(8, 10, 16, 0.92)';
+      gfx.fillStyle = rgba(bg, 0.92);
       gfx.fillRect(0, 0, width, height);
 
       const sampleRate = an?.context.sampleRate || 44100;
@@ -187,8 +195,8 @@ export default function AudioVisualizer({
         const h = Math.max(2, (value / 255) * (height - 8));
         const x = gap + i * (barW + gap);
         const y = height - h - 4;
-        const t = i / VISUALIZER_BAR_COUNT;
-        gfx.fillStyle = `rgba(${Math.round(62 + t * 170)}, ${Math.round(207 - t * 40)}, ${Math.round(191 - t * 80)}, 0.92)`;
+        const t = i / Math.max(1, VISUALIZER_BAR_COUNT - 1);
+        gfx.fillStyle = rgba(lerpRgb(accent, warm, t), 0.92);
         if (typeof gfx.roundRect === 'function') {
           gfx.beginPath();
           gfx.roundRect(x, y, barW, h, 2);

@@ -79,9 +79,9 @@ function ConditionalNode({ data = {}, id }: any) {
             </strong>
           </div>
           {isCollapsed ? (
-            <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
+            <ChevronDown className="w-4 h-4 text-[var(--text-faint)] shrink-0" />
           ) : (
-            <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
+            <ChevronUp className="w-4 h-4 text-[var(--text-faint)] shrink-0" />
           )}
           <select
             className="nodrag nopan nowheel synapse-node-mode-select"
@@ -103,7 +103,7 @@ function ConditionalNode({ data = {}, id }: any) {
 
         {/* Expanded Content */}
         {!isCollapsed && (
-          <div className="p-3 space-y-2 bg-slate-750">
+          <div className="p-3 space-y-2">
             <div className="space-y-2">
               {Array.from({ length: numPaths }).map((_, i) => {
                 const weight = weights[i] || 10;
@@ -113,11 +113,9 @@ function ConditionalNode({ data = {}, id }: any) {
                 return (
                   <div
                     key={i}
-                    className={`flex flex-col gap-2 p-2 bg-slate-600 rounded border-l-2 ${mode === 'timeRange' ? 'border-green-400' : 'border-indigo-400'}`}
+                    className={`synapse-node-row ${mode === 'timeRange' ? 'is-ok' : ''}`}
                   >
-                    <div className="text-xs text-slate-200 font-semibold">
-                      {pathLabel}
-                    </div>
+                    <div className="synapse-node-row-title">{pathLabel}</div>
                     {mode === 'random' && (
                       <div className="flex items-center gap-1">
                         <input
@@ -125,17 +123,17 @@ function ConditionalNode({ data = {}, id }: any) {
                           min="1"
                           value={weight}
                           onChange={(e) => handleWeightChange(i, parseInt(e.target.value) || 1)}
-                          className="hide-spinners w-8 text-xs px-1 py-0 bg-slate-500 border border-slate-400 rounded text-slate-100 text-center"
+                          className="hide-spinners synapse-node-field w-8"
                         />
-                        <span className="text-xs text-slate-400">({percentage}%)</span>
+                        <span className="synapse-node-muted">({percentage}%)</span>
                       </div>
                     )}
                     {mode === 'timeRange' && (
-                      <div className="text-xs text-slate-300 bg-slate-500 p-1 rounded">
+                      <div className="synapse-node-muted bg-[var(--input-bg)] p-1 rounded">
                         {timeRanges.length > 0 ? (
                           <>
                             {timeRanges.map((range, idx) => (
-                              <div key={idx} className="text-slate-200">
+                              <div key={idx}>
                                 {range.start.toString().padStart(2, '0')}:00 - {range.end.toString().padStart(2, '0')}:00
                               </div>
                             ))}

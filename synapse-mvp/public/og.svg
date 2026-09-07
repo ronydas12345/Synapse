@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#07080b"/>
+  <text x="80" y="220" font-family="Georgia, serif" font-size="72" fill="#e9ecf4">Synapse</text>
+  <text x="80" y="300" font-family="Segoe UI, sans-serif" font-size="36" fill="#8b93a7">Visual Music Paths</text>
+  <circle cx="900" cy="280" r="28" fill="#7dcea0"/>
+  <circle cx="1020" cy="180" r="28" fill="#3ecfbf"/>
+  <circle cx="1020" cy="380" r="28" fill="#e8a45c"/>
+  <path d="M928 280h50M978 280l42-90M978 280l42 90" stroke="#5c657a" stroke-width="8" fill="none" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,734 @@
+html:has(.synapse-mkt),
+body:has(.synapse-mkt),
+#root:has(.synapse-mkt) {
+  height: auto;
+  min-height: 100%;
+}
+
+.synapse-mkt {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 480px at 10% -10%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
+    radial-gradient(900px 420px at 90% 0%, color-mix(in srgb, var(--accent-warm) 12%, transparent), transparent 55%),
+    var(--bg-void);
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+
+.synapse-mkt-skip {
+  position: absolute;
+  left: 0.75rem;
+  top: -3rem;
+  z-index: 80;
+  padding: 0.45rem 0.8rem;
+  background: var(--accent);
+  color: #06110f;
+  border-radius: var(--radius-sm);
+}
+
+.synapse-mkt-skip:focus {
+  top: 0.75rem;
+}
+
+.synapse-mkt a:focus-visible,
+.synapse-mkt button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.synapse-mkt-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid transparent;
+  transition: background 180ms ease, border-color 180ms ease, backdrop-filter 180ms ease;
+}
+
+.synapse-mkt-header.is-solid {
+  background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
+  border-bottom-color: var(--border);
+  backdrop-filter: blur(16px);
+}
+
+.synapse-mkt-header-inner {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0.75rem 1.25rem;
+}
+
+.synapse-mkt-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.synapse-mkt-nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.2rem;
+}
+
+.synapse-mkt-nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+}
+
+.synapse-mkt-nav a:hover,
+.synapse-mkt-nav a.is-active {
+  color: var(--text);
+  background: var(--accent-dim);
+}
+
+.synapse-mkt-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.synapse-mkt-text-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.35rem 0.4rem;
+}
+
+.synapse-mkt-text-link:hover {
+  color: var(--text);
+}
+
+.synapse-mkt-cta {
+  text-decoration: none;
+}
+
+.synapse-mkt-burger {
+  display: none;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.synapse-mkt-drawer {
+  display: none;
+  padding: 0.5rem 1.25rem 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+
+.synapse-mkt-drawer nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.synapse-mkt-drawer a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.7rem 0.35rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.synapse-mkt-main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+.synapse-mkt-page {
+  padding-top: 2rem;
+  min-height: 60vh;
+}
+
+.synapse-mkt-section {
+  margin: 4.5rem 0;
+  scroll-margin-top: 5.5rem;
+}
+
+.synapse-mkt-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.7rem;
+}
+
+.synapse-mkt h1,
+.synapse-mkt h2 {
+  font-family: var(--font-display);
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  margin: 0 0 0.85rem;
+}
+
+.synapse-mkt h1 {
+  font-size: clamp(2.4rem, 6vw, 4.4rem);
+}
+
+.synapse-mkt h2 {
+  font-size: clamp(1.7rem, 3.4vw, 2.6rem);
+  max-width: 22ch;
+}
+
+.synapse-mkt h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  margin: 0.35rem 0 0.4rem;
+}
+
+.synapse-mkt-lead,
+.synapse-mkt-section p,
+.synapse-mkt-card p {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.synapse-mkt-lead {
+  max-width: 40rem;
+  margin: 0 0 1.25rem;
+  font-size: 1.05rem;
+}
+
+.synapse-mkt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+.synapse-mkt-actions a {
+  text-decoration: none;
+}
+
+.synapse-mkt-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 2rem;
+  align-items: center;
+  padding: 2.5rem 0 1rem;
+}
+
+.synapse-mkt-hero-viz {
+  min-width: 0;
+}
+
+.synapse-mkt-triple,
+.synapse-mkt-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.synapse-mkt-cards {
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+}
+
+.synapse-mkt-cards-3 {
+  grid-template-columns: repeat(auto-fill, minmax(16.5rem, 1fr));
+}
+
+.synapse-mkt-triple article,
+.synapse-mkt-card,
+.synapse-mkt-price-card,
+.synapse-mkt-workshop-card {
+  background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.05rem 1.15rem;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.synapse-mkt-card:hover,
+.synapse-mkt-workshop-card:hover,
+.synapse-mkt-price-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+
+.synapse-mkt-status {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.2rem;
+}
+
+.synapse-mkt-how-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1.25rem;
+  align-items: start;
+  margin-top: 1.25rem;
+}
+
+.synapse-mkt-how-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.synapse-mkt-how-steps button {
+  text-align: left;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: inherit;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+}
+
+.synapse-mkt-how-steps button.is-active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.synapse-mkt-how-steps span {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--accent);
+}
+
+.synapse-mkt-how-steps strong {
+  display: block;
+  margin: 0.15rem 0 0.25rem;
+}
+
+.synapse-mkt-how-steps em {
+  display: block;
+  font-style: normal;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.synapse-mkt-about-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.synapse-mkt-avatar {
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.synapse-mkt-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.synapse-mkt-about-name {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--text);
+  margin: 0 0 0.75rem;
+}
+
+.synapse-mkt-about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.synapse-mkt-about-links a {
+  color: var(--accent);
+}
+
+.synapse-mkt-philosophy {
+  padding: 2rem 0;
+}
+
+.synapse-mkt-philosophy h2 {
+  max-width: 16ch;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+}
+
+.synapse-mkt-principles {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.synapse-mkt-principles h3 {
+  font-size: 1.4rem;
+}
+
+.synapse-mkt-workshop-row,
+.synapse-mkt-theme-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(16rem, 20rem);
+  gap: 0.9rem;
+  overflow-x: auto;
+  padding-bottom: 0.6rem;
+  scroll-snap-type: x mandatory;
+  margin: 1.25rem 0;
+}
+
+.synapse-mkt-workshop-card,
+.synapse-mkt-theme-card {
+  scroll-snap-align: start;
+}
+
+.synapse-mkt-workshop-preview {
+  height: 7.5rem;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.7rem;
+  background: var(--bg-deep);
+}
+
+.synapse-mkt-workshop-preview .synapse-path-demo {
+  height: 140%;
+  margin-top: -12%;
+}
+
+.synapse-mkt-workshop-swatch {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  color: var(--text);
+}
+
+.synapse-mkt-tags {
+  font-size: 0.8rem;
+}
+
+.synapse-mkt-theme-card {
+  margin: 0;
+}
+
+.synapse-mkt-theme-card .synapse-theme-preview {
+  min-height: 11rem;
+}
+
+.synapse-mkt-theme-card figcaption {
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+
+.synapse-mkt-pricing {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.synapse-mkt-price-card ul {
+  margin: 0.8rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.synapse-mkt-price-card,
+.synapse-mkt-card,
+.synapse-mkt-workshop-card {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.synapse-mkt-price-card.is-free {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+.synapse-mkt-final {
+  margin: 3rem 0 1rem;
+  padding: 2.4rem 1.5rem;
+  border-radius: calc(var(--radius) * 1.4);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 28%, var(--bg-panel)), var(--bg-elevated));
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  text-align: center;
+}
+
+.synapse-mkt-final h2 {
+  max-width: none;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+}
+
+.synapse-mkt-final p {
+  color: var(--text);
+  max-width: 32rem;
+  margin: 0 auto 1.2rem;
+}
+
+.synapse-mkt-final .synapse-mkt-actions {
+  justify-content: center;
+}
+
+.synapse-mkt-footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg-deep);
+  padding: 2.2rem 1.25rem 1.4rem;
+}
+
+.synapse-mkt-footer-grid {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr));
+  gap: 1.4rem;
+}
+
+.synapse-mkt-footer p,
+.synapse-mkt-footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.synapse-mkt-footer a:hover {
+  color: var(--text);
+}
+
+.synapse-mkt-footer ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.synapse-mkt-foot-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin: 0 0 0.65rem;
+}
+
+.synapse-mkt-footer-brand p {
+  margin: 0.7rem 0 0;
+  max-width: 16rem;
+}
+
+.synapse-mkt-footer-bottom {
+  max-width: 72rem;
+  margin: 1.8rem auto 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-faint);
+  font-size: 0.82rem;
+}
+
+.synapse-mkt-reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 480ms ease, transform 480ms ease;
+}
+
+.synapse-mkt-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+.synapse-mkt-faq {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.synapse-mkt-faq dt {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  margin-bottom: 0.3rem;
+}
+
+.synapse-mkt-faq dd {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.synapse-mkt-prose {
+  max-width: 42rem;
+}
+
+.synapse-mkt-prose h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.synapse-mkt-legal-block {
+  margin: 1.5rem 0;
+}
+
+.synapse-mkt-legal-block h2 {
+  font-size: 1.2rem;
+  max-width: none;
+}
+
+.synapse-mkt-legal-block pre {
+  white-space: pre-wrap;
+  font-family: var(--font-ui);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.synapse-path-demo {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.synapse-path-grid {
+  fill: var(--bg-deep);
+  stroke: var(--border);
+}
+
+.synapse-path-edge {
+  stroke: var(--edge-color);
+  stroke-width: 2;
+  opacity: 0.7;
+}
+
+.synapse-path-route {
+  stroke: var(--accent-warm);
+  stroke-width: 2.5;
+  opacity: 0.85;
+  stroke-dasharray: 8 10;
+  animation: synapse-path-dash 1.2s linear infinite;
+}
+
+.synapse-path-node rect {
+  fill: var(--node-bg);
+  stroke: var(--node-border);
+  stroke-width: 1.5;
+}
+
+.synapse-path-node text {
+  fill: var(--text);
+  font-family: var(--font-node);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.synapse-path-node.is-start rect { stroke: var(--node-start); }
+.synapse-path-node.is-track rect { stroke: var(--node-track); }
+.synapse-path-node.is-conditional rect { stroke: var(--node-conditional); }
+.synapse-path-node.is-randomizer rect { stroke: var(--node-randomizer); }
+.synapse-path-node.is-transition rect { stroke: var(--node-transition); }
+
+.synapse-path-node.is-lit rect {
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 45%, transparent));
+}
+
+@keyframes synapse-path-dash {
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
+@media (max-width: 960px) {
+  .synapse-mkt-header-inner {
+    grid-template-columns: 1fr auto;
+  }
+
+  .synapse-mkt-nav {
+    display: none;
+  }
+
+  .synapse-mkt-burger,
+  .synapse-mkt-drawer {
+    display: grid;
+  }
+
+  .synapse-mkt-hero,
+  .synapse-mkt-how-grid,
+  .synapse-mkt-about-grid,
+  .synapse-mkt-principles,
+  .synapse-mkt-pricing,
+  .synapse-mkt-footer-grid,
+  .synapse-mkt-triple {
+    grid-template-columns: 1fr;
+  }
+
+  .synapse-mkt-hero {
+    gap: 1.25rem;
+    padding-top: 1.2rem;
+  }
+
+  .synapse-mkt-cta {
+    min-width: 0;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .synapse-mkt-text-link {
+    display: none;
+  }
+
+  .synapse-mkt-section {
+    margin: 3rem 0;
+  }
+
+  .synapse-mkt-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .synapse-mkt-actions .synapse-btn {
+    width: 100%;
+  }
+
+  .synapse-mkt-final .synapse-mkt-actions {
+    align-items: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .synapse-mkt-reveal,
+  .synapse-mkt-header,
+  .synapse-mkt-card,
+  .synapse-path-node rect {
+    transition: none;
+  }
+
+  .synapse-mkt-reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  .synapse-path-route,
+  .synapse-path-playhead {
+    animation: none;
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "type": "synapse-theme",
+  "id": "import-test-copper",
+  "name": "Import Test Copper",
+  "version": "1.0.0",
+  "colors": {
+    "workspaceBackground": "#140c08",
+    "workspaceSurface": "#1c120c",
+    "panelBackground": "#2a1a12",
+    "panelElevated": "#352116",
+    "panelHover": "#43291b",
+    "border": "#6b4228",
+    "borderStrong": "#8a5634",
+    "textPrimary": "#fff3e8",
+    "textSecondary": "#c9a48a",
+    "textFaint": "#8f6d55",
+    "accent": "#e08a45",
+    "accentWarm": "#f0b060",
+    "danger": "#e05a4a",
+    "ok": "#7cba6a",
+    "warning": "#f0b060",
+    "nodeBackground": "#2a1a12",
+    "nodeBorder": "#8a5634",
+    "nodeHeader": "#352116",
+    "nodeTrack": "#c9a48a",
+    "nodeConditional": "#e08a45",
+    "nodeRandomizer": "#d4a05a",
+    "nodeTransition": "#f0b060",
+    "nodeComment": "#c9a48a",
+    "nodeStart": "#7cba6a",
+    "nodeEnd": "#e05a4a",
+    "edge": "#c9a48a",
+    "playerBackground": "#1c120c",
+    "inputBackground": "#1c120c",
+    "gridLine": "#8a5634"
+  },
+  "typography": {
+    "ui": "Space Grotesk",
+    "display": "Fraunces",
+    "mono": "JetBrains Mono",
+    "node": "Inter"
+  },
+  "style": {
+    "radius": 12,
+    "radiusSm": 7,
+    "borderWidth": 1,
+    "gridIntensity": 0.06,
+    "shadowIntensity": 0.4
+  },
+  "overlays": []
+}

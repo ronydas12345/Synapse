@@ -6,6 +6,18 @@ import {
 } from './randomizerDrop';
 import { create } from 'zustand';
 import type { Node, Edge, Connection } from '@xyflow/react';
+import type { PathSummary } from './playlists/library';
+import {
+  activatePath,
+  createPath,
+  emptyGraph,
+  loadLibrary,
+  renamePath,
+  saveActiveGraph,
+  setPathVisibility,
+  summaries,
+  type PathLibrary,
+} from './playlists/library';
 
 interface PathState {
   nodes: Node[];
@@ -28,8 +40,10 @@ interface PathState {
   previousRequestId: number;
   /** Incremented when the playback marker is dropped on a new origin. */
   playbackOriginRequestId: number;
-  /** Studio canvas vs Listen screen. Transient — not persisted. */
-  uiMode: 'studio' | 'listen' | 'settings';
+  /** Current page. Transient — URL is the source of truth. */
+  uiMode: 'home' | 'studio' | 'listen' | 'settings' | 'profile';
+  activePathId: string;
+  pathSummaries: PathSummary[];
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
   onConnect: (connection: Connection) => void;
@@ -42,57 +56,52 @@ interface PathState {
   setCurrentTrackIndex: (index: number) => void;
   setCurrentPlayingNodeId: (id: string | null) => void;
   setPlaybackStartNode: (id: string | null) => void;
-  setUiMode: (mode: 'studio' | 'listen' | 'settings') => void;
+  setUiMode: (mode: 'home' | 'studio' | 'listen' | 'settings' | 'profile') => void;
   requestSkip: () => void;
   requestPrevious: () => void;
   deleteEdge: (edgeId: string) => void;
   deleteNode: (nodeId: string) => void;
   initializeFromStorage: () => void;
   normalizeSplitters: () => void;
+  createPlaylist: (name?: string) => void;
+  switchPlaylist: (id: string) => void;
+  renamePlaylist: (id: string, name: string) => void;
+  setPlaylistVisibility: (id: string, visibility: 'public' | 'private') => void;
 }
 
-const defaultStartNode: Node = {
-  id: 'start',
-  type: 'start',
-  position: { x: 400, y: 300 },
-  data: { label: 'Start' },
-};
+let library: PathLibrary = loadLibrary();
 
-const STORAGE_KEY = 'synapse_graph_state';
-
-const loadFromStorage = () => {
-  try {
-    console.log('Loading from storage...');
-    const stored = localStorage.getItem(STORAGE_KEY);
-    console.log('Stored data:', stored);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      console.log('Parsed data:', parsed);
-      return normalizeWorkspaceGraph<Node, Edge>(
-        (parsed.nodes as Node[] | undefined) || [defaultStartNode],
-        (parsed.edges as Edge[] | undefined) || []
-      );
-    }
-  } catch (e) {
-    console.error('Failed to load from localStorage:', e);
-  }
-  console.log('Using default start node');
-  return { nodes: [defaultStartNode], edges: [] };
-};
+const activeGraph = () =>
+  library.paths.find((p) => p.id === library.activeId) || library.paths[0];
 
 const saveToStorage = (nodes: Node[], edges: Edge[]) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges }));
-  } catch (e) {
-    console.error('Failed to save to localStorage:', e);
-  }
+  library = saveActiveGraph(library, nodes, edges);
 };
 
-const initialState = loadFromStorage();
+const libraryView = () => {
+  const graph = activeGraph();
+  const fallback = emptyGraph();
+  return {
+    nodes: graph?.nodes || fallback.nodes,
+    edges: graph?.edges || fallback.edges,
+    activePathId: library.activeId,
+    pathSummaries: summaries(library),
+  };
+};
+
+const playbackReset = {
+  isPlaying: false,
+  currentTrackIndex: 0,
+  currentPlayingNodeId: null as string | null,
+  playbackQueue: [] as string[],
+  selectedPlaybackStartNodeId: null as string | null,
+  selectedNodeId: null as string | null,
+  selectedNodeIds: [] as string[],
+  commentLinkingId: null as string | null,
+};
 
 export const usePathStore = create<PathState>((set) => ({
-  nodes: initialState.nodes,
-  edges: initialState.edges,
+  ...libraryView(),
   selectedNodeId: null,
   selectedNodeIds: [],
   commentLinkingId: null,
@@ -417,7 +426,36 @@ export const usePathStore = create<PathState>((set) => ({
       return state;
     }),
   initializeFromStorage: () => {
-    const state = loadFromStorage();
-    set({ nodes: state.nodes, edges: state.edges });
+    library = loadLibrary();
+    set(libraryView());
+  },
+  createPlaylist: (name) => {
+    const current = usePathStore.getState();
+    library = saveActiveGraph(library, current.nodes, current.edges);
+    library = createPath(library, name);
+    set({
+      ...libraryView(),
+      ...playbackReset,
+    });
+  },
+  switchPlaylist: (id) => {
+    if (id === library.activeId) return;
+    const current = usePathStore.getState();
+    library = saveActiveGraph(library, current.nodes, current.edges);
+    const next = activatePath(library, id);
+    if (!next) return;
+    library = next;
+    set({
+      ...libraryView(),
+      ...playbackReset,
+    });
+  },
+  renamePlaylist: (id, name) => {
+    library = renamePath(library, id, name);
+    set({ pathSummaries: summaries(library) });
+  },
+  setPlaylistVisibility: (id, visibility) => {
+    library = setPathVisibility(library, id, visibility);
+    set({ pathSummaries: summaries(library) });
   },
 }));

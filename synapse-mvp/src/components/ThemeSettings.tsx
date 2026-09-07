@@ -58,7 +58,17 @@ export default function ThemeSettings({ hintQuery = '' }: { hintQuery?: string }
       {editing ? (
         <div className="synapse-theme-lock" role="status">
           <strong>Editing theme</strong>
-          <span>{draft?.name}</span>
+          <label className="synapse-theme-name-field">
+            <span className="synapse-sr-only">Theme name</span>
+            <input
+              className="synapse-settings-input"
+              value={draft?.name ?? ''}
+              onChange={(e) => updateDraft({ name: e.target.value })}
+              placeholder="Theme name"
+              maxLength={64}
+              aria-label="Theme name"
+            />
+          </label>
           <div className="synapse-theme-lock-actions">
             <button type="button" className="synapse-btn synapse-btn-play" onClick={saveDraft}>
               Save
@@ -168,15 +178,6 @@ export default function ThemeSettings({ hintQuery = '' }: { hintQuery?: string }
 
       {draft ? (
         <div className="synapse-theme-editor">
-          <label className="synapse-settings-field">
-            <span>Name</span>
-            <input
-              className="synapse-settings-input"
-              value={draft.name}
-              onChange={(e) => updateDraft({ name: e.target.value })}
-            />
-          </label>
-
           <p className="synapse-section-label">Colors</p>
           <div className="synapse-theme-color-grid">
             {COLOR_KEYS.map((key) => (

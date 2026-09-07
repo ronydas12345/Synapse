@@ -35,39 +35,37 @@ export default function CommentNode({ data = {}, id }: any) {
 
       {/* Linked Node Info */}
       {linkedNode && !isLinking && (
-        <div className="px-3 py-2 bg-slate-750 border-b border-slate-700">
-          <p className="text-xs text-slate-400">
-            Linked to: <span className="text-slate-300">{linkedNode.type}</span>
+        <div className="synapse-node-banner">
+          <p>
+            Linked to: <span className="text-[var(--text)]">{linkedNode.type}</span>
           </p>
           <button
             onClick={() => updateNodeData(id, { linkedNodeId: null })}
-            className="text-xs text-red-400 hover:text-red-300 mt-1"
+            className="text-xs text-[var(--danger)] hover:underline mt-1"
           >
             Unlink
           </button>
         </div>
       )}
 
-      {/* Linking Mode Info */}
       {isLinking && (
-        <div className="px-3 py-2 bg-blue-900 border-b border-blue-700">
-          <p className="text-xs text-blue-200">Click a node to link to it</p>
+        <div className="synapse-node-banner is-link">
+          <p>Click a node to link to it</p>
           <button
             onClick={() => setCommentLinkingId(null)}
-            className="text-xs text-blue-300 hover:text-blue-100 mt-1"
+            className="text-xs mt-1 hover:underline"
           >
             Cancel
           </button>
         </div>
       )}
 
-      {/* Text Content */}
       <div className="px-3 py-3">
         <textarea
           value={data?.text || ''}
           onChange={(e) => updateNodeData(id, { text: e.target.value })}
           placeholder="Add a note..."
-          className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-slate-100 text-xs placeholder-slate-500 resize-none h-24 focus:outline-none focus:border-slate-500"
+          className="nodrag nopan nowheel synapse-node-note"
         />
       </div>
     </div>

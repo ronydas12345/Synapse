@@ -1,6 +1,6 @@
 import { emptyTheme } from './parseTheme';
 import { luminance } from './color';
-import type { SynapseTheme, ThemeColors } from './types';
+import type { SynapseTheme, ThemeColors, ThemeTypography } from './types';
 
 type Palette = Partial<ThemeColors> &
   Pick<
@@ -44,6 +44,87 @@ function preset(id: string, name: string, palette: Palette): SynapseTheme {
     ...base,
     builtin: true,
     colors,
+  };
+}
+
+const STANDARD: ThemeTypography = {
+  ui: 'Outfit',
+  display: 'Syne',
+  mono: 'IBM Plex Mono',
+  node: 'Outfit',
+};
+
+const PRESET_TYPE: Record<string, Partial<ThemeTypography>> = {
+  'standard-dark': STANDARD,
+  'standard-light': STANDARD,
+  'high-contrast-light': {
+    ui: 'system-ui',
+    display: 'Outfit',
+    mono: 'ui-monospace',
+    node: 'Segoe UI',
+  },
+  'high-contrast-dark': {
+    ui: 'system-ui',
+    display: 'Outfit',
+    mono: 'ui-monospace',
+    node: 'Segoe UI',
+  },
+  'ocean-blue': { ui: 'Inter', display: 'Syne', node: 'Inter' },
+  'bold-blue': { ui: 'Space Grotesk', display: 'Syne', node: 'Outfit' },
+  'leaf-green': { display: 'Georgia' },
+  'pretty-pink': {
+    ui: 'Space Grotesk',
+    display: 'Fraunces',
+    node: 'Inter',
+  },
+  'cherry-tree': {
+    ui: 'Space Grotesk',
+    display: 'Fraunces',
+    node: 'Inter',
+  },
+  'blood-red': { ui: 'Inter', display: 'Syne', mono: 'JetBrains Mono', node: 'Inter' },
+  'sunset-orange': { display: 'Fraunces' },
+  'purple-night': { ui: 'Space Grotesk', display: 'Fraunces', node: 'Inter' },
+  'lavender': { ui: 'Space Grotesk', display: 'Fraunces', node: 'Inter' },
+  'forest': { display: 'Georgia' },
+  'deep-ocean': { ui: 'Inter', display: 'Syne', node: 'Inter' },
+  'midnight': { ui: 'Inter', node: 'Inter' },
+  cyberpunk: {
+    ui: 'Space Grotesk',
+    display: 'Syne',
+    mono: 'JetBrains Mono',
+    node: 'Inter',
+  },
+  synthwave: {
+    ui: 'Space Grotesk',
+    display: 'Fraunces',
+    mono: 'JetBrains Mono',
+    node: 'Inter',
+  },
+  monochrome: {
+    ui: 'Inter',
+    display: 'Outfit',
+    mono: 'ui-monospace',
+    node: 'Inter',
+  },
+  'warm-cream': { display: 'Georgia', ui: 'Outfit' },
+  'solarized-light': { ui: 'Inter', display: 'Georgia', node: 'Inter' },
+  'solarized-dark': { ui: 'Inter', display: 'Georgia', node: 'Inter' },
+  rose: { ui: 'Space Grotesk', display: 'Fraunces', node: 'Inter' },
+  mint: { ui: 'Outfit', display: 'Syne' },
+  amber: { display: 'Fraunces' },
+  neon: {
+    ui: 'Space Grotesk',
+    display: 'Syne',
+    mono: 'JetBrains Mono',
+    node: 'Inter',
+  },
+};
+
+function withTypeVibe(theme: SynapseTheme): SynapseTheme {
+  return {
+    ...theme,
+    typography: { ...theme.typography, ...PRESET_TYPE[theme.id] },
   };
 }
 
@@ -154,6 +235,28 @@ export const BUILTIN_THEMES: SynapseTheme[] = [
     textPrimary: '#fdeef5',
     accent: '#f08ab8',
     accentWarm: '#ffb3c9',
+  }),
+  preset('cherry-tree', 'Cherry Tree', {
+    workspaceBackground: '#f7eef2',
+    workspaceSurface: '#fdf6f8',
+    panelBackground: '#fffafc',
+    panelElevated: '#f3e4ea',
+    panelHover: '#ead5de',
+    border: '#e3c5d0',
+    borderStrong: '#d0a3b4',
+    textPrimary: '#3a2430',
+    textSecondary: '#7a5566',
+    textFaint: '#9a7584',
+    accent: '#e28aaa',
+    accentWarm: '#efb4c6',
+    danger: '#c45c6e',
+    ok: '#6a9e78',
+    nodeBackground: '#fffafc',
+    nodeHeader: '#f8edf1',
+    nodeRandomizer: '#d48bb0',
+    nodeConditional: '#e28aaa',
+    nodeComment: '#c9a0b0',
+    gridLine: '#3a2430',
   }),
   preset('blood-red', 'Blood Red', {
     workspaceBackground: '#140708',
@@ -299,7 +402,7 @@ export const BUILTIN_THEMES: SynapseTheme[] = [
     accentWarm: '#ff00ea',
     nodeRandomizer: '#00e5ff',
   }),
-];
+].map(withTypeVibe);
 
 export const DEFAULT_THEME_ID = 'standard-dark';
 

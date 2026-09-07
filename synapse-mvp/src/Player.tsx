@@ -14,6 +14,7 @@ import DeckTransport from './components/DeckTransport';
 import AudioVisualizer from './components/AudioVisualizer';
 import PlayingScreen from './components/PlayingScreen';
 import { buildListenRows } from './listenPath';
+import { useProfileStore } from './profile/profileStore';
 
 function nodeToPlayable(node: Node | undefined, nodeId: string): PlayableMedia | null {
   if (!node) return null;
@@ -363,6 +364,10 @@ export default function Player() {
       return () => clearSilenceTimer();
     }
 
+    if (kind === 'track') {
+      useProfileStore.getState().recordListen();
+    }
+
     if (kind === 'transition') {
       adapterRef.current?.stop();
       const tType = (node?.data?.type as string) || 'silence';
@@ -580,7 +585,7 @@ export default function Player() {
               ? `Queue ${currentTrackIndex + 1} / ${playbackQueue.length}`
               : ''
           }
-          pathHeading={queueActive ? 'Path' : 'Upcoming'}
+          pathHeading="Playlist"
           rows={listenRows}
           vizAudio={vizAudio}
           onTogglePlay={() => setIsPlaying(!isPlaying)}
