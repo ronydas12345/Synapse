@@ -1,6 +1,5 @@
 import {
   addTrackToRandomizerList,
-  normalizeWorkspaceGraph,
   reconcileAfterNodeRemovals,
   syncParkedTracks,
 } from './randomizerDrop';
@@ -9,8 +8,10 @@ import type { Node, Edge, Connection } from '@xyflow/react';
 import type { PathSummary } from './playlists/library';
 import {
   activatePath,
+  addImportedPath,
   createPath,
   emptyGraph,
+  getPath,
   loadLibrary,
   renamePath,
   saveActiveGraph,
@@ -18,6 +19,16 @@ import {
   summaries,
   type PathLibrary,
 } from './playlists/library';
+import {
+  collectDependentCustomThemes,
+  parsePlaylistFile,
+  playlistDownloadName,
+  remapStyleNodeThemeIds,
+  serializePackageJson,
+  serializePlaylistJson,
+} from './playlists/format';
+import { getBuiltinTheme } from './theme/presets';
+import { resolveTheme, useThemeStore } from './theme/themeStore';
 
 interface PathState {
   nodes: Node[];
@@ -67,6 +78,11 @@ interface PathState {
   switchPlaylist: (id: string) => void;
   renamePlaylist: (id: string, name: string) => void;
   setPlaylistVisibility: (id: string, visibility: 'public' | 'private') => void;
+  exportPlaylistFile: (
+    id: string,
+    kind?: 'playlist' | 'package'
+  ) => { filename: string; json: string } | null;
+  importPlaylistFile: (text: string) => { error: string | null; notices: string[] };
 }
 
 let library: PathLibrary = loadLibrary();
@@ -163,7 +179,8 @@ export const usePathStore = create<PathState>((set) => ({
         targetNode?.type === 'track' || 
         targetNode?.type === 'end' || 
         targetNode?.type === 'randomizer' ||
-        targetNode?.type === 'transition';
+        targetNode?.type === 'transition' ||
+        targetNode?.type === 'style';
       
       if (!allowsMultipleInputs) {
         const existingIncoming = state.edges.filter(
@@ -457,5 +474,52 @@ export const usePathStore = create<PathState>((set) => ({
   setPlaylistVisibility: (id, visibility) => {
     library = setPathVisibility(library, id, visibility);
     set({ pathSummaries: summaries(library) });
+  },
+  exportPlaylistFile: (id, kind = 'playlist') => {
+    const current = usePathStore.getState();
+    library = saveActiveGraph(library, current.nodes, current.edges);
+    const path = getPath(library, id);
+    if (!path) return null;
+    const themeState = useThemeStore.getState();
+    const theme = resolveTheme(themeState.activeId, themeState.customThemes);
+    const themes = collectDependentCustomThemes(path.nodes, themeState.customThemes, [
+      theme.id,
+    ]);
+    const json =
+      kind === 'package'
+        ? serializePackageJson(path, themes, { themeId: theme.id })
+        : serializePlaylistJson(path, { themeId: theme.id, themes });
+    return { filename: playlistDownloadName(path.name), json };
+  },
+  importPlaylistFile: (text) => {
+    const parsed = parsePlaylistFile(text);
+    if (!parsed.ok) return { error: parsed.error, notices: [] };
+    const current = usePathStore.getState();
+    library = saveActiveGraph(library, current.nodes, current.edges);
+    const assigned = new Map<string, string>();
+    for (const theme of parsed.themes) {
+      const originalId = theme.id;
+      const nextId = useThemeStore.getState().addCustomTheme(theme);
+      if (nextId) assigned.set(originalId, nextId);
+    }
+    library = addImportedPath(library, {
+      ...parsed.playlist,
+      nodes: remapStyleNodeThemeIds(parsed.playlist.nodes, assigned),
+    });
+    set({
+      ...libraryView(),
+      ...playbackReset,
+    });
+    const want = parsed.themeId ? assigned.get(parsed.themeId) || parsed.themeId : null;
+    if (want) {
+      const themeState = useThemeStore.getState();
+      if (
+        !themeState.draft &&
+        (getBuiltinTheme(want) || themeState.customThemes.some((t) => t.id === want))
+      ) {
+        themeState.setActiveId(want);
+      }
+    }
+    return { error: null, notices: parsed.notices };
   },
 }));

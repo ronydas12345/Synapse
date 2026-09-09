@@ -38,7 +38,7 @@ export function emptyGraph(): { nodes: Node[]; edges: Edge[] } {
   return { nodes: [defaultStartNode()], edges: [] };
 }
 
-function newId(): string {
+export function makePathId(): string {
   try {
     return crypto.randomUUID();
   } catch {
@@ -60,7 +60,7 @@ function normalizePath(raw: Partial<StoredMusicPath> | undefined, fallbackName: 
     raw?.edges || []
   );
   return {
-    id: typeof raw?.id === 'string' && raw.id ? raw.id : newId(),
+    id: typeof raw?.id === 'string' && raw.id ? raw.id : makePathId(),
     name: String(raw?.name || fallbackName).slice(0, 60) || fallbackName,
     visibility: raw?.visibility === 'public' ? 'public' : 'private',
     nodes: graph.nodes,
@@ -108,7 +108,7 @@ export function loadLibrary(): PathLibrary {
 
   const first = normalizePath(
     {
-      id: newId(),
+      id: makePathId(),
       name: 'My playlist',
       nodes: legacy.nodes,
       edges: legacy.edges,
@@ -165,7 +165,7 @@ export function createPath(lib: PathLibrary, name?: string): PathLibrary {
   const graph = emptyGraph();
   const path = normalizePath(
     {
-      id: newId(),
+      id: makePathId(),
       name: (name || '').trim() || nextUntitledName(lib.paths.map((p) => p.name)),
       nodes: graph.nodes,
       edges: graph.edges,
@@ -207,6 +207,38 @@ export function setPathVisibility(
   const next: PathLibrary = {
     ...lib,
     paths: lib.paths.map((p) => (p.id === id ? { ...p, visibility } : p)),
+  };
+  persistLibrary(next);
+  return next;
+}
+
+export function getPath(lib: PathLibrary, id: string): StoredMusicPath | undefined {
+  return lib.paths.find((p) => p.id === id);
+}
+
+export function uniquePathName(existing: string[], preferred: string): string {
+  const base = preferred.trim().slice(0, 60) || 'Imported playlist';
+  const used = new Set(existing.map((n) => n.toLowerCase()));
+  if (!used.has(base.toLowerCase())) return base;
+  const copy = `${base} copy`.slice(0, 60);
+  if (!used.has(copy.toLowerCase())) return copy;
+  for (let n = 2; n < 1000; n++) {
+    const candidate = `${base} copy ${n}`.slice(0, 60);
+    if (!used.has(candidate.toLowerCase())) return candidate;
+  }
+  return `${base.slice(0, 40)} ${Date.now()}`;
+}
+
+export function addImportedPath(lib: PathLibrary, incoming: StoredMusicPath): PathLibrary {
+  const names = lib.paths.map((p) => p.name);
+  const name = uniquePathName(names, incoming.name);
+  let id = incoming.id;
+  if (!id || lib.paths.some((p) => p.id === id)) id = makePathId();
+  const path = normalizePath({ ...incoming, id, name }, name);
+  const next: PathLibrary = {
+    ...lib,
+    activeId: path.id,
+    paths: [...lib.paths, path],
   };
   persistLibrary(next);
   return next;
