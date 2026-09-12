@@ -14,6 +14,7 @@ const FALLBACK: Record<string, { width: number; height: number }> = {
   conditional: { width: 288, height: 160 },
   randomizer: { width: 224, height: 220 },
   transition: { width: 256, height: 100 },
+  style: { width: 256, height: 100 },
   start: { width: 128, height: 80 },
   end: { width: 128, height: 80 },
 };

@@ -8,22 +8,11 @@ import type {
 } from './types';
 import { toQueueKey } from './types';
 import { isPlaybackStartNodeType } from './startNode';
+import { selectConditionalPathIndex } from './selectConditionalPath';
 
 export const DEFAULT_MAX_QUEUE_ITEMS = 500;
 export const DEFAULT_MAX_TRAVERSE_STEPS = 2000;
 export const DEFAULT_MAX_PLAY_COUNT = 100;
-
-function isHourInRanges(
-  hour: number,
-  ranges: Array<{ start: number; end: number }>
-): boolean {
-  return ranges.some((range) => {
-    if (range.start <= range.end) {
-      return hour >= range.start && hour <= range.end;
-    }
-    return hour >= range.start || hour <= range.end;
-  });
-}
 
 function isBranchingType(type: string | undefined): boolean {
   return type === 'splitter' || type === 'conditional';
@@ -72,7 +61,9 @@ function walkGraph(
 ): BuildQueueResult {
   const { nodes, edges } = graph;
   const rng = options.rng ?? createDefaultRng();
-  const currentHour = options.currentHour ?? new Date().getHours();
+  const now = options.now ?? new Date();
+  const currentHour = options.currentHour ?? now.getHours();
+  const weatherState = options.weatherState ?? 'other';
   const maxQueueItems = options.maxQueueItems ?? DEFAULT_MAX_QUEUE_ITEMS;
   const maxTraverseSteps =
     options.maxTraverseSteps ?? DEFAULT_MAX_TRAVERSE_STEPS;
@@ -167,29 +158,10 @@ function walkGraph(
         }
       }
     } else if (isBranchingType(node.type)) {
-      const mode = (node.data?.mode as string) || 'random';
-      const weights = (node.data?.weights as number[]) || [1, 1];
-      const pathTimeRanges =
-        (node.data?.pathTimeRanges as Array<
-          Array<{ start: number; end: number }>
-        >) ||
-        Array(weights.length)
-          .fill(null)
-          .map(() => [{ start: 0, end: 23 }]);
-
-      let selectedPathIndex = -1;
-
-      if (mode === 'timeRange') {
-        for (let i = 0; i < pathTimeRanges.length; i++) {
-          if (isHourInRanges(currentHour, pathTimeRanges[i] || [])) {
-            selectedPathIndex = i;
-            break;
-          }
-        }
-        if (selectedPathIndex === -1) selectedPathIndex = 0;
-      } else {
-        selectedPathIndex = pickWeightedIndex(weights, rng);
-      }
+      const selectedPathIndex = selectConditionalPathIndex(
+        node.data as Record<string, unknown> | undefined,
+        { rng, currentHour, now, weatherState }
+      );
 
       const pathId = String.fromCharCode(65 + selectedPathIndex);
       const outgoingEdge = edges.find(
@@ -203,6 +175,13 @@ function walkGraph(
         kind: 'transition',
         nodeId,
         key: toQueueKey('transition', nodeId),
+      });
+    } else if (node.type === 'style') {
+      if (!canPush()) return;
+      queue.push({
+        kind: 'style',
+        nodeId,
+        key: toQueueKey('style', nodeId),
       });
     }
 

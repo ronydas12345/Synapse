@@ -11,7 +11,7 @@ export default function SiteFooter() {
       <div className="synapse-mkt-footer-grid">
         <div className="synapse-mkt-footer-brand">
           <AppLink to="home" className="synapse-mkt-logo">
-            <SynapseMark size={28} />
+            <SynapseMark size={30} />
             <span className="synapse-brand">Synapse</span>
           </AppLink>
           <p>Visual music paths for YouTube.</p>

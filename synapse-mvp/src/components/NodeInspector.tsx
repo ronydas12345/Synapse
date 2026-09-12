@@ -9,7 +9,26 @@ import {
   RANDOMIZER_MODE_OPTIONS,
   conditionalModePatch,
   randomizerModePatch,
+  resizeConditionalPaths,
 } from '../nodeMode';
+import WeatherPathEditor from './conditional/WeatherPathEditor';
+import DayPathEditor from './conditional/DayPathEditor';
+import { parsePathDateRules, parsePathWeather } from '../conditional/parse';
+import {
+  defaultCatchAllRule,
+  defaultPathDateRules,
+  defaultPathWeather,
+  padPathList,
+} from '../conditional/defaults';
+import { allThemes, useThemeStore } from '../theme/themeStore';
+import {
+  parseStyleNodeData,
+  MAX_STYLE_DELAY_MS,
+  MAX_STYLE_DURATION_MS,
+  STYLE_EASING_OPTIONS,
+  STYLE_LAYER_IDS,
+  STYLE_LAYER_LABELS,
+} from '../styleNode/parse';
 
 interface SliderInputProps {
   label: string;
@@ -19,6 +38,7 @@ interface SliderInputProps {
   step?: number;
   suffix?: string;
   onChange: (value: number) => void;
+  tutorialId?: string;
 }
 
 function TimeRangeFields({
@@ -50,7 +70,7 @@ function TimeRangeFields({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-tutorial="track-time">
       {!known ? (
         <p className="text-xs text-[var(--text-faint)] m-0">
           Duration unknown until this video plays. End means “full length” until then.
@@ -108,9 +128,9 @@ function TimeRangeFields({
   );
 }
 
-function SliderInput({ label, value, min = 0, max = 100, step = 1, suffix = '', onChange }: SliderInputProps) {
+function SliderInput({ label, value, min = 0, max = 100, step = 1, suffix = '', onChange, tutorialId }: SliderInputProps) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1.5" data-tutorial={tutorialId}>
       <label>{label}</label>
       <div className="flex gap-2 items-center">
         <input
@@ -141,6 +161,7 @@ function SliderInput({ label, value, min = 0, max = 100, step = 1, suffix = '', 
 
 export default function NodeInspector() {
   const { nodes, edges, setNodes, setEdges, selectedNodeId, selectNode, updateNodeData, deleteNode } = usePathStore();
+  const customThemes = useThemeStore((s) => s.customThemes);
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) as any;
 
   if (!selectedNode) return null;
@@ -178,43 +199,44 @@ export default function NodeInspector() {
         </div>
         {selectedNode.type === 'track' && (
           <>
-            <div className="space-y-3">
+            <div className="space-y-3" data-tutorial="track-metadata">
               <div>
-                <label className="text-slate-300 block mb-1">Song Title</label>
+                <label className="text-[var(--text)] block mb-1">Song Title</label>
                 <input
                   type="text"
                   placeholder="Song title"
-                  className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500"
+                  className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                   value={selectedNode.data?.songTitle || ''}
                   onChange={(e) => updateNodeData(selectedNode.id, { songTitle: e.target.value })}
                 />
               </div>
               <div>
-                <label className="text-slate-300 block mb-1">Artist</label>
+                <label className="text-[var(--text)] block mb-1">Artist</label>
                 <input
                   type="text"
                   placeholder="Artist"
-                  className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500"
+                  className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                   value={selectedNode.data?.artist || ''}
                   onChange={(e) => updateNodeData(selectedNode.id, { artist: e.target.value })}
                 />
               </div>
               <div>
-                <label className="text-slate-300 block mb-1">Album</label>
+                <label className="text-[var(--text)] block mb-1">Album</label>
                 <input
                   type="text"
                   placeholder="Album"
-                  className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500"
+                  className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                   value={selectedNode.data?.album || ''}
                   onChange={(e) => updateNodeData(selectedNode.id, { album: e.target.value })}
                 />
               </div>
               <div>
-                <label className="text-slate-300 block mb-1">YouTube Video ID or URL</label>
+                <label className="text-[var(--text)] block mb-1">YouTube Video ID or URL</label>
                 <input
                   type="text"
                   placeholder="dQw4w9wgVcQ or youtube.com/watch?v=…"
-                  className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500"
+                  className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
+                  data-tutorial="track-url"
                   value={selectedNode.data?.videoId || ''}
                   onChange={(e) => {
                     const raw = e.target.value;
@@ -259,8 +281,8 @@ export default function NodeInspector() {
               </div>
             </div>
 
-            <div className="border-t border-slate-700 pt-3">
-              <h4 className="text-xs font-semibold text-slate-200 uppercase mb-2">Playback</h4>
+            <div className="border-t border-[var(--border)] pt-3">
+              <h4 className="text-xs font-semibold text-[var(--text)] uppercase mb-2">Playback</h4>
               <div className="space-y-3">
                 <SliderInput
                   label="Volume (%)"
@@ -269,6 +291,7 @@ export default function NodeInspector() {
                   max={200}
                   step={5}
                   suffix="%"
+                  tutorialId="track-volume"
                   onChange={(v) => updateNodeData(selectedNode.id, { volume: v })}
                 />
                 <SliderInput
@@ -278,13 +301,14 @@ export default function NodeInspector() {
                   max={200}
                   step={5}
                   suffix="%"
+                  tutorialId="track-speed"
                   onChange={(v) => updateNodeData(selectedNode.id, { speed: v })}
                 />
               </div>
             </div>
 
-            <div className="border-t border-slate-700 pt-3">
-              <h4 className="text-xs font-semibold text-slate-200 uppercase mb-2">Time Range</h4>
+            <div className="border-t border-[var(--border)] pt-3">
+              <h4 className="text-xs font-semibold text-[var(--text)] uppercase mb-2">Time Range</h4>
               <TimeRangeFields
                 startTime={Number(selectedNode.data?.startTime) || 0}
                 endTime={Number(selectedNode.data?.endTime) || 0}
@@ -293,9 +317,9 @@ export default function NodeInspector() {
               />
             </div>
 
-            <details className="group border-t border-slate-700 pt-3">
+            <details className="group border-t border-[var(--border)] pt-3">
               <summary className="flex items-center justify-between gap-2 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
-                <h4 className="text-xs font-semibold text-slate-200 uppercase m-0">
+                <h4 className="text-xs font-semibold text-[var(--text)] uppercase m-0">
                   Experimental / not yet applied
                 </h4>
                 <ChevronDown className="w-3.5 h-3.5 text-[var(--text-faint)] flex-shrink-0 transition-transform group-open:rotate-180" />
@@ -304,7 +328,7 @@ export default function NodeInspector() {
                 These settings currently do nothing in playback. YouTube’s player cannot apply EQ
                 or pitch-shift; only Speed % is used. They will be implemented eventually.
               </p>
-              <h4 className="text-xs font-semibold text-slate-200 uppercase mb-2">EQ</h4>
+              <h4 className="text-xs font-semibold text-[var(--text)] uppercase mb-2">EQ</h4>
               <div className="space-y-3">
                 <SliderInput
                   label="Bass"
@@ -323,7 +347,7 @@ export default function NodeInspector() {
                   onChange={(v) => updateNodeData(selectedNode.id, { treble: v })}
                 />
               </div>
-              <h4 className="text-xs font-semibold text-slate-200 uppercase mb-2 mt-4">Pitch & Tempo</h4>
+              <h4 className="text-xs font-semibold text-[var(--text)] uppercase mb-2 mt-4">Pitch & Tempo</h4>
               <div className="space-y-3">
                 <SliderInput
                   label="Pitch (semitones)"
@@ -345,8 +369,8 @@ export default function NodeInspector() {
               </div>
             </details>
 
-            <div className="border-t border-slate-700 pt-3">
-              <h4 className="text-xs font-semibold text-slate-200 uppercase mb-2">Playback Count</h4>
+            <div className="border-t border-[var(--border)] pt-3">
+              <h4 className="text-xs font-semibold text-[var(--text)] uppercase mb-2">Playback Count</h4>
               <div className="space-y-3">
                 <SliderInput
                   label="Play Count"
@@ -359,25 +383,26 @@ export default function NodeInspector() {
               </div>
             </div>
 
-            <div className="border-t border-slate-700 pt-3">
-              <p className="text-slate-300 text-xs"><strong>Duration:</strong> {selectedNode.data?.duration || 0}s</p>
+            <div className="border-t border-[var(--border)] pt-3">
+              <p className="text-[var(--text)] text-xs"><strong>Duration:</strong> {selectedNode.data?.duration || 0}s</p>
             </div>
           </>
         )}
         {(selectedNode.type === 'conditional' || selectedNode.type === 'splitter') && (
           <>
-            <div className="border-t border-slate-700 pt-3">
-              <h4 className="text-xs font-semibold text-slate-200 uppercase mb-3">Conditional Settings</h4>
-              <label className="text-slate-300 block mb-2 text-sm">Conditional Type</label>
+            <div className="border-t border-[var(--border)] pt-3">
+              <h4 className="text-xs font-semibold text-[var(--text)] uppercase mb-3">Conditional Settings</h4>
+              <label className="text-[var(--text)] block mb-2 text-sm">Conditional Type</label>
               <select
                 value={selectedNode.data?.mode || 'random'}
+                data-tutorial="conditional-mode"
                 onChange={(e) => {
                   updateNodeData(
                     selectedNode.id,
                     conditionalModePatch(selectedNode.data, e.target.value)
                   );
                 }}
-                className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white text-sm"
+                className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)] text-sm"
               >
                 {CONDITIONAL_MODE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -387,26 +412,19 @@ export default function NodeInspector() {
               </select>
             </div>
 
-            <div className="border-t border-slate-700 pt-3">
-              <label className="text-slate-300 block mb-1">Number of Paths</label>
+            <div className="border-t border-[var(--border)] pt-3">
+              <label className="text-[var(--text)] block mb-1">Number of Paths</label>
               <input
                 type="number"
                 min="2"
                 max="10"
-                className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white"
+                className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                 value={selectedNode.data?.numPaths || 2}
                 onChange={(e) => {
-                  const newNumPaths = parseInt(e.target.value) || 2;
-                  const oldWeights = (selectedNode.data?.weights as number[]) || Array(selectedNode.data?.numPaths || 2).fill(10);
-                  const newWeights = Array(newNumPaths).fill(10);
-                  const oldTimeRanges = (selectedNode.data?.pathTimeRanges as Array<Array<{start: number, end: number}>>) || [];
-                  const newTimeRanges: Array<Array<{start: number, end: number}>> = [];
-
-                  for (let i = 0; i < newNumPaths; i++) {
-                    newWeights[i] = oldWeights[i] || 10;
-                    newTimeRanges[i] = oldTimeRanges[i] || [{ start: 0, end: 23 }];
-                  }
-                  updateNodeData(selectedNode.id, { numPaths: newNumPaths, weights: newWeights, pathTimeRanges: newTimeRanges });
+                  updateNodeData(
+                    selectedNode.id,
+                    resizeConditionalPaths(selectedNode.data, parseInt(e.target.value) || 2)
+                  );
                 }}
               />
             </div>
@@ -420,13 +438,13 @@ export default function NodeInspector() {
                   const percentage = Math.round((weight / totalWeight) * 100);
 
                   return (
-                    <div key={`path-${i}`} className="border-t border-slate-700 pt-3">
-                      <label className="text-slate-300 block mb-1">Path {String.fromCharCode(65 + i)} Weight</label>
+                    <div key={`path-${i}`} className="border-t border-[var(--border)] pt-3">
+                      <label className="text-[var(--text)] block mb-1">Path {String.fromCharCode(65 + i)} Weight</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
                           min="1"
-                          className="flex-1 p-2 bg-slate-700 border border-slate-600 rounded text-white"
+                          className="flex-1 p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                           value={weight}
                           onChange={(e) => {
                             const newWeights = [...(selectedNode.data?.weights as number[])];
@@ -434,7 +452,7 @@ export default function NodeInspector() {
                             updateNodeData(selectedNode.id, { weights: newWeights });
                           }}
                         />
-                        <span className="text-xs text-slate-400 min-w-fit">({percentage}%)</span>
+                        <span className="text-xs text-[var(--text-muted)] min-w-fit">({percentage}%)</span>
                       </div>
                     </div>
                   );
@@ -452,20 +470,20 @@ export default function NodeInspector() {
                   const timeRanges = allTimeRanges[pathIdx] || [{ start: 0, end: 23 }];
 
                   return (
-                    <div key={`path-time-${pathIdx}`} className="border-t border-slate-700 pt-3">
-                      <label className="text-slate-300 block mb-2 font-semibold text-sm">
+                    <div key={`path-time-${pathIdx}`} className="border-t border-[var(--border)] pt-3">
+                      <label className="text-[var(--text)] block mb-2 font-semibold text-sm">
                         Path {String.fromCharCode(65 + pathIdx)} Time Ranges
                       </label>
                       <div className="space-y-2">
                         {timeRanges.map((range, rangeIdx) => (
-                          <div key={rangeIdx} className="flex gap-2 items-end bg-slate-700 p-2 rounded">
+                          <div key={rangeIdx} className="flex gap-2 items-end bg-[var(--bg-deep)] p-2 rounded">
                             <div className="flex-1">
-                              <label className="text-xs text-slate-400 block mb-1">Start (0-23)</label>
+                              <label className="text-xs text-[var(--text-muted)] block mb-1">Start (0-23)</label>
                               <input
                                 type="number"
                                 min="0"
                                 max="23"
-                                className="w-full p-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+                                className="w-full p-2 bg-[var(--bg-hover)] border border-[var(--border)] rounded text-[var(--text)] text-sm"
                                 value={range.start}
                                 onChange={(e) => {
                                   const newStart = Math.max(0, Math.min(23, parseInt(e.target.value) || 0));
@@ -479,12 +497,12 @@ export default function NodeInspector() {
                               />
                             </div>
                             <div className="flex-1">
-                              <label className="text-xs text-slate-400 block mb-1">End (0-23)</label>
+                              <label className="text-xs text-[var(--text-muted)] block mb-1">End (0-23)</label>
                               <input
                                 type="number"
                                 min="0"
                                 max="23"
-                                className="w-full p-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+                                className="w-full p-2 bg-[var(--bg-hover)] border border-[var(--border)] rounded text-[var(--text)] text-sm"
                                 value={range.end}
                                 onChange={(e) => {
                                   const newEnd = Math.max(0, Math.min(23, parseInt(e.target.value) || 0));
@@ -508,7 +526,7 @@ export default function NodeInspector() {
                                 }
                                 updateNodeData(selectedNode.id, { pathTimeRanges: newTimeRanges });
                               }}
-                              className="px-2 py-2 bg-red-600 hover:bg-red-500 rounded text-white text-xs font-semibold"
+                              className="px-2 py-2 bg-[color-mix(in_srgb,var(--danger)_22%,transparent)] hover:bg-[color-mix(in_srgb,var(--danger)_28%,transparent)] rounded text-[var(--text)] text-xs font-semibold"
                             >
                               ✕
                             </button>
@@ -522,7 +540,7 @@ export default function NodeInspector() {
                             newTimeRanges[pathIdx] = [...timeRanges, { start: 0, end: 23 }];
                             updateNodeData(selectedNode.id, { pathTimeRanges: newTimeRanges });
                           }}
-                          className="w-full py-2 px-2 bg-slate-600 hover:bg-slate-500 rounded text-white text-xs font-semibold"
+                          className="w-full py-2 px-2 bg-[var(--bg-hover)] hover:bg-[var(--bg-elevated)] rounded text-[var(--text)] text-xs font-semibold"
                         >
                           + Add Range
                         </button>
@@ -532,14 +550,44 @@ export default function NodeInspector() {
                 })}
               </>
             )}
+
+            {selectedNode.data?.mode === 'weather' && (
+              <WeatherPathEditor
+                pathWeather={(() => {
+                  const n = Number(selectedNode.data?.numPaths) || 2;
+                  const rows = parsePathWeather(selectedNode.data?.pathWeather, n);
+                  return rows.some((row) => row.length > 0)
+                    ? rows
+                    : defaultPathWeather(n);
+                })()}
+                onChange={(pathWeather) =>
+                  updateNodeData(selectedNode.id, { pathWeather })
+                }
+              />
+            )}
+
+            {selectedNode.data?.mode === 'day' && (
+              <DayPathEditor
+                pathDateRules={(() => {
+                  const n = Number(selectedNode.data?.numPaths) || 2;
+                  const rows = parsePathDateRules(selectedNode.data?.pathDateRules, n);
+                  return rows.some((row) => row.length > 0)
+                    ? padPathList(rows, n, () => [defaultCatchAllRule()])
+                    : defaultPathDateRules(n);
+                })()}
+                onChange={(pathDateRules) =>
+                  updateNodeData(selectedNode.id, { pathDateRules })
+                }
+              />
+            )}
           </>
         )}
         {selectedNode.type === 'transition' && (
           <>
             <div>
-              <label className="text-slate-300 block mb-1">Transition Type</label>
+              <label className="text-[var(--text)] block mb-1">Transition Type</label>
               <select
-                className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white"
+                className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                 value={selectedNode.data?.type || 'silence'}
                 onChange={(e) => updateNodeData(selectedNode.id, { type: e.target.value })}
               >
@@ -550,13 +598,13 @@ export default function NodeInspector() {
             </div>
             {selectedNode.data?.type === 'silence' && (
               <div>
-                <label className="text-slate-300 block mb-1">Duration (seconds)</label>
+                <label className="text-[var(--text)] block mb-1">Duration (seconds)</label>
                 <input
                   type="number"
                   min="0.1"
                   max="30"
                   step="0.1"
-                  className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white"
+                  className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                   value={selectedNode.data?.duration || 1}
                   onChange={(e) => updateNodeData(selectedNode.id, { duration: Math.max(0.1, parseFloat(e.target.value) || 1) })}
                 />
@@ -564,20 +612,20 @@ export default function NodeInspector() {
             )}
             {selectedNode.data?.type === 'audio' && (
               <div>
-                <label className="text-slate-300 block mb-1">Audio File (max 5MB)</label>
+                <label className="text-[var(--text)] block mb-1">Audio File (max 5MB)</label>
                 {selectedNode.data?.audioFile ? (
                   <div className="space-y-2">
-                    <div className="p-2 bg-slate-700 border border-slate-600 rounded">
-                      <p className="text-xs text-slate-300 break-all">{selectedNode.data?.fileName || 'audio file'}</p>
+                    <div className="p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded">
+                      <p className="text-xs text-[var(--text)] break-all">{selectedNode.data?.fileName || 'audio file'}</p>
                     </div>
                     <button
                       onClick={() => updateNodeData(selectedNode.id, { audioFile: null, fileName: '' })}
-                      className="w-full py-1 px-2 bg-red-600 hover:bg-red-700 rounded text-xs text-white transition-colors"
+                      className="w-full py-1 px-2 bg-[color-mix(in_srgb,var(--danger)_22%,transparent)] hover:bg-[color-mix(in_srgb,var(--danger)_35%,transparent)] rounded text-xs text-[var(--text)] transition-colors"
                     >
                       Clear File
                     </button>
-                    <label className="block text-xs text-slate-400 cursor-pointer hover:text-slate-300">
-                      <span className="block py-2 text-center text-slate-300 hover:bg-slate-700 rounded border border-slate-600">Replace File</span>
+                    <label className="block text-xs text-[var(--text-muted)] cursor-pointer hover:text-[var(--text)]">
+                      <span className="block py-2 text-center text-[var(--text)] hover:bg-[var(--bg-hover)] rounded border border-[var(--border)]">Replace File</span>
                       <input
                         type="file"
                         accept="audio/mpeg,.mp3"
@@ -604,7 +652,7 @@ export default function NodeInspector() {
                   </div>
                 ) : (
                   <label className="block cursor-pointer">
-                    <span className="block py-2 px-2 text-center text-slate-300 bg-slate-700 border border-slate-600 rounded hover:bg-slate-600 transition-colors">Choose File</span>
+                    <span className="block py-2 px-2 text-center text-[var(--text)] bg-[var(--bg-deep)] border border-[var(--border)] rounded hover:bg-[var(--bg-hover)] transition-colors">Choose File</span>
                     <input
                       type="file"
                       accept="audio/mpeg,.mp3"
@@ -633,11 +681,11 @@ export default function NodeInspector() {
             )}
             {selectedNode.data?.type === 'youtube' && (
               <div>
-                <label className="text-slate-300 block mb-1">YouTube Video ID</label>
+                <label className="text-[var(--text)] block mb-1">YouTube Video ID</label>
                 <input
                   type="text"
                   placeholder="dQw4w9wgxcq"
-                  className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500"
+                  className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                   value={selectedNode.data?.videoId || ''}
                   onChange={(e) => updateNodeData(selectedNode.id, { videoId: e.target.value })}
                 />
@@ -648,9 +696,9 @@ export default function NodeInspector() {
         {selectedNode.type === 'randomizer' && (
           <>
             <div>
-              <label className="text-slate-300 block mb-1">Playback Mode</label>
+              <label className="text-[var(--text)] block mb-1">Playback Mode</label>
               <select
-                className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white"
+                className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                 value={selectedNode.data?.mode || 'sequence'}
                 onChange={(e) =>
                   updateNodeData(
@@ -667,26 +715,26 @@ export default function NodeInspector() {
               </select>
             </div>
             <div>
-              <label className="text-slate-300 block mb-1">Play Count</label>
+              <label className="text-[var(--text)] block mb-1">Play Count</label>
               <input
                 type="number"
                 min="1"
                 max="100"
-                className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white"
+                className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                 value={selectedNode.data?.playCount || 1}
                 onChange={(e) => updateNodeData(selectedNode.id, { playCount: Math.max(1, parseInt(e.target.value) || 1) })}
               />
-              <p className="text-xs text-slate-500 mt-1 mb-3">How many times to play all tracks</p>
+              <p className="text-xs text-[var(--text-faint)] mt-1 mb-3">How many times to play all tracks</p>
             </div>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed m-0 mb-3">
               Drag a track onto this {selectedNode.data?.mode === 'randomizer' ? 'randomizer' : 'sequence'} to move it in. The track leaves the canvas and appears in the list. Drag a list item out to restore it.
             </p>
             {selectedNode.data?.tracks && selectedNode.data.tracks.length > 0 && (
               <div>
-                <label className="text-slate-300 block mb-2">
+                <label className="text-[var(--text)] block mb-2">
                   {selectedNode.data?.mode === 'randomizer' ? 'Tracks & Weights' : 'Order'}
                 </label>
-                <div className="bg-slate-700 rounded p-2 space-y-3 max-h-48 overflow-y-auto">
+                <div className="bg-[var(--bg-deep)] rounded p-2 space-y-3 max-h-48 overflow-y-auto">
                   {selectedNode.data.tracks.map((trackId: string, i: number) => {
                     const trackNode = nodes.find((n) => n.id === trackId);
                     const meta = getTrackDisplayMeta(trackNode?.data);
@@ -697,7 +745,7 @@ export default function NodeInspector() {
                     return (
                       <div key={trackId} className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="flex-1 text-xs text-slate-100 truncate">
+                          <span className="flex-1 text-xs text-[var(--text)] truncate">
                             {i + 1}. {meta.title}
                           </span>
                           <button
@@ -714,7 +762,7 @@ export default function NodeInspector() {
                                 setEdges(restored.edges);
                               }
                             }}
-                            className="p-1 text-red-400 hover:bg-red-600 hover:text-white rounded transition"
+                            className="p-1 text-[var(--danger)] hover:bg-[color-mix(in_srgb,var(--danger)_28%,transparent)] hover:text-[var(--text)] rounded transition"
                             title="Remove from sequence and restore to canvas"
                           >
                             <Trash2 className="w-3 h-3" />
@@ -722,7 +770,7 @@ export default function NodeInspector() {
                         </div>
                         {selectedNode.data?.mode === 'randomizer' ? (
                           <div className="flex items-center gap-2 px-1">
-                            <label className="text-xs text-slate-400">Weight:</label>
+                            <label className="text-xs text-[var(--text-muted)]">Weight:</label>
                             <input
                               type="number"
                               min="1"
@@ -732,9 +780,9 @@ export default function NodeInspector() {
                                 newWeights[i] = Math.max(1, parseInt(e.target.value) || 1);
                                 updateNodeData(selectedNode.id, { weights: newWeights });
                               }}
-                              className="w-16 text-xs px-1 py-0 bg-slate-600 border border-slate-500 rounded text-slate-100 text-center"
+                              className="w-16 text-xs px-1 py-0 bg-[var(--bg-hover)] border border-[var(--border)] rounded text-[var(--text)] text-center"
                             />
-                            <span className="text-xs text-slate-400 flex-1">({percentage}%)</span>
+                            <span className="text-xs text-[var(--text-muted)] flex-1">({percentage}%)</span>
                           </div>
                         ) : null}
                       </div>
@@ -745,27 +793,158 @@ export default function NodeInspector() {
             )}
           </>
         )}
+        {selectedNode.type === 'style' && (
+          <>
+            {(() => {
+              const style = parseStyleNodeData(selectedNode.data);
+              const themes = allThemes(customThemes);
+              return (
+                <>
+                  <div>
+                    <label className="text-[var(--text)] block mb-1">Saved theme</label>
+                    <select
+                      className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
+                      value={style.themeId}
+                      onChange={(e) =>
+                        updateNodeData(selectedNode.id, { themeId: e.target.value })
+                      }
+                    >
+                      {!themes.some((t) => t.id === style.themeId) && (
+                        <option value={style.themeId || ''}>
+                          {style.themeId ? `Missing: ${style.themeId}` : 'Pick a saved theme'}
+                        </option>
+                      )}
+                      {themes.map((theme) => (
+                        <option key={theme.id} value={theme.id}>
+                          {theme.name}
+                          {theme.builtin ? '' : ' (custom)'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[var(--text)] block mb-2">Applies to</label>
+                    <div className="space-y-1.5">
+                      {STYLE_LAYER_IDS.map((layer) => (
+                        <label
+                          key={layer}
+                          className="flex items-center gap-2 text-xs text-[var(--text)]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={style.layers.includes(layer)}
+                            onChange={() => {
+                              const next = style.layers.includes(layer)
+                                ? style.layers.filter((id) => id !== layer)
+                                : [...style.layers, layer];
+                              updateNodeData(selectedNode.id, {
+                                layers: next.length === 0 ? [...STYLE_LAYER_IDS] : next,
+                              });
+                            }}
+                          />
+                          {STYLE_LAYER_LABELS[layer]}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[var(--text)] block mb-1">
+                      Delay ({(style.delayMs / 1000).toFixed(style.delayMs % 1000 === 0 ? 0 : 1)}s)
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={MAX_STYLE_DELAY_MS}
+                      step={100}
+                      className="w-full cursor-pointer"
+                      value={style.delayMs}
+                      onChange={(e) =>
+                        updateNodeData(selectedNode.id, {
+                          delayMs: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      max={MAX_STYLE_DELAY_MS / 1000}
+                      step={0.1}
+                      className="w-full p-2 mt-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
+                      value={Number((style.delayMs / 1000).toFixed(1))}
+                      onChange={(e) =>
+                        updateNodeData(selectedNode.id, {
+                          delayMs: Math.round(Number(e.target.value) * 1000),
+                        })
+                      }
+                    />
+                    <p className="text-xs text-[var(--text-faint)] mt-1">
+                      Wait after this node is reached before the look starts changing.
+                      Put Style before a track to line up with a moment in that song.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-[var(--text)] block mb-1">
+                      Transition ({style.durationMs} ms)
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={MAX_STYLE_DURATION_MS}
+                      step={50}
+                      className="w-full cursor-pointer"
+                      value={style.durationMs}
+                      onChange={(e) =>
+                        updateNodeData(selectedNode.id, {
+                          durationMs: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <p className="text-xs text-[var(--text-faint)] mt-1">
+                      How long the look takes to ease in after the delay. 0 snaps instantly.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-[var(--text)] block mb-1">Easing</label>
+                    <select
+                      className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
+                      value={style.easing}
+                      onChange={(e) =>
+                        updateNodeData(selectedNode.id, { easing: e.target.value })
+                      }
+                    >
+                      {STYLE_EASING_OPTIONS.map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              );
+            })()}
+          </>
+        )}
         {selectedNode.type === 'comment' && (
           <>
             <div>
-              <label className="text-slate-300 block mb-1">Comment Text</label>
+              <label className="text-[var(--text)] block mb-1">Comment Text</label>
               <textarea
                 placeholder="Add a note or comment..."
                 value={selectedNode.data?.text || ''}
                 onChange={(e) => updateNodeData(selectedNode.id, { text: e.target.value })}
-                className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-white text-sm placeholder-slate-500 resize-none h-24 focus:outline-none focus:border-slate-500"
+                className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)] text-sm resize-none h-24 focus:outline-none focus:border-[var(--border)]"
               />
             </div>
             {selectedNode.data?.linkedNodeId && (
               <div className="mt-3">
-                <label className="text-slate-300 block mb-1">Linked Node</label>
-                <div className="p-2 bg-slate-700 border border-slate-600 rounded">
-                  <p className="text-xs text-slate-400">
-                    ID: <span className="text-slate-300 font-mono">{selectedNode.data?.linkedNodeId}</span>
+                <label className="text-[var(--text)] block mb-1">Linked Node</label>
+                <div className="p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded">
+                  <p className="text-xs text-[var(--text-muted)]">
+                    ID: <span className="text-[var(--text)] font-mono">{selectedNode.data?.linkedNodeId}</span>
                   </p>
                   <button
                     onClick={() => updateNodeData(selectedNode.id, { linkedNodeId: null })}
-                    className="text-xs text-red-400 hover:text-red-300 mt-2"
+                    className="text-xs text-[var(--danger)] hover:text-red-300 mt-2"
                   >
                     Unlink
                   </button>

@@ -82,7 +82,7 @@ export default function PlaylistSwitcher() {
           className="synapse-playlist-name"
         />
       ) : null}
-      <div className="synapse-playlist-switcher" ref={rootRef}>
+      <div className="synapse-playlist-switcher" ref={rootRef} data-tutorial="playlist-switcher">
         <button
           type="button"
           className="synapse-playlist-trigger"

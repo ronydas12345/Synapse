@@ -15,6 +15,21 @@ import AudioVisualizer from './components/AudioVisualizer';
 import PlayingScreen from './components/PlayingScreen';
 import { buildListenRows } from './listenPath';
 import { useProfileStore } from './profile/profileStore';
+import {
+  graphNeedsWeather,
+  resolvePlaybackWeather,
+} from './weather/client';
+import { useWeatherSnapshot } from './weather/useWeatherSnapshot';
+import { parseStyleNodeData, styleThemeDisplayName } from './styleNode/parse';
+import {
+  applyStyleCuesAtNode,
+  endPlaybackStyleSession,
+  playStyleCue,
+  styleCueHoldMs,
+} from './theme/playbackStyle';
+import { allThemes, resolveTheme, themeExists, useThemeStore } from './theme/themeStore';
+import { getAppSettings, useAppSettings } from './settings/settingsStore';
+import { scaleVolume } from './settings/parse';
 
 function nodeToPlayable(node: Node | undefined, nodeId: string): PlayableMedia | null {
   if (!node) return null;
@@ -23,7 +38,10 @@ function nodeToPlayable(node: Node | undefined, nodeId: string): PlayableMedia |
 
   const startTime = Number(node.data?.startTime) || 0;
   const endTime = Number(node.data?.endTime) || 0;
-  const volume = node.data?.volume != null ? Number(node.data.volume) : 100;
+  const volume = scaleVolume(
+    node.data?.volume != null ? Number(node.data.volume) : 100,
+    getAppSettings().playback.masterVolume
+  );
   const speedPct = node.data?.speed != null ? Number(node.data.speed) : 100;
 
   return {
@@ -57,6 +75,14 @@ export default function Player() {
     selectedPlaybackStartNodeId,
     setPlaybackStartNode,
   } = usePathStore();
+
+  const weather = useWeatherSnapshot();
+  const masterVolume = useAppSettings((s) => s.playback.masterVolume);
+  const showVisualizer = useAppSettings((s) => s.visualizer.visible);
+
+  useEffect(() => {
+    if (graphNeedsWeather(nodes)) void resolvePlaybackWeather(nodes);
+  }, [nodes]);
 
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [playerReady, setPlayerReady] = useState(false);
@@ -115,6 +141,7 @@ export default function Player() {
       state.setCurrentPlayingNodeId(null);
       state.setPlaybackQueue([]);
       adapterRef.current?.stop();
+      endPlaybackStyleSession();
       setStatusMessage('Path finished');
     }
 
@@ -142,6 +169,14 @@ export default function Player() {
       state.setIsPlaying(true);
     }
     advanceRef.current();
+
+    const after = usePathStore.getState();
+    if (after.playbackQueue.length === 0) return;
+    applyStyleCuesAtNode(
+      after.nodes,
+      after.edges,
+      parseQueueKey(after.playbackQueue[after.currentTrackIndex] || '')?.nodeId
+    );
   }, [skipRequestId]);
 
   useEffect(() => {
@@ -178,7 +213,13 @@ export default function Player() {
     activeItemKeyRef.current = null;
     advancingRef.current = false;
     if (!state.isPlaying) state.setIsPlaying(true);
-    state.setCurrentTrackIndex(state.currentTrackIndex - 1);
+    const newIndex = state.currentTrackIndex - 1;
+    state.setCurrentTrackIndex(newIndex);
+    applyStyleCuesAtNode(
+      state.nodes,
+      state.edges,
+      parseQueueKey(state.playbackQueue[newIndex] || '')?.nodeId
+    );
   }, [previousRequestId]);
 
   // Mount YouTube once (do not recreate when callbacks change)
@@ -212,6 +253,7 @@ export default function Player() {
       setPlayerReady(false);
       clearSilenceTimer();
       stopLocalAudio();
+      endPlaybackStyleSession();
       adapter.destroy();
       adapterRef.current = null;
     };
@@ -222,6 +264,7 @@ export default function Player() {
     if (playbackQueue.length === 0) {
       sessionActiveRef.current = false;
       activeItemKeyRef.current = null;
+      endPlaybackStyleSession();
     }
   }, [playbackQueue.length]);
 
@@ -229,29 +272,43 @@ export default function Player() {
   useEffect(() => {
     if (!isPlaying) return;
     if (playbackQueue.length > 0) return;
+    let cancelled = false;
 
     const startNodeId =
       usePathStore.getState().selectedPlaybackStartNodeId ?? undefined;
-    const result = buildPlaybackQueueResult({ nodes, edges }, { startNodeId });
-    const keys = result.items.map((item) => item.key);
-    if (keys.length === 0) {
-      setIsPlaying(false);
-      setStatusMessage(
-        result.haltReason === 'no_start'
-          ? 'Nothing to play — add a Start node'
-          : 'Nothing to play — connect tracks from Start'
+
+    void (async () => {
+      const weatherState = await resolvePlaybackWeather(nodes);
+      if (cancelled) return;
+      const result = buildPlaybackQueueResult(
+        { nodes, edges },
+        { startNodeId, weatherState, now: new Date() }
       );
-      return;
-    }
-    sessionActiveRef.current = true;
-    activeItemKeyRef.current = null;
-    setCurrentTrackIndex(0);
-    setPlaybackQueue(keys);
-    setStatusMessage(
-      result.haltReason === 'max_queue' || result.haltReason === 'max_steps'
-        ? 'Path truncated to prevent a runaway graph'
-        : ''
-    );
+      const keys = result.items.map((item) => item.key);
+      if (keys.length === 0) {
+        setIsPlaying(false);
+        setStatusMessage(
+          result.haltReason === 'no_start'
+            ? 'Nothing to play — add a Start node'
+            : 'Nothing to play — connect tracks from Start'
+        );
+        return;
+      }
+      sessionActiveRef.current = true;
+      activeItemKeyRef.current = null;
+      applyStyleCuesAtNode(nodes, edges, startNodeId);
+      setCurrentTrackIndex(0);
+      setPlaybackQueue(keys);
+      setStatusMessage(
+        result.haltReason === 'max_queue' || result.haltReason === 'max_steps'
+          ? 'Path truncated to prevent a runaway graph'
+          : ''
+      );
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     isPlaying,
     playbackQueue.length,
@@ -280,26 +337,36 @@ export default function Player() {
       return;
     }
 
-    const result = buildPlaybackQueueResult(
-      { nodes: state.nodes, edges: state.edges },
-      { startNodeId: startId }
-    );
-    const keys = result.items.map((item) => item.key);
-    const first = keys[0] ? parseQueueKey(keys[0]) : null;
+    let cancelled = false;
+    void (async () => {
+      const weatherState = await resolvePlaybackWeather(state.nodes);
+      if (cancelled) return;
+      const result = buildPlaybackQueueResult(
+        { nodes: state.nodes, edges: state.edges },
+        { startNodeId: startId, weatherState, now: new Date() }
+      );
+      const keys = result.items.map((item) => item.key);
+      const first = keys[0] ? parseQueueKey(keys[0]) : null;
 
-    sessionActiveRef.current = keys.length > 0 ? true : sessionActiveRef.current;
-    state.setCurrentTrackIndex(0);
-    state.setPlaybackQueue(keys);
-    state.setCurrentPlayingNodeId(first?.nodeId ?? (keys.length > 0 ? startId : null));
-    setStatusMessage(
-      result.haltReason === 'max_queue' || result.haltReason === 'max_steps'
-        ? 'Path truncated to prevent a runaway graph'
-        : keys.length === 0
-          ? 'Nothing to play from that node'
-          : state.isPlaying
-            ? 'Starting from selected node'
-            : 'Start position updated'
-    );
+      sessionActiveRef.current = keys.length > 0 ? true : sessionActiveRef.current;
+      if (keys.length > 0) applyStyleCuesAtNode(state.nodes, state.edges, startId);
+      state.setCurrentTrackIndex(0);
+      state.setPlaybackQueue(keys);
+      state.setCurrentPlayingNodeId(first?.nodeId ?? (keys.length > 0 ? startId : null));
+      setStatusMessage(
+        result.haltReason === 'max_queue' || result.haltReason === 'max_steps'
+          ? 'Path truncated to prevent a runaway graph'
+          : keys.length === 0
+            ? 'Nothing to play from that node'
+            : state.isPlaying
+              ? 'Starting from selected node'
+              : 'Start position updated'
+      );
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [playbackOriginRequestId]);
 
   // Pause without wiping queue; clear only when session ended
@@ -312,6 +379,7 @@ export default function Player() {
 
     if (!sessionActiveRef.current) {
       activeItemKeyRef.current = null;
+      endPlaybackStyleSession();
       if (playbackQueue.length > 0) {
         setPlaybackQueue([]);
         setCurrentTrackIndex(0);
@@ -359,7 +427,13 @@ export default function Player() {
     const node = nodes.find((n) => n.id === nodeId);
 
     if (!node) {
-      setStatusMessage(kind === 'transition' ? 'Transition missing — skipping' : 'Track missing — skipping');
+      setStatusMessage(
+        kind === 'style'
+          ? 'Style missing — skipping'
+          : kind === 'transition'
+            ? 'Transition missing — skipping'
+            : 'Track missing — skipping'
+      );
       silenceTimerRef.current = window.setTimeout(() => advance(), 400);
       return () => clearSilenceTimer();
     }
@@ -386,6 +460,7 @@ export default function Player() {
         }
         const audio = audioElementRef.current;
         audio.src = String(node.data.audioFile);
+        audio.volume = scaleVolume(100, getAppSettings().playback.masterVolume) / 100;
         audio.onended = () => advance();
         setVizAudio(audio);
         audio.play().catch(() => {
@@ -407,6 +482,34 @@ export default function Player() {
 
       setStatusMessage('Empty transition — skipping');
       silenceTimerRef.current = window.setTimeout(() => advance(), 400);
+      return () => clearSilenceTimer();
+    }
+
+    if (kind === 'style') {
+      adapterRef.current?.stop();
+      const style = parseStyleNodeData(node.data);
+      const customThemes = useThemeStore.getState().customThemes;
+      if (!themeExists(style.themeId, customThemes)) {
+        setStatusMessage('Style theme missing — skipping');
+        silenceTimerRef.current = window.setTimeout(() => advance(), 400);
+        return () => clearSilenceTimer();
+      }
+      const target = resolveTheme(style.themeId, customThemes);
+      playStyleCue({
+        target,
+        layers: style.layers,
+        durationMs: style.durationMs,
+        delayMs: style.delayMs,
+        easing: style.easing,
+      });
+      setStatusMessage(
+        style.delayMs > 0
+          ? `Style in ${(style.delayMs / 1000).toFixed(style.delayMs % 1000 === 0 ? 0 : 1)}s: ${target.name}`
+          : `Style: ${target.name}`
+      );
+      const isLast = currentTrackIndex >= playbackQueue.length - 1;
+      const hold = styleCueHoldMs(style.durationMs, isLast, style.delayMs);
+      silenceTimerRef.current = window.setTimeout(() => advance(), hold);
       return () => clearSilenceTimer();
     }
 
@@ -503,7 +606,16 @@ export default function Player() {
   ]);
 
   const nowPlaying =
-    currentParsed?.kind === 'transition'
+    currentParsed?.kind === 'style'
+      ? {
+          title: 'Style',
+          artist: styleThemeDisplayName(
+            parseStyleNodeData(currentNode?.data).themeId,
+            allThemes(useThemeStore.getState().customThemes)
+          ),
+          album: '',
+        }
+      : currentParsed?.kind === 'transition'
       ? {
           title: 'Transition',
           artist: String(currentNode?.data?.type || 'silence'),
@@ -521,10 +633,11 @@ export default function Player() {
   const previewQueue = useMemo(() => {
     if (playbackQueue.length > 0) return playbackQueue;
     const startNodeId = selectedPlaybackStartNodeId ?? undefined;
-    return buildPlaybackQueueResult({ nodes, edges }, { startNodeId }).items.map(
-      (item) => item.key
-    );
-  }, [playbackQueue, nodes, edges, selectedPlaybackStartNodeId]);
+    return buildPlaybackQueueResult(
+      { nodes, edges },
+      { startNodeId, weatherState: weather.state, now: new Date() }
+    ).items.map((item) => item.key);
+  }, [playbackQueue, nodes, edges, selectedPlaybackStartNodeId, weather.state]);
 
   const listenRows = useMemo(
     () =>
@@ -565,8 +678,21 @@ export default function Player() {
     setCurrentTime(seconds);
   };
 
+  useEffect(() => {
+    const nodeVol = currentNode?.data?.volume != null ? Number(currentNode.data.volume) : 100;
+    const next = scaleVolume(nodeVol, masterVolume);
+    adapterRef.current?.setVolume(next);
+    if (audioElementRef.current) {
+      audioElementRef.current.volume = next / 100;
+    }
+  }, [masterVolume, currentNode?.data?.volume]);
+
   return (
-    <div className={`synapse-deck ${listen ? 'is-listen' : ''}`}>
+    <div
+      className={`synapse-deck ${listen ? 'is-listen' : ''}`}
+      data-tutorial="player"
+      id={listen ? 'workspace-main' : undefined}
+    >
       <div
         ref={ytContainerRef}
         className="synapse-deck-screen"
@@ -640,7 +766,9 @@ export default function Player() {
               onSeekTo={handleSeekTo}
             />
           </div>
-          <AudioVisualizer isPlaying={isPlaying} mediaElement={vizAudio} />
+          {showVisualizer ? (
+            <AudioVisualizer isPlaying={isPlaying} mediaElement={vizAudio} />
+          ) : null}
         </>
       )}
     </div>

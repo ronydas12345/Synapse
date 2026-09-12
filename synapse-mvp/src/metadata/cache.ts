@@ -1,6 +1,7 @@
 import type { TrackCredits } from './types';
 
-const STORAGE_KEY = 'synapse_yt_metadata_v1';
+export const METADATA_STORAGE_KEY = 'synapse_yt_metadata_v1';
+const STORAGE_KEY = METADATA_STORAGE_KEY;
 const TTL_MS = 1000 * 60 * 60 * 24 * 30;
 
 export type CachedCredits = TrackCredits & {
@@ -34,6 +35,18 @@ export function getCachedCredits(videoId: string): CachedCredits | null {
   if (!entry) return null;
   if (Date.now() - entry.fetchedAt > TTL_MS) return null;
   return entry;
+}
+
+export function creditsCacheSize(): number {
+  return Object.keys(readAll()).length;
+}
+
+export function clearCreditsCache(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* quota / private mode */
+  }
 }
 
 export function setCachedCredits(

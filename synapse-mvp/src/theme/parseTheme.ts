@@ -1,6 +1,8 @@
 import { COLOR_KEYS, THEME_SCHEMA_VERSION, THEME_TYPE, type SynapseTheme } from './types';
 import { normalizeHex } from './color';
+import { sanitizeEdgeType } from './edgeType';
 import { sanitizeFont } from './fonts';
+import { sanitizeVisualizerBarCount } from './visualizerBars';
 
 const ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
@@ -38,6 +40,7 @@ const FALLBACK_COLORS: SynapseTheme['colors'] = {
   nodeConditional: '#3ecfbf',
   nodeRandomizer: '#78a0ff',
   nodeTransition: '#e8a45c',
+  nodeStyle: '#e8a45c',
   nodeComment: '#8b93a7',
   nodeStart: '#7dcea0',
   nodeEnd: '#f07178',
@@ -67,6 +70,8 @@ export function emptyTheme(id: string, name: string): SynapseTheme {
       borderWidth: 1,
       gridIntensity: 0.04,
       shadowIntensity: 0.35,
+      edgeType: 'bezier',
+      visualizerBarCount: 28,
     },
     overlays: [],
   };
@@ -117,6 +122,11 @@ export function parseTheme(input: unknown): SynapseTheme | null {
       borderWidth: clamp(styleRaw.borderWidth, 1, 4, base.style.borderWidth),
       gridIntensity: clamp(styleRaw.gridIntensity, 0.01, 0.2, base.style.gridIntensity),
       shadowIntensity: clamp(styleRaw.shadowIntensity, 0, 0.8, base.style.shadowIntensity),
+      edgeType: sanitizeEdgeType(styleRaw.edgeType, base.style.edgeType),
+      visualizerBarCount: sanitizeVisualizerBarCount(
+        styleRaw.visualizerBarCount,
+        base.style.visualizerBarCount
+      ),
     },
     overlays: [],
   };

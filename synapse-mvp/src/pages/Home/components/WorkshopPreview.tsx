@@ -9,6 +9,7 @@ export default function WorkshopPreview({ full = false }: { full?: boolean }) {
       className="synapse-mkt-section"
       id="workshop"
       aria-labelledby="workshop-title"
+      data-tutorial="workshop"
     >
       <Reveal>
         <p className="synapse-mkt-kicker">Workshop</p>

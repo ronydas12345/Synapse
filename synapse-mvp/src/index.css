@@ -32,6 +32,7 @@
   --node-conditional: #3ecfbf;
   --node-randomizer: #78a0ff;
   --node-transition: #e8a45c;
+  --node-style: #e8a45c;
   --node-comment: #8b93a7;
   --node-start: #7dcea0;
   --node-end: #f07178;
@@ -51,6 +52,13 @@ body,
   width: 100%;
   margin: 0;
   padding: 0;
+}
+
+html:has(.synapse-app),
+body:has(.synapse-app),
+#root:has(.synapse-app) {
+  overflow: hidden;
+  max-height: 100%;
 }
 
 body {
@@ -94,13 +102,33 @@ body {
 
 /* ——— App shell ——— */
 .synapse-app {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  overflow: hidden;
   background:
     radial-gradient(1200px 600px at 10% -10%, var(--accent-dim), transparent 55%),
     radial-gradient(900px 500px at 100% 0%, var(--accent-warm-dim), transparent 50%),
     linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-void) 40%, var(--bg-void) 100%);
   color: var(--text);
-  container-type: inline-size;
-  container-name: synapse-shell;
+}
+
+.synapse-mkt-skip {
+  position: absolute;
+  left: 0.75rem;
+  top: -3rem;
+  z-index: 80;
+  padding: 0.45rem 0.8rem;
+  background: var(--accent);
+  color: var(--bg-void);
+  border-radius: var(--radius-sm);
+}
+
+.synapse-mkt-skip:focus {
+  top: 0.75rem;
 }
 
 .synapse-topbar {
@@ -108,10 +136,14 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1.25rem;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-height: 4.75rem;
   width: 100%;
   box-sizing: border-box;
-  padding: 0.85rem 1.75rem;
+  padding: 0.7rem 1.5rem;
   background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
@@ -141,9 +173,40 @@ body {
 }
 
 .synapse-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
   text-decoration: none;
   color: inherit;
   margin-right: 0;
+  min-width: 0;
+}
+
+.synapse-logo {
+  display: block;
+  flex-shrink: 0;
+}
+
+.synapse-topbar .synapse-logo {
+  width: 34px;
+  height: 34px;
+  max-width: 34px;
+  max-height: 34px;
+}
+
+.synapse-logo-grey {
+  fill: var(--logo-ink, #c5cad3);
+}
+
+.synapse-logo-grey-stroke {
+  fill: none;
+  stroke: var(--logo-ink, #c5cad3);
+  stroke-width: 24;
+  stroke-linejoin: round;
+}
+
+.synapse-logo-accent {
+  fill: var(--accent);
 }
 
 .synapse-playlist-name {
@@ -319,10 +382,20 @@ body {
 }
 
 .synapse-mode-avatar {
+  display: block;
   width: 1.15rem;
   height: 1.15rem;
+  max-width: 1.15rem;
+  max-height: 1.15rem;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
+}
+
+.synapse-mode-toggle .synapse-help-btn {
+  width: 1.85rem;
+  height: 1.85rem;
+  margin: 0 0.12rem;
 }
 
 .synapse-transport {
@@ -433,10 +506,11 @@ body {
 .synapse-sidebar {
   width: 20rem;
   flex-shrink: 0;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  height: 100%;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0.9rem;
@@ -499,7 +573,9 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.85rem;
-  space-y: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .synapse-inspector label,
@@ -534,7 +610,7 @@ body {
 .synapse-sidebar input:not([type="range"]):focus,
 .synapse-sidebar select:focus {
   outline: none !important;
-  border-color: rgba(62, 207, 191, 0.55) !important;
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent) !important;
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
@@ -581,7 +657,7 @@ body {
   width: 0;
   flex-shrink: 0;
   align-self: stretch;
-  height: 100%;
+  min-height: 0;
   overflow: hidden;
   border-left: 0 solid var(--border);
   background: var(--bg-panel);
@@ -616,12 +692,30 @@ body {
   border-top: none;
 }
 
+.synapse-workspace {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.synapse-canvas-slot {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-deep);
+}
+
 /* ——— Canvas ——— */
 .synapse-canvas-wrap {
   position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: 100%;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
   border: none;
   border-radius: 0;
   overflow: hidden;
@@ -682,11 +776,64 @@ body {
   background: var(--bg-hover) !important;
 }
 
-.synapse-canvas-action {
+.synapse-align-guides {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.synapse-align-guide {
+  fill: none;
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.synapse-align-guide.is-side {
+  stroke: color-mix(in srgb, var(--text-muted) 55%, var(--text) 45%);
+  opacity: 0.95;
+}
+
+.synapse-align-guide.is-center {
+  stroke: color-mix(in srgb, var(--danger) 84%, var(--accent-warm) 16%);
+  opacity: 0.98;
+}
+
+.synapse-align-guide.is-diagonal {
+  stroke: color-mix(in srgb, #4d9fff 78%, var(--accent) 22%);
+  stroke-dasharray: 3 3.5;
+  opacity: 0.98;
+}
+
+.synapse-align-guide.is-spacing {
+  stroke: color-mix(in srgb, #4d9fff 78%, var(--accent) 22%);
+  stroke-dasharray: none;
+  stroke-width: 2;
+  opacity: 0.98;
+}
+
+.synapse-align-gap-label {
+  fill: color-mix(in srgb, #4d9fff 78%, var(--accent) 22%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+.synapse-canvas-actions {
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
   z-index: 50;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.synapse-canvas-action {
   padding: 0.4rem 0.75rem;
   font-family: var(--font-mono);
   font-size: 0.65rem;
@@ -701,15 +848,38 @@ body {
   transition: background 150ms ease, border-color 150ms ease;
 }
 
+.synapse-canvas-action.is-revert {
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+.synapse-canvas-action.is-path {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
 .synapse-canvas-action:hover {
   background: rgba(240, 113, 120, 0.12);
   border-color: var(--danger);
+}
+
+.synapse-canvas-action.is-revert:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+.synapse-canvas-action.is-path:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-panel));
+  border-color: var(--accent);
 }
 
 /* ——— Player / deck ——— */
 .synapse-deck {
   display: flex;
   flex-direction: column;
+  flex: 0 0 auto;
   gap: 1rem;
   padding: 1.15rem 1.35rem 1.25rem;
   background: var(--player-bg, rgba(10, 12, 18, 0.96));
@@ -1035,6 +1205,7 @@ body {
 .synapse-node.is-randomizer { border-color: var(--node-randomizer); }
 .synapse-node.is-sequence { border-color: var(--node-randomizer); }
 .synapse-node.is-transition { border-color: var(--node-transition); }
+.synapse-node.is-style { border-color: var(--node-style); }
 .synapse-node.is-comment { border-color: var(--node-comment); }
 .synapse-node.is-playing { border-color: var(--accent-warm); }
 
@@ -1710,7 +1881,7 @@ body {
   ~22rem controls + ~22rem path + padding/gap. Below this, keep the stacked
   controls-then-path column.
 */
-@container synapse-shell (min-width: 56rem) {
+@media (min-width: 56rem) {
   .synapse-deck.is-listen {
     display: grid;
     grid-template-columns: minmax(22rem, 34rem) minmax(0, 1fr);
@@ -1765,18 +1936,108 @@ body {
   }
 }
 
+.synapse-settings-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin: 0.7rem 0;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.synapse-settings-toggle input {
+  margin-top: 0.2rem;
+}
+
+.synapse-settings-toggle-title {
+  display: block;
+}
+
+.synapse-settings-toggle-hint,
+.synapse-settings-range-value {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  margin-top: 0.15rem;
+}
+
+.synapse-settings-range-value {
+  display: inline;
+  margin-left: 0.4rem;
+}
+
+.synapse-settings-range {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.synapse-settings-playlist-vis {
+  flex: 0 0 9.5rem;
+}
+
+.synapse-settings-key-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.synapse-settings-key-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.synapse-settings-danger {
+  margin-top: 1.25rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.synapse-settings-transfer {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.synapse-settings-field span {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .synapse-deck.is-listen {
+  html:not([data-motion="full"]) .synapse-deck.is-listen {
     transition: none;
   }
 
-  .synapse-listen-play {
+  html:not([data-motion="full"]) .synapse-listen-play {
     transition: none;
   }
 
-  .synapse-listen-play:hover {
+  html:not([data-motion="full"]) .synapse-listen-play:hover {
     transform: none;
   }
+}
+
+html.synapse-reduce-motion .synapse-deck.is-listen,
+html.synapse-reduce-motion .synapse-listen-play {
+  transition: none;
+}
+
+html.synapse-reduce-motion .synapse-listen-play:hover {
+  transform: none;
 }
 
 .synapse-home {
@@ -1901,10 +2162,32 @@ body {
 }
 
 .synapse-settings-playlist-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.55rem;
   align-items: center;
+}
+
+.synapse-settings-playlist-row .synapse-settings-input {
+  flex: 1 1 12rem;
+}
+
+.synapse-settings-playlist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.synapse-settings-notices {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  color: var(--warning);
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
 .synapse-settings-layout {
@@ -2063,6 +2346,9 @@ body {
 }
 
 .synapse-theme-preview-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -2103,6 +2389,23 @@ body {
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
   font-size: 0.72rem;
+}
+
+.synapse-theme-preview-viz {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  flex: 1;
+  min-width: 2.5rem;
+  height: 1.55rem;
+}
+
+.synapse-theme-preview-viz span {
+  flex: 1 1 0;
+  min-width: 1px;
+  background: var(--accent);
+  opacity: 0.88;
+  border-radius: 1px 1px 0 0;
 }
 
 .synapse-theme-preview-deck {
@@ -2158,12 +2461,15 @@ body {
 .synapse-theme-preview-node.is-track { border-color: var(--node-track); }
 .synapse-theme-preview-node.is-conditional { border-color: var(--node-conditional); }
 .synapse-theme-preview-node.is-randomizer { border-color: var(--node-randomizer); }
+.synapse-theme-preview-node.is-transition { border-color: var(--node-transition); }
+.synapse-theme-preview-node.is-style { border-color: var(--node-style); }
 .synapse-theme-preview-node.is-comment { border-color: var(--node-comment); }
 
 .synapse-theme-preview-edge {
-  width: 2rem;
-  height: 0.75rem;
+  width: 4.5rem;
+  height: 1.75rem;
   color: var(--edge-color);
+  flex: 0 0 auto;
 }
 
 .synapse-theme-preview-btn {

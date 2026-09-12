@@ -1,3 +1,5 @@
+import { documentPrefersReducedMotion } from '../settings/motion';
+
 export type AppRoute =
   | 'home'
   | 'workshop'
@@ -102,7 +104,7 @@ export function appHref(path: AppPath, hash = ''): string {
 }
 
 function scrollToHash(hash: string): void {
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduced = documentPrefersReducedMotion();
   document.getElementById(hash)?.scrollIntoView({
     block: 'start',
     behavior: reduced ? 'auto' : 'smooth',

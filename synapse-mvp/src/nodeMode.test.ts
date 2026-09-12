@@ -4,6 +4,7 @@ import {
   RANDOMIZER_MODE_OPTIONS,
   conditionalModePatch,
   randomizerModePatch,
+  resizeConditionalPaths,
 } from './nodeMode';
 
 describe('mode dropdown patches', () => {
@@ -24,6 +25,8 @@ describe('mode dropdown patches', () => {
     expect(CONDITIONAL_MODE_OPTIONS.map((o) => o.value)).toEqual([
       'random',
       'timeRange',
+      'weather',
+      'day',
     ]);
   });
 
@@ -56,5 +59,32 @@ describe('mode dropdown patches', () => {
       'sequence',
       'randomizer',
     ]);
+  });
+
+  it('initializes weather and day path lists when switching modes', () => {
+    const data = { mode: 'random', weights: [10, 10], numPaths: 2 };
+    const weather = conditionalModePatch(data, 'weather');
+    expect(weather.mode).toBe('weather');
+    expect(weather.pathWeather).toEqual([['clear'], ['other']]);
+    const day = conditionalModePatch(data, 'day');
+    expect(day.mode).toBe('day');
+    expect(Array.isArray(day.pathDateRules)).toBe(true);
+    expect((day.pathDateRules as unknown[]).length).toBe(2);
+  });
+
+  it('resizes weather and date lists with the path count', () => {
+    const resized = resizeConditionalPaths(
+      {
+        mode: 'weather',
+        numPaths: 2,
+        weights: [10, 10],
+        pathWeather: [['clear'], ['other']],
+      },
+      3
+    );
+    expect(resized.numPaths).toBe(3);
+    expect((resized.pathWeather as string[][]).length).toBe(3);
+    expect((resized.pathDateRules as unknown[]).length).toBe(3);
+    expect((resized.weights as number[]).length).toBe(3);
   });
 });

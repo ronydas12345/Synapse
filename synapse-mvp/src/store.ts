@@ -146,7 +146,6 @@ export const usePathStore = create<PathState>((set) => ({
 
       // Prevent connections to/from comment nodes
       if (sourceNode?.type === 'comment' || targetNode?.type === 'comment') {
-        console.warn('Cannot connect to/from comment nodes');
         return state;
       }
 
@@ -158,9 +157,6 @@ export const usePathStore = create<PathState>((set) => ({
           (e) => e.source === connection.source
         );
         if (existingOutgoing.length > 0) {
-          console.warn(
-            'Cannot create multiple outgoing edges from non-branching node'
-          );
           return state;
         }
       } else {
@@ -169,7 +165,6 @@ export const usePathStore = create<PathState>((set) => ({
           (e) => e.source === connection.source && e.sourceHandle === connection.sourceHandle
         );
         if (existingFromHandle.length > 0) {
-          console.warn('This output handle is already connected');
           return state;
         }
       }
@@ -187,7 +182,6 @@ export const usePathStore = create<PathState>((set) => ({
           (e) => e.target === connection.target
         );
         if (existingIncoming.length > 0) {
-          console.warn('Cannot create multiple incoming edges to this node type');
           return state;
         }
       }

@@ -42,6 +42,57 @@ describe('listenPath', () => {
     expect(split?.options[1].detail).toBe('30%');
   });
 
+  it('lists weather and day/date branch details', () => {
+    const a = makeNode('a', 'track', { songTitle: 'Sunny mix' });
+    const b = makeNode('b', 'track', { songTitle: 'Rain mix' });
+    const weather = makeNode('w', 'conditional', {
+      mode: 'weather',
+      numPaths: 2,
+      pathWeather: [['clear'], ['rain', 'other']],
+    });
+    const weatherSplit = branchesFromNode(
+      weather,
+      [a, b, weather],
+      [makeEdge('w', 'a', 'A'), makeEdge('w', 'b', 'B')]
+    );
+    expect(weatherSplit?.modeLabel).toBe('Weather');
+    expect(weatherSplit?.options[0].detail).toContain('Sunny');
+    expect(weatherSplit?.options[1].detail).toContain('Rain');
+
+    const day = makeNode('d', 'conditional', {
+      mode: 'day',
+      numPaths: 2,
+      pathDateRules: [
+        [{ join: 'any', clauses: [{ kind: 'in', field: 'weekday', values: [1] }] }],
+        [{ join: 'any', clauses: [{ kind: 'catchAll' }] }],
+      ],
+    });
+    const daySplit = branchesFromNode(
+      day,
+      [a, b, day],
+      [makeEdge('d', 'a', 'A'), makeEdge('d', 'b', 'B')]
+    );
+    expect(daySplit?.modeLabel).toBe('Day / Date');
+    expect(daySplit?.options[1].detail).toContain('Any other day');
+  });
+
+  it('labels style nodes with the saved theme name', () => {
+    const start = makeNode('start', 'start');
+    const look = makeNode('look', 'style', { themeId: 'cherry-tree' });
+    const t1 = makeNode('t1', 'track', { songTitle: 'After style' });
+    const nodes = [start, look, t1];
+    const edges = [makeEdge('start', 'look'), makeEdge('look', 't1')];
+    const queue = buildPlaybackQueueKeys({ nodes, edges });
+    expect(queue).toEqual(['style:look', 'track:t1']);
+    const rows = buildListenRows({ nodes, edges, queue, currentIndex: 0 });
+    const style = rows.find((r) => r.type === 'style');
+    expect(style).toMatchObject({
+      title: 'Style',
+      subtitle: 'Cherry Tree',
+      phase: 'now',
+    });
+  });
+
   it('finds split owners for parked randomizer tracks and conditional edges', () => {
     const a = makeNode('a', 'track', { songTitle: 'A' });
     const rnd = makeNode('r', 'randomizer', { tracks: ['a'] });

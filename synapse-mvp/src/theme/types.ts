@@ -24,6 +24,7 @@ export interface ThemeColors {
   nodeConditional: string;
   nodeRandomizer: string;
   nodeTransition: string;
+  nodeStyle: string;
   nodeComment: string;
   nodeStart: string;
   nodeEnd: string;
@@ -40,12 +41,25 @@ export interface ThemeTypography {
   node: string;
 }
 
+export const THEME_EDGE_TYPES = [
+  'bezier',
+  'simpleBezier',
+  'straight',
+  'rectangular',
+  'rounded',
+  'triangular',
+] as const;
+
+export type ThemeEdgeType = (typeof THEME_EDGE_TYPES)[number];
+
 export interface ThemeStyle {
   radius: number;
   radiusSm: number;
   borderWidth: number;
   gridIntensity: number;
   shadowIntensity: number;
+  edgeType: ThemeEdgeType;
+  visualizerBarCount: number;
 }
 
 export interface SynapseTheme {
@@ -84,6 +98,7 @@ export const COLOR_KEYS: (keyof ThemeColors)[] = [
   'nodeConditional',
   'nodeRandomizer',
   'nodeTransition',
+  'nodeStyle',
   'nodeComment',
   'nodeStart',
   'nodeEnd',
@@ -116,6 +131,7 @@ export const COLOR_LABELS: Record<keyof ThemeColors, string> = {
   nodeConditional: 'Conditional node',
   nodeRandomizer: 'Randomizer node',
   nodeTransition: 'Transition node',
+  nodeStyle: 'Style node',
   nodeComment: 'Comment node',
   nodeStart: 'Start node',
   nodeEnd: 'End node',

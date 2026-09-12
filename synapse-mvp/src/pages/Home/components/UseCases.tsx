@@ -3,7 +3,7 @@ import Reveal from './Reveal';
 const CASES = [
   {
     title: 'Personal listening',
-    body: 'Dynamic systems for everyday music. Morning → calmer tracks. Afternoon → energy. Evening → wind down. Time-of-day conditionals are live.',
+    body: 'Dynamic systems for everyday music. Morning → calmer tracks. Weekend → unwind. Rainy days → a different mix. Time, weather, and day/date conditionals are live.',
   },
   {
     title: 'Mood-based listening',

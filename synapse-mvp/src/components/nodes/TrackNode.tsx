@@ -29,6 +29,7 @@ export default function TrackNode({ data = {}, id }: any) {
       className={`synapse-node w-72 relative is-track ${
         isPlaying ? 'is-playing' : ''
       }`}
+      data-tutorial="node-track"
     >
       <div className="synapse-node-header">
         <div className="flex items-center gap-2 flex-1 min-w-0">

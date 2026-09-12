@@ -16,7 +16,7 @@ const STEPS: { scene: PathScene; title: string; body: string }[] = [
   {
     scene: 'step3',
     title: 'Add personality',
-    body: 'Add transitions, a theme, and the rules you care about. Overlays are planned.',
+    body: 'Add transitions, Style nodes, and the rules you care about. Overlays are planned.',
   },
   {
     scene: 'step4',

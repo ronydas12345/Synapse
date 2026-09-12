@@ -3,6 +3,9 @@ import { Menu, X } from 'lucide-react';
 import { AppLink, useAppRoute } from '../../app/AppLink';
 import SynapseMark from './SynapseMark';
 import { useProfileStore } from '../../profile/profileStore';
+import HomeThemePicker from '../Home/components/HomeThemePicker';
+import TutorialHelpButton from '../../tutorial/TutorialHelpButton';
+import OpenWorkspaceLink from '../../components/OpenWorkspaceLink';
 
 const NAV = [
   { to: 'home' as const, label: 'Home' },
@@ -40,7 +43,7 @@ export default function SiteHeader() {
     <header className={`synapse-mkt-header${solid || open ? ' is-solid' : ''}`}>
       <div className="synapse-mkt-header-inner">
         <AppLink to="home" className="synapse-mkt-logo" onNavigate={close}>
-          <SynapseMark size={32} />
+          <SynapseMark size={36} />
           <span className="synapse-brand">Synapse</span>
         </AppLink>
 
@@ -60,16 +63,17 @@ export default function SiteHeader() {
         </nav>
 
         <div className="synapse-mkt-header-actions">
+          {route === 'home' ? <HomeThemePicker compact /> : null}
+          <TutorialHelpButton />
           <AppLink to="profile" className="synapse-mkt-text-link" onNavigate={close}>
-            {username ? 'Profile' : 'Log In'}
+            {username ? `@${username}` : 'Profile'}
           </AppLink>
-          <AppLink
-            to="edit"
+          <OpenWorkspaceLink
             className="synapse-btn synapse-btn-play synapse-mkt-cta"
             onNavigate={close}
           >
             Open Synapse
-          </AppLink>
+          </OpenWorkspaceLink>
           <button
             type="button"
             className="synapse-mkt-burger"
@@ -96,6 +100,13 @@ export default function SiteHeader() {
                 {item.label}
               </AppLink>
             ))}
+            {route === 'home' ? <HomeThemePicker /> : null}
+            <AppLink to="profile" onNavigate={close}>
+              {username ? `@${username}` : 'Profile'}
+            </AppLink>
+            <OpenWorkspaceLink className="synapse-btn synapse-btn-play" onNavigate={close}>
+              Open Synapse
+            </OpenWorkspaceLink>
           </nav>
         </div>
       ) : null}

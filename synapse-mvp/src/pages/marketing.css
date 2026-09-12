@@ -22,7 +22,7 @@ body:has(.synapse-mkt),
   z-index: 80;
   padding: 0.45rem 0.8rem;
   background: var(--accent);
-  color: #06110f;
+  color: var(--bg-void);
   border-radius: var(--radius-sm);
 }
 
@@ -111,6 +111,42 @@ body:has(.synapse-mkt),
 
 .synapse-mkt-cta {
   text-decoration: none;
+}
+
+.synapse-mkt-theme-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.85rem 0 0.4rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.synapse-mkt-theme-pick.is-compact {
+  margin: 0;
+}
+
+.synapse-mkt-theme-pick select {
+  min-width: 10.5rem;
+  max-width: 16rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--input-bg, var(--bg-deep));
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.synapse-mkt-drawer .synapse-mkt-theme-pick {
+  margin: 0.75rem 0 0;
+}
+
+.synapse-mkt-drawer .synapse-mkt-theme-pick select {
+  width: 100%;
+  max-width: none;
 }
 
 .synapse-mkt-burger {
@@ -428,6 +464,25 @@ body:has(.synapse-mkt),
 
 .synapse-mkt-theme-card {
   margin: 0;
+  padding: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+}
+
+.synapse-mkt-theme-card.is-active {
+  border-color: var(--accent);
+}
+
+.synapse-mkt-theme-apply {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
 }
 
 .synapse-mkt-theme-card .synapse-theme-preview {
@@ -590,11 +645,57 @@ body:has(.synapse-mkt),
   max-width: none;
 }
 
-.synapse-mkt-legal-block pre {
-  white-space: pre-wrap;
-  font-family: var(--font-ui);
+.synapse-mkt-legal-block h3 {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 1.35rem 0 0.55rem;
+}
+
+.synapse-mkt-legal-block p {
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.55;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.synapse-mkt-legal-block ul {
+  list-style: disc;
+  list-style-position: outside;
+  margin: 0 0 0.85rem;
+  padding-left: 1.25rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.synapse-mkt-legal-block li {
+  display: list-item;
+  margin: 0.55rem 0;
+}
+
+.synapse-mkt-legal-block li::marker {
+  color: var(--accent);
+}
+
+.synapse-mkt-legal-block li strong,
+.synapse-mkt-legal-block p strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.synapse-mkt-legal-block code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  color: var(--text);
+  background: var(--bg-elevated);
+  padding: 0.08em 0.35em;
+  border-radius: 4px;
+}
+
+.synapse-mkt-legal-block a {
+  color: var(--accent);
 }
 
 .synapse-path-demo {
@@ -640,6 +741,7 @@ body:has(.synapse-mkt),
 .synapse-path-node.is-conditional rect { stroke: var(--node-conditional); }
 .synapse-path-node.is-randomizer rect { stroke: var(--node-randomizer); }
 .synapse-path-node.is-transition rect { stroke: var(--node-transition); }
+.synapse-path-node.is-style rect { stroke: var(--node-style); }
 
 .synapse-path-node.is-lit rect {
   filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 45%, transparent));
@@ -657,6 +759,10 @@ body:has(.synapse-mkt),
   }
 
   .synapse-mkt-nav {
+    display: none;
+  }
+
+  .synapse-mkt-header-actions .synapse-mkt-theme-pick {
     display: none;
   }
 
@@ -711,24 +817,45 @@ body:has(.synapse-mkt),
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
+  html:not([data-motion="full"]) {
     scroll-behavior: auto;
   }
 
-  .synapse-mkt-reveal,
-  .synapse-mkt-header,
-  .synapse-mkt-card,
-  .synapse-path-node rect {
+  html:not([data-motion="full"]) .synapse-mkt-reveal,
+  html:not([data-motion="full"]) .synapse-mkt-header,
+  html:not([data-motion="full"]) .synapse-mkt-card,
+  html:not([data-motion="full"]) .synapse-path-node rect {
     transition: none;
   }
 
-  .synapse-mkt-reveal {
+  html:not([data-motion="full"]) .synapse-mkt-reveal {
     opacity: 1;
     transform: none;
   }
 
-  .synapse-path-route,
-  .synapse-path-playhead {
+  html:not([data-motion="full"]) .synapse-path-route,
+  html:not([data-motion="full"]) .synapse-path-playhead {
     animation: none;
   }
+}
+
+html.synapse-reduce-motion {
+  scroll-behavior: auto;
+}
+
+html.synapse-reduce-motion .synapse-mkt-reveal,
+html.synapse-reduce-motion .synapse-mkt-header,
+html.synapse-reduce-motion .synapse-mkt-card,
+html.synapse-reduce-motion .synapse-path-node rect {
+  transition: none;
+}
+
+html.synapse-reduce-motion .synapse-mkt-reveal {
+  opacity: 1;
+  transform: none;
+}
+
+html.synapse-reduce-motion .synapse-path-route,
+html.synapse-reduce-motion .synapse-path-playhead {
+  animation: none;
 }

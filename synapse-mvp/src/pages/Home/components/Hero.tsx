@@ -1,4 +1,5 @@
 import { AppLink } from '../../../app/AppLink';
+import OpenWorkspaceLink from '../../../components/OpenWorkspaceLink';
 import PathDemo from './PathDemo';
 
 export default function Hero() {
@@ -13,11 +14,11 @@ export default function Hero() {
           listening experience that follows your rules.
         </p>
         <div className="synapse-mkt-actions">
-          <AppLink to="edit" className="synapse-btn synapse-btn-play">
+          <OpenWorkspaceLink className="synapse-btn synapse-btn-play">
             Open Synapse
-          </AppLink>
+          </OpenWorkspaceLink>
           <AppLink to="workshop" className="synapse-btn synapse-btn-ghost">
-            Explore the Workshop
+            Workshop preview
           </AppLink>
         </div>
       </div>

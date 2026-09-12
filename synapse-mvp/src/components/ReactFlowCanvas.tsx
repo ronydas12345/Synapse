@@ -9,22 +9,33 @@ import StartNode from './nodes/StartNode';
 import EndNode from './nodes/EndNode';
 import RandomizerNode from './nodes/RandomizerNode';
 import TransitionNode from './nodes/TransitionNode';
+import StyleNode from './nodes/StyleNode';
 import CommentNode from './nodes/CommentNode';
 import CommentConnections from './CommentConnections';
 import PlaybackMarker from './PlaybackMarker';
 import StartDirectionArrow from './StartDirectionArrow';
-import { useEffect, useCallback, useRef } from 'react';
-import type { Node, Edge } from '@xyflow/react';
+import ThemeToggleButton from './ThemeToggleButton';
+import AlignGuides from './AlignGuides';
+import TriangularEdge from './edges/TriangularEdge';
+import { useEffect, useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
+import type { Node, Edge, NodeChange } from '@xyflow/react';
 import {
   applyTrackMovesIntoRandomizers,
   dataTransferHasSequenceItem,
   moveSequenceItemBetweenRandomizers,
   normalizeWorkspaceGraph,
+  nodeSize,
   reconcileAfterNodeRemovals,
   restoreTrackFromRandomizer,
   sequenceItemFromDataTransfer,
   worldPosition,
 } from '../randomizerDrop';
+import { applySnapToDragChanges } from '../alignGuides';
+import { getAlignOverlay, setAlignOverlay } from '../alignGuideStore';
+import { getAppliedEdgeType, subscribeAppliedTheme } from '../theme/applyTheme';
+import { toReactFlowEdgeType } from '../theme/edgeType';
+import { confirmDestructive, useAppSettings } from '../settings/settingsStore';
+import { documentPrefersReducedMotion } from '../settings/motion';
 import {
   canDropPlaybackMarkerOn,
   dataTransferIsPlaybackMarker,
@@ -39,7 +50,12 @@ const nodeTypes = {
   end: EndNode,
   randomizer: RandomizerNode,
   transition: TransitionNode,
+  style: StyleNode,
   comment: CommentNode,
+};
+
+const edgeTypes = {
+  triangular: TriangularEdge,
 };
 
 // Valid node type names for filtering
@@ -50,7 +66,9 @@ function CustomMinimap() {
   const { getNodes, getViewport } = useReactFlow();
   const [containerDims, setContainerDims] = React.useState({ width: 1200, height: 800 });
   const [viewportState, setViewportState] = React.useState({ x: 0, y: 0, zoom: 1 });
-  const [collapsed, setCollapsed] = React.useState(false);
+  const showMinimap = useAppSettings((s) => s.canvas.showMinimap);
+  const updateCanvas = useAppSettings((s) => s.updateCanvas);
+  const collapsed = !showMinimap;
   const minimapRef = React.useRef<HTMLDivElement>(null);
   const prevViewportRef = React.useRef({ x: 0, y: 0, zoom: 1 });
 
@@ -125,6 +143,7 @@ function CustomMinimap() {
     splitter: { width: 320, height: 160 },
     randomizer: { width: 320, height: 220 },
     transition: { width: 256, height: 100 },
+    style: { width: 256, height: 100 },
     comment: { width: 256, height: 120 },
   };
 
@@ -169,14 +188,15 @@ function CustomMinimap() {
 
   // Border colors matching the actual node borders in workspace
   const typeColors: Record<string, string> = {
-    start: '#22c55e',      // border-green-500
-    end: '#ef4444',        // border-red-500
-    track: '#64748b',      // border-slate-600
-    conditional: '#6366f1', // border-indigo-500
-    splitter: '#6366f1',   // border-indigo-500
-    randomizer: '#a855f7', // border-purple-500
-    transition: '#b45309', // border-amber-600
-    comment: '#64748b',    // border-slate-500
+    start: 'var(--node-start)',
+    end: 'var(--node-end)',
+    track: 'var(--node-track)',
+    conditional: 'var(--node-conditional)',
+    splitter: 'var(--node-conditional)',
+    randomizer: 'var(--node-randomizer)',
+    transition: 'var(--node-transition)',
+    style: 'var(--node-style)',
+    comment: 'var(--node-comment)',
   };
 
   // Calculate the visible area in world coordinates
@@ -193,7 +213,7 @@ function CustomMinimap() {
       className="synapse-minimap-toggle"
       title={collapsed ? 'Show minimap' : 'Hide minimap'}
       aria-label={collapsed ? 'Show minimap' : 'Hide minimap'}
-      onClick={() => setCollapsed((v) => !v)}
+      onClick={() => updateCanvas({ showMinimap: !showMinimap })}
     >
       {collapsed ? <MapIcon className="w-4 h-4" /> : <Minimize2 className="w-3.5 h-3.5" />}
     </button>
@@ -302,7 +322,12 @@ const MemoizedCustomMinimap = React.memo(CustomMinimap);
 function ReactFlowContent() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { nodes: storeNodes, edges: storeEdges, setNodes: setStoreNodes, setEdges: setStoreEdges, deleteEdge, onConnect: storeOnConnect, updateNodeData } = usePathStore();
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getViewport, fitView } = useReactFlow();
+  const snapToGrid = useAppSettings((s) => s.canvas.snapToGrid);
+  const gridSize = useAppSettings((s) => s.canvas.gridSize);
+  const fitViewOnSwitch = useAppSettings((s) => s.canvas.fitViewOnPlaylistSwitch);
+  const activePathId = usePathStore((s) => s.activePathId);
+  const skipFitRef = useRef(true);
 
   const [nodes, setNodes] = useNodesState(storeNodes as Node[]);
   // Keep only "real" edges in state. Dashed comment-link edges are derived and should not
@@ -318,11 +343,20 @@ function ReactFlowContent() {
   const handleNodesChange = useCallback(
     (changes: any) => {
       setNodes((currentNodes) => {
+        const snapped = applySnapToDragChanges(changes, currentNodes, {
+          shift: getAlignOverlay().shift,
+          zoom: getViewport().zoom,
+          sizeOf: nodeSize,
+          worldOf: worldPosition,
+        });
+        setAlignOverlay({ dragging: snapped.dragging, guides: snapped.guides });
+        const nextChanges = snapped.changes;
+
         // Track position movements BEFORE applying changes so we can compute deltas
         const movements: Map<string, { deltaX: number; deltaY: number }> = new Map();
 
-        for (const change of changes) {
-          if (change.type === 'position' && change.position) {
+        for (const change of nextChanges) {
+          if (change.type === 'position' && change.position && change.id) {
             const node = currentNodes.find((n) => n.id === change.id);
             if (node && node.position) {
               movements.set(change.id, {
@@ -335,7 +369,10 @@ function ReactFlowContent() {
 
         // Apply ALL changes using React Flow's built-in handler
         // This properly handles dimensions, position, select, add, remove, etc.
-        let result = applyNodeChanges(changes, currentNodes) as typeof currentNodes;
+        let result = applyNodeChanges(
+          nextChanges as NodeChange<Node>[],
+          currentNodes
+        ) as typeof currentNodes;
 
         const removedIds = new Set(
           (changes as { type?: string; id?: string }[])
@@ -411,7 +448,7 @@ function ReactFlowContent() {
         }
       });
     },
-    [setNodes]
+    [setNodes, getViewport]
   );
   const lastSyncedNodesRef = useRef<Node[]>(storeNodes);
   const lastSyncedEdgesRef = useRef<Edge[]>(storeEdges);
@@ -431,6 +468,21 @@ function ReactFlowContent() {
     }
     isInitializedRef.current = true;
   }, []);
+
+  useEffect(() => {
+    if (skipFitRef.current) {
+      skipFitRef.current = false;
+      return;
+    }
+    if (!fitViewOnSwitch) return;
+    const id = window.setTimeout(() => {
+      fitView({
+        padding: 0.2,
+        duration: documentPrefersReducedMotion() ? 0 : 200,
+      });
+    }, 50);
+    return () => window.clearTimeout(id);
+  }, [activePathId, fitViewOnSwitch, fitView]);
 
   // Sync store changes to React Flow (when settings are updated or nodes deleted from sidebar)
   // IMPORTANT: This only runs when structure or data actually changes, not on every position update
@@ -456,12 +508,9 @@ function ReactFlowContent() {
     }
 
     if (structureChanged || dataChanged) {
-      console.log('Store nodes changed (data/structure), syncing to React Flow. Count:', storeNodes.length);
       lastSyncedNodesRef.current = storeNodes;
 
       if (structureChanged) {
-        // Node added/removed - replace all
-        console.log('Node count changed, replacing all nodes');
         setNodes(storeNodes as Node[]);
       } else {
         // Data changed on existing nodes - update data only, preserve positions
@@ -496,13 +545,22 @@ function ReactFlowContent() {
 
     // Check if edges in store differ from what React Flow has
     if (JSON.stringify(storeEdges) !== JSON.stringify(lastSyncedEdgesRef.current)) {
-      console.log('Store edges changed, syncing to React Flow. Edge count:', storeEdges.length);
       setEdges(storeEdges as Edge[]);
       lastSyncedEdgesRef.current = storeEdges;
     }
   }, [storeEdges, setEdges]);
 
   const renderedEdges = edges as Edge[];
+  const appliedEdgeType = useSyncExternalStore(
+    subscribeAppliedTheme,
+    getAppliedEdgeType,
+    getAppliedEdgeType
+  );
+  const rfEdgeType = toReactFlowEdgeType(appliedEdgeType);
+  const themedEdges = useMemo(
+    () => renderedEdges.map((edge) => ({ ...edge, type: rfEdgeType })),
+    [renderedEdges, rfEdgeType]
+  );
 
   // Sync React Flow changes back to store (debounced to avoid excessive updates during drag)
   // IMPORTANT: Only sync data changes, NOT position changes. Position is transient UI state.
@@ -543,7 +601,6 @@ function ReactFlowContent() {
       }
 
       if (structureChanged || dataChanged) {
-        console.log('Syncing node data to store (position changes ignored). Node count:', nodesToSync.length);
         setStoreNodes(nodes); // Send full nodes to store
         lastSyncedNodesRef.current = nodes;
       }
@@ -563,7 +620,6 @@ function ReactFlowContent() {
       
       // Only sync back if React Flow edges differ from what we synced TO the store
       if (JSON.stringify(regularEdges) !== JSON.stringify(lastSyncedEdgesRef.current)) {
-        console.log('Syncing edges back to store. Edge count:', regularEdges.length);
         setStoreEdges(regularEdges);
         lastSyncedEdgesRef.current = regularEdges;
       }
@@ -757,7 +813,6 @@ function ReactFlowContent() {
       const targetNode = nodes.find((n) => n.id === connection.target);
 
       if (!sourceNode || !targetNode) {
-        console.warn('Connect failed: source or target node not found');
         return;
       }
 
@@ -802,7 +857,8 @@ function ReactFlowContent() {
         targetNode.type === 'track' ||
         targetNode.type === 'end' ||
         targetNode.type === 'randomizer' ||
-        targetNode.type === 'transition';
+        targetNode.type === 'transition' ||
+        targetNode.type === 'style';
 
       if (!allowsMultipleInputs) {
         const existingIncoming = edges.filter(
@@ -828,18 +884,17 @@ function ReactFlowContent() {
       if (edge.id.startsWith('dashed-')) {
         return;
       }
-      if (window.confirm('Delete this connection?')) {
-        // Remove from local state
-        setEdges((prevEdges) => prevEdges.filter((e) => e.id !== edge.id));
-        // Also update store
-        deleteEdge(edge.id);
+      if (!confirmDestructive('Delete this connection?')) {
+        return;
       }
+      setEdges((prevEdges) => prevEdges.filter((e) => e.id !== edge.id));
+      deleteEdge(edge.id);
     },
     [setEdges, deleteEdge]
   );
 
   const handleRemoveAll = useCallback(() => {
-    if (!window.confirm('Remove all nodes and connections?')) return;
+    if (!confirmDestructive('Remove all nodes and connections?')) return;
     setNodes([]);
     setEdges([]);
     setStoreNodes([]);
@@ -864,14 +919,16 @@ function ReactFlowContent() {
   );
 
   return (
-    <div ref={reactFlowRef} className="synapse-canvas-wrap" style={{ minHeight: '100%' }}>
+    <div ref={reactFlowRef} className="synapse-canvas-wrap" data-tutorial="canvas">
       <ReactFlow
         nodes={nodes}
-        edges={renderedEdges}
+        edges={themedEdges}
+        edgeTypes={edgeTypes}
         onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={handleConnect}
         onNodeDragStop={(_event, _node, draggedNodes) => {
+          setAlignOverlay({ dragging: false, guides: [] });
           const positions = new Map(
             draggedNodes.map((n) => [n.id, n.position] as const)
           );
@@ -914,22 +971,30 @@ function ReactFlowContent() {
         nodesConnectable={true}
         elementsSelectable={true}
         selectNodesOnDrag={false}
+        snapToGrid={snapToGrid}
+        snapGrid={[gridSize, gridSize]}
         fitView
         defaultEdgeOptions={{
+          type: rfEdgeType,
           style: { stroke: 'var(--edge-color)', strokeWidth: 2 },
         }}
         deleteKeyCode={['Backspace', 'Delete']}
         colorMode="dark"
       >
-        <Background color="var(--grid-line)" gap={24} size={1} />
+        <Background color="var(--grid-line)" gap={gridSize} size={1} />
         <Controls showInteractive={false} position="bottom-left" />
         <PlaybackMarker />
         <CommentConnections nodes={nodes} />
       </ReactFlow>
 
-      <button type="button" onClick={handleRemoveAll} className="synapse-canvas-action">
-        Remove All
-      </button>
+      <AlignGuides nodes={nodes} containerRef={reactFlowRef} />
+
+      <div className="synapse-canvas-actions">
+        <ThemeToggleButton />
+        <button type="button" onClick={handleRemoveAll} className="synapse-canvas-action" data-tutorial="remove-all">
+          Remove All
+        </button>
+      </div>
 
       <MemoizedCustomMinimap />
     </div>
@@ -938,7 +1003,7 @@ function ReactFlowContent() {
 
 export default function ReactFlowCanvas() {
   return (
-    <div className="flex-1 h-full min-w-0 bg-[var(--bg-deep)]">
+    <div className="synapse-canvas-slot">
       <ReactFlowProvider>
         <ReactFlowContent />
       </ReactFlowProvider>

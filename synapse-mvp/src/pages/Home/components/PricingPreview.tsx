@@ -1,10 +1,11 @@
 import { AppLink } from '../../../app/AppLink';
+import OpenWorkspaceLink from '../../../components/OpenWorkspaceLink';
 import { PRICING } from '../../../site/content';
 import Reveal from './Reveal';
 
 export default function PricingPreview({ full = false }: { full?: boolean }) {
   return (
-    <section className="synapse-mkt-section" id="pricing" aria-labelledby="pricing-title">
+    <section className="synapse-mkt-section" id="pricing" aria-labelledby="pricing-title" data-tutorial="pricing">
       <Reveal>
         <p className="synapse-mkt-kicker">Pricing</p>
         <h2 id="pricing-title">{full ? 'Plans' : 'Start free. Pro when it exists.'}</h2>
@@ -37,9 +38,9 @@ export default function PricingPreview({ full = false }: { full?: boolean }) {
           </p>
         ) : (
           <p className="synapse-mkt-actions">
-            <AppLink to="edit" className="synapse-btn synapse-btn-play">
+            <OpenWorkspaceLink className="synapse-btn synapse-btn-play">
               Open Synapse
-            </AppLink>
+            </OpenWorkspaceLink>
           </p>
         )}
       </Reveal>

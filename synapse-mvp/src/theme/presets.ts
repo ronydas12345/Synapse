@@ -1,6 +1,6 @@
 import { emptyTheme } from './parseTheme';
 import { luminance } from './color';
-import type { SynapseTheme, ThemeColors, ThemeTypography } from './types';
+import type { SynapseTheme, ThemeColors, ThemeEdgeType, ThemeTypography } from './types';
 
 type Palette = Partial<ThemeColors> &
   Pick<
@@ -121,10 +121,73 @@ const PRESET_TYPE: Record<string, Partial<ThemeTypography>> = {
   },
 };
 
+const PRESET_EDGE: Record<string, ThemeEdgeType> = {
+  'standard-dark': 'bezier',
+  'standard-light': 'bezier',
+  'high-contrast-light': 'rectangular',
+  'high-contrast-dark': 'rectangular',
+  'ocean-blue': 'bezier',
+  'bold-blue': 'rectangular',
+  'leaf-green': 'rounded',
+  'pretty-pink': 'simpleBezier',
+  'cherry-tree': 'simpleBezier',
+  'blood-red': 'triangular',
+  'sunset-orange': 'bezier',
+  'purple-night': 'bezier',
+  lavender: 'rounded',
+  forest: 'rounded',
+  'deep-ocean': 'bezier',
+  midnight: 'straight',
+  cyberpunk: 'triangular',
+  synthwave: 'triangular',
+  monochrome: 'rectangular',
+  'warm-cream': 'rounded',
+  'solarized-light': 'rectangular',
+  'solarized-dark': 'rectangular',
+  rose: 'simpleBezier',
+  mint: 'rounded',
+  amber: 'rounded',
+  neon: 'triangular',
+};
+
+const PRESET_BARS: Record<string, number> = {
+  'standard-dark': 28,
+  'standard-light': 28,
+  'high-contrast-light': 12,
+  'high-contrast-dark': 12,
+  'ocean-blue': 28,
+  'bold-blue': 24,
+  'leaf-green': 24,
+  'pretty-pink': 32,
+  'cherry-tree': 32,
+  'blood-red': 16,
+  'sunset-orange': 28,
+  'purple-night': 32,
+  lavender: 32,
+  forest: 24,
+  'deep-ocean': 28,
+  midnight: 16,
+  cyberpunk: 48,
+  synthwave: 48,
+  monochrome: 16,
+  'warm-cream': 24,
+  'solarized-light': 24,
+  'solarized-dark': 24,
+  rose: 32,
+  mint: 28,
+  amber: 24,
+  neon: 48,
+};
+
 function withTypeVibe(theme: SynapseTheme): SynapseTheme {
   return {
     ...theme,
     typography: { ...theme.typography, ...PRESET_TYPE[theme.id] },
+    style: {
+      ...theme.style,
+      edgeType: PRESET_EDGE[theme.id] ?? theme.style.edgeType,
+      visualizerBarCount: PRESET_BARS[theme.id] ?? theme.style.visualizerBarCount,
+    },
   };
 }
 

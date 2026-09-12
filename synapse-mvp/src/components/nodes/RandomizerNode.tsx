@@ -159,6 +159,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
         className={`synapse-node w-80 overflow-hidden transition is-randomizer ${
           isPlaying ? 'is-playing' : mode === 'sequence' ? 'is-sequence' : ''
         } ${isDragOver ? 'bg-[var(--bg-hover)]' : ''}`}
+        data-tutorial="node-randomizer"
         data-randomizer-id={id}
         onDragOver={handleNodeDragOver}
         onDragLeave={() => setIsDragOver(false)}

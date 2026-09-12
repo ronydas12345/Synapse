@@ -11,6 +11,7 @@ describe('theme schema', () => {
     expect(parsed?.id).toBe(source.id);
     expect(parsed?.type).toBe('synapse-theme');
     expect(parsed?.colors.accent).toBe(source.colors.accent);
+    expect(parsed?.style.edgeType).toBe(source.style.edgeType);
     expect(parsed?.builtin).toBe(false);
   });
 
@@ -40,6 +41,7 @@ describe('theme schema', () => {
   it('maps theme tokens to CSS variables', () => {
     const vars = themeCssVars(BUILTIN_THEMES[0]);
     expect(vars['--accent']).toBe(BUILTIN_THEMES[0].colors.accent);
+    expect(vars['--node-style']).toBe(BUILTIN_THEMES[0].colors.nodeStyle);
     expect(vars['--bg-void']).toBe(BUILTIN_THEMES[0].colors.workspaceBackground);
     expect(vars['--brand-from']).toBe('#ffffff');
     expect(vars['--font-ui']).toContain('Outfit');
@@ -49,6 +51,41 @@ describe('theme schema', () => {
     const light = BUILTIN_THEMES.find((t) => t.id === 'standard-light');
     expect(light).toBeTruthy();
     expect(themeCssVars(light!)['--brand-from']).toBe(light!.colors.textPrimary);
+    expect(themeCssVars(light!)['--logo-ink']).toBe('#111111');
+  });
+
+  it('uses light grey logo ink on dark themes', () => {
+    expect(themeCssVars(BUILTIN_THEMES[0])['--logo-ink']).toBe('#c5cad3');
+  });
+
+  it('rejects unknown arrow types on import', () => {
+    const parsed = parseTheme({
+      schemaVersion: 1,
+      type: 'synapse-theme',
+      id: 'ok-theme',
+      name: 'Edges',
+      style: { edgeType: 'javascript:alert(1)' },
+    });
+    expect(parsed?.style.edgeType).toBe('bezier');
+  });
+
+  it('snaps imported visualizer bar counts onto the allowlist', () => {
+    const parsed = parseTheme({
+      schemaVersion: 1,
+      type: 'synapse-theme',
+      id: 'ok-theme',
+      name: 'Bars',
+      style: { visualizerBarCount: 30 },
+    });
+    expect(parsed?.style.visualizerBarCount).toBe(28);
+  });
+
+  it('maps cyberpunk to triangular arrows', () => {
+    const cyber = BUILTIN_THEMES.find((t) => t.id === 'cyberpunk');
+    expect(cyber?.style.edgeType).toBe('triangular');
+    expect(themeCssVars(cyber!)['--edge-type']).toBe('triangular');
+    expect(cyber?.style.visualizerBarCount).toBe(48);
+    expect(themeCssVars(cyber!)['--visualizer-bars']).toBe('48');
   });
 
   it('filters the preset list by name', () => {

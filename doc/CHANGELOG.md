@@ -24,6 +24,10 @@ Now-playing credits. Local feature branch `feature/now-playing-metadata`; not pu
 - Off-screen Start direction arrow near the minimap; click pans to the closest Start.
 - Separate **Listen** screen (header Studio / Listen): centered vertical list with now playing, large play/pause, song controls, audio visualizer, upcoming songs, and split branches. Click a song or branch to start playback from that node. Wide windows place player controls on the left and the Music Path on the right; narrow windows keep controls stacked above the path.
 - Theme engine: 25 searchable presets, custom editor with isolated live preview, Save/Cancel/Reset lock, local custom themes, JSON import/export (`synapse-theme` schema v1). Settings tab hosts Themes; other settings sections are stubs.
+- Local **playlist library** with named paths, switcher, and Settings rename. Portable **`.synapse` JSON** import/export (playlist + optional theme package) in Settings → Import / Export. Schema `{ schemaVersion: 1, type: "synapse-playlist" | "synapse-package" }`. Export includes custom themes referenced by Style nodes (and the current Settings theme); presets stay as ids. ZIP archives and overlays are rejected or skipped with a notice; imported JSON cannot run code.
+- Conditional **Weather** and **Day / Date** modes. Weather uses a normalized enum and the user’s Profile location (or browser geolocation), cached, with Other / Unknown as fallback. Day / Date rules can be a single value, a list, or a range for weekday, month, year, dates, and repeating annual windows.
+- **Style node**: pick a saved theme (preset or custom), optionally limit which layers it changes, and interpolate colors when playback reaches it. Jumping or skipping to a node applies Style cues already on the path to that node. Canvas **Settings theme** / **Path theme** toggles the Settings look versus the path Style look without moving the playback marker. Does not overwrite the Settings theme. Respects `prefers-reduced-motion`.
+- **Interactive tutorial**: `?` in the header opens a guided walkthrough. Full tour or jump to a topic, spotlight on real UI, action steps listen to the app store, progress in `localStorage`. Esc exits. Unshipped features (Workshop publish, overlays, collaboration) are documented as previews, not faked.
 
 ### Changed
 
@@ -33,6 +37,8 @@ Now-playing credits. Local feature branch `feature/now-playing-metadata`; not pu
 - Start/end inspectors use the real video duration (once known) with clock-style fields. Unset end still means play to the end.
 - Visualizer bars use log-frequency peak mapping (`fftSize` 2048) so high-frequency bins are not skipped. Firefox still cannot tap YouTube iframe audio (CORS); tab share or mic remains the real FFT source — no fake spectrum.
 - Node settings moved out of the left sidebar into a dedicated right inspector. MiniMap is bottom-left; Remove All is top-left so they do not compete with the inspector.
+- Logo plate, circles, and lines are black on light themes and light grey on dark themes. The π glyph still uses the theme accent.
+- Inspector, Style/Transition nodes, and conditional editors use theme tokens instead of hardcoded slate. Debug console logs and the leftover `App.minimal` shell are gone. Marketing no longer labels the local profile as “Log In”.
 
 ### Fixed
 

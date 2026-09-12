@@ -1,6 +1,8 @@
-import { Music, GitBranch, Plus, Play, Square, Dice5, MessageSquare, ArrowRight } from 'lucide-react';
+import { Music, GitBranch, Plus, Play, Square, Dice5, MessageSquare, ArrowRight, Palette } from 'lucide-react';
 import { usePathStore } from '../store';
 import { useCallback } from 'react';
+import { defaultStyleNodeData } from '../styleNode/parse';
+import { defaultTrackNodeData } from '../settings/nodeDefaults';
 
 interface NodeType {
   type: string;
@@ -52,6 +54,12 @@ const NODE_TYPES: NodeType[] = [
     defaultData: { type: 'silence', duration: 1, audioFile: null, videoId: '' },
   },
   {
+    type: 'style',
+    label: 'Style',
+    icon: <Palette className="w-4 h-4" />,
+    defaultData: defaultStyleNodeData(),
+  },
+  {
     type: 'comment',
     label: 'Comment',
     icon: <MessageSquare className="w-4 h-4" />,
@@ -68,6 +76,9 @@ const NODE_TYPES: NodeType[] = [
 export default function Sidebar() {
   const { nodes, setNodes, normalizeSplitters } = usePathStore();
 
+  const dataForNode = (nodeType: NodeType) =>
+    nodeType.type === 'track' ? defaultTrackNodeData() : { ...nodeType.defaultData };
+
   const handleAddNode = useCallback(
     (nodeType: NodeType) => {
       if (nodeType.type === 'start' && nodes.some(n => n.type === 'start')) {
@@ -79,7 +90,7 @@ export default function Sidebar() {
         id: `${nodeType.type}-${Date.now()}`,
         type: nodeType.type,
         position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
-        data: { ...nodeType.defaultData },
+        data: dataForNode(nodeType),
       };
       setNodes([...nodes, newNode as any]);
     },
@@ -92,13 +103,13 @@ export default function Sidebar() {
       'application/reactflow',
       JSON.stringify({
         type: nodeType.type,
-        defaultData: nodeType.defaultData,
+        defaultData: dataForNode(nodeType),
       })
     );
   };
 
   return (
-    <aside className="synapse-sidebar">
+    <aside className="synapse-sidebar" data-tutorial="sidebar">
       <div>
         <p className="synapse-section-label">Module rack</p>
         <h2
@@ -117,6 +128,7 @@ export default function Sidebar() {
               onDragStart={(e) => onDragStart(e, nodeType)}
               onClick={() => handleAddNode(nodeType)}
               className="synapse-rack-item group"
+              data-tutorial={`rack-${nodeType.type}`}
             >
               <div className="synapse-rack-icon">{nodeType.icon}</div>
               <div className="flex-1 min-w-0">

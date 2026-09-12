@@ -21,7 +21,7 @@ export default function About() {
             {CREATOR.photoSrc ? (
               <img src={CREATOR.photoSrc} alt={CREATOR.photoAlt} />
             ) : (
-              <SynapseMark size={96} title="Synapse mark used as a placeholder avatar" />
+              <SynapseMark size={72} title="Synapse mark used as a placeholder avatar" />
             )}
           </div>
           <div>

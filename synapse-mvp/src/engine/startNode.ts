@@ -6,6 +6,7 @@ export const PLAYBACK_START_NODE_TYPES = [
   'splitter',
   'randomizer',
   'transition',
+  'style',
   'end',
 ] as const;
 

@@ -44,6 +44,27 @@ describe('buildPlaybackQueue', () => {
     ]);
   });
 
+  it('inserts style nodes between tracks', () => {
+    const g = graph(
+      [
+        start(),
+        track('t1'),
+        makeNode('look', 'style', { themeId: 'cherry-tree' }),
+        track('t2'),
+      ],
+      [
+        makeEdge('start', 't1'),
+        makeEdge('t1', 'look'),
+        makeEdge('look', 't2'),
+      ]
+    );
+    expect(buildPlaybackQueueKeys(g)).toEqual([
+      'track:t1',
+      'style:look',
+      'track:t2',
+    ]);
+  });
+
   it('inserts transition nodes between tracks', () => {
     const g = graph(
       [
@@ -186,6 +207,54 @@ describe('buildPlaybackQueue', () => {
     ]);
     expect(buildPlaybackQueueKeys(g, { currentHour: 10 })).toEqual([
       'track:day',
+    ]);
+  });
+
+  it('selects a weather branch from injected weatherState', () => {
+    const splitter = makeNode('split', 'conditional', {
+      mode: 'weather',
+      numPaths: 3,
+      pathWeather: [['clear'], ['rain', 'drizzle'], ['other']],
+    });
+    const g = graph(
+      [start(), splitter, track('sun'), track('wet'), track('fallback')],
+      [
+        makeEdge('start', 'split'),
+        makeEdge('split', 'sun', 'A'),
+        makeEdge('split', 'wet', 'B'),
+        makeEdge('split', 'fallback', 'C'),
+      ]
+    );
+    expect(buildPlaybackQueueKeys(g, { weatherState: 'rain' })).toEqual([
+      'track:wet',
+    ]);
+    expect(buildPlaybackQueueKeys(g, { weatherState: 'snow' })).toEqual([
+      'track:fallback',
+    ]);
+  });
+
+  it('selects a day/date branch from injected now', () => {
+    const splitter = makeNode('split', 'conditional', {
+      mode: 'day',
+      numPaths: 2,
+      pathDateRules: [
+        [{ join: 'any', clauses: [{ kind: 'in', field: 'weekday', values: [1, 2, 3, 4, 5] }] }],
+        [{ join: 'any', clauses: [{ kind: 'catchAll' }] }],
+      ],
+    });
+    const g = graph(
+      [start(), splitter, track('weekday'), track('other')],
+      [
+        makeEdge('start', 'split'),
+        makeEdge('split', 'weekday', 'A'),
+        makeEdge('split', 'other', 'B'),
+      ]
+    );
+    expect(buildPlaybackQueueKeys(g, { now: new Date(2026, 8, 7) })).toEqual([
+      'track:weekday',
+    ]);
+    expect(buildPlaybackQueueKeys(g, { now: new Date(2026, 8, 12) })).toEqual([
+      'track:other',
     ]);
   });
 
@@ -387,6 +456,21 @@ describe('buildPlaybackQueue', () => {
     const result = buildPlaybackQueueResult(g, { startNodeId: 'note' });
     expect(result.items).toEqual([]);
     expect(result.haltReason).toBe('no_start');
+  });
+
+  it('starts from a style node', () => {
+    const g = graph(
+      [
+        start(),
+        makeNode('look', 'style', { themeId: 'midnight' }),
+        track('t1'),
+      ],
+      [makeEdge('start', 'look'), makeEdge('look', 't1')]
+    );
+    expect(buildPlaybackQueueKeys(g, { startNodeId: 'look' })).toEqual([
+      'style:look',
+      'track:t1',
+    ]);
   });
 
   it('falls back to Start when the requested start id is missing', () => {

@@ -26,6 +26,7 @@ describe('playback marker targeting', () => {
     expect(canDropPlaybackMarkerOn('randomizer')).toBe(true);
     expect(canDropPlaybackMarkerOn('start')).toBe(true);
     expect(canDropPlaybackMarkerOn('end')).toBe(true);
+    expect(canDropPlaybackMarkerOn('style')).toBe(true);
     expect(canDropPlaybackMarkerOn('comment')).toBe(false);
     expect(isPlaybackStartNodeType('comment')).toBe(false);
   });

@@ -21,6 +21,7 @@ pids
 # Environment variables
 .env
 .env.*
+env.txt.txt
 
 # Build outputs
 dist/

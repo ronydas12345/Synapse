@@ -8,10 +8,12 @@ import SettingsPage from './components/SettingsPage';
 import ProfilePage from './components/ProfilePage';
 import ThemeRoot from './theme/ThemeRoot';
 import PlaylistSwitcher from './components/PlaylistSwitcher';
+import SynapseMark from './pages/chrome/SynapseMark';
 import { usePathStore } from './store';
 import { AppLink, useAppRoute } from './app/AppLink';
 import { isMarketingRoute, isWorkspaceRoute, routeToUiMode, type AppRoute } from './app/routes';
 import { useProfileStore } from './profile/profileStore';
+import { useAppSettings } from './settings/settingsStore';
 import { applyPageMeta } from './site/seo';
 import MarketingLayout from './pages/MarketingLayout';
 import Home from './pages/Home/Home';
@@ -20,6 +22,7 @@ import PricingPage from './pages/PricingPage';
 import ChangelogPage from './pages/ChangelogPage';
 import FaqPage from './pages/FaqPage';
 import PrivacyPage, { CookiesPage, TermsPage } from './pages/LegalPages';
+import TutorialHelpButton from './tutorial/TutorialHelpButton';
 
 const WORKSPACE_META: Record<
   'edit' | 'listen' | 'settings' | 'profile',
@@ -52,20 +55,24 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
   const edit = route === 'edit';
 
   return (
-    <div className="synapse-app w-full h-screen flex flex-col text-[var(--text)]">
+    <div className="synapse-app w-full flex flex-col text-[var(--text)]" data-tutorial="workspace">
+      <a className="synapse-mkt-skip" href="#workspace-main">
+        Skip to workspace
+      </a>
       <header className="synapse-topbar">
         <div className="synapse-topbar-brand">
           <div className="synapse-topbar-brand-row">
-            <div className="synapse-topbar-title">
-              <AppLink to="home" className="synapse-brand-link">
+            <AppLink to="home" className="synapse-brand-link">
+              <SynapseMark size={34} />
+              <div className="synapse-topbar-title">
                 <div className="synapse-brand">Synapse</div>
-              </AppLink>
-              <div className="synapse-brand-meta">{WORKSPACE_META[route].label}</div>
-            </div>
+                <div className="synapse-brand-meta">{WORKSPACE_META[route].label}</div>
+              </div>
+            </AppLink>
             <PlaylistSwitcher />
           </div>
         </div>
-        <nav className="synapse-mode-toggle" aria-label="App pages">
+        <nav className="synapse-mode-toggle" aria-label="App pages" data-tutorial="app-nav">
           <AppLink to="home" className="synapse-mode-btn">
             Home
           </AppLink>
@@ -87,17 +94,25 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
             title={username ? `@${username}` : 'Profile'}
           >
             {avatar ? (
-              <img src={avatar} alt="" className="synapse-mode-avatar" />
+              <img
+                src={avatar}
+                alt=""
+                className="synapse-mode-avatar"
+                width={18}
+                height={18}
+              />
             ) : null}
             Profile
           </AppLink>
         </nav>
+        <TutorialHelpButton />
         {edit ? (
-          <div className="synapse-transport">
+          <div className="synapse-transport" data-tutorial="header-transport">
             <button
               type="button"
               onClick={() => setIsPlaying(!isPlaying)}
               className={`synapse-btn ${isPlaying ? 'synapse-btn-ghost' : 'synapse-btn-play'}`}
+              data-tutorial="header-play"
             >
               {isPlaying ? 'Pause' : 'Play'}
             </button>
@@ -116,7 +131,7 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
       </header>
 
       {edit ? (
-        <div className="flex flex-1 overflow-hidden min-h-0">
+        <div id="workspace-main" className="synapse-workspace">
           <Sidebar />
           <ReactFlowCanvas />
           <InspectorPanel />
@@ -137,6 +152,14 @@ export default function App() {
 
   useEffect(() => {
     usePathStore.getState().setUiMode(routeToUiMode(route));
+  }, [route]);
+
+  useEffect(() => {
+    if (route === 'edit' || route === 'listen') {
+      if (useAppSettings.getState().general.lastWorkspace !== route) {
+        useAppSettings.getState().updateGeneral({ lastWorkspace: route });
+      }
+    }
   }, [route]);
 
   useEffect(() => {

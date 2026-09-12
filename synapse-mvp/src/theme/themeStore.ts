@@ -4,7 +4,8 @@ import { emptyTheme, parseTheme, parseThemeJson, themeToJson } from './parseThem
 import { BUILTIN_THEMES, DEFAULT_THEME_ID, getBuiltinTheme } from './presets';
 import type { SynapseTheme } from './types';
 
-const STORAGE_KEY = 'synapse_theme_state';
+export const THEME_STORAGE_KEY = 'synapse_theme_state';
+const STORAGE_KEY = THEME_STORAGE_KEY;
 
 interface PersistedThemeState {
   schemaVersion: 1;
@@ -29,6 +30,7 @@ interface ThemeState {
   duplicateActive: () => void;
   resetDraft: () => void;
   importJson: (text: string) => string | null;
+  addCustomTheme: (theme: SynapseTheme) => string;
   exportActive: () => string | null;
   deleteCustom: (id: string) => void;
 }
@@ -75,6 +77,16 @@ export function resolveTheme(
     customThemes.find((t) => t.id === activeId) ||
     getBuiltinTheme(activeId) ||
     getBuiltinTheme(DEFAULT_THEME_ID)!
+  );
+}
+
+export function themeExists(
+  id: string,
+  customThemes: SynapseTheme[]
+): boolean {
+  if (!id) return false;
+  return Boolean(
+    getBuiltinTheme(id) || customThemes.some((t) => t.id === id)
   );
 }
 
@@ -192,6 +204,21 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     persist(theme.id, next);
     set({ customThemes: next, activeId: theme.id, draft: null });
     return null;
+  },
+
+  addCustomTheme: (theme) => {
+    const parsed = parseTheme({ ...theme, builtin: false, overlays: [] });
+    if (!parsed) return '';
+    const { customThemes, activeId } = get();
+    let id = parsed.id;
+    if (getBuiltinTheme(id) || id.startsWith('standard-') || customThemes.some((t) => t.id === id)) {
+      id = `custom-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    }
+    const stored = { ...parsed, id, builtin: false };
+    const next = [...customThemes, stored];
+    persist(activeId, next);
+    set({ customThemes: next });
+    return stored.id;
   },
 
   exportActive: () => {

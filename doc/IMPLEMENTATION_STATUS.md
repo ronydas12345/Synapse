@@ -1,7 +1,7 @@
 # Synapse — Implementation Status
 
 **Audit date:** 2026-08-26  
-**Last implementation update:** 2026-09-05 — Pages + local profile. See `doc/SYNAPSE_CURSOR_HANDOFF_V2.md` V2.6 / V2.8.  
+**Last implementation update:** 2026-09-07 — Style node with smooth theme interpolation; weather/day conditionals; theme-aware logo ink. See `doc/SYNAPSE_EXTENSIVE_FEATURES_HANDOFF.md` §8–12.  
 **Scope:** `synapse-mvp/` (primary app). Root `package.json` is leftover deps only — not the runnable app.  
 **Method:** Code inspection of `src/`, `package.json`, config, and absences (no backend/env/tests/deploy).
 
@@ -53,9 +53,23 @@ Implemented without pushing:
 
 - URLs: `/edit`, `/listen`, `/settings`, `/profile` (`/` redirects to `/edit`). Player stays mounted across pages.
 - Local profile: `@username`, display name, optional sections, public/private flag, listen counts from playback. No Firebase yet.
-- Deferred: Style node, overlays, Workshop publish, connection-style setting, remaining Settings categories.
+- Deferred at the time: Style node (now shipped 2026-09-07), overlays, Workshop publish, connection-style setting, remaining Settings categories.
 
-**How to verify:** Start → Track (paste a YouTube URL/ID) → Play. Real video should play in the bottom bar. Select a node to open the right inspector. Drag the yellow-orange marker onto another track while paused, then Play.
+**2026-09-06 playlist files** (`doc/SYNAPSE_CURSOR_HANDOFF.md` §11, `doc/SYNAPSE_EXTENSIVE_FEATURES_HANDOFF.md` §18–19):
+
+- Settings **Import / Export** writes and reads `.synapse` JSON (playlist graph, custom themes used by Style nodes and the current Settings theme, optional package + manifest). ZIP packages and overlay assets are not supported yet; import explains skipped overlays instead of silently dropping playlist content.
+- Schema `{ schemaVersion: 1, type: "synapse-playlist" | "synapse-package" }`. Legacy `{ version, name, nodes, edges, settings }` still parses. Node types are allowlisted; paths cannot traverse.
+
+**2026-09-07 weather + day splitters** (`doc/SYNAPSE_EXTENSIVE_FEATURES_HANDOFF.md` §10–12):
+
+- Conditional node modes **Weather** and **Day / Date** in the inspector and on-node picker. Weather uses Open-Meteo behind a provider interface, Profile coords or geolocation, 20-minute cache, and Other / Unknown when data is missing. Day / Date rules are structured (equals / one-of / range / specific dates / annual range / catch-all).
+- Logo ink is black on light themes and light grey on dark themes.
+
+**2026-09-07 style node** (`doc/SYNAPSE_EXTENSIVE_FEATURES_HANDOFF.md` §8–9):
+
+- Toolbox **Style** node selects a saved theme and optional visual layers (workspace, text, nodes, player, fonts, chrome). Playback queue kind `style:{id}`. Player interpolates CSS variables; Settings `activeId` is not persisted from the node. Missing themes skip. Path end / stop restores the user theme. `prefers-reduced-motion` snaps.
+
+**How to verify:** Start → Track (paste a YouTube URL/ID) → Play. Real video should play in the bottom bar. Select a node to open the right inspector. Drag the yellow-orange marker onto another track while paused, then Play. Settings → Import / Export: export the current playlist, re-import it (name becomes a copy if it already exists). Conditional: set Weather or Day / Date, assign states/rules per path, press Play. Style: Start → Track → Style (pick Cherry Tree) → Track → Play; the workspace should ease into that theme, then restore your Settings theme when the path ends.
 
 ---
 
@@ -81,7 +95,7 @@ Implemented without pushing:
 |---|---|---|---|
 | App shell | **PARTIAL** | `App.tsx`: `/edit`, `/listen`, `/settings`, `/profile`; canvas, inspector, `Player` | OAuth, public profiles |
 | Node canvas | **DONE** | `ReactFlowCanvas.tsx`: zoom/pan, drag-drop add, connect, select, delete, minimap, connection rules | Minor polish; “Remove All” can wipe Start |
-| Node types | **PARTIAL** | Toolbox: start, track, conditional, randomizer, transition, comment, end | Artist, Genre nodes; dedicated Splitter label (conditional fills role) |
+| Node types | **PARTIAL** | Toolbox: start, track, conditional, randomizer, transition, style, comment, end | Artist, Genre nodes; dedicated Splitter label (conditional fills role) |
 | Path execution | **PARTIAL** | `src/engine/buildPlaybackQueue.ts` — pure graph walk, weighted + time-range, optional seed | More node types; unit tests |
 | YouTube integration | **PARTIAL** | IFrame Player adapter plays by `videoId`; URL→ID helper | OAuth, Data API, metadata cache |
 | Playback | **PARTIAL** | YouTube adapter + silence/audio transitions; Play/Pause/Skip | Robust error UX; pitch/tempo/EQ not applied |
@@ -89,34 +103,29 @@ Implemented without pushing:
 | Authentication | **MISSING** | — | User accounts, YouTube login |
 | Weighting | **PARTIAL** | Engine `pickWeightedIndex` + UI weights; `normalizeSplitters()` | Wire seed from UI/tests; edge-level model |
 | Track controls | **PARTIAL** | Sidebar start/end use duration-aware clocks (`endTime === 0` = full length); volume/speed applied | Pitch/tempo/EQ still unused |
-| Conditional logic | **PARTIAL** | Conditional `mode: timeRange` (hour-based) implemented in Player | Skip-penalty, cooldown |
+| Conditional logic | **PARTIAL** | Weighted, time-range, weather, and day/date modes; Open-Meteo via provider | Skip-penalty, cooldown |
 | Analytics | **MISSING** | — | Execution events + dashboard |
-| Export/import | **MISSING** | Auto local save only; no versioned path file/export/import/share | Versioned JSON format, named paths |
+| Export/import | **PARTIAL** | Settings `.synapse` playlist/package JSON (`src/playlists/format.ts`); themes still have their own JSON | ZIP container, overlay assets, share links |
 | Billing | **MISSING** | — | Ads / premium (Phase 3) |
-| Testing | **PARTIAL** | Vitest: engine, randomizer, track times, spectrum, listen path, theme parse (`npm test`) | Broader UI/e2e coverage |
+| Testing | **PARTIAL** | Vitest: engine, randomizer, track times, spectrum, listen path, theme parse, playlist files (`npm test`) | Broader UI/e2e coverage |
 | Deployment | **MISSING** | No Vercel/Docker/CI | Hosting + env for API keys later |
 
 ### What already works (do not rebuild)
 
 - Workspace layout: toolbox ↔ inspector, React Flow canvas.
 - Node CRUD: add (click/drag), select, delete, connect with branching rules.
-- Conditional = Path Splitter: weighted random **or** time-of-day ranges.
+- Conditional = Path Splitter: weighted random, time-of-day, weather (user location), or day/date rules.
 - Randomizer: sequence vs weighted random over linked track node IDs; play count. Tracks listed on a randomizer are parked (`hidden`) until dragged out.
 - Transition node UI: silence / custom audio / YouTube videoId (execution is demo-level).
+- Style node: saved theme + optional layers; Player interpolates CSS; canvas Settings/Path theme toggle; Settings theme is restored when the path ends.
+- Interactive tutorial (`?` in the header): data-driven sections, spotlight, resume/skip, observes existing store events.
 - Comment nodes + center-to-center dotted annotation lines drawn in the edges pane (behind nodes; not play-path edges; no graph handles).
 - Graph persistence to `localStorage` on change; reload restores graph.
 - Play/Pause toggles a demo “playback” queue traversal with node highlight.
 
 ### Technical debt / smells
 
-- Path engine lives inside `Player.tsx` (violates PDD Principle 1).
-- `playbackQueue` comment says “YouTube videoIds” but stores `track:{nodeId}` / `transition:{nodeId}`.
-- Track stores only `videoId` — no `song_title` / `artist` / `album` (blocks Phase 2 migration design).
-- Micro-control UI writes state that playback never reads.
-- Verbose `console.log` in ConditionalNode / storage / canvas connect paths.
-- `App.minimal.tsx` leftover debug shell.
-- `Player` returns `null` — no now-playing UI, skip, or progress.
-- No PlaybackAdapter abstraction.
+- Path engine still shares `Player.tsx` with the YouTube adapter loop (queue build itself is in `src/engine/`).
 - Root repo `package.json` duplicates some deps and is unused by the Vite app.
 
 ---
@@ -137,7 +146,9 @@ Implemented without pushing:
 | Weighting engine | Inline in `Player.tsx` | PARTIAL | Extract module; normalize UX; tests + seed | P0 |
 | Start/end time, volume override | Sidebar fields | SCAFFOLD | Apply in PlaybackAdapter | P1 |
 | Tempo/pitch | Sidebar fields | SCAFFOLD | Feasibility after YouTube adapter | P3 |
-| Time-of-day trigger | Conditional `timeRange` | PARTIAL | Dedicated node optional; polish | P2 |
+| Time-of-day trigger | Conditional `timeRange` | DONE | Dedicated node optional | P2 |
+| Weather splitter | Conditional `weather` + `src/weather/` | DONE | Manual weather override | P2 |
+| Day/date splitter | Conditional `day` structured rules | DONE | Week-of-month polish | P2 |
 | Skip penalty | — | MISSING | Design + implement | P2 |
 | Cooldown | — | MISSING | Design + implement | P2 |
 | Transition node | `TransitionNode.tsx` | PARTIAL | Real silence/SFX/YT between tracks | P2 |

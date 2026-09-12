@@ -7,7 +7,83 @@ import {
   useThemeStore,
 } from '../theme/themeStore';
 import { COLOR_KEYS, COLOR_LABELS } from '../theme/types';
+import type { ThemeEdgeType } from '../theme/types';
+import { THEME_EDGE_TYPE_OPTIONS } from '../theme/edgeType';
 import { FONT_OPTIONS } from '../theme/fonts';
+import { VISUALIZER_BAR_OPTIONS } from '../theme/visualizerBars';
+
+export function ThemeVisualizerBarSelect() {
+  const draft = useThemeStore((s) => s.draft);
+  const activeId = useThemeStore((s) => s.activeId);
+  const customThemes = useThemeStore((s) => s.customThemes);
+  const startEdit = useThemeStore((s) => s.startEdit);
+  const preview = draft ?? resolveTheme(activeId, customThemes);
+
+  return (
+    <>
+      <label className="synapse-settings-field" data-tutorial="theme-visualizer-bars">
+        <span>Visualizer bars</span>
+        <select
+          className="synapse-settings-input"
+          value={preview.style.visualizerBarCount}
+          onChange={(e) => {
+            const visualizerBarCount = Number(e.target.value);
+            if (!draft) startEdit();
+            useThemeStore.getState().updateDraft({ style: { visualizerBarCount } });
+          }}
+          aria-label="Visualizer bars"
+        >
+          {VISUALIZER_BAR_OPTIONS.map((count) => (
+            <option key={count} value={count}>
+              {count}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="synapse-settings-hint">
+        Spectrum bar count follows the theme, including Style nodes on the
+        path. Changing a preset opens a custom copy until you Save.
+      </p>
+    </>
+  );
+}
+
+export function ThemeEdgeTypeSelect() {
+  const draft = useThemeStore((s) => s.draft);
+  const activeId = useThemeStore((s) => s.activeId);
+  const customThemes = useThemeStore((s) => s.customThemes);
+  const startEdit = useThemeStore((s) => s.startEdit);
+  const preview = draft ?? resolveTheme(activeId, customThemes);
+
+  return (
+    <>
+      <label className="synapse-settings-field" data-tutorial="theme-edge-type">
+        <span>Arrow type</span>
+        <select
+          className="synapse-settings-input"
+          value={preview.style.edgeType}
+          onChange={(e) => {
+            const edgeType = e.target.value as ThemeEdgeType;
+            if (!draft) startEdit();
+            useThemeStore.getState().updateDraft({ style: { edgeType } });
+          }}
+          aria-label="Arrow type"
+        >
+          {THEME_EDGE_TYPE_OPTIONS.map((opt) => (
+            <option key={opt.id} value={opt.id}>
+              {opt.label} — {opt.hint}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="synapse-settings-hint">
+        Graph connections use this path: bezier, rectangular, straight, triangular
+        (straight–45°–straight), plus simple bezier and rounded. Each preset has a
+        matching type. Changing a preset opens a custom copy until you Save.
+      </p>
+    </>
+  );
+}
 
 export default function ThemeSettings({ hintQuery = '' }: { hintQuery?: string }) {
   const activeId = useThemeStore((s) => s.activeId);
@@ -54,7 +130,7 @@ export default function ThemeSettings({ hintQuery = '' }: { hintQuery?: string }
   };
 
   return (
-    <div className="synapse-theme-settings">
+    <div className="synapse-theme-settings" data-tutorial="theme-editor">
       {editing ? (
         <div className="synapse-theme-lock" role="status">
           <strong>Editing theme</strong>
@@ -130,7 +206,7 @@ export default function ThemeSettings({ hintQuery = '' }: { hintQuery?: string }
         </div>
       </label>
 
-      <div className="synapse-theme-actions">
+      <div className="synapse-theme-actions" data-tutorial="theme-actions">
         <button type="button" className="synapse-btn synapse-btn-ghost" onClick={() => startEdit()} disabled={editing}>
           Edit
         </button>
@@ -176,9 +252,12 @@ export default function ThemeSettings({ hintQuery = '' }: { hintQuery?: string }
 
       <ThemePreview theme={preview} />
 
+      <ThemeEdgeTypeSelect />
+      <ThemeVisualizerBarSelect />
+
       {draft ? (
         <div className="synapse-theme-editor">
-          <p className="synapse-section-label">Colors</p>
+          <p className="synapse-section-label" data-tutorial="theme-colors">Colors</p>
           <div className="synapse-theme-color-grid">
             {COLOR_KEYS.map((key) => (
               <label key={key} className="synapse-theme-color">
@@ -192,7 +271,7 @@ export default function ThemeSettings({ hintQuery = '' }: { hintQuery?: string }
             ))}
           </div>
 
-          <p className="synapse-section-label">Typography</p>
+          <p className="synapse-section-label" data-tutorial="theme-fonts">Typography</p>
           {(
             [
               ['ui', 'Main UI'],

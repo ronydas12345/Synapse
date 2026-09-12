@@ -59,6 +59,14 @@ export function lerpRgb(
   };
 }
 
+export function rgbToHex(rgb: { r: number; g: number; b: number }): string {
+  const to = (n: number) =>
+    Math.min(255, Math.max(0, Math.round(n)))
+      .toString(16)
+      .padStart(2, '0');
+  return `#${to(rgb.r)}${to(rgb.g)}${to(rgb.b)}`;
+}
+
 export function rgba(
   rgb: { r: number; g: number; b: number },
   alpha: number

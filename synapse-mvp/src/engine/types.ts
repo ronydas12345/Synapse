@@ -1,11 +1,12 @@
 import type { Node, Edge } from '@xyflow/react';
+import type { WeatherState } from '../conditional/types';
 
-export type QueueItemKind = 'track' | 'transition';
+export type QueueItemKind = 'track' | 'transition' | 'style';
 
 export interface QueueItem {
   kind: QueueItemKind;
   nodeId: string;
-  /** Serialized form used by the store / UI: `track:id` | `transition:id` */
+  /** Serialized form used by the store / UI: `track:id` | `transition:id` | `style:id` */
   key: string;
 }
 
@@ -20,6 +21,10 @@ export interface BuildQueueOptions {
   rng?: () => number;
   /** Hour 0–23 for time-range conditionals; defaults to local now. */
   currentHour?: number;
+  /** Instant for day/date conditionals; defaults to local now. */
+  now?: Date;
+  /** Normalized weather for weather conditionals; defaults to `other`. */
+  weatherState?: WeatherState;
   /** Hard cap on queued items. Defaults to DEFAULT_MAX_QUEUE_ITEMS. */
   maxQueueItems?: number;
   /** Hard cap on traverse calls. Defaults to DEFAULT_MAX_TRAVERSE_STEPS. */
@@ -49,7 +54,12 @@ export function parseQueueKey(key: string): QueueItem | null {
   if (idx <= 0) return null;
   const kind = key.slice(0, idx) as QueueItemKind;
   const nodeId = key.slice(idx + 1);
-  if ((kind !== 'track' && kind !== 'transition') || !nodeId) return null;
+  if (
+    (kind !== 'track' && kind !== 'transition' && kind !== 'style') ||
+    !nodeId
+  ) {
+    return null;
+  }
   return { kind, nodeId, key };
 }
 

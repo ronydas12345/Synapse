@@ -24,7 +24,7 @@ import {
   useProfileStore,
 } from '../profile/profileStore';
 import {
-  GENRE_PRESETS,
+  GENRE_PRESET_GROUPS,
   OPTIONAL_SECTIONS,
   SECTION_LABELS,
   type OptionalSectionId,
@@ -837,7 +837,7 @@ export default function ProfilePage() {
     profile.visibility === 'public' && !editing ? publicPaths : pathSummaries;
 
   return (
-    <div className="synapse-profile">
+    <div className="synapse-profile" data-tutorial="profile" id="workspace-main">
       <div className="synapse-profile-hero">
         <div className="synapse-profile-identity">
           <button
@@ -1017,13 +1017,21 @@ export default function ProfilePage() {
                       aria-label="Add a preset genre"
                     >
                       <option value="">Add a genre</option>
-                      {GENRE_PRESETS.filter(
-                        (g) => !profile.favoriteGenres.includes(g)
-                      ).map((g) => (
-                        <option key={g} value={g}>
-                          {g}
-                        </option>
-                      ))}
+                      {GENRE_PRESET_GROUPS.map((group) => {
+                        const options = group.genres.filter(
+                          (g) => !profile.favoriteGenres.includes(g)
+                        );
+                        if (options.length === 0) return null;
+                        return (
+                          <optgroup key={group.label} label={group.label}>
+                            {options.map((g) => (
+                              <option key={g} value={g}>
+                                {g}
+                              </option>
+                            ))}
+                          </optgroup>
+                        );
+                      })}
                     </select>
                     <input
                       className="synapse-settings-input"

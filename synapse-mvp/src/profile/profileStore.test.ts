@@ -8,7 +8,7 @@ import {
   reorderSectionOrder,
   usernameError,
 } from './profileStore';
-import { emptyProfile, OPTIONAL_SECTIONS } from './types';
+import { emptyProfile, GENRE_PRESETS, OPTIONAL_SECTIONS } from './types';
 
 describe('profile helpers', () => {
   it('normalizes @username to a lowercase handle', () => {
@@ -53,5 +53,14 @@ describe('profile helpers', () => {
     const after = reorderSectionOrder([...OPTIONAL_SECTIONS], 'songs', 'bio', 'after');
     expect(after[1]).toBe('bio');
     expect(after[2]).toBe('songs');
+  });
+
+  it('ships a wide, unique genre preset list', () => {
+    expect(GENRE_PRESETS).toContain('Shoegaze');
+    expect(GENRE_PRESETS).toContain('City Pop');
+    expect(GENRE_PRESETS).toContain('Amapiano');
+    expect(new Set(GENRE_PRESETS).size).toBe(GENRE_PRESETS.length);
+    expect(GENRE_PRESETS.length).toBeGreaterThan(80);
+    expect(GENRE_PRESETS.every((g) => g.length <= 32)).toBe(true);
   });
 });

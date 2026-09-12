@@ -10,7 +10,8 @@ import {
   type UserProfile,
 } from './types';
 
-const STORAGE_KEY = 'synapse_profile_state';
+export const PROFILE_STORAGE_KEY = 'synapse_profile_state';
+const STORAGE_KEY = PROFILE_STORAGE_KEY;
 
 function localDayKey(date = new Date()): string {
   const y = date.getFullYear();
@@ -150,7 +151,7 @@ function sanitizeProfile(raw: unknown): UserProfile {
         : null,
     bio: String(p.bio || '').slice(0, 280),
     favoriteGenres: Array.isArray(p.favoriteGenres)
-      ? p.favoriteGenres.map((g) => String(g).slice(0, 32)).filter(Boolean).slice(0, 16)
+      ? p.favoriteGenres.map((g) => String(g).slice(0, 32)).filter(Boolean).slice(0, 24)
       : [],
     favoriteSongs,
     playlists,
@@ -220,6 +221,7 @@ interface ProfileStore {
     edge?: 'before' | 'after'
   ) => void;
   recordListen: () => void;
+  reset: () => void;
 }
 
 function commit(profile: UserProfile): UserProfile {
@@ -251,7 +253,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       return {
         profile: commit({
           ...state.profile,
-          favoriteGenres: [...state.profile.favoriteGenres, next].slice(0, 16),
+          favoriteGenres: [...state.profile.favoriteGenres, next].slice(0, 24),
         }),
       };
     }),
@@ -372,6 +374,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     persist(next);
     set({ profile: next });
   },
+  reset: () => set({ profile: commit(emptyProfile()) }),
 }));
 
 export { localDayKey };

@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
+import { documentPrefersReducedMotion, osPrefersReducedMotion } from '../settings/motion';
+import { useAppSettings } from '../settings/settingsStore';
 
 export function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(() =>
-    typeof window !== 'undefined'
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false
-  );
+  const preference = useAppSettings((s) => s.general.motion);
+  const [reduced, setReduced] = useState(() => documentPrefersReducedMotion());
 
   useEffect(() => {
+    const sync = () => setReduced(documentPrefersReducedMotion());
+    sync();
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const onChange = () => setReduced(mq.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, [preference]);
 
   return reduced;
 }
+
+export { osPrefersReducedMotion };

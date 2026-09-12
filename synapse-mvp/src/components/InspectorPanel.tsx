@@ -10,6 +10,7 @@ export default function InspectorPanel() {
     <aside
       className={`synapse-inspector-rail ${open ? 'is-open' : ''}`}
       aria-hidden={!open}
+      data-tutorial="inspector"
     >
       <div className="synapse-inspector-rail-inner">
         {count > 1 ? (

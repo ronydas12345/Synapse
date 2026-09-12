@@ -37,6 +37,7 @@ export default function PlaybackMarker() {
     >
       <div
         className="synapse-playback-marker nodrag nopan"
+        data-tutorial="playback-marker"
         draggable
         onDragStart={onDragStart}
         title="Now playing — drag onto another node to start from there"

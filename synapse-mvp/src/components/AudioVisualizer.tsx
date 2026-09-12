@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AudioWaveform, ChevronDown, Mic, Monitor } from 'lucide-react';
 import {
   browserCaptureProfile,
@@ -7,10 +7,11 @@ import {
 } from '../playback/captureAudio';
 import {
   mapSpectrumBars,
-  VISUALIZER_BAR_COUNT,
   VISUALIZER_FFT_SIZE,
 } from '../playback/spectrumBars';
 import { cssToRgb, lerpRgb, rgba } from '../theme/color';
+import { getAppliedVisualizerBarCount, subscribeAppliedTheme } from '../theme/applyTheme';
+import { useAppSettings } from '../settings/settingsStore';
 
 interface AudioVisualizerProps {
   isPlaying: boolean;
@@ -37,7 +38,13 @@ export default function AudioVisualizer({
   const [error, setError] = useState('');
   const [listening, setListening] = useState(false);
   const [captureMode, setCaptureMode] = useState<CaptureMode | null>(null);
-  const [statusCollapsed, setStatusCollapsed] = useState(false);
+  const collapseShareStatus = useAppSettings((s) => s.visualizer.collapseShareStatus);
+  const barCount = useSyncExternalStore(
+    subscribeAppliedTheme,
+    getAppliedVisualizerBarCount,
+    getAppliedVisualizerBarCount
+  );
+  const [statusCollapsed, setStatusCollapsed] = useState(collapseShareStatus);
   const profile = browserCaptureProfile();
 
   const ensureGraph = useCallback(async () => {
@@ -186,16 +193,16 @@ export default function AudioVisualizer({
 
       const sampleRate = an?.context.sampleRate || 44100;
       const fftSize = an?.fftSize || VISUALIZER_FFT_SIZE;
-      const bars = mapSpectrumBars(bins, VISUALIZER_BAR_COUNT, sampleRate, fftSize);
+      const bars = mapSpectrumBars(bins, barCount, sampleRate, fftSize);
       const gap = 3;
-      const barW = (width - gap * (VISUALIZER_BAR_COUNT + 1)) / VISUALIZER_BAR_COUNT;
+      const barW = (width - gap * (barCount + 1)) / barCount;
 
-      for (let i = 0; i < VISUALIZER_BAR_COUNT; i++) {
+      for (let i = 0; i < barCount; i++) {
         const value = listening && isPlaying ? bars[i] ?? 0 : 0;
         const h = Math.max(2, (value / 255) * (height - 8));
         const x = gap + i * (barW + gap);
         const y = height - h - 4;
-        const t = i / Math.max(1, VISUALIZER_BAR_COUNT - 1);
+        const t = i / Math.max(1, barCount - 1);
         gfx.fillStyle = rgba(lerpRgb(accent, warm, t), 0.92);
         if (typeof gfx.roundRect === 'function') {
           gfx.beginPath();
@@ -220,7 +227,7 @@ export default function AudioVisualizer({
       window.removeEventListener('resize', resize);
       window.cancelAnimationFrame(rafRef.current);
     };
-  }, [isPlaying, listening]);
+  }, [isPlaying, listening, barCount]);
 
   useEffect(() => {
     return () => {

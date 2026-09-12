@@ -8,7 +8,7 @@ const FEATURES = [
   },
   {
     title: 'Conditional playback',
-    body: 'Branch with weighted random or time of day. Weather, calendar date, and other conditions are planned.',
+    body: 'Branch with weighted random, time of day, local weather, or day/date rules. Each path can list one or more matching states.',
     status: 'Available',
   },
   {
@@ -23,7 +23,7 @@ const FEATURES = [
   },
   {
     title: 'Styles & themes',
-    body: 'Preset and custom themes: colors, fonts, and chrome. The same path can look entirely different.',
+    body: 'Preset and custom themes in Settings, plus Style nodes that change the look as a path plays.',
     status: 'Available',
   },
   {

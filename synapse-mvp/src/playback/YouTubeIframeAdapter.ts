@@ -295,6 +295,14 @@ export class YouTubeIframeAdapter implements PlaybackAdapter {
     this.seekTo(next);
   }
 
+  setVolume(volume: number): void {
+    try {
+      this.player?.setVolume(clampVolume(volume));
+    } catch {
+      // ignore
+    }
+  }
+
   stop(): void {
     this.bumpSessionAndSuppress(1500);
     try {

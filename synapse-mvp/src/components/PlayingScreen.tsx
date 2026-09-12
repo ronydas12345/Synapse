@@ -3,6 +3,8 @@ import { GitBranch, Play, Pause } from 'lucide-react';
 import DeckTransport from './DeckTransport';
 import AudioVisualizer from './AudioVisualizer';
 import type { ListenRow } from '../listenPath';
+import { useAppSettings } from '../settings/settingsStore';
+import { documentPrefersReducedMotion } from '../settings/motion';
 
 interface PlayingScreenProps {
   nowPlaying: { title: string; artist: string; album: string } | null;
@@ -121,11 +123,12 @@ export default function PlayingScreen({
   onJump,
 }: PlayingScreenProps) {
   const nowRef = useRef<HTMLLIElement>(null);
+  const showVisualizer = useAppSettings((s) => s.visualizer.visible);
 
   useEffect(() => {
     const el = nowRef.current;
     if (!el) return;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = documentPrefersReducedMotion();
     el.scrollIntoView({
       block: 'nearest',
       behavior: reduce ? 'auto' : 'smooth',
@@ -135,7 +138,7 @@ export default function PlayingScreen({
   return (
     <div className="synapse-listen-list">
       <div className="synapse-listen-live">
-        <div className="synapse-listen-now">
+        <div className="synapse-listen-now" data-tutorial="listen-now">
           <p className="synapse-section-label">Now playing</p>
           <h2 className="synapse-listen-title">
             {nowPlaying?.title || (isPlaying ? 'Starting…' : 'Ready')}
@@ -179,12 +182,14 @@ export default function PlayingScreen({
           onSeekTo={onSeekTo}
         />
 
-        <AudioVisualizer isPlaying={isPlaying} mediaElement={vizAudio} />
+        {showVisualizer ? (
+          <AudioVisualizer isPlaying={isPlaying} mediaElement={vizAudio} />
+        ) : null}
       </div>
 
       <div className="synapse-listen-paths">
         {rows.length > 0 ? (
-          <section className="synapse-listen-path" aria-label="Playlist">
+          <section className="synapse-listen-path" aria-label="Playlist" data-tutorial="listen-path">
             <p className="synapse-section-label">{pathHeading}</p>
             <ol className="synapse-listen-rows synapse-listen-playlist">
               {rows.map((row, index) => {

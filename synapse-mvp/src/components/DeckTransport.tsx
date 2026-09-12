@@ -31,7 +31,7 @@ export default function DeckTransport({
   const max = duration > 0 ? duration : 0;
 
   return (
-    <div className="synapse-transport-deck">
+    <div className="synapse-transport-deck" data-tutorial="deck-transport">
       <div className="synapse-transport-row">
         <button
           type="button"

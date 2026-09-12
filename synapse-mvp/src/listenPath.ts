@@ -1,6 +1,11 @@
 import type { Edge, Node } from '@xyflow/react';
 import { parseQueueKey } from './engine/types';
 import { getTrackDisplayMeta } from './trackMetadata';
+import { conditionalModeLabel } from './nodeMode';
+import { formatDatePath, formatWeatherPath } from './conditional/format';
+import { parsePathDateRules, parsePathWeather } from './conditional/parse';
+import { parseStyleNodeData, styleThemeDisplayName } from './styleNode/parse';
+import { allThemes, useThemeStore } from './theme/themeStore';
 
 export type ListenPhase = 'played' | 'now' | 'upcoming';
 export type ListenRowKind = 'item' | 'split';
@@ -56,13 +61,22 @@ export function nodeListLabel(node: Node | undefined): { title: string; subtitle
       subtitle: String(node.data?.type || 'silence'),
     };
   }
+  if (node.type === 'style') {
+    const parsed = parseStyleNodeData(node.data);
+    return {
+      title: 'Style',
+      subtitle: styleThemeDisplayName(
+        parsed.themeId,
+        allThemes(useThemeStore.getState().customThemes)
+      ),
+    };
+  }
   if (node.type === 'randomizer') {
     const mode = node.data?.mode === 'randomizer' ? 'Weighted Random' : 'Sequence';
     return { title: mode, subtitle: 'Sequence / Randomizer' };
   }
   if (node.type === 'conditional' || node.type === 'splitter') {
-    const mode = node.data?.mode === 'timeRange' ? 'Time Range' : 'Weighted Random';
-    return { title: 'Conditional', subtitle: mode };
+    return { title: 'Conditional', subtitle: conditionalModeLabel(String(node.data?.mode || 'random')) };
   }
   if (node.type === 'start') return { title: 'Start', subtitle: '' };
   if (node.type === 'end') return { title: 'End', subtitle: '' };
@@ -114,6 +128,7 @@ export function branchesFromNode(
       (node.data?.pathTimeRanges as Array<Array<{ start: number; end: number }>>) ||
       [];
     const numPaths = Math.max(
+      Number(node.data?.numPaths) || 0,
       weights.length,
       pathTimeRanges.length,
       edges.filter((e) => e.source === node.id).length,
@@ -122,6 +137,8 @@ export function branchesFromNode(
     const pcts = weightPercents(
       Array.from({ length: numPaths }, (_, i) => weights[i] ?? 1)
     );
+    const weather = parsePathWeather(node.data?.pathWeather, numPaths);
+    const dates = parsePathDateRules(node.data?.pathDateRules, numPaths);
     const options: ListenBranchOption[] = [];
     for (let i = 0; i < numPaths; i++) {
       const handle = pathLetter(i);
@@ -137,6 +154,10 @@ export function branchesFromNode(
         if (ranges[0]) {
           detail = `${formatHour(ranges[0].start)}–${formatHour(ranges[0].end)}`;
         }
+      } else if (mode === 'weather') {
+        detail = formatWeatherPath(weather[i]);
+      } else if (mode === 'day') {
+        detail = formatDatePath(dates[i]);
       }
       options.push({
         nodeId: edge.target,
@@ -148,7 +169,7 @@ export function branchesFromNode(
     if (options.length === 0) return null;
     return {
       title: 'Conditional',
-      modeLabel: mode === 'timeRange' ? 'Time Range' : 'Weighted Random',
+      modeLabel: conditionalModeLabel(mode),
       options,
     };
   }

@@ -39,7 +39,7 @@ export const PRICING = {
       'Visual Music Path editor',
       'Listen mode',
       'YouTube track playback',
-      'Weighted and time-of-day conditionals',
+      'Weighted, time-of-day, weather, and day/date conditionals',
       'Sequence and weighted randomizers, with play-count limits',
       'Silence, audio, and YouTube transitions',
       'Preset and custom themes',
