@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { APP_PATHS, navigateApp, type AppRoute } from '../app/routes';
 import {
   FULL_TUTORIAL_SECTIONS,
+  SIMPLE_TUTORIAL_ID,
   getSection,
 } from './tutorialCatalog';
 import { actionsMatch } from './tutorialMatch';
@@ -16,13 +17,14 @@ import {
 import type {
   TutorialAction,
   TutorialProgress,
+  TutorialRunKind,
   TutorialStep,
   TutorialView,
 } from './tutorialTypes';
 
 interface TutorialState {
   view: TutorialView;
-  runKind: 'full' | 'section';
+  runKind: TutorialRunKind;
   sectionId: string | null;
   stepIndex: number;
   progress: TutorialProgress;
@@ -36,7 +38,9 @@ interface TutorialState {
   confirmSkip: () => void;
   maybeLater: () => void;
   startWelcome: () => void;
+  startSimple: (resume?: boolean) => void;
   startFull: (resume?: boolean) => void;
+  openFullTutorial: () => void;
   startSection: (sectionId: string, stepIndex?: number) => void;
   next: () => void;
   back: () => void;
@@ -70,6 +74,32 @@ function finishSection(
   const sectionId = state.sectionId;
   let progress = state.progress;
   if (complete && sectionId) progress = markSectionComplete(progress, sectionId);
+
+  if (state.runKind === 'simple') {
+    if (complete) {
+      progress = persist({
+        ...progress,
+        lastSection: null,
+        lastStep: 0,
+      });
+      return {
+        view: 'complete',
+        progress,
+        sectionId: null,
+        stepIndex: 0,
+        actionSatisfied: false,
+        praise: null,
+      };
+    }
+    return {
+      view: 'closed',
+      progress: persist(progress),
+      actionSatisfied: false,
+      praise: null,
+      sectionId: null,
+      stepIndex: 0,
+    };
+  }
 
   if (state.runKind === 'section') {
     return {
@@ -168,14 +198,43 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
 
   startWelcome: () => set({ view: 'welcome' }),
 
+  startSimple: (resume = false) => {
+    const section = getSection(SIMPLE_TUTORIAL_ID);
+    if (!section) return;
+    const { progress } = get();
+    const stepIndex =
+      resume && progress.lastSection === SIMPLE_TUTORIAL_ID
+        ? Math.min(Math.max(0, progress.lastStep), section.steps.length - 1)
+        : 0;
+    const step = section.steps[stepIndex];
+    goToStepRoute(step);
+    set({
+      view: 'tour',
+      runKind: 'simple',
+      sectionId: SIMPLE_TUTORIAL_ID,
+      stepIndex,
+      actionSatisfied: false,
+      praise: null,
+      progress: persist({
+        ...progress,
+        skipped: false,
+        dismissedWelcome: true,
+        lastSection: SIMPLE_TUTORIAL_ID,
+        lastStep: stepIndex,
+      }),
+    });
+  },
+
   startFull: (resume = false) => {
     const { progress } = get();
-    const sectionId =
-      resume && progress.lastSection && getSection(progress.lastSection)
-        ? progress.lastSection
-        : FULL_TUTORIAL_SECTIONS[0];
+    const canResumeFull =
+      resume &&
+      progress.lastSection &&
+      FULL_TUTORIAL_SECTIONS.includes(progress.lastSection) &&
+      getSection(progress.lastSection);
+    const sectionId = canResumeFull ? progress.lastSection : FULL_TUTORIAL_SECTIONS[0];
     const stepIndex =
-      resume && progress.lastSection === sectionId ? progress.lastStep : 0;
+      canResumeFull && progress.lastSection === sectionId ? progress.lastStep : 0;
     const step = currentStep(sectionId, stepIndex);
     goToStepRoute(step);
     set({
@@ -195,7 +254,21 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
     });
   },
 
+  openFullTutorial: () => {
+    const s = get();
+    if (s.runKind === 'simple' && s.sectionId) {
+      set({
+        progress: persist(markSectionComplete(s.progress, s.sectionId)),
+      });
+    }
+    get().startFull(false);
+  },
+
   startSection: (sectionId, stepIndex = 0) => {
+    if (sectionId === SIMPLE_TUTORIAL_ID) {
+      get().startSimple(false);
+      return;
+    }
     const section = getSection(sectionId);
     if (!section) return;
     const idx = Math.min(Math.max(0, stepIndex), section.steps.length - 1);
@@ -324,11 +397,18 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
     })),
 }));
 
+export function shouldPromptFirstRun(
+  progress: TutorialProgress,
+  sessionLater: boolean
+): boolean {
+  if (progress.skipped || progress.completedFull || progress.dismissedWelcome) return false;
+  return !sessionLater;
+}
+
 export function maybeShowFirstRun(): void {
   const { progress, view } = useTutorialStore.getState();
   if (view !== 'closed') return;
-  if (progress.skipped || progress.completedFull || progress.dismissedWelcome) return;
-  if (loadSessionLater()) return;
+  if (!shouldPromptFirstRun(progress, loadSessionLater())) return;
   useTutorialStore.getState().startWelcome();
 }
 

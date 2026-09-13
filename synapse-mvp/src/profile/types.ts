@@ -236,7 +236,7 @@ export const SECTION_LABELS: Record<OptionalSectionId, string> = {
   songs: 'Favorite songs',
   playlists: 'Playlists',
   stats: 'Listening stats',
-  activity: 'Activity',
+  activity: 'Listening activity',
 };
 
 export function emptyProfile(): UserProfile {

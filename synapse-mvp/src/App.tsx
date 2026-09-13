@@ -8,7 +8,7 @@ import SettingsPage from './components/SettingsPage';
 import ProfilePage from './components/ProfilePage';
 import ThemeRoot from './theme/ThemeRoot';
 import PlaylistSwitcher from './components/PlaylistSwitcher';
-import SynapseMark from './pages/chrome/SynapseMark';
+import { SynapseWordmark } from './pages/chrome/SynapseMark';
 import { usePathStore } from './store';
 import { AppLink, useAppRoute } from './app/AppLink';
 import { isMarketingRoute, isWorkspaceRoute, routeToUiMode, type AppRoute } from './app/routes';
@@ -63,11 +63,7 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
         <div className="synapse-topbar-brand">
           <div className="synapse-topbar-brand-row">
             <AppLink to="home" className="synapse-brand-link">
-              <SynapseMark size={34} />
-              <div className="synapse-topbar-title">
-                <div className="synapse-brand">Synapse</div>
-                <div className="synapse-brand-meta">{WORKSPACE_META[route].label}</div>
-              </div>
+              <SynapseWordmark />
             </AppLink>
             <PlaylistSwitcher />
           </div>

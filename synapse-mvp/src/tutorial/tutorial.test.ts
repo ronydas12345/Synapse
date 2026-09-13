@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { actionsMatch, tokenize } from './tutorialMatch';
-import { searchHits, searchSections, TUTORIAL_SECTIONS } from './tutorialCatalog';
+import { searchHits, searchSections, SIMPLE_TUTORIAL_ID, TUTORIAL_SECTIONS, FULL_TUTORIAL_SECTIONS, getSection } from './tutorialCatalog';
 import { markSectionComplete, parseProgress, emptyProgress } from './tutorialStorage';
+import { shouldPromptFirstRun } from './tutorialStore';
 import { paddedRect, placeWindow, rectsClose } from './placement';
 
 describe('tutorial engine', () => {
@@ -71,6 +72,33 @@ describe('tutorial engine', () => {
     const ids = TUTORIAL_SECTIONS.flatMap((s) => s.steps.map((st) => st.id));
     expect(new Set(ids).size).toBe(ids.length);
     expect(TUTORIAL_SECTIONS.length).toBeGreaterThanOrEqual(14);
+  });
+
+  it('keeps a short first-run tour separate from the full walkthrough', () => {
+    const simple = getSection(SIMPLE_TUTORIAL_ID);
+    expect(simple).toBeDefined();
+    expect(simple!.steps.length).toBeGreaterThanOrEqual(6);
+    expect(simple!.steps.length).toBeLessThanOrEqual(8);
+    expect(simple!.steps.map((st) => st.title)).toEqual([
+      'Music Paths',
+      'Add a Track',
+      'Connect from Start',
+      'Optional branches',
+      'Play',
+      'Your playlist',
+      'That’s the loop',
+    ]);
+    expect(FULL_TUTORIAL_SECTIONS).not.toContain(SIMPLE_TUTORIAL_ID);
+    expect(FULL_TUTORIAL_SECTIONS[0]).toBe('getting-started');
+  });
+
+  it('reuses dismissed/completed flags so first-run is shown once', () => {
+    const fresh = emptyProgress();
+    expect(shouldPromptFirstRun(fresh, false)).toBe(true);
+    expect(shouldPromptFirstRun(fresh, true)).toBe(false);
+    expect(shouldPromptFirstRun({ ...fresh, dismissedWelcome: true }, false)).toBe(false);
+    expect(shouldPromptFirstRun({ ...fresh, skipped: true }, false)).toBe(false);
+    expect(shouldPromptFirstRun({ ...fresh, completedFull: true }, false)).toBe(false);
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cssToRgb, lerpRgb, rgba } from './color';
+import { contrastRatio, cssToRgb, lerpRgb, relativeLuminance, rgba } from './color';
 
 describe('theme color helpers', () => {
   it('reads hex and rgb CSS colors', () => {
@@ -15,5 +15,11 @@ describe('theme color helpers', () => {
 
   it('formats rgba for canvas fills', () => {
     expect(rgba({ r: 10, g: 20, b: 30 }, 0.5)).toBe('rgba(10, 20, 30, 0.5)');
+  });
+
+  it('computes WCAG contrast', () => {
+    expect(contrastRatio('#000000', '#ffffff')).toBe(21);
+    expect(relativeLuminance('#ffffff')).toBe(1);
+    expect(relativeLuminance('#000000')).toBe(0);
   });
 });

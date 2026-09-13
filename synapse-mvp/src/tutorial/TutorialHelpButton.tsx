@@ -9,6 +9,7 @@ export default function TutorialHelpButton({ className = '' }: { className?: str
     <button
       type="button"
       className={`synapse-help-btn ${className}`.trim()}
+      data-tutorial="help"
       aria-label="Help & Tutorial"
       title="Help & Tutorial"
       aria-haspopup="dialog"

@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { AppLink, useAppRoute } from '../../app/AppLink';
-import SynapseMark from './SynapseMark';
+import { SynapseWordmark } from './SynapseMark';
 import { useProfileStore } from '../../profile/profileStore';
 import HomeThemePicker from '../Home/components/HomeThemePicker';
 import TutorialHelpButton from '../../tutorial/TutorialHelpButton';
@@ -43,8 +43,7 @@ export default function SiteHeader() {
     <header className={`synapse-mkt-header${solid || open ? ' is-solid' : ''}`}>
       <div className="synapse-mkt-header-inner">
         <AppLink to="home" className="synapse-mkt-logo" onNavigate={close}>
-          <SynapseMark size={36} />
-          <span className="synapse-brand">Synapse</span>
+          <SynapseWordmark />
         </AppLink>
 
         <nav className="synapse-mkt-nav" aria-label="Marketing">

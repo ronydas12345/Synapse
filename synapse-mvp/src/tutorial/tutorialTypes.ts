@@ -45,6 +45,8 @@ export interface TutorialSection {
   steps: TutorialStep[];
 }
 
+export type TutorialRunKind = 'simple' | 'full' | 'section';
+
 export type TutorialGroupId =
   | 'getting-started'
   | 'building'

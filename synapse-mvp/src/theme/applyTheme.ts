@@ -1,11 +1,13 @@
 import type { SynapseTheme, ThemeEdgeType } from './types';
-import { luminance, withAlpha } from './color';
+import { contrastRatio, luminance, relativeLuminance, withAlpha } from './color';
 import { sanitizeEdgeType } from './edgeType';
 import { fontStack } from './fonts';
 import { sanitizeVisualizerBarCount } from './visualizerBars';
 
-export const LOGO_INK_LIGHT = '#111111';
-export const LOGO_INK_DARK = '#c5cad3';
+export const BRAND_INK_LIGHT = '#000000';
+export const BRAND_INK_DARK = '#ffffff';
+export const LOGO_INK_LIGHT = BRAND_INK_LIGHT;
+export const LOGO_INK_DARK = BRAND_INK_DARK;
 
 let appliedEdgeType: ThemeEdgeType = 'bezier';
 let appliedVisualizerBarCount = 28;
@@ -28,15 +30,31 @@ export function isLightTheme(theme: SynapseTheme): boolean {
   return luminance(theme.colors.workspaceBackground) > 0.55;
 }
 
+export function brandInk(theme: SynapseTheme): string {
+  return isLightTheme(theme) ? BRAND_INK_LIGHT : BRAND_INK_DARK;
+}
+
 export function logoInk(theme: SynapseTheme): string {
-  return isLightTheme(theme) ? LOGO_INK_LIGHT : LOGO_INK_DARK;
+  return brandInk(theme);
+}
+
+/** Recolor the mark only when the theme is near black/white high contrast. */
+export function logoUsesContrastInk(theme: SynapseTheme): boolean {
+  const bg = relativeLuminance(theme.colors.workspaceBackground);
+  const text = relativeLuminance(theme.colors.textPrimary);
+  const extremeBg = bg <= 0.015 || bg >= 0.94;
+  const extremeText = text <= 0.05 || text >= 0.94;
+  return (
+    extremeBg &&
+    extremeText &&
+    contrastRatio(theme.colors.workspaceBackground, theme.colors.textPrimary) >= 16
+  );
 }
 
 export function themeCssVars(theme: SynapseTheme): Record<string, string> {
   const c = theme.colors;
   const s = theme.style;
   const t = theme.typography;
-  const light = isLightTheme(theme);
   return {
     '--bg-void': c.workspaceBackground,
     '--bg-deep': c.workspaceSurface,
@@ -78,7 +96,7 @@ export function themeCssVars(theme: SynapseTheme): Record<string, string> {
     '--input-bg': c.inputBackground,
     '--grid-line': withAlpha(c.gridLine, s.gridIntensity * 4),
     '--shadow-panel': `0 1px 0 ${withAlpha(c.textPrimary, 0.04)} inset, 0 12px 40px ${withAlpha('#000000', s.shadowIntensity)}`,
-    '--brand-from': light ? c.textPrimary : '#ffffff',
+    '--brand-ink': brandInk(theme),
     '--logo-ink': logoInk(theme),
     '--edge-type': s.edgeType ?? 'bezier',
     '--visualizer-bars': String(
@@ -98,6 +116,7 @@ export function applyThemeToElement(
   const light = isLightTheme(theme);
   el.style.colorScheme = light ? 'light' : 'dark';
   el.dataset.themeScheme = light ? 'light' : 'dark';
+  el.dataset.logoContrast = logoUsesContrastInk(theme) ? 'ink' : 'gradient';
 }
 
 export function applyTheme(theme: SynapseTheme): void {

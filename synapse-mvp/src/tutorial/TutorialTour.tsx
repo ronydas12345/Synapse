@@ -18,6 +18,7 @@ export default function TutorialTour() {
   const back = useTutorialStore((s) => s.back);
   const skipSection = useTutorialStore((s) => s.skipSection);
   const exitTour = useTutorialStore((s) => s.exitTour);
+  const openFullTutorial = useTutorialStore((s) => s.openFullTutorial);
   const reduced = usePrefersReducedMotion();
   const [rect, setRect] = useState<SpotlightRect | null>(null);
   const [vw, setVw] = useState(() =>
@@ -72,6 +73,13 @@ export default function TutorialTour() {
 
   const sectionN = runKind === 'full' ? sectionIndexInFull(section.id) + 1 : 0;
   const sectionTotal = FULL_TUTORIAL_SECTIONS.length;
+  const lastStep = stepIndex === section.steps.length - 1;
+  const kicker =
+    runKind === 'full'
+      ? `Section ${sectionN} of ${sectionTotal} · ${stepIndex + 1} / ${section.steps.length}`
+      : runKind === 'simple'
+        ? `Quick start · ${stepIndex + 1} / ${section.steps.length}`
+        : `${section.title} · ${stepIndex + 1} / ${section.steps.length}`;
   const instant = reduced ? ' is-instant' : '';
 
   return (
@@ -99,11 +107,7 @@ export default function TutorialTour() {
         aria-labelledby="synapse-tutorial-title"
         style={pos.sheet ? undefined : { left: pos.left, top: pos.top }}
       >
-        <p className="synapse-tutorial-kicker">
-          {runKind === 'full'
-            ? `Section ${sectionN} of ${sectionTotal} · ${stepIndex + 1} / ${section.steps.length}`
-            : `${section.title} · ${stepIndex + 1} / ${section.steps.length}`}
-        </p>
+        <p className="synapse-tutorial-kicker">{kicker}</p>
         <h2 id="synapse-tutorial-title">{step.title}</h2>
         <p>{step.body}</p>
         {praise ? <p className="synapse-tutorial-praise">{praise}</p> : null}
@@ -115,10 +119,15 @@ export default function TutorialTour() {
             Back
           </button>
           <button type="button" className="synapse-btn synapse-btn-play" onClick={next}>
-            Next
+            {runKind === 'simple' && lastStep ? 'Done' : 'Next'}
           </button>
+          {runKind === 'simple' && lastStep ? (
+            <button type="button" className="synapse-btn synapse-btn-ghost" onClick={openFullTutorial}>
+              Open Full Tutorial
+            </button>
+          ) : null}
           <button type="button" className="synapse-btn synapse-btn-ghost" onClick={skipSection}>
-            Skip Section
+            {runKind === 'simple' ? 'Skip Tour' : 'Skip Section'}
           </button>
           <button type="button" className="synapse-btn synapse-btn-ghost" onClick={exitTour}>
             Exit Tutorial

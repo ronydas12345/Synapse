@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseTheme, parseThemeJson, themeToJson } from './parseTheme';
 import { BUILTIN_THEMES } from './presets';
-import { themeCssVars } from './applyTheme';
+import { logoUsesContrastInk, themeCssVars } from './applyTheme';
 import { filterThemes } from './themeStore';
 
 describe('theme schema', () => {
@@ -43,19 +43,25 @@ describe('theme schema', () => {
     expect(vars['--accent']).toBe(BUILTIN_THEMES[0].colors.accent);
     expect(vars['--node-style']).toBe(BUILTIN_THEMES[0].colors.nodeStyle);
     expect(vars['--bg-void']).toBe(BUILTIN_THEMES[0].colors.workspaceBackground);
-    expect(vars['--brand-from']).toBe('#ffffff');
+    expect(vars['--brand-ink']).toBe('#ffffff');
     expect(vars['--font-ui']).toContain('Outfit');
   });
 
-  it('uses dark Synapse lettering on light themes', () => {
+  it('uses black Synapse lettering on light themes', () => {
     const light = BUILTIN_THEMES.find((t) => t.id === 'standard-light');
     expect(light).toBeTruthy();
-    expect(themeCssVars(light!)['--brand-from']).toBe(light!.colors.textPrimary);
-    expect(themeCssVars(light!)['--logo-ink']).toBe('#111111');
+    expect(themeCssVars(light!)['--brand-ink']).toBe('#000000');
+    expect(themeCssVars(light!)['--logo-ink']).toBe('#000000');
   });
 
-  it('uses light grey logo ink on dark themes', () => {
-    expect(themeCssVars(BUILTIN_THEMES[0])['--logo-ink']).toBe('#c5cad3');
+  it('keeps the purple-blue mark on typical themes and inks it on high contrast', () => {
+    expect(logoUsesContrastInk(BUILTIN_THEMES[0])).toBe(false);
+    const light = BUILTIN_THEMES.find((t) => t.id === 'standard-light')!;
+    expect(logoUsesContrastInk(light)).toBe(false);
+    const hcLight = BUILTIN_THEMES.find((t) => t.id === 'high-contrast-light')!;
+    const hcDark = BUILTIN_THEMES.find((t) => t.id === 'high-contrast-dark')!;
+    expect(logoUsesContrastInk(hcLight)).toBe(true);
+    expect(logoUsesContrastInk(hcDark)).toBe(true);
   });
 
   it('rejects unknown arrow types on import', () => {

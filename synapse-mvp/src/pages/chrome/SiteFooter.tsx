@@ -1,5 +1,5 @@
 import { AppLink } from '../../app/AppLink';
-import SynapseMark from './SynapseMark';
+import { SynapseWordmark } from './SynapseMark';
 import { CREATOR } from '../../site/content';
 
 export default function SiteFooter() {
@@ -11,8 +11,7 @@ export default function SiteFooter() {
       <div className="synapse-mkt-footer-grid">
         <div className="synapse-mkt-footer-brand">
           <AppLink to="home" className="synapse-mkt-logo">
-            <SynapseMark size={30} />
-            <span className="synapse-brand">Synapse</span>
+            <SynapseWordmark compact />
           </AppLink>
           <p>Visual music paths for YouTube.</p>
         </div>

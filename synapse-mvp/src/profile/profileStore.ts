@@ -1,5 +1,6 @@
 import { extractYouTubeId } from '../playback';
 import { create } from 'zustand';
+import { localDayKey } from './listenStats';
 import {
   OPTIONAL_SECTIONS,
   emptyProfile,
@@ -12,13 +13,6 @@ import {
 
 export const PROFILE_STORAGE_KEY = 'synapse_profile_state';
 const STORAGE_KEY = PROFILE_STORAGE_KEY;
-
-function localDayKey(date = new Date()): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
 
 export function normalizeUsername(raw: string): string {
   return raw.trim().replace(/^@+/, '').toLowerCase();
@@ -377,4 +371,4 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
   reset: () => set({ profile: commit(emptyProfile()) }),
 }));
 
-export { localDayKey };
+export { localDayKey } from './listenStats';

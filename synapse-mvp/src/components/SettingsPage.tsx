@@ -191,9 +191,9 @@ export default function SettingsPage() {
             <section id="settings-tutorial" className="synapse-settings-section" data-tutorial="settings-tutorial">
               <h2>Tutorial</h2>
               <p className="synapse-settings-lead">
-                The ? button in the header opens the guided walkthrough. Progress
-                is stored on this device. Esc leaves a tour without deleting
-                progress.
+                The ? button in the header opens Help. First visit offers a short
+                tour. The full walkthrough is always under Help. Progress is stored
+                on this device. Esc leaves a tour without deleting progress.
               </p>
               <div className="synapse-theme-actions">
                 <button
@@ -202,6 +202,20 @@ export default function SettingsPage() {
                   onClick={() => useTutorialStore.getState().openMenu()}
                 >
                   Open tutorial menu
+                </button>
+                <button
+                  type="button"
+                  className="synapse-btn synapse-btn-ghost"
+                  onClick={() => useTutorialStore.getState().startSimple()}
+                >
+                  Start quick tour
+                </button>
+                <button
+                  type="button"
+                  className="synapse-btn synapse-btn-ghost"
+                  onClick={() => useTutorialStore.getState().startFull()}
+                >
+                  Start full tutorial
                 </button>
                 <button
                   type="button"

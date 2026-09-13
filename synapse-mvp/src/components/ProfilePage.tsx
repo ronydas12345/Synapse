@@ -17,12 +17,13 @@ import { lookupTrackCredits } from '../metadata';
 import { extractYouTubeId } from '../playback';
 import { osmEmbedUrl, suggestPlaces, type PlaceSuggestion } from '../profile/geocode';
 import {
-  activitySeries,
-  averageListens,
   displayNameError,
   usernameError,
   useProfileStore,
 } from '../profile/profileStore';
+import ListenActivityHeatmap, {
+  ListenStatsNumbers,
+} from '../profile/ListenActivityHeatmap';
 import {
   GENRE_PRESET_GROUPS,
   OPTIONAL_SECTIONS,
@@ -792,9 +793,7 @@ export default function ProfilePage() {
   const userErr = usernameError(profile.username);
   const nameErr = displayNameError(profile.displayName);
   const canSave = !userErr && !nameErr;
-  const avg = averageListens(profile);
-  const series = activitySeries(profile.listensByDay, 84);
-  const peak = Math.max(1, ...series);
+  const statsVisible = !profile.hiddenSections.includes('stats');
 
   const visibleOrder = profile.sectionOrder.filter(
     (id) => !profile.hiddenSections.includes(id)
@@ -1172,19 +1171,12 @@ export default function ProfilePage() {
           if (id === 'stats') {
             return (
               <SectionChrome key={id} id={id} onHide={hideSection}>
-                <dl className="synapse-profile-stats">
-                  <div>
-                    <dt>Total listens</dt>
-                    <dd>{profile.totalListens}</dd>
-                  </div>
-                  <div>
-                    <dt>Average / day</dt>
-                    <dd>{avg.toFixed(1)}</dd>
-                  </div>
-                </dl>
+                <ListenStatsNumbers profile={profile} />
+                <ListenActivityHeatmap profile={profile} />
                 <p className="synapse-settings-hint">
-                  Counts tracks started in this browser. Cloud totals arrive with
-                  accounts.
+                  A listen is a track started in this browser. Streaks count consecutive
+                  local days with at least one listen. History starts when this profile
+                  was created on this device.
                 </p>
               </SectionChrome>
             );
@@ -1192,16 +1184,13 @@ export default function ProfilePage() {
 
           return (
             <SectionChrome key={id} id={id} onHide={hideSection}>
-              <div className="synapse-profile-activity" aria-label="Listens over the last 12 weeks">
-                {series.map((count, i) => (
-                  <span
-                    key={i}
-                    className="synapse-profile-activity-bar"
-                    style={{ height: `${Math.max(8, (count / peak) * 100)}%` }}
-                    title={`${count} listen${count === 1 ? '' : 's'}`}
-                  />
-                ))}
-              </div>
+              {statsVisible ? (
+                <p className="synapse-settings-lead">
+                  The full listen calendar is in Listening stats.
+                </p>
+              ) : (
+                <ListenActivityHeatmap profile={profile} />
+              )}
             </SectionChrome>
           );
         })}

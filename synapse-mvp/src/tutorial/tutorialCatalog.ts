@@ -15,7 +15,79 @@ function s(
   return { id, title, body, type: extra.type ?? 'info', ...extra };
 }
 
+export const SIMPLE_TUTORIAL_ID = 'quick-start';
+
 export const TUTORIAL_SECTIONS: TutorialSection[] = [
+  {
+    id: SIMPLE_TUTORIAL_ID,
+    title: 'Quick start',
+    summary: 'Short first-run tour: Music Path, Track, connections, play, playlist.',
+    keywords:
+      'quick start first run beginner simple short tour music path track connect play playlist help',
+    group: 'getting-started',
+    steps: [
+      s(
+        'qs-welcome',
+        'Music Paths',
+        'Synapse plays a graph, not a flat list. Playback walks from the Start node through the nodes you connect.',
+        { type: 'info', route: 'edit', target: 'workspace' }
+      ),
+      s(
+        'qs-track',
+        'Add a Track',
+        'Click Track Node in the rack, or drag it onto the canvas. Select it and paste a YouTube URL in the inspector.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'rack-track',
+          expectedAction: { type: 'node-created', nodeType: 'track' },
+          praise: 'Track added. Paste a YouTube URL when you have one.',
+        }
+      ),
+      s(
+        'qs-connect',
+        'Connect from Start',
+        'Drag from Start’s output handle to the Track’s input. Playback follows those edges.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'canvas',
+          expectedAction: { type: 'nodes-connected' },
+          praise: 'Connected. The engine can walk that edge.',
+        }
+      ),
+      s(
+        'qs-branch',
+        'Optional branches',
+        'A Conditional picks one outgoing path (weights, time, weather, or date). A Randomizer shuffles tracks inside one node. Neither is required.',
+        { type: 'highlight', route: 'edit', target: 'sidebar' }
+      ),
+      s(
+        'qs-play',
+        'Play',
+        'Press Play in the header. The engine builds a queue from Start. Listen shows the same path as a list.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'header-play',
+          expectedAction: { type: 'playing' },
+          praise: 'Playback started.',
+        }
+      ),
+      s(
+        'qs-playlist',
+        'Your playlist',
+        'Each Music Path is stored on this device. Rename it in the top bar, or switch paths from the playlist menu.',
+        { type: 'highlight', route: 'edit', target: 'playlist-switcher' }
+      ),
+      s(
+        'qs-done',
+        'That’s the loop',
+        'The ? button opens Help — full tutorial, topics, and search — when you want node types, branches, and themes in detail.',
+        { type: 'complete', route: 'edit', target: 'help' }
+      ),
+    ],
+  },
   {
     id: 'getting-started',
     title: 'Getting Started',
@@ -947,7 +1019,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
 ];
 
 export const TUTORIAL_GROUPS: TutorialGroup[] = [
-  { id: 'getting-started', label: 'Getting Started', sectionIds: ['getting-started'] },
+  { id: 'getting-started', label: 'Getting Started', sectionIds: [SIMPLE_TUTORIAL_ID, 'getting-started'] },
   {
     id: 'building',
     label: 'Building',
@@ -971,10 +1043,12 @@ export const TUTORIAL_GROUPS: TutorialGroup[] = [
   },
 ];
 
-export const FULL_TUTORIAL_SECTIONS = TUTORIAL_GROUPS.flatMap((g) => g.sectionIds);
+export const FULL_TUTORIAL_SECTIONS = TUTORIAL_GROUPS.flatMap((g) =>
+  g.sectionIds.filter((id) => id !== SIMPLE_TUTORIAL_ID)
+);
 
 export const CONTEXT_SECTIONS: Partial<Record<AppRoute, string[]>> = {
-  edit: ['building', 'align-guides', 'track-nodes', 'conditionals', 'play-mode', 'styles-themes'],
+  edit: [SIMPLE_TUTORIAL_ID, 'building', 'align-guides', 'track-nodes', 'conditionals', 'play-mode', 'styles-themes'],
   listen: ['play-mode', 'getting-started', 'conditionals'],
   settings: ['styles-themes', 'import-export', 'account-settings'],
   profile: ['account-settings'],

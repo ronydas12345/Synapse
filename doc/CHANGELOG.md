@@ -37,7 +37,7 @@ Now-playing credits. Local feature branch `feature/now-playing-metadata`; not pu
 - Start/end inspectors use the real video duration (once known) with clock-style fields. Unset end still means play to the end.
 - Visualizer bars use log-frequency peak mapping (`fftSize` 2048) so high-frequency bins are not skipped. Firefox still cannot tap YouTube iframe audio (CORS); tab share or mic remains the real FFT source — no fake spectrum.
 - Node settings moved out of the left sidebar into a dedicated right inspector. MiniMap is bottom-left; Remove All is top-left so they do not compete with the inspector.
-- Logo plate, circles, and lines are black on light themes and light grey on dark themes. The π glyph still uses the theme accent.
+- Wordmark uses Lexend Deca Regular in black or white; the new mark sits in the “a” and keeps its purple–blue gradient except on near black/white high-contrast themes.
 - Inspector, Style/Transition nodes, and conditional editors use theme tokens instead of hardcoded slate. Debug console logs and the leftover `App.minimal` shell are gone. Marketing no longer labels the local profile as “Log In”.
 
 ### Fixed
