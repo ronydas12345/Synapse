@@ -30,6 +30,8 @@ import {
 import { allThemes, resolveTheme, themeExists, useThemeStore } from './theme/themeStore';
 import { getAppSettings, useAppSettings } from './settings/settingsStore';
 import { scaleVolume } from './settings/parse';
+import { Maximize2, Minimize2 } from 'lucide-react';
+import { DECK_MINIMIZED_KEY } from './site/legal';
 
 function nodeToPlayable(node: Node | undefined, nodeId: string): PlayableMedia | null {
   if (!node) return null;
@@ -89,6 +91,13 @@ export default function Player() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [vizAudio, setVizAudio] = useState<HTMLAudioElement | null>(null);
+  const [minimized, setMinimized] = useState(() => {
+    try {
+      return sessionStorage.getItem(DECK_MINIMIZED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
 
   const ytContainerRef = useRef<HTMLDivElement>(null);
   const adapterRef = useRef<YouTubeIframeAdapter | null>(null);
@@ -687,9 +696,21 @@ export default function Player() {
     }
   }, [masterVolume, currentNode?.data?.volume]);
 
+  const toggleMinimized = () => {
+    setMinimized((current) => {
+      const next = !current;
+      try {
+        sessionStorage.setItem(DECK_MINIMIZED_KEY, next ? '1' : '0');
+      } catch {
+        /* private mode */
+      }
+      return next;
+    });
+  };
+
   return (
     <div
-      className={`synapse-deck ${listen ? 'is-listen' : ''}`}
+      className={`synapse-deck ${listen ? 'is-listen' : ''} ${minimized ? 'is-minimized' : ''}`}
       data-tutorial="player"
       id={listen ? 'workspace-main' : undefined}
     >
@@ -698,6 +719,15 @@ export default function Player() {
         className="synapse-deck-screen"
         aria-label="YouTube player"
       />
+      <button
+        type="button"
+        className="synapse-deck-min-btn"
+        aria-label={minimized ? 'Expand player' : 'Minimize player'}
+        title={minimized ? 'Expand player' : 'Minimize player'}
+        onClick={toggleMinimized}
+      >
+        {minimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+      </button>
       {listen ? (
         <PlayingScreen
           nowPlaying={nowPlaying}

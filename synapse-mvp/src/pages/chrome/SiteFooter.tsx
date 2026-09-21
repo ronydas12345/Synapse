@@ -38,6 +38,12 @@ export default function SiteFooter() {
               <AppLink to="pricing">Pricing</AppLink>
             </li>
             <li>
+              <AppLink to="login">Log in</AppLink>
+            </li>
+            <li>
+              <AppLink to="signup">Sign up</AppLink>
+            </li>
+            <li>
               <AppLink to="changelog">Changelog</AppLink>
             </li>
           </ul>

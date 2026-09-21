@@ -2,6 +2,9 @@ import { useEffect, useId, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { AppLink, useAppRoute } from '../../app/AppLink';
 import { SynapseWordmark } from './SynapseMark';
+import AuthControls from '../../auth/AuthControls';
+import { useAuthAccess } from '../../auth/useAuthAccess';
+import { useAuthStore } from '../../auth/authStore';
 import { useProfileStore } from '../../profile/profileStore';
 import HomeThemePicker from '../Home/components/HomeThemePicker';
 import TutorialHelpButton from '../../tutorial/TutorialHelpButton';
@@ -22,6 +25,8 @@ export default function SiteHeader() {
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const username = useProfileStore((s) => s.profile.username);
+  const { complete: signedIn } = useAuthAccess();
+  const role = useAuthStore((s) => s.role);
 
   useEffect(() => {
     const onScroll = () => setSolid(window.scrollY > 12);
@@ -64,9 +69,21 @@ export default function SiteHeader() {
         <div className="synapse-mkt-header-actions">
           {route === 'home' ? <HomeThemePicker compact /> : null}
           <TutorialHelpButton />
-          <AppLink to="profile" className="synapse-mkt-text-link" onNavigate={close}>
-            {username ? `@${username}` : 'Profile'}
-          </AppLink>
+          <AuthControls onNavigate={close} />
+          {signedIn && role === 'admin' ? (
+            <AppLink to="admin" className="synapse-mkt-text-link" onNavigate={close}>
+              Admin
+            </AppLink>
+          ) : null}
+          {signedIn && role === 'superadmin' ? (
+            <AppLink
+              to="superadmin"
+              className="synapse-mkt-text-link"
+              onNavigate={close}
+            >
+              Superadmin
+            </AppLink>
+          ) : null}
           <OpenWorkspaceLink
             className="synapse-btn synapse-btn-play synapse-mkt-cta"
             onNavigate={close}
@@ -100,9 +117,22 @@ export default function SiteHeader() {
               </AppLink>
             ))}
             {route === 'home' ? <HomeThemePicker /> : null}
-            <AppLink to="profile" onNavigate={close}>
-              {username ? `@${username}` : 'Profile'}
-            </AppLink>
+            <AuthControls onNavigate={close} />
+            {signedIn ? (
+              <AppLink to="profile" onNavigate={close}>
+                {username ? `@${username}` : 'Profile'}
+              </AppLink>
+            ) : null}
+            {signedIn && role === 'admin' ? (
+              <AppLink to="admin" onNavigate={close}>
+                Admin
+              </AppLink>
+            ) : null}
+            {signedIn && role === 'superadmin' ? (
+              <AppLink to="superadmin" onNavigate={close}>
+                Superadmin
+              </AppLink>
+            ) : null}
             <OpenWorkspaceLink className="synapse-btn synapse-btn-play" onNavigate={close}>
               Open Synapse
             </OpenWorkspaceLink>

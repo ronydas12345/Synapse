@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import ReactFlowCanvas from './components/ReactFlowCanvas';
 import Sidebar from './components/Sidebar';
 import InspectorPanel from './components/InspectorPanel';
@@ -11,18 +11,34 @@ import PlaylistSwitcher from './components/PlaylistSwitcher';
 import { SynapseWordmark } from './pages/chrome/SynapseMark';
 import { usePathStore } from './store';
 import { AppLink, useAppRoute } from './app/AppLink';
-import { isMarketingRoute, isWorkspaceRoute, routeToUiMode, type AppRoute } from './app/routes';
+import {
+  isAuthRoute,
+  isMarketingRoute,
+  isStaffRoute,
+  isWorkspaceRoute,
+  routeToUiMode,
+  type AppRoute,
+} from './app/routes';
 import { useProfileStore } from './profile/profileStore';
+import AuthControls from './auth/AuthControls';
+import { useAuthStore } from './auth/authStore';
+import RequireAuth from './auth/RequireAuth';
 import { useAppSettings } from './settings/settingsStore';
 import { applyPageMeta } from './site/seo';
 import MarketingLayout from './pages/MarketingLayout';
+import AuthLayout from './pages/AuthLayout';
 import Home from './pages/Home/Home';
 import WorkshopPage from './pages/WorkshopPage';
 import PricingPage from './pages/PricingPage';
 import ChangelogPage from './pages/ChangelogPage';
 import FaqPage from './pages/FaqPage';
 import PrivacyPage, { CookiesPage, TermsPage } from './pages/LegalPages';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import AdminDashboard from './pages/AdminDashboard';
+import SuperadminDashboard from './pages/SuperadminDashboard';
 import TutorialHelpButton from './tutorial/TutorialHelpButton';
+import CookieNotice from './pages/chrome/CookieNotice';
 
 const WORKSPACE_META: Record<
   'edit' | 'listen' | 'settings' | 'profile',
@@ -48,7 +64,10 @@ function MarketingPage({ route }: { route: AppRoute }) {
 function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'profile' }) {
   const { isPlaying, setIsPlaying, playbackQueue, requestSkip } = usePathStore();
   const avatar = useProfileStore((s) => s.profile.avatarDataUrl);
+  const authPhoto = useAuthStore((s) => s.user?.photoURL);
   const username = useProfileStore((s) => s.profile.username);
+  const role = useAuthStore((s) => s.role);
+  const photo = avatar || authPhoto;
   const listen = route === 'listen';
   const settings = route === 'settings';
   const profile = route === 'profile';
@@ -89,9 +108,9 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
             className={`synapse-mode-btn synapse-mode-profile ${profile ? 'is-active' : ''}`}
             title={username ? `@${username}` : 'Profile'}
           >
-            {avatar ? (
+            {photo ? (
               <img
-                src={avatar}
+                src={photo}
                 alt=""
                 className="synapse-mode-avatar"
                 width={18}
@@ -100,8 +119,19 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
             ) : null}
             Profile
           </AppLink>
+          {role === 'admin' ? (
+            <AppLink to="admin" className="synapse-mode-btn">
+              Admin
+            </AppLink>
+          ) : null}
+          {role === 'superadmin' ? (
+            <AppLink to="superadmin" className="synapse-mode-btn">
+              Superadmin
+            </AppLink>
+          ) : null}
         </nav>
         <TutorialHelpButton />
+        <AuthControls compact />
         {edit ? (
           <div className="synapse-transport" data-tutorial="header-transport">
             <button
@@ -159,29 +189,37 @@ export default function App() {
   }, [route]);
 
   useEffect(() => {
-    if (isMarketingRoute(route)) applyPageMeta(route);
+    if (isAuthRoute(route)) applyPageMeta(route);
+    else if (isMarketingRoute(route)) applyPageMeta(route);
     else if (route === 'edit' || route === 'listen' || route === 'settings' || route === 'profile') {
       document.title = WORKSPACE_META[route].title;
+    } else if (isStaffRoute(route)) {
+      applyPageMeta(route);
     }
   }, [route]);
 
-  if (isMarketingRoute(route)) {
-    return (
-      <>
-        <ThemeRoot />
-        <MarketingLayout>
-          <MarketingPage route={route} />
-        </MarketingLayout>
-      </>
+  let page: ReactNode = null;
+  if (isAuthRoute(route)) {
+    page = (
+      <AuthLayout>{route === 'signup' ? <SignupPage /> : <LoginPage />}</AuthLayout>
     );
+  } else if (isMarketingRoute(route)) {
+    page = (
+      <MarketingLayout>
+        <MarketingPage route={route} />
+      </MarketingLayout>
+    );
+  } else if (isStaffRoute(route)) {
+    page = route === 'superadmin' ? <SuperadminDashboard /> : <AdminDashboard />;
+  } else if (isWorkspaceRoute(route)) {
+    page = <WorkspaceApp route={route} />;
   }
-
-  if (!isWorkspaceRoute(route)) return null;
 
   return (
     <>
       <ThemeRoot />
-      <WorkspaceApp route={route} />
+      <RequireAuth>{page}</RequireAuth>
+      <CookieNotice />
     </>
   );
 }

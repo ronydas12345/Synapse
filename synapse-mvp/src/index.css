@@ -876,6 +876,7 @@ body {
 
 /* ——— Player / deck ——— */
 .synapse-deck {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
@@ -1001,6 +1002,122 @@ body {
   flex-direction: column;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+.synapse-deck-min-btn {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--bg-panel) 86%, transparent);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.synapse-deck-min-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.synapse-deck.is-minimized {
+  flex: 0 0 auto;
+  min-height: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 3rem 0.4rem 0.55rem;
+  overflow: hidden;
+}
+
+.synapse-deck.is-minimized .synapse-deck-screen {
+  width: 5.6rem;
+  height: 3.15rem;
+}
+
+.synapse-deck.is-minimized .synapse-deck-album,
+.synapse-deck.is-minimized .synapse-deck-status,
+.synapse-deck.is-minimized .synapse-deck-queue,
+.synapse-deck.is-minimized .synapse-visualizer,
+.synapse-deck.is-minimized .synapse-listen-paths,
+.synapse-deck.is-minimized .synapse-listen-play,
+.synapse-deck.is-minimized .synapse-ctrl-seek,
+.synapse-deck.is-minimized .synapse-transport-deck input[type='range'] {
+  display: none;
+}
+
+.synapse-deck.is-minimized .synapse-deck-title,
+.synapse-deck.is-minimized .synapse-listen-title {
+  font-size: 0.95rem;
+}
+
+.synapse-deck.is-minimized .synapse-deck-main,
+.synapse-deck.is-minimized .synapse-listen-list,
+.synapse-deck.is-minimized .synapse-listen-live {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.synapse-deck.is-minimized.is-listen {
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0.4rem 3rem 0.4rem 0.55rem;
+  background: var(--player-bg, rgba(10, 12, 18, 0.96));
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.synapse-cookie-notice {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.1rem;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+  color: var(--text);
+}
+
+.synapse-cookie-notice p {
+  margin: 0;
+  max-width: 48rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.synapse-legal-updated {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.synapse-auth-consent {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.synapse-auth-consent input {
+  margin-top: 0.2rem;
 }
 
 .synapse-deck-meta {
@@ -3217,5 +3334,301 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
 
 .synapse-settings-lead a {
   color: var(--accent);
+}
+
+.synapse-auth-switch-row {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.synapse-auth-switch-row a {
+  color: var(--accent);
+}
+
+.synapse-auth-gate {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+}
+
+.synapse-auth-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 0 0 1.1rem;
+  max-width: 22rem;
+}
+
+.synapse-auth-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.synapse-auth-photo,
+.synapse-auth-chip .synapse-mode-avatar {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.synapse-auth-name {
+  margin: 0;
+  font-weight: 650;
+}
+
+.synapse-auth-role {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.synapse-auth-google {
+  min-width: 12rem;
+}
+
+.synapse-auth-divider {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.synapse-auth-form {
+  width: 100%;
+}
+
+.synapse-auth-switch {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.synapse-auth-switch:hover {
+  text-decoration: underline;
+}
+
+.synapse-auth-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.synapse-auth-chip:hover {
+  color: var(--accent);
+}
+
+.synapse-staff {
+  min-height: 100%;
+  padding: 1.25rem 1.5rem 3rem;
+  background: var(--bg-void);
+  color: var(--text);
+}
+
+.synapse-staff-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.synapse-staff-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+}
+
+.synapse-staff-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.synapse-staff-layout {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.synapse-staff-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.synapse-staff-nav-item {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-sm);
+}
+
+.synapse-staff-nav-item:hover,
+.synapse-staff-nav-item.is-active {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.synapse-staff-main,
+.synapse-staff-section {
+  min-width: 0;
+}
+
+.synapse-staff-section h2,
+.synapse-staff-section h3 {
+  margin: 0 0 0.5rem;
+}
+
+.synapse-staff-table-wrap {
+  overflow: auto;
+  margin: 1rem 0;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius);
+}
+
+.synapse-staff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.synapse-staff-table th,
+.synapse-staff-table td {
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.synapse-staff-table tbody tr {
+  cursor: pointer;
+}
+
+.synapse-staff-table tbody tr:hover,
+.synapse-staff-table tbody tr.is-selected {
+  background: var(--bg-hover);
+}
+
+.synapse-staff-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+}
+
+.synapse-staff-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  gap: 1rem;
+  align-items: start;
+}
+
+.synapse-staff-thread {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.synapse-staff-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.synapse-staff-stat {
+  padding: 0.85rem;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+}
+
+.synapse-staff-stat-value {
+  margin: 0.2rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.synapse-staff-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.35rem;
+  height: 8rem;
+  margin-top: 0.75rem;
+}
+
+.synapse-staff-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 0.3rem;
+}
+
+.synapse-staff-bar span {
+  width: 100%;
+  background: var(--accent);
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+}
+
+.synapse-staff-bar em {
+  font-size: 0.65rem;
+  font-style: normal;
+  color: var(--text-faint);
+}
+
+.synapse-staff-suspended {
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+@media (max-width: 860px) {
+  .synapse-staff-layout,
+  .synapse-staff-split {
+    grid-template-columns: 1fr;
+  }
+
+  .synapse-staff-nav {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
 }
 

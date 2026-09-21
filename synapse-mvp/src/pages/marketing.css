@@ -125,6 +125,9 @@ body:has(.synapse-mkt),
 }
 
 .synapse-mkt-text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   color: var(--text-muted);
   text-decoration: none;
   font-size: 0.88rem;
@@ -222,6 +225,71 @@ body:has(.synapse-mkt),
 .synapse-mkt-page {
   padding-top: 2rem;
   min-height: 60vh;
+}
+
+.synapse-auth-card {
+  margin: 1.25rem 0 0;
+  max-width: 24rem;
+  padding: 1.15rem 1.2rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 14px);
+  background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
+}
+
+.synapse-auth-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.synapse-auth-screen-brand {
+  margin-bottom: 1.5rem;
+}
+
+.synapse-auth-screen-main {
+  width: 100%;
+  max-width: 24rem;
+}
+
+.synapse-auth-screen-main h1 {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  max-width: none;
+}
+
+.synapse-auth-screen .synapse-auth-card,
+.synapse-auth-screen .synapse-auth-test {
+  width: 100%;
+  max-width: none;
+}
+
+.synapse-auth-test {
+  margin: 1rem 0 0;
+  max-width: 24rem;
+  padding: 0.85rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md, 14px);
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.synapse-auth-test p {
+  margin: 0.2rem 0 0;
+}
+
+.synapse-auth-test-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.synapse-auth-test code {
+  color: var(--text);
 }
 
 .synapse-mkt-section {
@@ -661,6 +729,22 @@ body:has(.synapse-mkt),
 
 .synapse-mkt-prose {
   max-width: 42rem;
+}
+
+.synapse-mkt-prose h2 {
+  font-size: 1.25rem;
+  margin: 1.75rem 0 0.6rem;
+}
+
+.synapse-mkt-prose ul {
+  margin: 0.4rem 0 1rem 1.1rem;
+  padding: 0;
+}
+
+.synapse-mkt-prose li {
+  margin: 0.35rem 0;
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 
 .synapse-mkt-prose h1 {

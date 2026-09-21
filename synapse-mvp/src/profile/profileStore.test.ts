@@ -1,12 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 import {
   activitySeries,
   averageListens,
   displayNameError,
   daysSince,
   normalizeUsername,
+  readStashedProfile,
   reorderSectionOrder,
   usernameError,
+  writeStashedProfile,
 } from './profileStore';
 import { emptyProfile, GENRE_PRESETS, OPTIONAL_SECTIONS } from './types';
 
@@ -62,5 +64,35 @@ describe('profile helpers', () => {
     expect(new Set(GENRE_PRESETS).size).toBe(GENRE_PRESETS.length);
     expect(GENRE_PRESETS.length).toBeGreaterThan(80);
     expect(GENRE_PRESETS.every((g) => g.length <= 32)).toBe(true);
+  });
+});
+
+describe('per-account profile stash', () => {
+  const memory = new Map<string, string>();
+
+  beforeEach(() => {
+    memory.clear();
+    const storage = {
+      getItem: (key: string) => memory.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        memory.set(key, value);
+      },
+      removeItem: (key: string) => {
+        memory.delete(key);
+      },
+    };
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: storage,
+    });
+  });
+
+  it('does not return another account’s profile', () => {
+    const profile = emptyProfile();
+    profile.username = 'first_user';
+    profile.displayName = 'First';
+    writeStashedProfile('uid-a', profile);
+    expect(readStashedProfile('uid-a')?.username).toBe('first_user');
+    expect(readStashedProfile('uid-b')).toBeNull();
   });
 });

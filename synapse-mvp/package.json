@@ -12,8 +12,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@xyflow/react": "^12.10.1",
+    "firebase": "^12.19.0",
     "lucide-react": "^0.577.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

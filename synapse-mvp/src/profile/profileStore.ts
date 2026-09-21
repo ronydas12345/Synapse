@@ -12,6 +12,7 @@ import {
 } from './types';
 
 export const PROFILE_STORAGE_KEY = 'synapse_profile_state';
+export const PROFILE_ACCOUNTS_KEY = 'synapse_profile_accounts';
 const STORAGE_KEY = PROFILE_STORAGE_KEY;
 
 export function normalizeUsername(raw: string): string {
@@ -177,6 +178,40 @@ function persist(profile: UserProfile) {
   }
 }
 
+function readStash(): Record<string, UserProfile> {
+  try {
+    const raw = localStorage.getItem(PROFILE_ACCOUNTS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object') return {};
+    const out: Record<string, UserProfile> = {};
+    for (const [uid, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (uid) out[uid] = sanitizeProfile(value);
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export function readStashedProfile(uid: string): UserProfile | null {
+  if (!uid) return null;
+  const row = readStash()[uid];
+  return row ?? null;
+}
+
+export function writeStashedProfile(uid: string, profile: UserProfile): void {
+  if (!uid) return;
+  try {
+    localStorage.setItem(
+      PROFILE_ACCOUNTS_KEY,
+      JSON.stringify({ ...readStash(), [uid]: sanitizeProfile(profile) })
+    );
+  } catch {
+    /* quota / private mode */
+  }
+}
+
 function load(): UserProfile {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -188,6 +223,7 @@ function load(): UserProfile {
 }
 
 interface ProfileStore {
+  accountUid: string | null;
   profile: UserProfile;
   patch: (partial: Partial<UserProfile>) => void;
   setUsername: (raw: string) => void;
@@ -216,36 +252,53 @@ interface ProfileStore {
   ) => void;
   recordListen: () => void;
   reset: () => void;
+  adoptAccount: (uid: string, knownUsername?: string) => void;
+  clearAccount: (uid?: string) => void;
 }
 
-function commit(profile: UserProfile): UserProfile {
+function commit(
+  state: { accountUid: string | null },
+  profile: UserProfile
+): UserProfile {
   persist(profile);
+  if (state.accountUid) writeStashedProfile(state.accountUid, profile);
   return profile;
 }
 
 export const useProfileStore = create<ProfileStore>((set, get) => ({
+  accountUid: null,
   profile: load(),
   patch: (partial) =>
-    set((state) => ({ profile: commit({ ...state.profile, ...partial }) })),
+    set((state) => ({ profile: commit(state, { ...state.profile, ...partial }) })),
   setUsername: (raw) =>
     set((state) => ({
-      profile: commit({ ...state.profile, username: normalizeUsername(raw) }),
+      profile: commit(state, {
+        ...state.profile,
+        username: normalizeUsername(raw),
+      }),
     })),
   setDisplayName: (name) =>
     set((state) => ({
-      profile: commit({ ...state.profile, displayName: name.slice(0, 40) }),
+      profile: commit(state, {
+        ...state.profile,
+        displayName: name.slice(0, 40),
+      }),
     })),
   setVisibility: (visibility) =>
-    set((state) => ({ profile: commit({ ...state.profile, visibility }) })),
+    set((state) => ({
+      profile: commit(state, { ...state.profile, visibility }),
+    })),
   setAvatarDataUrl: (url) =>
-    set((state) => ({ profile: commit({ ...state.profile, avatarDataUrl: url }) })),
+    set((state) => ({
+      profile: commit(state, { ...state.profile, avatarDataUrl: url }),
+    })),
   addGenre: (genre) =>
     set((state) => {
       const next = genre.trim().slice(0, 32);
       if (!next) return state;
       if (state.profile.favoriteGenres.includes(next)) return state;
       return {
-        profile: commit({
+        profile: commit(state, {
           ...state.profile,
           favoriteGenres: [...state.profile.favoriteGenres, next].slice(0, 24),
         }),
@@ -253,7 +306,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     }),
   removeGenre: (genre) =>
     set((state) => ({
-      profile: commit({
+      profile: commit(state, {
         ...state.profile,
         favoriteGenres: state.profile.favoriteGenres.filter((g) => g !== genre),
       }),
@@ -273,7 +326,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
         album: (input.album || '').trim().slice(0, 80),
       };
       return {
-        profile: commit({
+        profile: commit(state, {
           ...state.profile,
           favoriteSongs: [...state.profile.favoriteSongs, song].slice(0, 20),
         }),
@@ -281,7 +334,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     }),
   removeSong: (id) =>
     set((state) => ({
-      profile: commit({
+      profile: commit(state, {
         ...state.profile,
         favoriteSongs: state.profile.favoriteSongs.filter((s) => s.id !== id),
       }),
@@ -295,7 +348,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       };
       if (!pl.name) return state;
       return {
-        profile: commit({
+        profile: commit(state, {
           ...state.profile,
           playlists: [...state.profile.playlists, pl].slice(0, 30),
         }),
@@ -303,14 +356,14 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     }),
   removePlaylist: (id) =>
     set((state) => ({
-      profile: commit({
+      profile: commit(state, {
         ...state.profile,
         playlists: state.profile.playlists.filter((p) => p.id !== id),
       }),
     })),
   setPlaylistVisibility: (id, visibility) =>
     set((state) => ({
-      profile: commit({
+      profile: commit(state, {
         ...state.profile,
         playlists: state.profile.playlists.map((p) =>
           p.id === id ? { ...p, visibility } : p
@@ -321,7 +374,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     set((state) => {
       if (state.profile.hiddenSections.includes(id)) return state;
       return {
-        profile: commit({
+        profile: commit(state, {
           ...state.profile,
           hiddenSections: [...state.profile.hiddenSections, id],
         }),
@@ -329,7 +382,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     }),
   showSection: (id) =>
     set((state) => ({
-      profile: commit({
+      profile: commit(state, {
         ...state.profile,
         hiddenSections: state.profile.hiddenSections.filter((s) => s !== id),
       }),
@@ -341,7 +394,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       const j = i + direction;
       if (i < 0 || j < 0 || j >= order.length) return state;
       [order[i], order[j]] = [order[j], order[i]];
-      return { profile: commit({ ...state.profile, sectionOrder: order }) };
+      return { profile: commit(state, { ...state.profile, sectionOrder: order }) };
     }),
   reorderSections: (fromId, toId, edge = 'before') =>
     set((state) => {
@@ -352,23 +405,49 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
         edge
       );
       if (order === state.profile.sectionOrder) return state;
-      return { profile: commit({ ...state.profile, sectionOrder: order }) };
+      return { profile: commit(state, { ...state.profile, sectionOrder: order }) };
     }),
   recordListen: () => {
+    const state = get();
     const day = localDayKey();
-    const profile = get().profile;
     const next = {
-      ...profile,
-      totalListens: profile.totalListens + 1,
+      ...state.profile,
+      totalListens: state.profile.totalListens + 1,
       listensByDay: {
-        ...profile.listensByDay,
-        [day]: (profile.listensByDay[day] || 0) + 1,
+        ...state.profile.listensByDay,
+        [day]: (state.profile.listensByDay[day] || 0) + 1,
       },
     };
-    persist(next);
-    set({ profile: next });
+    set({ profile: commit(state, next) });
   },
-  reset: () => set({ profile: commit(emptyProfile()) }),
+  reset: () => {
+    persist(emptyProfile());
+    set({ accountUid: null, profile: emptyProfile() });
+  },
+  adoptAccount: (uid, knownUsername) => {
+    const state = get();
+    if (!uid || state.accountUid === uid) return;
+    if (state.accountUid) writeStashedProfile(state.accountUid, state.profile);
+    const stored = readStashedProfile(uid);
+    const migrated =
+      !stored &&
+      Boolean(knownUsername) &&
+      state.profile.username === knownUsername
+        ? state.profile
+        : null;
+    const next = stored ?? migrated ?? emptyProfile();
+    persist(next);
+    writeStashedProfile(uid, next);
+    set({ accountUid: uid, profile: next });
+  },
+  clearAccount: (uid) => {
+    const state = get();
+    const id = state.accountUid || uid;
+    if (id) writeStashedProfile(id, state.profile);
+    const empty = emptyProfile();
+    persist(empty);
+    set({ accountUid: null, profile: empty });
+  },
 }));
 
 export { localDayKey } from './listenStats';

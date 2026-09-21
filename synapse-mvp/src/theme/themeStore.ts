@@ -31,6 +31,7 @@ interface ThemeState {
   resetDraft: () => void;
   importJson: (text: string) => string | null;
   addCustomTheme: (theme: SynapseTheme) => string;
+  ingestPublished: (themes: SynapseTheme[]) => void;
   exportActive: () => string | null;
   deleteCustom: (id: string) => void;
 }
@@ -219,6 +220,19 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     persist(activeId, next);
     set({ customThemes: next });
     return stored.id;
+  },
+
+  ingestPublished: (themes) => {
+    const { customThemes, activeId } = get();
+    const byId = new Map(customThemes.map((theme) => [theme.id, theme]));
+    for (const theme of themes) {
+      const parsed = parseTheme({ ...theme, builtin: false, overlays: [] });
+      if (!parsed || getBuiltinTheme(parsed.id)) continue;
+      byId.set(parsed.id, { ...parsed, builtin: false });
+    }
+    const next = [...byId.values()];
+    persist(activeId, next);
+    set({ customThemes: next });
   },
 
   exportActive: () => {

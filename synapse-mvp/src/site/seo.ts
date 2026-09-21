@@ -22,15 +22,31 @@ const PAGE_META: Partial<Record<AppRoute, { title: string; description: string }
   },
   privacy: {
     title: 'Privacy — Synapse',
-    description: 'How Synapse stores data on this device.',
+    description: 'How Synapse collects, uses, stores, and deletes personal data worldwide.',
   },
   terms: {
     title: 'Terms — Synapse',
-    description: 'Terms of use for the Synapse app.',
+    description: 'Terms of use for the Synapse app and Music Paths.',
   },
   cookies: {
     title: 'Cookies — Synapse',
-    description: 'Cookie and local storage settings for Synapse.',
+    description: 'Cookies, local storage, and third-party YouTube cookies in Synapse.',
+  },
+  login: {
+    title: 'Log in — Synapse',
+    description: 'Log in to Synapse with Google or email.',
+  },
+  signup: {
+    title: 'Create account — Synapse',
+    description: 'Create a Synapse account. Username and display name are required.',
+  },
+  admin: {
+    title: 'Admin — Synapse',
+    description: 'Staff dashboard for users, tickets, stats, and moderation.',
+  },
+  superadmin: {
+    title: 'Superadmin — Synapse',
+    description: 'Owner dashboard for admins, themes, and audit history.',
   },
 };
 

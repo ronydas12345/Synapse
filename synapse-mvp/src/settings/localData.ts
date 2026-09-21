@@ -1,6 +1,8 @@
+import { ACCOUNT_CACHE_KEY } from '../auth/identity';
+import { COOKIE_NOTICE_KEY } from '../site/legal';
 import { LIBRARY_KEY, LEGACY_GRAPH_KEY } from '../playlists/library';
 import { METADATA_STORAGE_KEY, clearCreditsCache, creditsCacheSize } from '../metadata/cache';
-import { PROFILE_STORAGE_KEY } from '../profile/profileStore';
+import { PROFILE_ACCOUNTS_KEY, PROFILE_STORAGE_KEY } from '../profile/profileStore';
 import { THEME_STORAGE_KEY } from '../theme/themeStore';
 import { TUTORIAL_SESSION_KEY, TUTORIAL_STORAGE_KEY } from '../tutorial/tutorialStorage';
 import { clearWeatherCache } from '../weather/client';
@@ -10,10 +12,13 @@ export const SYNAPSE_LOCAL_KEYS = [
   SETTINGS_STORAGE_KEY,
   THEME_STORAGE_KEY,
   PROFILE_STORAGE_KEY,
+  PROFILE_ACCOUNTS_KEY,
   LIBRARY_KEY,
   LEGACY_GRAPH_KEY,
   METADATA_STORAGE_KEY,
   TUTORIAL_STORAGE_KEY,
+  ACCOUNT_CACHE_KEY,
+  COOKIE_NOTICE_KEY,
 ] as const;
 
 export function listedLocalKeys(): { key: string; present: boolean }[] {

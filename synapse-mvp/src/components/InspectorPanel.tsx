@@ -23,7 +23,10 @@ export default function InspectorPanel() {
               Multiple nodes
             </h3>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed mt-3 m-0">
-              {count} nodes selected. Select a single node to edit its settings.
+              {count} nodes selected. Drag to move them together. Copy with
+              Ctrl+C / Cmd+C, paste with Ctrl+V, or duplicate with Ctrl+D.
+              Shift-click or drag a box on empty canvas to change the
+              selection. Click one node to edit it.
             </p>
           </div>
         ) : (

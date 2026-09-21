@@ -7,8 +7,13 @@ import { SettingsRange, SettingsSelect, SettingsToggle } from './settings/Fields
 import { usePathStore } from '../store';
 import { allThemes, filterThemes, useThemeStore } from '../theme/themeStore';
 import { useTutorialStore } from '../tutorial/tutorialStore';
+import AuthPanel from '../auth/AuthPanel';
+import { useAuthStore } from '../auth/authStore';
+import { signOut } from '../auth/client';
+import { deleteOwnAccount, exportMyAccount } from '../admin/privacy';
 import { useProfileStore } from '../profile/profileStore';
 import { useAppSettings } from '../settings/settingsStore';
+import SupportForm from '../admin/SupportForm';
 import { GRID_SIZE_OPTIONS } from '../settings/types';
 import {
   clearMetadataCache,
@@ -37,10 +42,10 @@ const SECTIONS = [
   { id: 'import', label: 'Import / Export', keywords: 'json package synapse playlist file import export settings' },
   { id: 'tutorial', label: 'Tutorial', keywords: 'help walkthrough tour guide' },
   { id: 'workshop', label: 'Workshop', keywords: 'share publish' },
-  { id: 'account', label: 'Account', keywords: 'profile login visibility username' },
+  { id: 'account', label: 'Account', keywords: 'profile login visibility username google oauth signin account email' },
   { id: 'privacy', label: 'Privacy / Data', keywords: 'localstorage cache clear erase metadata weather' },
   { id: 'pro', label: 'Pro', keywords: 'billing premium' },
-  { id: 'support', label: 'Support', keywords: 'faq changelog privacy terms help' },
+  { id: 'support', label: 'Support', keywords: 'faq changelog privacy terms help ticket' },
 ] as const;
 
 export default function SettingsPage() {
@@ -265,8 +270,9 @@ export default function SettingsPage() {
             <section id="settings-support" className="synapse-settings-section" data-tutorial="settings-support">
               <h2>Support</h2>
               <p className="synapse-settings-lead">
-                There is no ticket form. These pages are the local help surface.
+                File a ticket for staff. FAQ and legal pages stay public.
               </p>
+              <SupportForm />
               <div className="synapse-theme-actions">
                 <AppLink to="faq" className="synapse-btn synapse-btn-ghost">
                   FAQ
@@ -546,11 +552,14 @@ function AccountSection() {
     <section id="settings-account" className="synapse-settings-section" data-tutorial="settings-account">
       <h2>Account</h2>
       <p className="synapse-settings-lead">
-        There is no Synapse sign-in. Username, picture, and music sections live
-        on your <AppLink to="profile">profile</AppLink>
-        {username ? ` (@${username})` : ''}. Visibility is stored only on this
-        device.
+        Sign in with Google or email. Username and display name are required
+        when you create an account. Picture and music sections still live on
+        your <AppLink to="profile">profile</AppLink>
+        {username ? ` (@${username})` : ''}. Paths stay on this device until
+        cloud sync exists. Sign-out hides this account; it does not erase local
+        playlists.
       </p>
+      <AuthPanel variant="account" />
       <SettingsSelect
         label="Profile visibility"
         value={visibility}
@@ -564,18 +573,49 @@ function AccountSection() {
 }
 
 function PrivacySection() {
+  const user = useAuthStore((s) => s.user);
   const [eraseInput, setEraseInput] = useState('');
+  const [deleteInput, setDeleteInput] = useState('');
   const [metaCount, setMetaCount] = useState(() => creditsCacheSize());
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
   useAppSettings((s) => s.exportJson());
   const keys = listedLocalKeys();
+
+  async function downloadAccount() {
+    setError('');
+    setBusy(true);
+    try {
+      const json = await exportMyAccount();
+      downloadTextFile(`synapse-account-${Date.now()}.json`, json);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not export account data.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function eraseAccount() {
+    setError('');
+    setBusy(true);
+    try {
+      await deleteOwnAccount();
+      wipeSynapseLocalData();
+      await signOut();
+      window.location.assign('/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete the account.');
+      setBusy(false);
+    }
+  }
+
   return (
     <section id="settings-privacy" className="synapse-settings-section" data-tutorial="settings-privacy">
       <h2>Privacy / Data</h2>
       <p className="synapse-settings-lead">
-        This release stores paths, themes, profile, settings, tutorial
-        progress, and song-metadata cache in localStorage. YouTube may set its
-        own cookies when a track plays. Nothing is uploaded to a Synapse
-        server.
+        Paths, themes, and most profile extras stay in localStorage. Signed-in
+        account rows live in Supabase (US West). YouTube may set cookies when a
+        track plays. Read the <AppLink to="privacy">Privacy Policy</AppLink>.
       </p>
       <ul className="synapse-settings-key-list">
         {keys.map((item) => (
@@ -585,7 +625,18 @@ function PrivacySection() {
           </li>
         ))}
       </ul>
+      {error ? <p className="synapse-settings-error">{error}</p> : null}
       <div className="synapse-theme-actions">
+        {user ? (
+          <button
+            type="button"
+            className="synapse-btn synapse-btn-ghost"
+            disabled={busy}
+            onClick={() => void downloadAccount()}
+          >
+            Download my data
+          </button>
+        ) : null}
         <button
           type="button"
           className="synapse-btn synapse-btn-ghost"
@@ -613,7 +664,8 @@ function PrivacySection() {
         <p className="synapse-settings-lead">
           Erase all Synapse data on this browser, including playlists, themes,
           profile, settings, and tutorial progress. Type <code>erase</code> to
-          enable the button. The page reloads afterward.
+          enable the button. The page reloads afterward. This does not delete
+          the cloud account.
         </p>
         <input
           className="synapse-settings-input"
@@ -634,6 +686,30 @@ function PrivacySection() {
           Erase local Synapse data
         </button>
       </div>
+      {user ? (
+        <div className="synapse-settings-danger">
+          <p className="synapse-settings-lead">
+            Delete the signed-in account and its cloud profile, tickets, and
+            roles. Local playlists are also wiped. Type <code>delete</code> to
+            confirm.
+          </p>
+          <input
+            className="synapse-settings-input"
+            value={deleteInput}
+            onChange={(e) => setDeleteInput(e.target.value)}
+            placeholder='Type "delete"'
+            aria-label="Type delete to confirm account deletion"
+          />
+          <button
+            type="button"
+            className="synapse-btn synapse-btn-danger"
+            disabled={busy || deleteInput.trim().toLowerCase() !== 'delete'}
+            onClick={() => void eraseAccount()}
+          >
+            Delete my account
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }

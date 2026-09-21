@@ -1,0 +1,481 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: Firebase Auth uid
+    // Fields:
+    //   - uid: string (required, immutable, must match document ID)
+    //   - email: string (required, immutable, valid email, PII)
+    //   - username: string (required, 3-20 [a-z0-9_])
+    //   - displayName: string (required, 1-40)
+    //   - photoURL: string (required, empty or https URL, max 2048)
+    //   - status: string (required, 'active' | 'suspended')
+    //   - emailVerified: bool (required)
+    //   - createdAt: timestamp (required, immutable)
+    //   - updatedAt: timestamp (required)
+    //   - lastSeenAt: timestamp (required)
+    //
+    // Collection: roles
+    // Document ID: Firebase Auth uid
+    // Fields:
+    //   - uid: string (required, immutable, must match document ID)
+    //   - role: string (required, 'admin' only — never self-assigned)
+    //   - email: string (required, valid email)
+    //   - active: bool (required)
+    //   - createdBy: string (required, uid of superadmin)
+    //   - createdAt: timestamp (required, immutable)
+    //   - updatedAt: timestamp (required)
+    //
+    // Collection: tickets
+    // Document ID: auto-id
+    // Fields:
+    //   - uid: string (required, immutable, ticket author)
+    //   - email: string (required, immutable)
+    //   - subject: string (required, 3-120)
+    //   - body: string (required, 1-4000)
+    //   - status: string (required, open|pending|resolved|closed)
+    //   - priority: string (required, low|normal|high|urgent)
+    //   - assignedAdminUid: string (required, empty or uid, max 128)
+    //   - createdAt: timestamp (required, immutable)
+    //   - updatedAt: timestamp (required)
+    //
+    // Collection: tickets/{ticketId}/messages
+    // Document ID: auto-id
+    // Fields:
+    //   - uid: string (required, immutable, author)
+    //   - body: string (required, 1-4000)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: moderation
+    // Document ID: auto-id
+    // Fields:
+    //   - type: string (required, avatar|overlay)
+    //   - targetUid: string (required, 1-128)
+    //   - imageUrl: string (required, empty or https URL, max 2048)
+    //   - status: string (required, pending|approved|rejected|removed)
+    //   - note: string (required, 0-500)
+    //   - reviewerUid: string (required, empty or uid, max 128)
+    //   - createdAt: timestamp (required, immutable)
+    //   - updatedAt: timestamp (required)
+    //
+    // Collection: adminAudit
+    // Document ID: auto-id
+    // Fields:
+    //   - actorUid: string (required, must equal auth.uid)
+    //   - actorEmail: string (required)
+    //   - action: string (required, 1-80)
+    //   - targetType: string (required, 1-40)
+    //   - targetId: string (required, 0-128)
+    //   - summary: string (required, 1-300)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: publishedThemes
+    // Document ID: theme id
+    // Fields:
+    //   - themeId: string (required, matches document ID, 1-64)
+    //   - name: string (required, 1-64)
+    //   - status: string (required, published|archived)
+    //   - publishedBy: string (required, uid)
+    //   - payloadJson: string (required, 2-50000)
+    //   - createdAt: timestamp (required, immutable)
+    //   - updatedAt: timestamp (required)
+    //
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isSuperadmin() {
+      return isAuthenticated()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && request.auth.token.email.lower() == 'dasrony231@gmail.com';
+    }
+
+    function roleDoc(userId) {
+      return /databases/$(database)/documents/roles/$(userId);
+    }
+
+    function isAdmin() {
+      return isAuthenticated()
+        && exists(roleDoc(request.auth.uid))
+        && get(roleDoc(request.auth.uid)).data.role == 'admin'
+        && get(roleDoc(request.auth.uid)).data.active == true;
+    }
+
+    function isStaff() {
+      return isSuperadmin() || isAdmin();
+    }
+
+    function isValidEmail(email) {
+      return email is string
+        && email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    function isHttpsOrEmpty(url) {
+      return url is string
+        && url.size() <= 2048
+        && (url.size() == 0 || url.matches('^https://.*'));
+    }
+
+    function isValidUid(value) {
+      return value is string && value.size() > 0 && value.size() <= 128;
+    }
+
+    function targetEmailIsSuperadmin() {
+      return resource.data.email is string
+        && resource.data.email.lower() == 'dasrony231@gmail.com';
+    }
+
+    function targetIsStaffUser(userId) {
+      return targetEmailIsSuperadmin() || exists(roleDoc(userId));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasOnly([
+          'uid',
+          'email',
+          'username',
+          'displayName',
+          'photoURL',
+          'status',
+          'emailVerified',
+          'createdAt',
+          'updatedAt',
+          'lastSeenAt'
+        ])
+        && isValidUid(data.uid)
+        && isValidEmail(data.email)
+        && data.username is string
+        && data.username.matches('^[a-z0-9_]{3,20}$')
+        && data.displayName is string
+        && data.displayName.size() >= 1
+        && data.displayName.size() <= 40
+        && isHttpsOrEmpty(data.photoURL)
+        && data.status in ['active', 'suspended']
+        && data.emailVerified is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && data.lastSeenAt is timestamp;
+    }
+
+    function isValidRole(data) {
+      return data.keys().hasOnly([
+          'uid',
+          'role',
+          'email',
+          'active',
+          'createdBy',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidUid(data.uid)
+        && data.role == 'admin'
+        && isValidEmail(data.email)
+        && data.active is bool
+        && isValidUid(data.createdBy)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTicket(data) {
+      return data.keys().hasOnly([
+          'uid',
+          'email',
+          'subject',
+          'body',
+          'status',
+          'priority',
+          'assignedAdminUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidUid(data.uid)
+        && isValidEmail(data.email)
+        && data.subject is string
+        && data.subject.size() >= 3
+        && data.subject.size() <= 120
+        && data.body is string
+        && data.body.size() >= 1
+        && data.body.size() <= 4000
+        && data.status in ['open', 'pending', 'resolved', 'closed']
+        && data.priority in ['low', 'normal', 'high', 'urgent']
+        && data.assignedAdminUid is string
+        && data.assignedAdminUid.size() <= 128
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasOnly(['uid', 'body', 'createdAt'])
+        && isValidUid(data.uid)
+        && data.body is string
+        && data.body.size() >= 1
+        && data.body.size() <= 4000
+        && data.createdAt is timestamp;
+    }
+
+    function isValidModeration(data) {
+      return data.keys().hasOnly([
+          'type',
+          'targetUid',
+          'imageUrl',
+          'status',
+          'note',
+          'reviewerUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.type in ['avatar', 'overlay']
+        && isValidUid(data.targetUid)
+        && isHttpsOrEmpty(data.imageUrl)
+        && data.status in ['pending', 'approved', 'rejected', 'removed']
+        && data.note is string
+        && data.note.size() <= 500
+        && data.reviewerUid is string
+        && data.reviewerUid.size() <= 128
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAudit(data) {
+      return data.keys().hasOnly([
+          'actorUid',
+          'actorEmail',
+          'action',
+          'targetType',
+          'targetId',
+          'summary',
+          'createdAt'
+        ])
+        && data.actorUid == request.auth.uid
+        && isValidEmail(data.actorEmail)
+        && data.action is string
+        && data.action.size() >= 1
+        && data.action.size() <= 80
+        && data.targetType is string
+        && data.targetType.size() >= 1
+        && data.targetType.size() <= 40
+        && data.targetId is string
+        && data.targetId.size() <= 128
+        && data.summary is string
+        && data.summary.size() >= 1
+        && data.summary.size() <= 300
+        && data.createdAt is timestamp;
+    }
+
+    function isValidPublishedTheme(data) {
+      return data.keys().hasOnly([
+          'themeId',
+          'name',
+          'status',
+          'publishedBy',
+          'payloadJson',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.themeId is string
+        && data.themeId.matches('^[a-z0-9][a-z0-9-]{0,63}$')
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 64
+        && data.status in ['published', 'archived']
+        && isValidUid(data.publishedBy)
+        && data.payloadJson is string
+        && data.payloadJson.size() >= 2
+        && data.payloadJson.size() <= 50000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isStaff();
+
+      allow create: if isValidUser(request.resource.data)
+        && request.resource.data.uid == userId
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastSeenAt == request.time
+        && (
+          (
+            isOwner(userId)
+            && request.resource.data.status == 'active'
+            && request.auth.token.email is string
+            && request.resource.data.email.lower() == request.auth.token.email.lower()
+          )
+          || (
+            isSuperadmin()
+            && request.resource.data.status == 'active'
+          )
+        );
+
+      allow update: if isValidUser(request.resource.data)
+        && request.resource.data.uid == userId
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && (
+          (
+            isOwner(userId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['username', 'displayName', 'photoURL', 'emailVerified', 'updatedAt', 'lastSeenAt'])
+          )
+          || (
+            isStaff()
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['username', 'displayName', 'photoURL', 'status', 'emailVerified', 'updatedAt', 'lastSeenAt'])
+            && (
+              request.resource.data.status == resource.data.status
+              || (isSuperadmin() && !targetEmailIsSuperadmin())
+              || (isAdmin() && !targetIsStaffUser(userId))
+            )
+          )
+        );
+
+      allow delete: if false;
+    }
+
+    match /roles/{userId} {
+      allow read: if isSuperadmin() || isOwner(userId);
+      allow create: if isSuperadmin()
+        && isValidRole(request.resource.data)
+        && request.resource.data.uid == userId
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if isSuperadmin()
+        && isValidRole(request.resource.data)
+        && request.resource.data.uid == userId
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['email', 'active', 'updatedAt']);
+      allow delete: if isSuperadmin();
+    }
+
+    match /tickets/{ticketId} {
+      allow read: if isStaff()
+        || (isAuthenticated() && resource.data.uid == request.auth.uid);
+
+      allow create: if isAuthenticated()
+        && isValidTicket(request.resource.data)
+        && request.resource.data.uid == request.auth.uid
+        && request.auth.token.email is string
+        && request.resource.data.email.lower() == request.auth.token.email.lower()
+        && request.resource.data.status == 'open'
+        && request.resource.data.assignedAdminUid == ''
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isStaff()
+        && isValidTicket(request.resource.data)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.subject == resource.data.subject
+        && request.resource.data.body == resource.data.body
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && (
+          (
+            isSuperadmin()
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'priority', 'assignedAdminUid', 'updatedAt'])
+          )
+          || (
+            isAdmin()
+            && request.resource.data.assignedAdminUid == resource.data.assignedAdminUid
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'priority', 'updatedAt'])
+          )
+        );
+
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        function parentTicket() {
+          return get(/databases/$(database)/documents/tickets/$(ticketId));
+        }
+
+        function canUseTicket() {
+          return isStaff()
+            || (
+              isAuthenticated()
+              && exists(/databases/$(database)/documents/tickets/$(ticketId))
+              && parentTicket().data.uid == request.auth.uid
+            );
+        }
+
+        allow read: if canUseTicket();
+        allow create: if canUseTicket()
+          && isValidMessage(request.resource.data)
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+    }
+
+    match /moderation/{itemId} {
+      allow read: if isStaff();
+      allow create: if isStaff()
+        && isValidModeration(request.resource.data)
+        && request.resource.data.status == 'pending'
+        && request.resource.data.reviewerUid == ''
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if isStaff()
+        && isValidModeration(request.resource.data)
+        && request.resource.data.type == resource.data.type
+        && request.resource.data.targetUid == resource.data.targetUid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.reviewerUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['imageUrl', 'status', 'note', 'reviewerUid', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /adminAudit/{entryId} {
+      allow read: if isSuperadmin();
+      allow create: if isStaff()
+        && isValidAudit(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    match /publishedThemes/{themeId} {
+      allow read: if isAuthenticated();
+      allow create: if isSuperadmin()
+        && isValidPublishedTheme(request.resource.data)
+        && request.resource.data.themeId == themeId
+        && request.resource.data.publishedBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if isSuperadmin()
+        && isValidPublishedTheme(request.resource.data)
+        && request.resource.data.themeId == themeId
+        && request.resource.data.themeId == resource.data.themeId
+        && request.resource.data.publishedBy == resource.data.publishedBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isSuperadmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

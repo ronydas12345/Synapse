@@ -29,6 +29,11 @@ import {
 } from './playlists/format';
 import { getBuiltinTheme } from './theme/presets';
 import { resolveTheme, useThemeStore } from './theme/themeStore';
+import {
+  applyPaste,
+  collectCopySet,
+  type NodeClipboard,
+} from './canvas/clipboard';
 
 interface PathState {
   nodes: Node[];
@@ -83,6 +88,8 @@ interface PathState {
     kind?: 'playlist' | 'package'
   ) => { filename: string; json: string } | null;
   importPlaylistFile: (text: string) => { error: string | null; notices: string[] };
+  copySelection: () => NodeClipboard | null;
+  pasteClipboard: (clipboard: NodeClipboard) => string[];
 }
 
 let library: PathLibrary = loadLibrary();
@@ -116,7 +123,7 @@ const playbackReset = {
   commentLinkingId: null as string | null,
 };
 
-export const usePathStore = create<PathState>((set) => ({
+export const usePathStore = create<PathState>((set, get) => ({
   ...libraryView(),
   selectedNodeId: null,
   selectedNodeIds: [],
@@ -515,5 +522,21 @@ export const usePathStore = create<PathState>((set) => ({
       }
     }
     return { error: null, notices: parsed.notices };
+  },
+  copySelection: () => {
+    const state = get();
+    return collectCopySet(state.nodes, state.edges, state.selectedNodeIds);
+  },
+  pasteClipboard: (clipboard) => {
+    const state = get();
+    const next = applyPaste(state.nodes, state.edges, clipboard);
+    saveToStorage(next.nodes, next.edges);
+    set({
+      nodes: next.nodes,
+      edges: next.edges,
+      selectedNodeIds: next.selectedIds,
+      selectedNodeId: next.selectedIds.length === 1 ? next.selectedIds[0] : null,
+    });
+    return next.selectedIds;
   },
 }));

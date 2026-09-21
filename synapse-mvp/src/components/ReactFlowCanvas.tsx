@@ -41,6 +41,10 @@ import {
   dataTransferIsPlaybackMarker,
   isPlaybackMarkerDrag,
 } from '../playbackMarker';
+import {
+  parseNodeClipboard,
+  type NodeClipboard,
+} from '../canvas/clipboard';
 
 const nodeTypes = {
   track: TrackNode,
@@ -60,6 +64,7 @@ const edgeTypes = {
 
 // Valid node type names for filtering
 const validNodeTypes = new Set(Object.keys(nodeTypes));
+let memoryClipboard: NodeClipboard | null = null;
 
 // Custom minimap component that syncs with camera
 function CustomMinimap() {
@@ -918,6 +923,64 @@ function ReactFlowContent() {
     [updateNodeData]
   );
 
+  const copySelectionToClipboard = useCallback(async () => {
+    const payload = usePathStore.getState().copySelection();
+    if (!payload) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(payload));
+    } catch {
+      memoryClipboard = payload;
+    }
+  }, []);
+
+  const pasteFromClipboard = useCallback(async () => {
+    let payload: NodeClipboard | null = memoryClipboard;
+    try {
+      payload = parseNodeClipboard(await navigator.clipboard.readText()) || payload;
+    } catch {
+      /* permission or empty clipboard */
+    }
+    if (!payload) return;
+    const ids = usePathStore.getState().pasteClipboard(payload);
+    if (ids.length) setNodes(usePathStore.getState().nodes);
+    if (ids.length) setEdges(usePathStore.getState().edges);
+  }, [setNodes, setEdges]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      if (!(event.ctrlKey || event.metaKey)) return;
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) return;
+      if (key === 'c') {
+        event.preventDefault();
+        void copySelectionToClipboard();
+      } else if (key === 'v') {
+        event.preventDefault();
+        void pasteFromClipboard();
+      } else if (key === 'd') {
+        event.preventDefault();
+        const payload = usePathStore.getState().copySelection();
+        if (payload) usePathStore.getState().pasteClipboard(payload);
+        setNodes(usePathStore.getState().nodes);
+        setEdges(usePathStore.getState().edges);
+      } else if (key === 'a') {
+        event.preventDefault();
+        const ids = usePathStore
+          .getState()
+          .nodes.filter((node) => !node.hidden)
+          .map((node) => node.id);
+        usePathStore.getState().setSelection(ids);
+        setNodes((current) =>
+          current.map((node) => ({ ...node, selected: ids.includes(node.id) }))
+        );
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [copySelectionToClipboard, pasteFromClipboard, setNodes, setEdges]);
+
   return (
     <div ref={reactFlowRef} className="synapse-canvas-wrap" data-tutorial="canvas">
       <ReactFlow
@@ -971,6 +1034,10 @@ function ReactFlowContent() {
         nodesConnectable={true}
         elementsSelectable={true}
         selectNodesOnDrag={false}
+        selectionOnDrag={true}
+        panOnDrag={[1, 2]}
+        multiSelectionKeyCode="Shift"
+        selectionKeyCode="Shift"
         snapToGrid={snapToGrid}
         snapGrid={[gridSize, gridSize]}
         fitView

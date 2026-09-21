@@ -21,6 +21,8 @@ pids
 # Environment variables
 .env
 .env.*
+!.env.example
+!synapse-mvp/.env.example
 env.txt.txt
 
 # Build outputs

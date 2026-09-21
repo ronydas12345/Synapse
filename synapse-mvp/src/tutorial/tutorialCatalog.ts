@@ -147,7 +147,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'gs-play',
         'Playing a Music Path',
-        'Press Play in the header (Edit) or the deck. The engine builds a queue from Start (or the marker) and the bottom bar shows the current song.',
+        'Press Play in the header (Edit) or the deck. Minimize the deck if you need more room on Settings or Profile — the video stays loaded. The bottom bar shows the current song.',
         {
           type: 'action',
           route: 'edit',
@@ -193,7 +193,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'b-select',
         'Selecting nodes',
-        'Click a node to select it. The right inspector opens for a single selection and closes when you click empty canvas.',
+        'Click a node to select it. Shift-click to add more. Drag a box on empty canvas to multi-select (middle- or right-drag pans). Ctrl+C / Ctrl+V copies and pastes the selection; Ctrl+D duplicates it.',
         {
           type: 'action',
           route: 'edit',
@@ -205,7 +205,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'b-inspector',
         'Node settings',
-        'The inspector is where YouTube IDs, weights, times, and Style themes live. Multi-select is for moving, not editing.',
+        'The inspector is where YouTube IDs, weights, times, and Style themes live. Multi-select is for moving, copying, and pasting. Click one node to edit it.',
         { type: 'highlight', route: 'edit', target: 'inspector' }
       ),
       s(
@@ -917,7 +917,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'as-account',
         'Account settings',
-        'Username, display name, picture, location, and bio live on Profile. Cloud sign-in is not wired. Settings → Account points here.',
+        'Username, display name, picture, location, and bio live on Profile. Log in at /login or create an account at /signup. Edit, Listen, Settings, Profile, Admin, and Superadmin require sign-in. Staff dashboards are separate routes.',
         { type: 'highlight', route: 'profile', target: 'profile' }
       ),
       s(

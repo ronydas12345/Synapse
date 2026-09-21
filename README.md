@@ -2,7 +2,7 @@
 
 **Visual Music Paths.** Synapse is a browser app for building playback as a graph instead of a fixed song list. You place nodes on a canvas, connect them with rules, and press Play. The engine walks the graph and decides what comes next.
 
-Current app version: **0.3.0** (`synapse-mvp/package.json`). There is no account system and no cloud save. Paths, themes, settings, and profile live in this browser’s `localStorage`. Track nodes play **YouTube** videos; Synapse does not host an audio library.
+Current app version: **0.3.0** (`synapse-mvp/package.json`). **Google / email sign-in** uses Supabase Auth. Paths, themes, settings, and profile still live in this browser’s `localStorage` until cloud sync ships. Track nodes play **YouTube** videos; Synapse does not host an audio library.
 
 Workshop publishing, Pro checkout, collaborative editing, and image/GIF overlays are **not shipped**. The marketing pages describe those honestly as planned or preview-only.
 
@@ -46,17 +46,18 @@ Workshop publishing, Pro checkout, collaborative editing, and image/GIF overlays
 - Use **Listen** mode (`/listen`) as an indented path list instead of the graph editor.
 - Keep a **local playlist library**, export/import `.synapse` JSON (graph + dependent custom themes).
 - Keep a **local profile** (`@username`, optional sections, listen counts).
+- **Sign in** with Google or email (`/login`, `/signup`, header). Edit, Listen, Settings, Profile, `/admin`, and `/superadmin` require an account. Sign-out clears the visible account and profile; it does not wipe local playlists. The owner account opens the Superadmin dashboard; promoted admins open `/admin`.
 - Open the **tutorial** from `?` in the header.
 
 ## What is not in this release
 
-- Accounts, OAuth, YouTube login, or public cloud profiles.
 - Workshop search, publish, or share links (preview pages only).
+- YouTube account login, public cloud profiles, or multi-device playlist sync.
 - Pro billing, ads, or paid feature gating.
 - ZIP playlist packages, overlay images, GIFs, or animated canvas overlays.
 - Pitch, tempo, and EQ on YouTube playback (inspector fields exist; they are not applied).
 - Artist / Genre node types.
-- Server-side database or multi-device sync.
+- Server-side playlist sync and Workshop media hosting. Supabase Postgres is used for accounts, staff roles, tickets, moderation, published themes, and audit logs.
 
 ---
 
@@ -81,11 +82,18 @@ Vite prints a local URL (typically `http://localhost:5173`). Open `/` for the ma
 | `npm run test:watch` | Vitest watch |
 | `npm run lint` | ESLint |
 
-**Optional env** (in `synapse-mvp/.env`, never commit keys):
+**Optional env** (in `synapse-mvp/.env.local`, never commit keys):
 
 ```
 VITE_YOUTUBE_API_KEY=
+VITE_SUPABASE_URL=https://hrgwnaamlwaneccwghie.supabase.co
+VITE_SUPABASE_ANON_KEY=
+VITE_SUPERADMIN_EMAILS=
 ```
+
+Public Supabase URL and anon key for project `hrgwnaamlwaneccwghie` are in `src/supabase/config.ts` and can be overridden with `VITE_SUPABASE_*`. Extra superadmin emails in `VITE_SUPERADMIN_EMAILS` must be verified. The owner email `dasrony231@gmail.com` is always treated as Superadmin. Never put the `service_role` key in the Vite app; row-level security is the real lock.
+
+Copy `synapse-mvp/.env.example` to `.env.local`. If you host on a domain other than `localhost`, add that origin under Supabase Authentication → URL Configuration → Redirect URLs (for example `https://your-domain.example/**`). Google sign-in also needs the Google provider enabled in the Supabase dashboard, with authorized client ID/secret and callback `https://hrgwnaamlwaneccwghie.supabase.co/auth/v1/callback`.
 
 Track titles still fill from oEmbed and iTunes album lookup without this key. The Data API key can improve YouTube metadata when present.
 
@@ -104,14 +112,18 @@ Requires a current Node.js (the app is ESM, Vite 8, React 19).
 | `/pricing` | Pricing copy; checkout is not open |
 | `/changelog` | In-app changelog |
 | `/faq`, `/privacy`, `/terms`, `/cookies` | FAQ and legal |
-| `/edit` | Graph editor (Studio) |
-| `/listen` | Listen screen |
-| `/settings` | Themes, appearance, playlists, import/export, and other local settings |
-| `/profile` | Local profile |
+| `/login` | Log in (Google or email). `/signin` redirects here |
+| `/signup` | Create an account (username and display name required) |
+| `/edit` | Graph editor (Studio). Requires sign-in |
+| `/listen` | Listen screen. Requires sign-in |
+| `/settings` | Themes, appearance, playlists, import/export, and other local settings. Requires sign-in |
+| `/profile` | Local profile. Requires sign-in |
+| `/admin` | Admin dashboard. Admins only; Superadmin is redirected away |
+| `/superadmin` | Superadmin dashboard. Superadmin only; admins are redirected away |
 
-Marketing routes do **not** mount the YouTube player. Workspace routes (`/edit`, `/listen`, `/settings`, `/profile`) keep the player mounted so playback can continue while you switch those pages.
+Marketing routes do **not** mount the YouTube player. Workspace routes (`/edit`, `/listen`, `/settings`, `/profile`) require sign-in. After login they keep the player mounted so playback can continue while you switch those pages. Staff sign-in uses the same `/login` page; role routing sends admins to `/admin` and Superadmin to `/superadmin`. Each role can open only its own dashboard, even when tools overlap. Those dashboards are enforced by routing and Supabase row-level security, not only by hiding UI.
 
-The header **Open Synapse** control goes to the workspace. The `?` button opens the tutorial (workspace).
+The header **Open Synapse** control goes to the workspace if you are signed in, or `/login` if you are not. The `?` button opens the tutorial (workspace; also requires sign-in).
 
 ### Build a path
 
@@ -171,13 +183,13 @@ Theme `style` includes corner radius, grid/shadow intensity, **arrow type** (`be
 
 ### Settings
 
-Local, versioned store (`synapse_app_settings`). Sections that exist in this build include themes, appearance (motion), playlists, general, canvas, connections, nodes, playback (master volume), visualizer visibility, environment (weather/geo), import/export, tutorial, account (link to local profile), privacy/data, and support. Workshop and Pro sections state that those products are **not available**.
+Local, versioned store (`synapse_app_settings`). Sections that exist in this build include themes, appearance (motion), playlists, general, canvas, connections, nodes, playback (master volume), visualizer visibility, environment (weather/geo), import/export, tutorial, account (Supabase sign-in + local profile), privacy/data, and support. Workshop and Pro sections state that those products are **not available**.
 
 Do not expect settings for features that are not implemented (no fake crossfade, no overlay controls that do nothing).
 
 ### Profile
 
-`/profile`: required `@username` and display name; optional picture, location, bio, genres, songs, playlists, listen stats, activity graph. Sections can be reordered. Visibility is stored locally only. Track starts increment local listen counts. Location (or browser geolocation) feeds weather conditionals.
+`/profile`: required `@username` and display name; optional picture, location, bio, genres, songs, playlists, listen stats, activity graph. Sections can be reordered. Visibility is stored locally. Sign-in attaches a Google or email identity and writes the required username/display name to Postgres; the rest of the profile stays on this device. Track starts increment local listen counts. Location (or browser geolocation) feeds weather conditionals.
 
 ### Tutorial
 
@@ -209,7 +221,7 @@ File extension: `.synapse` (JSON). Schema version `1`.
 
 ## Architecture
 
-Synapse is a Vite + React 19 + TypeScript SPA. There is no backend in this repo.
+Synapse is a Vite + React 19 + TypeScript SPA. Authentication uses Supabase Auth; staff data lives in Postgres with row-level security. There is no custom backend in this repo.
 
 | Piece | Location | Role |
 | --- | --- | --- |
@@ -224,6 +236,8 @@ Synapse is a Vite + React 19 + TypeScript SPA. There is no backend in this repo.
 | Playlists | `src/playlists/` | Library + sanitize/serialize `.synapse` |
 | Settings | `src/settings/` | Versioned local settings |
 | Profile | `src/profile/` | Local profile store |
+| Auth | `src/auth/`, `src/supabase/` | Supabase Google/email sign-in, session, roles |
+| Staff data | `src/admin/` | Profiles, roles, tickets, moderation, audit, published themes |
 | Tutorial | `src/tutorial/` | Catalog, spotlight, storage |
 | Marketing | `src/pages/` | Home, workshop preview, legal, changelog |
 | Routing | `src/app/routes.ts` | History API paths (no React Router) |
@@ -240,7 +254,7 @@ Synapse is a Vite + React 19 + TypeScript SPA. There is no backend in this repo.
 
 ## Local data and privacy
 
-Everything Synapse stores for the app is on-device. Playing a track still uses YouTube (their cookies/player apply). Weather uses Open-Meteo when a location is available.
+Everything Synapse stores for the app is on-device, except Supabase Auth sessions and staff/account rows in Postgres. Playing a track still uses YouTube (their cookies/player apply). Weather uses Open-Meteo when a location is available.
 
 | `localStorage` key | Data |
 | --- | --- |
@@ -281,7 +295,11 @@ Synapse/
     src/pages/              marketing + legal
     src/playlists/          .synapse format + library
     src/theme/              presets + apply
+    src/auth/               session, login/signup
+    src/supabase/           public client (anon key only)
+    src/admin/              staff dashboards and Postgres API
     public/                 favicon, OG image
+  supabase/migrations/      staff schema + RLS
   doc/                      handoff notes, implementation status
   scripts/google-apps-script/  optional sprint-sheet webhook
 ```

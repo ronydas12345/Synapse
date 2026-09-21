@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import TutorialProvider from './tutorial/TutorialProvider';
+import AuthProvider from './auth/AuthProvider';
 import './index.css';
 
 try {
@@ -13,7 +14,9 @@ try {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <TutorialProvider>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </TutorialProvider>
     </React.StrictMode>
   );

@@ -31,6 +31,8 @@ import {
   type OptionalSectionId,
 } from '../profile/types';
 import { cropAndFitAvatar, clampPan, coverScale, cropFromViewport } from '../profile/avatarImage';
+import AuthPanel from '../auth/AuthPanel';
+import { useAuthStore } from '../auth/authStore';
 import { usePathStore } from '../store';
 
 type DropEdge = 'before' | 'after';
@@ -764,6 +766,8 @@ function AvatarModal({
 
 export default function ProfilePage() {
   const profile = useProfileStore((s) => s.profile);
+  const authUser = useAuthStore((s) => s.user);
+  const authRole = useAuthStore((s) => s.role);
   const pathSummaries = usePathStore((s) => s.pathSummaries);
   const setPlaylistVisibility = usePathStore((s) => s.setPlaylistVisibility);
   const {
@@ -831,6 +835,7 @@ export default function ProfilePage() {
     }
   };
 
+  const photo = profile.avatarDataUrl || authUser?.photoURL;
   const publicPaths = pathSummaries.filter((p) => p.visibility === 'public');
   const shownPaths =
     profile.visibility === 'public' && !editing ? publicPaths : pathSummaries;
@@ -848,15 +853,23 @@ export default function ProfilePage() {
             }}
             aria-label="Edit profile picture"
           >
-            {profile.avatarDataUrl ? (
-              <img src={profile.avatarDataUrl} alt="" />
+            {photo ? (
+              <img src={photo} alt="" />
             ) : (
               <UserRound className="w-10 h-10" />
             )}
           </button>
           <div>
             <p className="synapse-section-label">
-              {profile.visibility === 'public' ? 'Public profile' : 'Private profile'}
+              {authUser
+                ? authRole === 'superadmin'
+                  ? 'Superadmin account'
+                  : authRole === 'admin'
+                    ? 'Admin account'
+                    : 'Signed in'
+                : profile.visibility === 'public'
+                  ? 'Public profile'
+                  : 'Private profile'}
             </p>
             <h1 className="synapse-profile-title">
               {profile.displayName.trim() || 'Your profile'}
@@ -898,6 +911,7 @@ export default function ProfilePage() {
 
       <section className="synapse-profile-section synapse-profile-identity-card" data-section="identity">
         <h2>Identity</h2>
+        <AuthPanel variant="account" />
         {editing ? (
           <>
             <label className="synapse-settings-field">
@@ -936,8 +950,10 @@ export default function ProfilePage() {
               </select>
             </label>
             <p className="synapse-settings-hint">
-              Cloud sharing is not live yet. Visibility is saved locally so it
-              is ready when accounts exist.
+              Cloud sharing is not live yet. Visibility is saved locally.
+              {authUser
+                ? ' Your Google or email sign-in is the account identity.'
+                : ' Sign in to attach this profile to an account.'}
             </p>
           </>
         ) : (

@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   appHref,
   isAppPath,
+  isAuthRoute,
   isMarketingRoute,
+  isProtectedRoute,
   pathToRoute,
   routeToUiMode,
 } from './routes';
@@ -16,6 +18,19 @@ describe('app routes', () => {
     expect(pathToRoute('/profile')).toBe('profile');
     expect(pathToRoute('/workshop')).toBe('workshop');
     expect(pathToRoute('/pricing')).toBe('pricing');
+    expect(pathToRoute('/login')).toBe('login');
+    expect(pathToRoute('/signin')).toBe('login');
+    expect(pathToRoute('/signup')).toBe('signup');
+    expect(pathToRoute('/admin')).toBe('admin');
+    expect(pathToRoute('/superadmin')).toBe('superadmin');
+    expect(isAuthRoute('login')).toBe(true);
+    expect(isMarketingRoute('login')).toBe(false);
+    expect(isProtectedRoute('edit')).toBe(true);
+    expect(isProtectedRoute('profile')).toBe(true);
+    expect(isProtectedRoute('admin')).toBe(true);
+    expect(isProtectedRoute('superadmin')).toBe(true);
+    expect(isProtectedRoute('home')).toBe(false);
+    expect(isProtectedRoute('login')).toBe(false);
   });
 
   it('treats the site root as home, not edit', () => {
@@ -23,6 +38,8 @@ describe('app routes', () => {
     expect(isAppPath('/')).toBe(true);
     expect(isAppPath('/edit')).toBe(true);
     expect(isAppPath('/workshop')).toBe(true);
+    expect(isAppPath('/login')).toBe(true);
+    expect(isAppPath('/signin')).toBe(true);
     expect(pathToRoute('/studio')).toBe('home');
     expect(isMarketingRoute('home')).toBe(true);
     expect(isMarketingRoute('edit')).toBe(false);
@@ -35,5 +52,6 @@ describe('app routes', () => {
     expect(routeToUiMode('listen')).toBe('listen');
     expect(routeToUiMode('profile')).toBe('profile');
     expect(routeToUiMode('workshop')).toBe('home');
+    expect(routeToUiMode('login')).toBe('home');
   });
 });

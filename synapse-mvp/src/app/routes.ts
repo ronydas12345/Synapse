@@ -9,10 +9,14 @@ export type AppRoute =
   | 'privacy'
   | 'terms'
   | 'cookies'
+  | 'login'
+  | 'signup'
   | 'edit'
   | 'listen'
   | 'settings'
-  | 'profile';
+  | 'profile'
+  | 'admin'
+  | 'superadmin';
 
 export type AppPath =
   | '/'
@@ -23,10 +27,15 @@ export type AppPath =
   | '/privacy'
   | '/terms'
   | '/cookies'
+  | '/login'
+  | '/signup'
+  | '/signin'
   | '/edit'
   | '/listen'
   | '/settings'
-  | '/profile';
+  | '/profile'
+  | '/admin'
+  | '/superadmin';
 
 export const APP_PATHS: Record<AppRoute, AppPath> = {
   home: '/',
@@ -37,13 +46,17 @@ export const APP_PATHS: Record<AppRoute, AppPath> = {
   privacy: '/privacy',
   terms: '/terms',
   cookies: '/cookies',
+  login: '/login',
+  signup: '/signup',
   edit: '/edit',
   listen: '/listen',
   settings: '/settings',
   profile: '/profile',
+  admin: '/admin',
+  superadmin: '/superadmin',
 };
 
-const PATH_SET = new Set<string>(Object.values(APP_PATHS));
+const PATH_SET = new Set<string>([...Object.values(APP_PATHS), '/signin']);
 
 const MARKETING: ReadonlySet<AppRoute> = new Set([
   'home',
@@ -63,7 +76,26 @@ export function isMarketingRoute(route: AppRoute): boolean {
 export function isWorkspaceRoute(
   route: AppRoute
 ): route is 'edit' | 'listen' | 'settings' | 'profile' {
-  return !isMarketingRoute(route);
+  return (
+    route === 'edit' ||
+    route === 'listen' ||
+    route === 'settings' ||
+    route === 'profile'
+  );
+}
+
+export function isStaffRoute(route: AppRoute): route is 'admin' | 'superadmin' {
+  return route === 'admin' || route === 'superadmin';
+}
+
+export function isAuthRoute(route: AppRoute): route is 'login' | 'signup' {
+  return route === 'login' || route === 'signup';
+}
+
+export function isProtectedRoute(
+  route: AppRoute
+): route is 'edit' | 'listen' | 'settings' | 'profile' | 'admin' | 'superadmin' {
+  return isWorkspaceRoute(route) || isStaffRoute(route);
 }
 
 export function pathToRoute(pathname: string): AppRoute {
@@ -76,10 +108,14 @@ export function pathToRoute(pathname: string): AppRoute {
   if (p === '/privacy') return 'privacy';
   if (p === '/terms') return 'terms';
   if (p === '/cookies') return 'cookies';
+  if (p === '/login' || p === '/signin') return 'login';
+  if (p === '/signup') return 'signup';
   if (p === '/edit') return 'edit';
   if (p === '/listen') return 'listen';
   if (p === '/settings') return 'settings';
   if (p === '/profile') return 'profile';
+  if (p === '/admin') return 'admin';
+  if (p === '/superadmin') return 'superadmin';
   return 'home';
 }
 
@@ -111,7 +147,11 @@ function scrollToHash(hash: string): void {
   });
 }
 
-export function navigateApp(path: AppPath, hash = ''): void {
+export function navigateApp(
+  path: AppPath,
+  hash = '',
+  replace = false
+): void {
   const next = appHref(path, hash);
   const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
   const currentHash = window.location.hash.replace(/^#/, '');
@@ -119,7 +159,8 @@ export function navigateApp(path: AppPath, hash = ''): void {
     if (hash) scrollToHash(hash);
     return;
   }
-  window.history.pushState({}, '', next);
+  if (replace) window.history.replaceState({}, '', next);
+  else window.history.pushState({}, '', next);
   window.dispatchEvent(new PopStateEvent('popstate'));
   if (hash) {
     window.requestAnimationFrame(() => scrollToHash(hash));
@@ -128,6 +169,10 @@ export function navigateApp(path: AppPath, hash = ''): void {
 
 export function ensureAppPath(): void {
   const p = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (p === '/signin') {
+    window.history.replaceState({}, '', APP_PATHS.login);
+    return;
+  }
   if (PATH_SET.has(p)) return;
   window.history.replaceState({}, '', APP_PATHS.home);
 }

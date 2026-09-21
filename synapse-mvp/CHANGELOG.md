@@ -4,6 +4,20 @@ All notable changes to the Synapse app (`synapse-mvp`) are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Supabase Auth with Google OAuth and email/password. Log in at `/login` or create an account at `/signup`. Edit, Listen, Settings, Profile, `/admin`, and `/superadmin` require sign-in. Username and display name are required.
+- Staff roles: verified owner email is Superadmin; other admins are stored in Postgres `roles` and can only be written by Superadmin. Separate Admin (`/admin`) and Superadmin (`/superadmin`) dashboards. Each role can open only its own dashboard, even when tools overlap. Row-level security enforces the permission boundary.
+- Minimize control on the bottom deck. The YouTube surface stays mounted so playback continues on Edit, Listen, Settings, and Profile.
+- Canvas multi-select (Shift-click or box-select) with copy, paste, and duplicate (Ctrl/Cmd+C, V, D).
+- Privacy Policy, Terms, FAQ, and Cookie pages for a global launch. Settings can download or delete the signed-in account. Consents and data-subject requests are stored with row-level security.
+
+### Fixed
+
+- Sign-out clears the on-screen account and profile so the next person does not see the previous user’s name or picture. Local playlists stay on this device.
+
 ## [0.3.0] — 2026-08-30
 
 Now-playing credits. Local feature branch `feature/now-playing-metadata`; not pushed unless requested.

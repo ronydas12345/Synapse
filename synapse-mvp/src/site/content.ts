@@ -93,7 +93,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Do I need an account?',
-    a: 'Not for the current app. Paths, themes, and profile data save in this browser. Cloud login is not wired yet.',
+    a: 'Yes for the workspace (Edit, Listen, Settings, Profile) and staff dashboards. The marketing pages stay public. Log in at `/login` or create an account at `/signup`. Username and display name are required. Paths still save in this browser. Admins land on `/admin`; the owner lands on `/superadmin`.',
   },
   {
     q: 'What can I play?',
@@ -105,6 +105,26 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Where is my data stored?',
-    a: 'On this device, in localStorage. Clearing site data removes paths, themes, and profile. Playing a track still uses YouTube.',
+    a: 'Playlists, themes, and profile extras stay in this browser’s localStorage. Sign-in identity, staff roles, support tickets, and published theme presets use Supabase. Clearing site data does not delete your Synapse account.',
+  },
+  {
+    q: 'Who can open Admin or Superadmin?',
+    a: 'The same login page is used for everyone. The verified owner email is Superadmin and opens `/superadmin` only. Promoted admins open `/admin` only. Overlapping tools (users, tickets, stats, moderation) exist on both dashboards as separate pages. Row-level security still blocks Superadmin-only writes from Admin accounts.',
+  },
+  {
+    q: 'How do I copy nodes on the canvas?',
+    a: 'Shift-click or drag a box on empty canvas to select several nodes. Ctrl+C / Cmd+C copies, Ctrl+V pastes, Ctrl+D duplicates. Middle- or right-drag pans while box-select is on.',
+  },
+  {
+    q: 'Can I hide the bottom player?',
+    a: 'Yes. Use the minimize control on the deck. The YouTube video stays loaded so playback does not restart when you expand it or switch Edit, Listen, Settings, or Profile.',
+  },
+  {
+    q: 'How do I download or delete my account?',
+    a: 'Settings → Privacy / Data. Download my data gives a JSON copy of your cloud profile, tickets, and consents. Delete my account removes the auth user and related rows. Erase local Synapse data only clears this browser.',
+  },
+  {
+    q: 'Where is personal data processed?',
+    a: 'Account data is in Supabase (AWS us-west-2, United States). The static app is hosted on Vercel. Playlists stay in this browser until cloud sync ships. Details are on the Privacy Policy page.',
   },
 ] as const;
