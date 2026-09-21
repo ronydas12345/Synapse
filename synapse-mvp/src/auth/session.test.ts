@@ -12,6 +12,7 @@ function user(partial: Partial<SessionUser> = {}): SessionUser {
   return {
     uid: 'uid-1',
     email: 'dasrony231@gmail.com',
+    username: 'rony',
     displayName: 'Rony',
     photoURL: null,
     emailVerified: true,

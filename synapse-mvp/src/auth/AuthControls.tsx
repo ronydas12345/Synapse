@@ -15,7 +15,8 @@ export default function AuthControls({
   const username = useProfileStore((s) => s.profile.username);
   const displayName = useProfileStore((s) => s.profile.displayName);
   const localAvatar = useProfileStore((s) => s.profile.avatarDataUrl);
-  const photo = localAvatar || user?.photoURL;
+  const avatarUrl = useProfileStore((s) => s.profile.avatarUrl);
+  const photo = localAvatar || avatarUrl;
   const complete = isIdentityComplete(username, displayName);
 
   const linkClass = compact ? 'synapse-auth-chip' : 'synapse-mkt-text-link';

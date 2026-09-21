@@ -1,11 +1,26 @@
 import { supabase, throwIfError } from '../supabase/client';
-import { isIdentityComplete, type AccountIdentity } from '../auth/identity';
+import {
+  identityFromFields,
+  isIdentityComplete,
+  type AccountIdentity,
+} from '../auth/identity';
 import type { SessionUser } from '../auth/session';
 import type { AccountStatus } from './model';
-import { httpsPhoto } from './model';
 import { listPublishedThemes } from './api';
 import { parseTheme } from '../theme/parseTheme';
 import { useThemeStore } from '../theme/themeStore';
+
+export async function readOwnIdentity(
+  uid: string
+): Promise<AccountIdentity | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('username, display_name')
+    .eq('uid', uid)
+    .maybeSingle();
+  if (error || !data) return null;
+  return identityFromFields(String(data.username || ''), String(data.display_name || ''));
+}
 
 export async function upsertOwnUser(
   user: SessionUser,
@@ -14,7 +29,6 @@ export async function upsertOwnUser(
   if (!user.email || !isIdentityComplete(identity.username, identity.displayName)) {
     return 'active';
   }
-  const photoURL = httpsPhoto(user.photoURL);
   const { data, error } = await supabase
     .from('profiles')
     .select('status')
@@ -27,7 +41,7 @@ export async function upsertOwnUser(
       email: user.email.toLowerCase(),
       username: identity.username,
       display_name: identity.displayName,
-      photo_url: photoURL,
+      photo_url: '',
       status: 'active',
       email_verified: user.emailVerified,
     });
@@ -40,7 +54,6 @@ export async function upsertOwnUser(
     .update({
       username: identity.username,
       display_name: identity.displayName,
-      photo_url: photoURL,
       email_verified: user.emailVerified,
       last_seen_at: new Date().toISOString(),
     })

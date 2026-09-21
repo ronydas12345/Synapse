@@ -32,6 +32,8 @@ export interface UserProfile {
   displayName: string;
   visibility: ProfileVisibility;
   avatarDataUrl: string | null;
+  avatarUrl: string | null;
+  avatarStatus: 'none' | 'pending' | 'approved' | 'rejected';
   location: string;
   locationLat: number | null;
   locationLon: number | null;
@@ -246,6 +248,8 @@ export function emptyProfile(): UserProfile {
     displayName: '',
     visibility: 'private',
     avatarDataUrl: null,
+    avatarUrl: null,
+    avatarStatus: 'none',
     location: '',
     locationLat: null,
     locationLon: null,

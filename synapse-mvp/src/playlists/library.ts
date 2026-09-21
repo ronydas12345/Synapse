@@ -1,4 +1,5 @@
 import type { Edge, Node } from '@xyflow/react';
+import { scheduleWorkspacePersist } from '../cloud/persistGate';
 import { normalizeWorkspaceGraph } from '../randomizerDrop';
 
 export const LEGACY_GRAPH_KEY = 'synapse_graph_state';
@@ -72,67 +73,59 @@ function normalizePath(raw: Partial<StoredMusicPath> | undefined, fallbackName: 
   };
 }
 
-export function loadLibrary(): PathLibrary {
+export function emptyLibrary(): PathLibrary {
+  const first = normalizePath({ name: 'My playlist' }, 'My playlist');
+  return { schemaVersion: 1, activeId: first.id, paths: [first] };
+}
+
+export function parseLibrary(raw: unknown): PathLibrary {
+  if (!raw || typeof raw !== 'object') return emptyLibrary();
+  const parsed = raw as Partial<PathLibrary>;
+  const paths = Array.isArray(parsed.paths)
+    ? parsed.paths.map((p, i) => normalizePath(p, `Playlist ${i + 1}`))
+    : [];
+  if (paths.length === 0) return emptyLibrary();
+  const activeId =
+    typeof parsed.activeId === 'string' && paths.some((p) => p.id === parsed.activeId)
+      ? parsed.activeId
+      : paths[0].id;
+  return { schemaVersion: 1, activeId, paths };
+}
+
+export function libraryHasUserContent(lib: PathLibrary): boolean {
+  return lib.paths.some((path) => path.nodes.length > 1 || path.edges.length > 0);
+}
+
+export function readLegacyLibrary(): PathLibrary | null {
   try {
     const raw = localStorage.getItem(LIBRARY_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw) as Partial<PathLibrary>;
-      const paths = Array.isArray(parsed.paths)
-        ? parsed.paths.map((p, i) => normalizePath(p, `Playlist ${i + 1}`))
-        : [];
-      if (paths.length > 0) {
-        const activeId =
-          typeof parsed.activeId === 'string' && paths.some((p) => p.id === parsed.activeId)
-            ? parsed.activeId
-            : paths[0].id;
-        return { schemaVersion: 1, activeId, paths };
-      }
+      const parsed = parseLibrary(JSON.parse(raw));
+      if (libraryHasUserContent(parsed) || parsed.paths.length > 1) return parsed;
     }
   } catch {
-    // ignore
+    /* ignore */
   }
-
-  let legacy = emptyGraph();
   try {
     const stored = localStorage.getItem(LEGACY_GRAPH_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored) as { nodes?: Node[]; edges?: Edge[] };
-      legacy = normalizeWorkspaceGraph<Node, Edge>(
-        parsed.nodes?.length ? parsed.nodes : emptyGraph().nodes,
-        parsed.edges || []
-      );
+    if (!stored) return null;
+    const parsed = JSON.parse(stored) as { nodes?: Node[]; edges?: Edge[] };
+    if (!parsed.nodes?.length && !parsed.edges?.length) return null;
+    const path = normalizePath(
+      { name: 'My playlist', nodes: parsed.nodes, edges: parsed.edges },
+      'My playlist'
+    );
+    if (!libraryHasUserContent({ schemaVersion: 1, activeId: path.id, paths: [path] })) {
+      return null;
     }
+    return { schemaVersion: 1, activeId: path.id, paths: [path] };
   } catch {
-    // ignore
+    return null;
   }
-
-  const first = normalizePath(
-    {
-      id: makePathId(),
-      name: 'My playlist',
-      nodes: legacy.nodes,
-      edges: legacy.edges,
-    },
-    'My playlist'
-  );
-  const lib: PathLibrary = { schemaVersion: 1, activeId: first.id, paths: [first] };
-  persistLibrary(lib);
-  return lib;
 }
 
-export function persistLibrary(lib: PathLibrary): void {
-  try {
-    localStorage.setItem(LIBRARY_KEY, JSON.stringify(lib));
-    const active = lib.paths.find((p) => p.id === lib.activeId) || lib.paths[0];
-    if (active) {
-      localStorage.setItem(
-        LEGACY_GRAPH_KEY,
-        JSON.stringify({ nodes: active.nodes, edges: active.edges })
-      );
-    }
-  } catch (e) {
-    console.error('Failed to save playlists:', e);
-  }
+export function persistLibrary(_lib: PathLibrary): void {
+  scheduleWorkspacePersist();
 }
 
 export function summaries(lib: PathLibrary): PathSummary[] {

@@ -64,10 +64,10 @@ function MarketingPage({ route }: { route: AppRoute }) {
 function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'profile' }) {
   const { isPlaying, setIsPlaying, playbackQueue, requestSkip } = usePathStore();
   const avatar = useProfileStore((s) => s.profile.avatarDataUrl);
-  const authPhoto = useAuthStore((s) => s.user?.photoURL);
+  const avatarUrl = useProfileStore((s) => s.profile.avatarUrl);
   const username = useProfileStore((s) => s.profile.username);
   const role = useAuthStore((s) => s.role);
-  const photo = avatar || authPhoto;
+  const photo = avatar || avatarUrl;
   const listen = route === 'listen';
   const settings = route === 'settings';
   const profile = route === 'profile';

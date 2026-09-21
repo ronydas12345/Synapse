@@ -259,6 +259,22 @@ body:has(.synapse-mkt),
   max-width: none;
 }
 
+.synapse-auth-alt {
+  margin: 0.45rem 0 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.synapse-auth-alt a {
+  color: var(--accent);
+  font-weight: 650;
+  text-decoration: underline;
+}
+
+.synapse-auth-alt a:hover {
+  color: var(--text);
+}
+
 .synapse-auth-screen .synapse-auth-card,
 .synapse-auth-screen .synapse-auth-test {
   width: 100%;

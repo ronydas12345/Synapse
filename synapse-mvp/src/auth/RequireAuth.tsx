@@ -1,6 +1,10 @@
 import { APP_PATHS, isAuthRoute, isProtectedRoute, navigateApp } from '../app/routes';
 import { rememberReturnPath } from './returnPath';
 import { goToAppAfterAuth } from './goToAppAfterAuth';
+import {
+  incompleteUserRedirect,
+  shouldDeferIncompleteRedirect,
+} from './authRedirect';
 import { useAuthAccess } from './useAuthAccess';
 import { useAppRoute } from '../app/AppLink';
 import AuthGate from './AuthGate';
@@ -11,7 +15,7 @@ import { canOpenAdmin, canOpenSuperadmin } from '../admin/permissions';
 
 export default function RequireAuth({ children }: { children: ReactNode }) {
   const route = useAppRoute();
-  const { status, user, complete } = useAuthAccess();
+  const { status, user, complete, workspaceStatus } = useAuthAccess();
   const role = useAuthStore((s) => s.role);
   const roleStatus = useAuthStore((s) => s.roleStatus);
   const accountStatus = useAuthStore((s) => s.accountStatus);
@@ -25,10 +29,10 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
       }
       return;
     }
+    if (shouldDeferIncompleteRedirect(workspaceStatus)) return;
     if (!complete) {
-      if (isProtectedRoute(route) || route === 'login') {
-        navigateApp(APP_PATHS.signup, '', true);
-      }
+      const next = incompleteUserRedirect(route);
+      if (next) navigateApp(next, '', true);
       return;
     }
     if (accountStatus === 'suspended') return;
@@ -46,9 +50,25 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
       return;
     }
     if (isAuthRoute(route)) goToAppAfterAuth();
-  }, [status, user, complete, route, role, roleStatus, accountStatus]);
+  }, [
+    status,
+    user,
+    complete,
+    workspaceStatus,
+    route,
+    role,
+    roleStatus,
+    accountStatus,
+  ]);
 
-  if (isProtectedRoute(route) && (status !== 'ready' || !user || !complete)) {
+  if (
+    isProtectedRoute(route) &&
+    (status !== 'ready' || !user || !complete || workspaceStatus !== 'ready')
+  ) {
+    return <AuthGate />;
+  }
+
+  if (isAuthRoute(route) && user && workspaceStatus !== 'ready') {
     return <AuthGate />;
   }
 

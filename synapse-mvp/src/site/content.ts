@@ -93,7 +93,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Do I need an account?',
-    a: 'Yes for the workspace (Edit, Listen, Settings, Profile) and staff dashboards. The marketing pages stay public. Log in at `/login` or create an account at `/signup`. Username and display name are required. Paths still save in this browser. Admins land on `/admin`; the owner lands on `/superadmin`.',
+    a: 'Yes for the workspace (Edit, Listen, Settings, Profile) and staff dashboards. The marketing pages stay public. Log in at `/login` or create an account at `/signup`. Username and display name are required. Your paths, themes, settings, and profile save to your Supabase account. Admins land on `/admin`; the owner lands on `/superadmin`.',
   },
   {
     q: 'What can I play?',
@@ -105,7 +105,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Where is my data stored?',
-    a: 'Playlists, themes, and profile extras stay in this browser’s localStorage. Sign-in identity, staff roles, support tickets, and published theme presets use Supabase. Clearing site data does not delete your Synapse account.',
+    a: 'Your Music Paths, themes, settings, profile extras, and tutorial progress save to your Supabase account (US West) with row-level security so only you can read them. Sign-in identity, staff roles, support tickets, profile pictures awaiting review, and published theme presets also use Supabase. A cookie-notice flag and an optional song-credits cache can remain in this browser. Clearing site data does not delete your Synapse account.',
   },
   {
     q: 'Who can open Admin or Superadmin?',
@@ -121,7 +121,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'How do I download or delete my account?',
-    a: 'Settings → Privacy / Data. Download my data gives a JSON copy of your cloud profile, tickets, and consents. Delete my account removes the auth user and related rows. Erase local Synapse data only clears this browser.',
+    a: 'Settings → Privacy / Data. Download my data gives a JSON copy of your cloud profile, workspace, tickets, and consents. Delete my account removes the auth user and related rows. Profile pictures go through staff review before they appear on the public profile.',
   },
   {
     q: 'Where is personal data processed?',

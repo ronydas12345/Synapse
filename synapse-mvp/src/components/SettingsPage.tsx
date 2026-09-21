@@ -613,9 +613,10 @@ function PrivacySection() {
     <section id="settings-privacy" className="synapse-settings-section" data-tutorial="settings-privacy">
       <h2>Privacy / Data</h2>
       <p className="synapse-settings-lead">
-        Paths, themes, and most profile extras stay in localStorage. Signed-in
-        account rows live in Supabase (US West). YouTube may set cookies when a
-        track plays. Read the <AppLink to="privacy">Privacy Policy</AppLink>.
+        Paths, themes, settings, and profile extras save to your signed-in
+        Supabase account. A cookie-notice choice and an optional song-credits
+        cache can remain in this browser. Hosting is AWS US West. Read the{' '}
+        <AppLink to="privacy">Privacy Policy</AppLink>.
       </p>
       <ul className="synapse-settings-key-list">
         {keys.map((item) => (
@@ -662,10 +663,9 @@ function PrivacySection() {
       </div>
       <div className="synapse-settings-danger">
         <p className="synapse-settings-lead">
-          Erase all Synapse data on this browser, including playlists, themes,
-          profile, settings, and tutorial progress. Type <code>erase</code> to
-          enable the button. The page reloads afterward. This does not delete
-          the cloud account.
+          Erase leftover Synapse keys in this browser (cookie notice, metadata
+          cache). Your cloud playlists and profile are not deleted. Type{' '}
+          <code>erase</code> to enable the button. The page reloads afterward.
         </p>
         <input
           className="synapse-settings-input"
@@ -689,9 +689,8 @@ function PrivacySection() {
       {user ? (
         <div className="synapse-settings-danger">
           <p className="synapse-settings-lead">
-            Delete the signed-in account and its cloud profile, tickets, and
-            roles. Local playlists are also wiped. Type <code>delete</code> to
-            confirm.
+            Delete the signed-in account, its workspace, profile pictures, tickets,
+            and roles. Type <code>delete</code> to confirm.
           </p>
           <input
             className="synapse-settings-input"

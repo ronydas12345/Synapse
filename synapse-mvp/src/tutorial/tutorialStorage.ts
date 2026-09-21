@@ -1,4 +1,5 @@
 import type { TutorialProgress } from './tutorialTypes';
+import { scheduleWorkspacePersist } from '../cloud/persistGate';
 
 export const TUTORIAL_STORAGE_KEY = 'synapse_tutorial_progress';
 export const TUTORIAL_SESSION_KEY = 'synapse_tutorial_session';
@@ -34,22 +35,21 @@ export function parseProgress(raw: unknown): TutorialProgress {
 }
 
 export function loadProgress(): TutorialProgress {
-  if (typeof localStorage === 'undefined') return emptyProgress();
-  try {
-    const raw = localStorage.getItem(TUTORIAL_STORAGE_KEY);
-    if (!raw) return emptyProgress();
-    return parseProgress(JSON.parse(raw));
-  } catch {
-    return emptyProgress();
-  }
+  return emptyProgress();
 }
 
-export function saveProgress(progress: TutorialProgress): void {
-  if (typeof localStorage === 'undefined') return;
+export function saveProgress(_progress: TutorialProgress): void {
+  scheduleWorkspacePersist();
+}
+
+export function readLegacyProgress(): TutorialProgress | null {
+  if (typeof localStorage === 'undefined') return null;
   try {
-    localStorage.setItem(TUTORIAL_STORAGE_KEY, JSON.stringify(progress));
+    const raw = localStorage.getItem(TUTORIAL_STORAGE_KEY);
+    if (!raw) return null;
+    return parseProgress(JSON.parse(raw));
   } catch {
-    /* quota / private mode */
+    return null;
   }
 }
 

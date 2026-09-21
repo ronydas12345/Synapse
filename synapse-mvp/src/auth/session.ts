@@ -5,6 +5,7 @@ export const SUPERADMIN_EMAILS = ['dasrony231@gmail.com'] as const;
 export interface SessionUser {
   uid: string;
   email: string | null;
+  username: string | null;
   displayName: string | null;
   photoURL: string | null;
   emailVerified: boolean;

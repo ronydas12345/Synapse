@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { scheduleWorkspacePersist } from '../cloud/persistGate';
 import { applyTheme } from './applyTheme';
 import { emptyTheme, parseTheme, parseThemeJson, themeToJson } from './parseTheme';
 import { BUILTIN_THEMES, DEFAULT_THEME_ID, getBuiltinTheme } from './presets';
@@ -37,36 +38,40 @@ interface ThemeState {
 }
 
 function persist(activeId: string, customThemes: SynapseTheme[]) {
-  const payload: PersistedThemeState = {
-    schemaVersion: 1,
-    activeId,
-    customThemes,
-  };
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  } catch {
-    // quota / private mode
-  }
+  void activeId;
+  void customThemes;
+  scheduleWorkspacePersist();
 }
 
 function load(): Pick<ThemeState, 'activeId' | 'customThemes'> {
+  return { activeId: DEFAULT_THEME_ID, customThemes: [] };
+}
+
+export function parseThemeState(raw: unknown): Pick<ThemeState, 'activeId' | 'customThemes'> {
+  if (!raw || typeof raw !== 'object') {
+    return { activeId: DEFAULT_THEME_ID, customThemes: [] };
+  }
+  const parsed = raw as PersistedThemeState;
+  const customThemes = Array.isArray(parsed.customThemes)
+    ? parsed.customThemes
+        .map((t) => parseTheme(t))
+        .filter((t): t is SynapseTheme => t != null)
+    : [];
+  const activeId =
+    typeof parsed.activeId === 'string' &&
+    (getBuiltinTheme(parsed.activeId) || customThemes.some((t) => t.id === parsed.activeId))
+      ? parsed.activeId
+      : DEFAULT_THEME_ID;
+  return { activeId, customThemes };
+}
+
+export function readLegacyTheme(): Pick<ThemeState, 'activeId' | 'customThemes'> | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { activeId: DEFAULT_THEME_ID, customThemes: [] };
-    const parsed = JSON.parse(raw) as PersistedThemeState;
-    const customThemes = Array.isArray(parsed.customThemes)
-      ? parsed.customThemes
-          .map((t) => parseTheme(t))
-          .filter((t): t is SynapseTheme => t != null)
-      : [];
-    const activeId =
-      typeof parsed.activeId === 'string' &&
-      (getBuiltinTheme(parsed.activeId) || customThemes.some((t) => t.id === parsed.activeId))
-        ? parsed.activeId
-        : DEFAULT_THEME_ID;
-    return { activeId, customThemes };
+    if (!raw) return null;
+    return parseThemeState(JSON.parse(raw));
   } catch {
-    return { activeId: DEFAULT_THEME_ID, customThemes: [] };
+    return null;
   }
 }
 
@@ -251,6 +256,21 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     set({ customThemes: next, activeId: nextActive });
   },
 }));
+
+export function snapshotThemeState(): PersistedThemeState {
+  const { activeId, customThemes } = useThemeStore.getState();
+  return { schemaVersion: 1, activeId, customThemes };
+}
+
+export function replaceThemeState(raw: unknown): void {
+  const next = parseThemeState(raw);
+  applyTheme(resolveTheme(next.activeId, next.customThemes));
+  useThemeStore.setState({
+    activeId: next.activeId,
+    customThemes: next.customThemes,
+    draft: null,
+  });
+}
 
 export function filterThemes(
   themes: SynapseTheme[],

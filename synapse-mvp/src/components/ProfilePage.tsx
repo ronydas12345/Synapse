@@ -33,6 +33,7 @@ import {
 import { cropAndFitAvatar, clampPan, coverScale, cropFromViewport } from '../profile/avatarImage';
 import AuthPanel from '../auth/AuthPanel';
 import { useAuthStore } from '../auth/authStore';
+import { uploadAvatarFromDataUrl, removeOwnAvatar } from '../cloud/avatar';
 import { usePathStore } from '../store';
 
 type DropEdge = 'before' | 'after';
@@ -806,9 +807,22 @@ export default function ProfilePage() {
     profile.hiddenSections.includes(id)
   );
 
-  const handleAvatar = (dataUrl: string) => {
+  const handleAvatar = async (dataUrl: string) => {
     setAvatarError('');
     setAvatarDataUrl(dataUrl);
+    try {
+      const url = await uploadAvatarFromDataUrl(dataUrl);
+      useProfileStore.getState().patch({
+        avatarDataUrl: null,
+        avatarUrl: url,
+        avatarStatus: 'pending',
+      });
+      setAvatarOpen(false);
+    } catch (err) {
+      setAvatarError(
+        err instanceof Error ? err.message : 'Could not send that picture for review.'
+      );
+    }
   };
 
   const addFavoriteSong = async () => {
@@ -835,7 +849,7 @@ export default function ProfilePage() {
     }
   };
 
-  const photo = profile.avatarDataUrl || authUser?.photoURL;
+  const photo = profile.avatarDataUrl || profile.avatarUrl;
   const publicPaths = pathSummaries.filter((p) => p.visibility === 'public');
   const shownPaths =
     profile.visibility === 'public' && !editing ? publicPaths : pathSummaries;
@@ -876,6 +890,9 @@ export default function ProfilePage() {
             </h1>
             <p className="synapse-profile-handle">
               {profile.username ? `@${profile.username}` : 'Choose a username'}
+              {profile.avatarStatus === 'pending'
+                ? ' · picture in review'
+                : ''}
             </p>
           </div>
         </div>
@@ -1236,8 +1253,14 @@ export default function ProfilePage() {
         <AvatarModal
           error={avatarError}
           onClose={() => setAvatarOpen(false)}
-          onApply={handleAvatar}
-          onRemove={() => setAvatarDataUrl(null)}
+          onApply={(dataUrl) => void handleAvatar(dataUrl)}
+          onRemove={() => {
+            void removeOwnAvatar().catch((err) =>
+              setAvatarError(
+                err instanceof Error ? err.message : 'Could not remove that picture.'
+              )
+            );
+          }}
         />
       ) : null}
     </div>

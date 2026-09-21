@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { scheduleWorkspacePersist } from '../cloud/persistGate';
 import { applyMotionPreference } from './motion';
 import { defaultSettings, parseSettings, parseSettingsJson, settingsToJson } from './parse';
 import { SETTINGS_STORAGE_KEY, type AppSettings } from './types';
@@ -15,23 +16,33 @@ interface AppSettingsStore extends AppSettings {
   reset: () => void;
 }
 
-function persist(settings: AppSettings): void {
-  try {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, settingsToJson(settings));
-  } catch {
-    /* quota / private mode */
-  }
+function persist(_settings: AppSettings): void {
+  scheduleWorkspacePersist();
 }
 
 function load(): AppSettings {
-  if (typeof localStorage === 'undefined') return defaultSettings();
+  return defaultSettings();
+}
+
+export function readLegacySettings(): AppSettings | null {
+  if (typeof localStorage === 'undefined') return null;
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (!raw) return defaultSettings();
+    if (!raw) return null;
     return parseSettings(JSON.parse(raw));
   } catch {
-    return defaultSettings();
+    return null;
   }
+}
+
+export function snapshotSettings(): AppSettings {
+  return pickSettings(useAppSettings.getState());
+}
+
+export function replaceSettings(raw: unknown): void {
+  const next = parseSettings(raw);
+  applyMotionPreference(next.general.motion);
+  useAppSettings.setState(next);
 }
 
 function pickSettings(state: AppSettingsStore): AppSettings {

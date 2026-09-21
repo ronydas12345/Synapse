@@ -1,5 +1,6 @@
 import AuthPanel from '../auth/AuthPanel';
 import { TEST_ACCOUNT } from '../auth/identity';
+import AuthSwitchLink from '../auth/AuthSwitchLink';
 
 export default function LoginPage() {
   return (
@@ -8,6 +9,9 @@ export default function LoginPage() {
       <p className="synapse-mkt-lead">
         Use Google or email. After sign-in, users go to the workspace; admins
         and the owner go to their dashboards. Marketing pages stay public.
+      </p>
+      <p className="synapse-auth-alt">
+        Need an account? <AuthSwitchLink to="signup">Create account</AuthSwitchLink>
       </p>
       <aside className="synapse-auth-test">
         <p className="synapse-auth-test-label">Test user</p>

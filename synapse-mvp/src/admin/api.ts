@@ -1,5 +1,6 @@
 import { supabase, throwIfError } from '../supabase/client';
 import { supabaseAnonKey, supabaseUrl } from '../supabase/config';
+import { avatarPathFromPublicUrl } from '../cloud/avatar';
 import { useAuthStore } from '../auth/authStore';
 import { identityFromFields } from '../auth/identity';
 import { asDate } from './dates';
@@ -505,6 +506,12 @@ export async function reviewModeration(
 ): Promise<void> {
   const user = useAuthStore.getState().user;
   if (!user) throw new Error('Sign in first.');
+  const { data: item, error: readError } = await supabase
+    .from('moderation')
+    .select('type, target_uid, image_url')
+    .eq('id', id)
+    .maybeSingle();
+  throwIfError(readError);
   const next: Record<string, unknown> = {
     status,
     note: note.slice(0, 500),
@@ -513,19 +520,28 @@ export async function reviewModeration(
   if (imageUrl != null) next.image_url = httpsPhoto(imageUrl);
   const { error } = await supabase.from('moderation').update(next).eq('id', id);
   throwIfError(error);
-  if (status === 'removed' && imageUrl === '') {
-    const { data: item } = await supabase
-      .from('moderation')
-      .select('type, target_uid')
-      .eq('id', id)
-      .maybeSingle();
-    const targetUid = str(item?.target_uid);
-    if (item?.type === 'avatar' && targetUid) {
+  const targetUid = str(item?.target_uid);
+  const currentUrl = httpsPhoto(imageUrl ?? item?.image_url);
+  if (item?.type === 'avatar' && targetUid) {
+    if (status === 'approved' && currentUrl) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ photo_url: currentUrl })
+        .eq('uid', targetUid);
+      throwIfError(profileError);
+    }
+    if (status === 'removed') {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ photo_url: '' })
         .eq('uid', targetUid);
       throwIfError(profileError);
+    }
+    if ((status === 'removed' || status === 'rejected') && currentUrl) {
+      const path = avatarPathFromPublicUrl(currentUrl);
+      if (path) {
+        await supabase.storage.from('avatars').remove([path]);
+      }
     }
   }
   await writeAudit('moderation.review', 'moderation', id, `Marked ${id} as ${status}`);

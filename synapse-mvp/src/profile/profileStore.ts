@@ -1,5 +1,6 @@
 import { extractYouTubeId } from '../playback';
 import { create } from 'zustand';
+import { scheduleWorkspacePersist } from '../cloud/persistGate';
 import { localDayKey } from './listenStats';
 import {
   OPTIONAL_SECTIONS,
@@ -13,7 +14,6 @@ import {
 
 export const PROFILE_STORAGE_KEY = 'synapse_profile_state';
 export const PROFILE_ACCOUNTS_KEY = 'synapse_profile_accounts';
-const STORAGE_KEY = PROFILE_STORAGE_KEY;
 
 export function normalizeUsername(raw: string): string {
   return raw.trim().replace(/^@+/, '').toLowerCase();
@@ -135,6 +135,16 @@ function sanitizeProfile(raw: unknown): UserProfile {
       typeof p.avatarDataUrl === 'string' && p.avatarDataUrl.startsWith('data:image/')
         ? p.avatarDataUrl
         : null,
+    avatarUrl:
+      typeof p.avatarUrl === 'string' && p.avatarUrl.startsWith('https://')
+        ? p.avatarUrl.slice(0, 2048)
+        : null,
+    avatarStatus:
+      p.avatarStatus === 'pending' ||
+      p.avatarStatus === 'approved' ||
+      p.avatarStatus === 'rejected'
+        ? p.avatarStatus
+        : 'none',
     location: String(p.location || '').slice(0, 120),
     locationLat:
       p.locationLat != null && Number.isFinite(Number(p.locationLat))
@@ -170,12 +180,16 @@ function cryptoRandomId(): string {
   }
 }
 
-function persist(profile: UserProfile) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-  } catch {
-    // quota / private mode
-  }
+export function profilePhotoSrc(profile: UserProfile): string {
+  return profile.avatarDataUrl || profile.avatarUrl || '';
+}
+
+export function profileForCloud(profile: UserProfile): UserProfile {
+  return sanitizeProfile({ ...profile, avatarDataUrl: null });
+}
+
+function persist(_profile: UserProfile) {
+  scheduleWorkspacePersist();
 }
 
 function readStash(): Record<string, UserProfile> {
@@ -200,26 +214,12 @@ export function readStashedProfile(uid: string): UserProfile | null {
   return row ?? null;
 }
 
-export function writeStashedProfile(uid: string, profile: UserProfile): void {
-  if (!uid) return;
-  try {
-    localStorage.setItem(
-      PROFILE_ACCOUNTS_KEY,
-      JSON.stringify({ ...readStash(), [uid]: sanitizeProfile(profile) })
-    );
-  } catch {
-    /* quota / private mode */
-  }
+export function writeStashedProfile(_uid: string, _profile: UserProfile): void {
+  /* Profiles persist in Supabase. Kept so older tests still import this helper. */
 }
 
 function load(): UserProfile {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return emptyProfile();
-    return sanitizeProfile(JSON.parse(raw));
-  } catch {
-    return emptyProfile();
-  }
+  return emptyProfile();
 }
 
 interface ProfileStore {
@@ -253,15 +253,15 @@ interface ProfileStore {
   recordListen: () => void;
   reset: () => void;
   adoptAccount: (uid: string, knownUsername?: string) => void;
+  hydrateAccount: (uid: string, profile: UserProfile) => void;
   clearAccount: (uid?: string) => void;
 }
 
 function commit(
-  state: { accountUid: string | null },
+  _state: { accountUid: string | null },
   profile: UserProfile
 ): UserProfile {
   persist(profile);
-  if (state.accountUid) writeStashedProfile(state.accountUid, profile);
   return profile;
 }
 
@@ -427,26 +427,23 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
   adoptAccount: (uid, knownUsername) => {
     const state = get();
     if (!uid || state.accountUid === uid) return;
-    if (state.accountUid) writeStashedProfile(state.accountUid, state.profile);
-    const stored = readStashedProfile(uid);
-    const migrated =
-      !stored &&
-      Boolean(knownUsername) &&
-      state.profile.username === knownUsername
+    const next =
+      knownUsername && state.profile.username === knownUsername
         ? state.profile
-        : null;
-    const next = stored ?? migrated ?? emptyProfile();
-    persist(next);
-    writeStashedProfile(uid, next);
-    set({ accountUid: uid, profile: next });
+        : emptyProfile();
+    set({
+      accountUid: uid,
+      profile: {
+        ...next,
+        username: knownUsername || next.username,
+      },
+    });
   },
-  clearAccount: (uid) => {
-    const state = get();
-    const id = state.accountUid || uid;
-    if (id) writeStashedProfile(id, state.profile);
-    const empty = emptyProfile();
-    persist(empty);
-    set({ accountUid: null, profile: empty });
+  hydrateAccount: (uid: string, profile: UserProfile) => {
+    set({ accountUid: uid, profile: sanitizeProfile(profile) });
+  },
+  clearAccount: () => {
+    set({ accountUid: null, profile: emptyProfile() });
   },
 }));
 

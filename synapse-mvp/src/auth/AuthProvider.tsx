@@ -2,8 +2,8 @@ import { useEffect, type ReactNode } from 'react';
 import { applyIdentityToProfile, subscribeAuth } from './client';
 import { useAuthStore } from './authStore';
 import {
+  firstCompleteIdentity,
   identityForEmail,
-  isIdentityComplete,
   readAccountCache,
   writeAccountCache,
   type AccountIdentity,
@@ -12,36 +12,36 @@ import { useProfileStore } from '../profile/profileStore';
 import type { SessionUser } from './session';
 import {
   hydratePublishedThemes,
+  readOwnIdentity,
   readStaffAdmin,
   subscribeAccountStatus,
   subscribeStaffAdmin,
   upsertOwnUser,
 } from '../admin/syncAccount';
+import { hydrateUserWorkspace, resetUserWorkspace } from '../cloud/workspace';
 import { recordConsents } from '../admin/privacy';
 
 function restoreIdentity(user: SessionUser): AccountIdentity | null {
-  const cached = readAccountCache(user.uid);
-  const fromEmail = identityForEmail(user.email);
-  const identity: AccountIdentity | null = cached || fromEmail;
-  if (identity) {
-    writeAccountCache(user.uid, identity);
-    applyIdentityToProfile(identity);
-    return identity;
-  }
-  const { profile, setDisplayName } = useProfileStore.getState();
-  if (!profile.displayName.trim() && user.displayName) {
-    setDisplayName(user.displayName);
-  }
-  if (isIdentityComplete(profile.username, profile.displayName)) {
-    return { username: profile.username, displayName: profile.displayName };
-  }
-  return null;
+  return firstCompleteIdentity(
+    readAccountCache(user.uid),
+    identityForEmail(user.email),
+    { username: user.username, displayName: user.displayName }
+  );
 }
 
 function currentIdentity(): AccountIdentity | null {
   const profile = useProfileStore.getState().profile;
-  if (!isIdentityComplete(profile.username, profile.displayName)) return null;
-  return { username: profile.username, displayName: profile.displayName };
+  return firstCompleteIdentity(profile);
+}
+
+function adoptIdentity(uid: string, identity: AccountIdentity | null): void {
+  if (identity) {
+    writeAccountCache(uid, identity);
+    useProfileStore.getState().adoptAccount(uid, identity.username);
+    applyIdentityToProfile(identity);
+    return;
+  }
+  useProfileStore.getState().adoptAccount(uid);
 }
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
@@ -52,39 +52,28 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     let stopRole: (() => void) | undefined;
     let stopStatus: (() => void) | undefined;
     let cancelled = false;
+    let ticket = 0;
 
-    const stopAuth = subscribeAuth((user) => {
+    const stopAuth = subscribeAuth((user, event) => {
+      const prevUid = useAuthStore.getState().user?.uid;
+      const sameUser = Boolean(user && prevUid === user.uid);
+      setFromUser(user);
+      if (sameUser && event !== 'INITIAL_SESSION') return;
+
       stopRole?.();
       stopStatus?.();
       stopRole = undefined;
       stopStatus = undefined;
-      setFromUser(user);
+      const my = ++ticket;
+
       if (!user) {
         useProfileStore.getState().clearAccount();
         setStaffState(false, 'active');
+        void resetUserWorkspace();
         return;
       }
 
-      const cached = readAccountCache(user.uid);
-      useProfileStore.getState().adoptAccount(user.uid, cached?.username);
-      const identity = restoreIdentity(user) || currentIdentity();
-
-      void (async () => {
-        let accountStatus: 'active' | 'suspended' = 'active';
-        try {
-          if (identity) accountStatus = await upsertOwnUser(user, identity);
-          try {
-            await recordConsents('login');
-          } catch {
-            /* consent table may not be migrated yet */
-          }
-          const staffAdmin = await readStaffAdmin(user.uid);
-          if (!cancelled) setStaffState(staffAdmin, accountStatus);
-          void hydratePublishedThemes();
-        } catch {
-          if (!cancelled) setStaffState(false, accountStatus);
-        }
-      })();
+      adoptIdentity(user.uid, restoreIdentity(user) || currentIdentity());
 
       stopRole = subscribeStaffAdmin(user.uid, (activeAdmin) => {
         setStaffState(activeAdmin, useAuthStore.getState().accountStatus);
@@ -92,6 +81,31 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       stopStatus = subscribeAccountStatus(user.uid, (status) => {
         setStaffState(useAuthStore.getState().role === 'admin', status);
       });
+
+      void (async () => {
+        let accountStatus: 'active' | 'suspended' = 'active';
+        try {
+          const fromDb = await readOwnIdentity(user.uid);
+          if (cancelled || my !== ticket) return;
+          const identity =
+            fromDb || restoreIdentity(user) || currentIdentity();
+          adoptIdentity(user.uid, identity);
+          if (identity) accountStatus = await upsertOwnUser(user, identity);
+          try {
+            await recordConsents('login');
+          } catch {
+            /* consent table may not be migrated yet */
+          }
+          const staffAdmin = await readStaffAdmin(user.uid);
+          if (!cancelled && my === ticket) setStaffState(staffAdmin, accountStatus);
+        } catch {
+          if (!cancelled && my === ticket) setStaffState(false, accountStatus);
+        }
+        if (!cancelled && my === ticket) {
+          await hydrateUserWorkspace();
+          void hydratePublishedThemes();
+        }
+      })();
     });
 
     return () => {

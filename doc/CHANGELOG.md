@@ -13,10 +13,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Minimize control on the bottom deck. The YouTube surface stays mounted so playback continues on Edit, Listen, Settings, and Profile.
 - Canvas multi-select (Shift-click or box-select) with copy, paste, and duplicate (Ctrl/Cmd+C, V, D).
 - Privacy Policy, Terms, FAQ, and Cookie pages for a global launch. Settings can download or delete the signed-in account. Consents and data-subject requests are stored with row-level security.
+- Paths, themes, settings, profile extras, and tutorial progress save per user in Supabase. Profile pictures wait in the moderation queue until staff approve them.
 
-### Fixed
+### Changed
 
-- Sign-out clears the on-screen account and profile so the next person does not see the previous user’s name or picture. Local playlists stay on this device.
+- Sign-out clears the on-screen account. Cloud playlists stay on the signed-in user and reload on the next login.
 
 ## [0.3.0] — 2026-08-30
 

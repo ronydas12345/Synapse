@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   clampPan,
   cropFromViewport,
+  dataUrlToBlob,
   initialAvatarPlan,
   tightenAvatarPlan,
 } from './avatarImage';
@@ -70,5 +71,15 @@ describe('avatar crop viewport', () => {
   it('clamps pan so the image keeps covering the frame', () => {
     expect(clampPan(400, 200, 100)).toBe(50);
     expect(clampPan(-400, 200, 100)).toBe(-50);
+  });
+});
+
+describe('data URL conversion', () => {
+  it('turns a tiny png data URL into a blob', () => {
+    const blob = dataUrlToBlob(
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+    );
+    expect(blob.type).toBe('image/png');
+    expect(blob.size).toBeGreaterThan(0);
   });
 });

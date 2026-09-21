@@ -12,7 +12,7 @@ import {
   createPath,
   emptyGraph,
   getPath,
-  loadLibrary,
+  emptyLibrary,
   renamePath,
   saveActiveGraph,
   setPathVisibility,
@@ -78,6 +78,7 @@ interface PathState {
   deleteEdge: (edgeId: string) => void;
   deleteNode: (nodeId: string) => void;
   initializeFromStorage: () => void;
+  replaceLibrary: (next: PathLibrary) => void;
   normalizeSplitters: () => void;
   createPlaylist: (name?: string) => void;
   switchPlaylist: (id: string) => void;
@@ -92,7 +93,7 @@ interface PathState {
   pasteClipboard: (clipboard: NodeClipboard) => string[];
 }
 
-let library: PathLibrary = loadLibrary();
+let library: PathLibrary = emptyLibrary();
 
 const activeGraph = () =>
   library.paths.find((p) => p.id === library.activeId) || library.paths[0];
@@ -444,8 +445,15 @@ export const usePathStore = create<PathState>((set, get) => ({
       return state;
     }),
   initializeFromStorage: () => {
-    library = loadLibrary();
+    library = emptyLibrary();
     set(libraryView());
+  },
+  replaceLibrary: (next) => {
+    library = next;
+    set({
+      ...libraryView(),
+      ...playbackReset,
+    });
   },
   createPlaylist: (name) => {
     const current = usePathStore.getState();
@@ -540,3 +548,9 @@ export const usePathStore = create<PathState>((set, get) => ({
     return next.selectedIds;
   },
 }));
+
+export function snapshotPathLibrary(): PathLibrary {
+  const state = usePathStore.getState();
+  library = saveActiveGraph(library, state.nodes, state.edges);
+  return library;
+}

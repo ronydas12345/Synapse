@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppLink } from '../app/AppLink';
+import AuthSwitchLink from './AuthSwitchLink';
 import {
   completeAccountIdentity,
   createAccountWithEmail,
@@ -365,11 +366,13 @@ export default function AuthPanel({
       <p className="synapse-auth-switch-row">
         {isSignup ? (
           <>
-            Already have an account? <AppLink to="login">Log in</AppLink>
+            Already have an account?{' '}
+            <AuthSwitchLink to="login">Log in</AuthSwitchLink>
           </>
         ) : (
           <>
-            Need an account? <AppLink to="signup">Create one</AppLink>
+            Need an account?{' '}
+            <AuthSwitchLink to="signup">Create one</AuthSwitchLink>
           </>
         )}
       </p>

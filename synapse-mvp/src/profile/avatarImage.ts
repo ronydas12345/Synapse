@@ -36,6 +36,15 @@ export function tightenAvatarPlan(
   return { width, height, quality: 0.82 };
 }
 
+export function dataUrlToBlob(dataUrl: string): Blob {
+  const match = /^data:([^;,]+);base64,(.+)$/i.exec(dataUrl.trim());
+  if (!match) throw new Error('Could not read that image.');
+  const binary = atob(match[2]);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: match[1] || 'image/jpeg' });
+}
+
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

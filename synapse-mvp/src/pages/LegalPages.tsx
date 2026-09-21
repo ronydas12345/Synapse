@@ -56,9 +56,18 @@ export default function PrivacyPage() {
           accepted and any access/erasure request you file.
         </li>
         <li>
-          <strong>On this device only:</strong> Music Paths, themes, settings,
-          local profile extras, tutorial progress, and a song-credits cache in
-          localStorage. Those are not uploaded yet.
+          <strong>Your workspace in Postgres:</strong> Music Paths, app settings,
+          custom themes, profile extras, listen stats, and tutorial progress,
+          stored per account with row-level security.
+        </li>
+        <li>
+          <strong>Profile pictures:</strong> uploaded to private-to-folder Storage
+          and held in the moderation queue until staff approve them.
+        </li>
+        <li>
+          <strong>On this device only:</strong> a cookie-notice choice, the auth
+          session token, and an optional song-credits cache. Paths are not kept
+          in localStorage after you sign in.
         </li>
       </ul>
       <p>
@@ -249,17 +258,17 @@ export function CookiesPage() {
       <h2>Strictly necessary</h2>
       <ul>
         <li>
-          <strong>localStorage</strong> keys listed in Settings → Privacy (paths,
-          themes, settings, local profile, tutorial, metadata cache). These make
-          the editor work after a refresh. They stay on this device.
-        </li>
-        <li>
           <strong>Auth session</strong> after you log in, stored by the Supabase
-          client in this browser.
+          client in this browser so you stay signed in.
         </li>
         <li>
           <strong>Cookie notice choice</strong> (<code>synapse_cookie_notice</code>
           ) so we do not show the banner again.
+        </li>
+        <li>
+          <strong>Song-credits cache</strong> (optional) so YouTube lookups are
+          not repeated. You can clear it in Settings. Music Paths and profile
+          data live in your Supabase account, not in this cache.
         </li>
       </ul>
       <h2>Third parties when you play music</h2>

@@ -10,6 +10,7 @@ import {
   loadProgress,
   loadSessionLater,
   markSectionComplete,
+  parseProgress,
   saveProgress,
   saveSessionLater,
   emptyProgress,
@@ -410,6 +411,10 @@ export function maybeShowFirstRun(): void {
   if (view !== 'closed') return;
   if (!shouldPromptFirstRun(progress, loadSessionLater())) return;
   useTutorialStore.getState().startWelcome();
+}
+
+export function replaceTutorialProgress(raw: unknown): void {
+  useTutorialStore.setState({ progress: parseProgress(raw) });
 }
 
 export function getActiveStep(): TutorialStep | null {

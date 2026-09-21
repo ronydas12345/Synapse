@@ -2,7 +2,7 @@
 
 **Visual Music Paths.** Synapse is a browser app for building playback as a graph instead of a fixed song list. You place nodes on a canvas, connect them with rules, and press Play. The engine walks the graph and decides what comes next.
 
-Current app version: **0.3.0** (`synapse-mvp/package.json`). **Google / email sign-in** uses Supabase Auth. Paths, themes, settings, and profile still live in this browser’s `localStorage` until cloud sync ships. Track nodes play **YouTube** videos; Synapse does not host an audio library.
+Current app version: **0.3.0** (`synapse-mvp/package.json`). **Google / email sign-in** uses Supabase Auth. Paths, themes, settings, and profile save to that signed-in account. Track nodes play **YouTube** videos; Synapse does not host an audio library.
 
 Workshop publishing, Pro checkout, collaborative editing, and image/GIF overlays are **not shipped**. The marketing pages describe those honestly as planned or preview-only.
 
@@ -52,12 +52,12 @@ Workshop publishing, Pro checkout, collaborative editing, and image/GIF overlays
 ## What is not in this release
 
 - Workshop search, publish, or share links (preview pages only).
-- YouTube account login, public cloud profiles, or multi-device playlist sync.
+- YouTube account login or public cloud profiles for other people to browse.
 - Pro billing, ads, or paid feature gating.
 - ZIP playlist packages, overlay images, GIFs, or animated canvas overlays.
 - Pitch, tempo, and EQ on YouTube playback (inspector fields exist; they are not applied).
 - Artist / Genre node types.
-- Server-side playlist sync and Workshop media hosting. Supabase Postgres is used for accounts, staff roles, tickets, moderation, published themes, and audit logs.
+- Workshop media hosting. Supabase Postgres holds accounts, workspaces, staff roles, tickets, moderation, published themes, and audit logs.
 
 ---
 
@@ -183,17 +183,17 @@ Theme `style` includes corner radius, grid/shadow intensity, **arrow type** (`be
 
 ### Settings
 
-Local, versioned store (`synapse_app_settings`). Sections that exist in this build include themes, appearance (motion), playlists, general, canvas, connections, nodes, playback (master volume), visualizer visibility, environment (weather/geo), import/export, tutorial, account (Supabase sign-in + local profile), privacy/data, and support. Workshop and Pro sections state that those products are **not available**.
+Local, versioned store. Signed-in copies save to your Supabase workspace. Sections that exist in this build include themes, appearance (motion), playlists, general, canvas, connections, nodes, playback (master volume), visualizer visibility, environment (weather/geo), import/export, tutorial, account, privacy/data, and support. Workshop and Pro sections state that those products are **not available**.
 
 Do not expect settings for features that are not implemented (no fake crossfade, no overlay controls that do nothing).
 
 ### Profile
 
-`/profile`: required `@username` and display name; optional picture, location, bio, genres, songs, playlists, listen stats, activity graph. Sections can be reordered. Visibility is stored locally. Sign-in attaches a Google or email identity and writes the required username/display name to Postgres; the rest of the profile stays on this device. Track starts increment local listen counts. Location (or browser geolocation) feeds weather conditionals.
+`/profile`: required `@username` and display name; optional picture, location, bio, genres, songs, playlists, listen stats, activity graph. Sections can be reordered. Visibility and the rest of the profile save to your account. New profile pictures wait for staff approval. Track starts increment listen counts on that account. Location (or browser geolocation) feeds weather conditionals.
 
 ### Tutorial
 
-`?` in the header: full tour or jump to a topic, spotlight on real UI, action steps that listen to the app store. Progress is in `localStorage`. Esc exits. Unshipped features are labeled as previews.
+`?` in the header: full tour or jump to a topic, spotlight on real UI, action steps that listen to the app store. Progress saves with the signed-in account. Esc exits. Unshipped features are labeled as previews.
 
 ---
 
@@ -248,26 +248,15 @@ Synapse is a Vite + React 19 + TypeScript SPA. Authentication uses Supabase Auth
 - Do not unmount `.synapse-deck-screen` (YouTube iframe); it stays the first child of `.synapse-deck`.
 - Do not load/unload YouTube for settings UI.
 - Imported theme/playlist JSON must not execute code; fonts stay on the allowlist.
-- Do not invent cloud, Workshop publish, or billing APIs in the UI.
+- Do not invent Workshop publish or billing APIs in the UI.
 
 ---
 
 ## Local data and privacy
 
-Everything Synapse stores for the app is on-device, except Supabase Auth sessions and staff/account rows in Postgres. Playing a track still uses YouTube (their cookies/player apply). Weather uses Open-Meteo when a location is available.
+Signed-in Music Paths, themes, settings, profile extras, and tutorial progress live in Postgres table `user_workspaces` (row-level security: the owner only). Profile pictures go to Storage bucket `avatars` and the moderation queue. Playing a track still uses YouTube. Weather uses Open-Meteo when a location is available.
 
-| `localStorage` key | Data |
-| --- | --- |
-| `synapse_path_library` | Named Music Paths (nodes/edges) |
-| `synapse_graph_state` | Legacy single-graph key (migrated into the library) |
-| `synapse_theme_state` | Active theme id + custom themes |
-| `synapse_app_settings` | App settings |
-| `synapse_profile_state` | Local profile |
-| `synapse_yt_metadata_v1` | Cached track credits |
-| `synapse_tutorial_progress` | Tutorial progress |
-| `synapse_geo_denied` | Geolocation denied flag (session-related weather helpers) |
-
-Settings → **Privacy / Data** lists these keys and can clear metadata/weather caches or wipe Synapse’s local data. Clearing site data in the browser has the same effect. There is no Synapse server copy to restore from.
+The browser may still hold a cookie-notice flag, the Supabase auth session, and an optional song-credits cache (`synapse_yt_metadata_v1`). Settings → **Privacy / Data** can download your cloud copy or delete the account.
 
 ---
 

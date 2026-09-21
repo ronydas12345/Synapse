@@ -3344,6 +3344,8 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
 
 .synapse-auth-switch-row a {
   color: var(--accent);
+  font-weight: 650;
+  text-decoration: underline;
 }
 
 .synapse-auth-gate {
@@ -3534,6 +3536,15 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
 .synapse-staff-table tbody tr:hover,
 .synapse-staff-table tbody tr.is-selected {
   background: var(--bg-hover);
+}
+
+.synapse-moderation-preview {
+  width: min(12rem, 100%);
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: var(--border-width) solid var(--border);
 }
 
 .synapse-staff-card {

@@ -2,7 +2,7 @@ import { supabase, throwIfError } from '../supabase/client';
 import { LEGAL } from '../site/legal';
 import { useAuthStore } from '../auth/authStore';
 import { listOwnTickets, listTicketMessages } from './api';
-import { SYNAPSE_LOCAL_KEYS } from '../settings/localData';
+import { snapshotWorkspaceForExport } from '../cloud/workspace';
 
 export type ConsentPolicy = 'privacy' | 'terms' | 'cookies';
 
@@ -64,7 +64,7 @@ export async function exportMyAccount(): Promise<string> {
       ticketMessages: messages,
       consents: consents ?? [],
       dataSubjectRequests: requests ?? [],
-      localStorageKeysOnThisDevice: SYNAPSE_LOCAL_KEYS,
+      workspace: snapshotWorkspaceForExport(),
     },
     null,
     2

@@ -6,14 +6,15 @@ This is an engineering record of worldwide privacy duties we designed for, not a
 
 | Store | Data | Region |
 | --- | --- | --- |
-| Browser localStorage | Paths, themes, settings, local profile extras, tutorial, metadata cache | User device |
+| Browser | Cookie-notice choice, auth session, optional song-credits cache | User device |
 | Supabase Auth | Email, password hash, Google identity, sessions | AWS us-west-2 |
-| Postgres `profiles` and related tables | Username, display name, tickets, staff roles, consents, DSRs | AWS us-west-2 |
+| Postgres `profiles`, `user_workspaces`, related tables | Username, display name, Music Paths, settings, themes, profile extras, tickets, staff roles, consents, DSRs | AWS us-west-2 |
+| Supabase Storage `avatars` | Profile pictures pending or approved by staff | AWS us-west-2 |
 | YouTube / Google | Playback and optional Google sign-in | Google |
 | Open-Meteo / Photon | Weather/geocode if the user uses those features | Their services |
 | Vercel | Static hosting request logs | Vercel |
 
-Playlists are **not** synced to our servers in this release.
+Playlists belong to the signed-in account in `user_workspaces`. Profile pictures are not public until staff approve them.
 
 ## Regulations we mapped
 

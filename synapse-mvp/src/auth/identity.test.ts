@@ -3,6 +3,8 @@ import {
   identityFromFields,
   isIdentityComplete,
   identityForEmail,
+  firstCompleteIdentity,
+  firstFilled,
   TEST_ACCOUNT,
 } from './identity';
 
@@ -27,5 +29,15 @@ describe('account identity', () => {
       'synapse_tester'
     );
     expect(identityForEmail('other@example.com')).toBeNull();
+  });
+
+  it('keeps a complete identity when a later source is still empty', () => {
+    expect(firstFilled('', 'ada_lovelace', '')).toBe('ada_lovelace');
+    expect(
+      firstCompleteIdentity(
+        { username: '', displayName: '' },
+        { username: 'ada_lovelace', displayName: 'Ada Lovelace' }
+      )
+    ).toEqual({ username: 'ada_lovelace', displayName: 'Ada Lovelace' });
   });
 });

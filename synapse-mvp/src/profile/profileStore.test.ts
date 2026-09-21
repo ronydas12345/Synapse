@@ -1,14 +1,13 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   activitySeries,
   averageListens,
   displayNameError,
   daysSince,
   normalizeUsername,
-  readStashedProfile,
+  profileForCloud,
   reorderSectionOrder,
   usernameError,
-  writeStashedProfile,
 } from './profileStore';
 import { emptyProfile, GENRE_PRESETS, OPTIONAL_SECTIONS } from './types';
 
@@ -67,32 +66,12 @@ describe('profile helpers', () => {
   });
 });
 
-describe('per-account profile stash', () => {
-  const memory = new Map<string, string>();
-
-  beforeEach(() => {
-    memory.clear();
-    const storage = {
-      getItem: (key: string) => memory.get(key) ?? null,
-      setItem: (key: string, value: string) => {
-        memory.set(key, value);
-      },
-      removeItem: (key: string) => {
-        memory.delete(key);
-      },
-    };
-    Object.defineProperty(globalThis, 'localStorage', {
-      configurable: true,
-      value: storage,
-    });
-  });
-
-  it('does not return another account’s profile', () => {
+describe('cloud profile payload', () => {
+  it('does not send in-browser data URLs to the server', () => {
     const profile = emptyProfile();
     profile.username = 'first_user';
-    profile.displayName = 'First';
-    writeStashedProfile('uid-a', profile);
-    expect(readStashedProfile('uid-a')?.username).toBe('first_user');
-    expect(readStashedProfile('uid-b')).toBeNull();
+    profile.avatarDataUrl = 'data:image/png;base64,abc';
+    expect(profileForCloud(profile).avatarDataUrl).toBeNull();
+    expect(profileForCloud(profile).username).toBe('first_user');
   });
 });

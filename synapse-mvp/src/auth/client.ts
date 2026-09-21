@@ -1,11 +1,12 @@
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../supabase/client';
-import { writeAccountCache, type AccountIdentity } from './identity';
+import { writeAccountCache, clearAccountCache, type AccountIdentity } from './identity';
 import { useProfileStore } from '../profile/profileStore';
 import { useAuthStore } from './authStore';
 import { authErrorMessage, type SessionUser } from './session';
 import { upsertOwnUser } from '../admin/syncAccount';
 import { clearReturnPath } from './returnPath';
+import { flushWorkspaceNow, setCloudPersistEnabled } from '../cloud/persistGate';
 
 function providersFromUser(user: User): string[] {
   const fromIdentities = (user.identities ?? []).map((identity) => {
@@ -30,6 +31,7 @@ export function sessionFromUser(user: User): SessionUser {
   return {
     uid: user.id,
     email: user.email ?? null,
+    username: metaString(meta, 'username'),
     displayName:
       metaString(meta, 'display_name') ||
       metaString(meta, 'full_name') ||
@@ -168,17 +170,20 @@ export async function completeAccountIdentity(
 
 export async function signOut(): Promise<void> {
   const uid = useAuthStore.getState().user?.uid;
-  useProfileStore.getState().clearAccount(uid);
+  await flushWorkspaceNow();
+  setCloudPersistEnabled(false);
   useAuthStore.getState().setError(null);
   clearReturnPath();
+  if (uid) clearAccountCache(uid);
   await supabase.auth.signOut();
 }
 
 export function subscribeAuth(
-  listener: (user: SessionUser | null) => void
+  listener: (user: SessionUser | null, event: string) => void
 ): () => void {
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-    listener(session?.user ? sessionFromUser(session.user) : null);
+  const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'TOKEN_REFRESHED') return;
+    listener(session?.user ? sessionFromUser(session.user) : null, event);
   });
   return () => data.subscription.unsubscribe();
 }
