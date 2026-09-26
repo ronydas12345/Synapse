@@ -58,7 +58,12 @@ export default function SiteHeader() {
               to={item.to}
               hash={item.hash}
               className={
-                !item.hash && route === item.to ? 'is-active' : undefined
+                !item.hash &&
+                (item.to === 'workshop'
+                  ? route === 'workshop' || route === 'workshopItem'
+                  : route === item.to)
+                  ? 'is-active'
+                  : undefined
               }
             >
               {item.label}

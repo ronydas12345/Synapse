@@ -19,7 +19,7 @@ const CASES = [
   },
   {
     title: 'Community creations',
-    body: 'Workshop will host paths and themes from other people. Sharing is not live yet; the preview on this site shows the shape of it.',
+    body: 'Workshop hosts public Music Paths from other people. Publish, like, remix, and follow from the live catalog.',
   },
 ] as const;
 

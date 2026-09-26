@@ -13,6 +13,7 @@ import { deleteOwnAccount, exportMyAccount } from '../admin/privacy';
 import { useProfileStore } from '../profile/profileStore';
 import { useAppSettings } from '../settings/settingsStore';
 import SupportForm from '../admin/SupportForm';
+import PublishForm from '../workshop/PublishForm';
 import { GRID_SIZE_OPTIONS } from '../settings/types';
 import {
   clearMetadataCache,
@@ -111,9 +112,9 @@ export default function SettingsPage() {
             <section id="settings-playlists" className="synapse-settings-section" data-tutorial="settings-playlists">
               <h2>Playlists</h2>
               <p className="synapse-settings-lead">
-                Rename playlists stored on this account. Public/private is a
-                label until Workshop publishing exists — nothing is listed in
-                Workshop.
+                Rename playlists stored on this account. Public/private on a
+                playlist is a local label. To list a path in Workshop, publish
+                it from the Workshop section.
               </p>
               <ul className="synapse-settings-playlist-list">
                 {pathSummaries.map((path) => {
@@ -137,7 +138,7 @@ export default function SettingsPage() {
                         }
                       >
                         <option value="private">Private</option>
-                        <option value="public">Public (not listed yet)</option>
+                        <option value="public">Public (library label)</option>
                       </select>
                       <div className="synapse-settings-playlist-actions">
                         {current ? (
@@ -194,13 +195,9 @@ export default function SettingsPage() {
           {show('workshop') ? (
             <section id="settings-workshop" className="synapse-settings-section" data-tutorial="settings-workshop">
               <h2>Workshop</h2>
-              <p className="synapse-settings-lead">
-                Publishing, sharing IDs, and remote playlists need a backend that
-                is not in this release. The Workshop page is a preview of that
-                direction, not a live catalog.
-              </p>
+              <PublishForm />
               <AppLink to="workshop" className="synapse-btn synapse-btn-ghost">
-                Open Workshop preview
+                Open Workshop
               </AppLink>
             </section>
           ) : null}

@@ -4,7 +4,7 @@
 
 Current app version: **0.3.0** (`synapse-mvp/package.json`). **Google / email sign-in** uses Supabase Auth. Paths, themes, settings, and profile save to that signed-in account. Track nodes play **YouTube** videos; Synapse does not host an audio library.
 
-Workshop publishing, Pro checkout, collaborative editing, and image/GIF overlays are **not shipped**. The marketing pages describe those honestly as planned or preview-only.
+Workshop publishing is live (private / unlisted / public). Pro checkout, collaborative editing, and image/GIF overlays are **not shipped**.
 
 ---
 
@@ -51,13 +51,12 @@ Workshop publishing, Pro checkout, collaborative editing, and image/GIF overlays
 
 ## What is not in this release
 
-- Workshop search, publish, or share links (preview pages only).
-- YouTube account login or public cloud profiles for other people to browse.
+- YouTube account login.
 - Pro billing, ads, or paid feature gating.
 - ZIP playlist packages, overlay images, GIFs, or animated canvas overlays.
 - Pitch, tempo, and EQ on YouTube playback (inspector fields exist; they are not applied).
 - Artist / Genre node types.
-- Workshop media hosting. Supabase Postgres holds accounts, workspaces, staff roles, tickets, moderation, published themes, and audit logs.
+- Workshop comments, trending, collections, or overlay hosting. Supabase Postgres holds accounts, workspaces, badges, Workshop creations, follows, reports, staff roles, tickets, moderation, published themes, and audit logs.
 
 ---
 
@@ -108,7 +107,9 @@ Requires a current Node.js (the app is ESM, Vite 8, React 19).
 | Path | What it is |
 | --- | --- |
 | `/` | Marketing homepage |
-| `/workshop` | Workshop **preview** (publishing is not live) |
+| `/workshop` | Workshop catalog (Home, New, Featured, Search) |
+| `/workshop/{id}` | Creation page (play, like, save, share, remix, report) |
+| `/u/{username}` | Public creator profile when that profile is public |
 | `/pricing` | Pricing copy; checkout is not open |
 | `/changelog` | In-app changelog |
 | `/faq`, `/privacy`, `/terms`, `/cookies` | FAQ and legal |
@@ -183,13 +184,13 @@ Theme `style` includes corner radius, grid/shadow intensity, **arrow type** (`be
 
 ### Settings
 
-Local, versioned store. Signed-in copies save to your Supabase workspace. Sections that exist in this build include themes, appearance (motion), playlists, general, canvas, connections, nodes, playback (master volume), visualizer visibility, environment (weather/geo), import/export, tutorial, account, privacy/data, and support. Workshop and Pro sections state that those products are **not available**.
+Local, versioned store. Signed-in copies save to your Supabase workspace. Sections that exist in this build include themes, appearance (motion), playlists, general, canvas, connections, nodes, playback (master volume), visualizer visibility, environment (weather/geo), import/export, tutorial, Workshop publish, account, privacy/data, and support. Pro is **not for sale**.
 
 Do not expect settings for features that are not implemented (no fake crossfade, no overlay controls that do nothing).
 
 ### Profile
 
-`/profile`: required `@username` and display name; optional picture, location, bio, genres, songs, playlists, listen stats, activity graph. Sections can be reordered. Visibility and the rest of the profile save to your account. New profile pictures wait for staff approval. Track starts increment listen counts on that account. Location (or browser geolocation) feeds weather conditionals.
+`/profile`: required `@username` and display name; optional picture, location, bio, genres, songs, playlists, listen stats, activity graph. Public profiles are at `/u/{username}`. Server-awarded badges and cosmetic decorations show on the profile. New profile pictures wait for staff approval. Track starts increment listen counts on that account. Location (or browser geolocation) feeds weather conditionals.
 
 ### Tutorial
 
@@ -235,11 +236,12 @@ Synapse is a Vite + React 19 + TypeScript SPA. Authentication uses Supabase Auth
 | Conditionals | `src/conditional/`, `src/weather/` | Date/weather match, Open-Meteo provider |
 | Playlists | `src/playlists/` | Library + sanitize/serialize `.synapse` |
 | Settings | `src/settings/` | Versioned settings (cloud workspace) |
-| Profile | `src/profile/` | Profile store (cloud workspace) |
+| Profile | `src/profile/`, `src/profiles/`, `src/badges/`, `src/decorations/` | Cloud profile, public `/u/` pages, badges, decorations |
+| Workshop | `src/workshop/` | Catalog, publish RPC, like/save/remix/report |
 | Auth | `src/auth/`, `src/supabase/` | Supabase Google/email sign-in, session, roles |
-| Staff data | `src/admin/` | Profiles, roles, tickets, moderation, audit, published themes |
+| Staff data | `src/admin/` | Profiles, roles, tickets, moderation, audit, published themes, badges |
 | Tutorial | `src/tutorial/` | Catalog, spotlight, storage |
-| Marketing | `src/pages/` | Home, workshop preview, legal, changelog |
+| Marketing | `src/pages/` | Home, legal, changelog |
 | Routing | `src/app/routes.ts` | History API paths (no React Router) |
 
 **Constraints worth knowing when you change code:**
@@ -248,7 +250,7 @@ Synapse is a Vite + React 19 + TypeScript SPA. Authentication uses Supabase Auth
 - Do not unmount `.synapse-deck-screen` (YouTube iframe); it stays the first child of `.synapse-deck`.
 - Do not load/unload YouTube for settings UI.
 - Imported theme/playlist JSON must not execute code; fonts stay on the allowlist.
-- Do not invent Workshop publish or billing APIs in the UI.
+- Do not invent billing APIs in the UI. Workshop publish uses Supabase RPCs; clients cannot write `user_badges`.
 
 ---
 

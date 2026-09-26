@@ -42,6 +42,7 @@ import {
 } from '../tutorial/tutorialStorage';
 import { replaceTutorialProgress, useTutorialStore } from '../tutorial/tutorialStore';
 import { applyAvatarStateToProfile, submitAvatarUrl } from './avatar';
+import { syncProfilePublicFields } from '../profiles/api';
 import { SETTINGS_STORAGE_KEY } from '../settings/types';
 import { THEME_STORAGE_KEY } from '../theme/themeStore';
 import { PROFILE_ACCOUNTS_KEY, PROFILE_STORAGE_KEY } from '../profile/profileStore';
@@ -153,6 +154,15 @@ async function pushWorkspace(): Promise<void> {
     onConflict: 'uid',
   });
   if (error) console.error('Could not save workspace', error.message);
+  const profile = useProfileStore.getState().profile;
+  try {
+    await syncProfilePublicFields({
+      visibility: profile.visibility,
+      bio: profile.bio || '',
+    });
+  } catch (err) {
+    console.error('Could not sync public profile', err);
+  }
 }
 
 registerWorkspaceFlush(() => pushWorkspace());

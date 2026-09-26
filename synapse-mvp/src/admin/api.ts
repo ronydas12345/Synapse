@@ -447,6 +447,7 @@ export async function listModeration(): Promise<ModerationItem[]> {
       id: string;
       type: string;
       target_uid: string;
+      target_id?: string;
       image_url: string;
       status: string;
       note: string;
@@ -455,7 +456,8 @@ export async function listModeration(): Promise<ModerationItem[]> {
       updated_at: string | null;
     }[]
   ).map((row) => {
-    const type: ModerationType = row.type === 'overlay' ? 'overlay' : 'avatar';
+    const type: ModerationType =
+      row.type === 'overlay' ? 'overlay' : row.type === 'workshop' ? 'workshop' : 'avatar';
     const status = (
       ['pending', 'approved', 'rejected', 'removed'] as ModerationStatus[]
     ).includes(row.status as ModerationStatus)
@@ -465,6 +467,7 @@ export async function listModeration(): Promise<ModerationItem[]> {
       id: row.id,
       type,
       targetUid: str(row.target_uid),
+      targetId: str(row.target_id),
       imageUrl: httpsPhoto(str(row.image_url)),
       status,
       note: str(row.note),

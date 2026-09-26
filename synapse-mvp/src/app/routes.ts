@@ -3,6 +3,8 @@ import { documentPrefersReducedMotion } from '../settings/motion';
 export type AppRoute =
   | 'home'
   | 'workshop'
+  | 'workshopItem'
+  | 'publicProfile'
   | 'pricing'
   | 'changelog'
   | 'faq'
@@ -17,6 +19,16 @@ export type AppRoute =
   | 'profile'
   | 'admin'
   | 'superadmin';
+
+export const CREATION_ID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const PUBLIC_USERNAME_RE = /^[a-z0-9_]{3,20}$/;
+
+export type AppLocation = {
+  route: AppRoute;
+  workshopId?: string;
+  username?: string;
+};
 
 export type AppPath =
   | '/'
@@ -37,7 +49,17 @@ export type AppPath =
   | '/admin'
   | '/superadmin';
 
-export const APP_PATHS: Record<AppRoute, AppPath> = {
+export function workshopItemPath(id: string): string {
+  return `/workshop/${id}`;
+}
+
+export function publicProfilePath(username: string): string {
+  return `/u/${username}`;
+}
+
+export type StaticAppRoute = Exclude<AppRoute, 'workshopItem' | 'publicProfile'>;
+
+export const APP_PATHS: Record<StaticAppRoute, AppPath> = {
   home: '/',
   workshop: '/workshop',
   pricing: '/pricing',
@@ -61,6 +83,8 @@ const PATH_SET = new Set<string>([...Object.values(APP_PATHS), '/signin']);
 const MARKETING: ReadonlySet<AppRoute> = new Set([
   'home',
   'workshop',
+  'workshopItem',
+  'publicProfile',
   'pricing',
   'changelog',
   'faq',
@@ -98,25 +122,37 @@ export function isProtectedRoute(
   return isWorkspaceRoute(route) || isStaffRoute(route);
 }
 
-export function pathToRoute(pathname: string): AppRoute {
+export function parseAppLocation(pathname: string): AppLocation {
   const p = pathname.replace(/\/+$/, '') || '/';
-  if (p === '/') return 'home';
-  if (p === '/workshop') return 'workshop';
-  if (p === '/pricing') return 'pricing';
-  if (p === '/changelog') return 'changelog';
-  if (p === '/faq') return 'faq';
-  if (p === '/privacy') return 'privacy';
-  if (p === '/terms') return 'terms';
-  if (p === '/cookies') return 'cookies';
-  if (p === '/login' || p === '/signin') return 'login';
-  if (p === '/signup') return 'signup';
-  if (p === '/edit') return 'edit';
-  if (p === '/listen') return 'listen';
-  if (p === '/settings') return 'settings';
-  if (p === '/profile') return 'profile';
-  if (p === '/admin') return 'admin';
-  if (p === '/superadmin') return 'superadmin';
-  return 'home';
+  const item = p.match(/^\/workshop\/([^/]+)$/);
+  if (item && CREATION_ID_RE.test(item[1])) {
+    return { route: 'workshopItem', workshopId: item[1].toLowerCase() };
+  }
+  const profile = p.match(/^\/u\/([^/]+)$/);
+  if (profile && PUBLIC_USERNAME_RE.test(profile[1])) {
+    return { route: 'publicProfile', username: profile[1] };
+  }
+  if (p === '/') return { route: 'home' };
+  if (p === '/workshop') return { route: 'workshop' };
+  if (p === '/pricing') return { route: 'pricing' };
+  if (p === '/changelog') return { route: 'changelog' };
+  if (p === '/faq') return { route: 'faq' };
+  if (p === '/privacy') return { route: 'privacy' };
+  if (p === '/terms') return { route: 'terms' };
+  if (p === '/cookies') return { route: 'cookies' };
+  if (p === '/login' || p === '/signin') return { route: 'login' };
+  if (p === '/signup') return { route: 'signup' };
+  if (p === '/edit') return { route: 'edit' };
+  if (p === '/listen') return { route: 'listen' };
+  if (p === '/settings') return { route: 'settings' };
+  if (p === '/profile') return { route: 'profile' };
+  if (p === '/admin') return { route: 'admin' };
+  if (p === '/superadmin') return { route: 'superadmin' };
+  return { route: 'home' };
+}
+
+export function pathToRoute(pathname: string): AppRoute {
+  return parseAppLocation(pathname).route;
 }
 
 export function routeToUiMode(
@@ -131,10 +167,15 @@ export function routeToUiMode(
 
 export function isAppPath(pathname: string): boolean {
   const p = pathname.replace(/\/+$/, '') || '/';
-  return PATH_SET.has(p);
+  if (PATH_SET.has(p)) return true;
+  if (/^\/workshop\/[0-9a-f-]{36}$/i.test(p) && CREATION_ID_RE.test(p.slice('/workshop/'.length))) {
+    return true;
+  }
+  if (/^\/u\/[a-z0-9_]{3,20}$/.test(p)) return true;
+  return false;
 }
 
-export function appHref(path: AppPath, hash = ''): string {
+export function appHref(path: string, hash = ''): string {
   if (!hash) return path;
   return `${path}#${hash}`;
 }
@@ -148,7 +189,7 @@ function scrollToHash(hash: string): void {
 }
 
 export function navigateApp(
-  path: AppPath,
+  path: string,
   hash = '',
   replace = false
 ): void {

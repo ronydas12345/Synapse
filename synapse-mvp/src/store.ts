@@ -89,6 +89,7 @@ interface PathState {
     kind?: 'playlist' | 'package'
   ) => { filename: string; json: string } | null;
   importPlaylistFile: (text: string) => { error: string | null; notices: string[] };
+  importWorkshopGraph: (name: string, nodes: Node[], edges: Edge[]) => void;
   copySelection: () => NodeClipboard | null;
   pasteClipboard: (clipboard: NodeClipboard) => string[];
 }
@@ -530,6 +531,22 @@ export const usePathStore = create<PathState>((set, get) => ({
       }
     }
     return { error: null, notices: parsed.notices };
+  },
+  importWorkshopGraph: (name, nodes, edges) => {
+    const current = usePathStore.getState();
+    library = saveActiveGraph(library, current.nodes, current.edges);
+    library = addImportedPath(library, {
+      id: '',
+      name,
+      visibility: 'private',
+      nodes,
+      edges,
+      updatedAt: new Date().toISOString(),
+    });
+    set({
+      ...libraryView(),
+      ...playbackReset,
+    });
   },
   copySelection: () => {
     const state = get();

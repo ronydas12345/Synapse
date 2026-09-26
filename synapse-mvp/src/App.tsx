@@ -10,14 +10,14 @@ import ThemeRoot from './theme/ThemeRoot';
 import PlaylistSwitcher from './components/PlaylistSwitcher';
 import { SynapseWordmark } from './pages/chrome/SynapseMark';
 import { usePathStore } from './store';
-import { AppLink, useAppRoute } from './app/AppLink';
+import { AppLink, useAppLocation } from './app/AppLink';
 import {
   isAuthRoute,
   isMarketingRoute,
   isStaffRoute,
   isWorkspaceRoute,
   routeToUiMode,
-  type AppRoute,
+  type AppLocation,
 } from './app/routes';
 import { useProfileStore } from './profile/profileStore';
 import AuthControls from './auth/AuthControls';
@@ -29,6 +29,8 @@ import MarketingLayout from './pages/MarketingLayout';
 import AuthLayout from './pages/AuthLayout';
 import Home from './pages/Home/Home';
 import WorkshopPage from './pages/WorkshopPage';
+import CreationPage from './workshop/CreationPage';
+import PublicProfilePage from './profiles/PublicProfilePage';
 import PricingPage from './pages/PricingPage';
 import ChangelogPage from './pages/ChangelogPage';
 import FaqPage from './pages/FaqPage';
@@ -50,7 +52,14 @@ const WORKSPACE_META: Record<
   profile: { title: 'Synapse · Profile', label: 'Music path · Profile' },
 };
 
-function MarketingPage({ route }: { route: AppRoute }) {
+function MarketingPage({ location }: { location: AppLocation }) {
+  if (location.route === 'workshopItem' && location.workshopId) {
+    return <CreationPage id={location.workshopId} />;
+  }
+  if (location.route === 'publicProfile' && location.username) {
+    return <PublicProfilePage username={location.username} />;
+  }
+  const route = location.route;
   if (route === 'workshop') return <WorkshopPage />;
   if (route === 'pricing') return <PricingPage />;
   if (route === 'changelog') return <ChangelogPage />;
@@ -174,7 +183,8 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
 }
 
 export default function App() {
-  const route = useAppRoute();
+  const location = useAppLocation();
+  const route = location.route;
 
   useEffect(() => {
     usePathStore.getState().setUiMode(routeToUiMode(route));
@@ -206,7 +216,7 @@ export default function App() {
   } else if (isMarketingRoute(route)) {
     page = (
       <MarketingLayout>
-        <MarketingPage route={route} />
+        <MarketingPage location={location} />
       </MarketingLayout>
     );
   } else if (isStaffRoute(route)) {

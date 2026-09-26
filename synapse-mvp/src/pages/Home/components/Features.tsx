@@ -33,7 +33,7 @@ const FEATURES = [
   },
   {
     title: 'Workshop',
-    body: 'Discover and share paths, themes, and visual assets. Preview only — publishing is not live.',
+    body: 'Discover and share Music Paths. Publish from Settings, browse /workshop, and open creator profiles.',
     status: 'Coming soon',
   },
 ] as const;

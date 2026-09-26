@@ -187,10 +187,11 @@ export function TermsPage() {
         Synapse is a browser app for building visual Music Paths that play
         YouTube (and limited local) audio. It is provided as-is, currently as a
         personal project, without a paid subscription. Features marked planned,
-        preview, or coming soon — including Workshop publishing, Pro, overlays,
-        and collaborative editing — are not a promise and are not for sale in this
-        release. Music Paths you build while signed in are stored with your
-        account.
+        preview, or coming soon — including Pro, overlays, and collaborative
+        editing — are not a promise and are not for sale in this release.
+        Workshop publishing is live: public and unlisted Music Paths can be
+        listed or shared by link, subject to moderation. Music Paths you build
+        while signed in are stored with your account.
       </p>
       <h2>Your account</h2>
       <p>

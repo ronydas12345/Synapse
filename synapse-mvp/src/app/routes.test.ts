@@ -17,6 +17,15 @@ describe('app routes', () => {
     expect(pathToRoute('/settings')).toBe('settings');
     expect(pathToRoute('/profile')).toBe('profile');
     expect(pathToRoute('/workshop')).toBe('workshop');
+    expect(pathToRoute('/workshop/11111111-1111-4111-8111-111111111111')).toBe(
+      'workshopItem'
+    );
+    expect(pathToRoute('/u/ada_lovelace')).toBe('publicProfile');
+    expect(isAppPath('/workshop/11111111-1111-4111-8111-111111111111')).toBe(true);
+    expect(isAppPath('/u/ada_lovelace')).toBe(true);
+    expect(isAppPath('/u/no')).toBe(false);
+    expect(isMarketingRoute('workshopItem')).toBe(true);
+    expect(isMarketingRoute('publicProfile')).toBe(true);
     expect(pathToRoute('/pricing')).toBe('pricing');
     expect(pathToRoute('/login')).toBe('login');
     expect(pathToRoute('/signin')).toBe('login');

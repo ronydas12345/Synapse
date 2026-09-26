@@ -13,7 +13,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Minimize control on the bottom deck. The YouTube surface stays mounted so playback continues on Edit, Listen, Settings, and Profile.
 - Canvas multi-select (Shift-click or box-select) with copy, paste, and duplicate (Ctrl/Cmd+C, V, D).
 - Paths, themes, settings, profile extras, and tutorial progress save per user in Supabase (`user_workspaces`) instead of localStorage.
-- Profile pictures upload to Storage and wait in the staff moderation queue until approved.
+- Workshop catalog: Home / New / Featured / Search, creation pages, publish (private / unlisted / public), like, save, share, remix, follows, and public creator profiles at `/u/{username}`.
+- Server-awarded badges (first creation, 10/25/100 uploads, one month, one year, admin, superadmin, 10/100 followers) and cosmetic decorations. Clients cannot insert badge rows.
+- Staff Workshop moderation, reports, overlay queue, and Superadmin badge/decoration grants.
 
 ### Changed
 

@@ -18,7 +18,7 @@ export default function Hero() {
             Open Synapse
           </OpenWorkspaceLink>
           <AppLink to="workshop" className="synapse-btn synapse-btn-ghost">
-            Workshop preview
+            Workshop
           </AppLink>
         </div>
       </div>

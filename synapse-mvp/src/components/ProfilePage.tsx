@@ -34,6 +34,7 @@ import { cropAndFitAvatar, clampPan, coverScale, cropFromViewport } from '../pro
 import AuthPanel from '../auth/AuthPanel';
 import { useAuthStore } from '../auth/authStore';
 import { uploadAvatarFromDataUrl, removeOwnAvatar } from '../cloud/avatar';
+import ProfileRecognition from '../profile/ProfileRecognition';
 import { usePathStore } from '../store';
 
 type DropEdge = 'before' | 'after';
@@ -963,11 +964,12 @@ export default function ProfilePage() {
                 }
               >
                 <option value="private">Private — only you</option>
-                <option value="public">Public — shareable later</option>
+                <option value="public">Public — /u/username and Workshop</option>
               </select>
             </label>
             <p className="synapse-settings-hint">
-              Cloud sharing is not live yet. Visibility is saved on your account.
+              Public profiles are at /u/your_username. Followers, badges, and
+              public Workshop creations show there.
               {authUser
                 ? ' Your Google or email sign-in is the account identity.'
                 : ' Sign in to attach this profile to an account.'}
@@ -976,11 +978,13 @@ export default function ProfilePage() {
         ) : (
           <p className="synapse-settings-lead">
             {profile.visibility === 'public'
-              ? 'This profile is marked public. Workshop discovery is not live yet.'
+              ? 'This profile is public at /u/' + (profile.username || 'username') + '.'
               : 'This profile is private. Optional sections below stay on your account.'}
           </p>
         )}
       </section>
+
+      <ProfileRecognition editing={editing} />
 
       <SectionDragProvider editing={editing} onReorder={reorderSections}>
         {visibleOrder.map((id) => {

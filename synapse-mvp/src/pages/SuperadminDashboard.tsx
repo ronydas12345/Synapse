@@ -7,6 +7,7 @@ import ModerationPanel from '../admin/ModerationPanel';
 import AdminsPanel from '../admin/AdminsPanel';
 import ThemesPanel from '../admin/ThemesPanel';
 import AuditPanel from '../admin/AuditPanel';
+import BadgeManagerPanel from '../admin/BadgeManagerPanel';
 
 export default function SuperadminDashboard() {
   return (
@@ -18,6 +19,7 @@ export default function SuperadminDashboard() {
         if (section === 'admins') return <AdminsPanel />;
         if (section === 'themes') return <ThemesPanel />;
         if (section === 'audit') return <AuditPanel />;
+        if (section === 'badges') return <BadgeManagerPanel />;
         return <UsersPanel />;
       }}
     </StaffShell>

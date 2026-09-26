@@ -110,6 +110,7 @@ if (stepNeedsAccount(step) && !opts.accountReady) {
   }
   if (stepNeedsAccount(step) && opts.accountReady) return null;
   if (!step.route) return null;
+  if (step.route === 'workshopItem' || step.route === 'publicProfile') return null;
   if (isProtectedRoute(step.route) && !opts.accountReady) {
     rememberReturnPath(APP_PATHS[step.route]);
     return { path: APP_PATHS.signup, hash: '' };
@@ -304,7 +305,10 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
       progress.lastSection &&
       FULL_TUTORIAL_SECTIONS.includes(progress.lastSection) &&
       getSection(progress.lastSection);
-    const sectionId = canResumeFull ? progress.lastSection : FULL_TUTORIAL_SECTIONS[0];
+    const sectionId =
+      canResumeFull && progress.lastSection
+        ? progress.lastSection
+        : FULL_TUTORIAL_SECTIONS[0];
     const firstSection = getSection(sectionId);
     const stepIndex =
       canResumeFull && progress.lastSection === sectionId

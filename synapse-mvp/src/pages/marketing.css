@@ -960,7 +960,61 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
   transform: none;
 }
 
-html.synapse-reduce-motion .synapse-path-route,
-html.synapse-reduce-motion .synapse-path-playhead {
-  animation: none;
+.synapse-workshop-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.synapse-workshop-sub {
+  margin: 1.25rem 0 0.4rem;
+  font-size: 1.05rem;
+}
+
+.synapse-workshop-card-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.synapse-workshop-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  align-items: center;
+}
+
+.synapse-workshop-actions,
+.synapse-workshop-report {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.synapse-workshop-report {
+  flex-direction: column;
+  align-items: stretch;
+  max-width: 28rem;
+}
+
+.synapse-workshop-publish {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 36rem;
+  margin-bottom: 1rem;
+}
+
+.synapse-public-profile-hero {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.synapse-public-profile-hero img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 999px;
 }

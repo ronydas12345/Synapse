@@ -3,12 +3,12 @@ import type { AuthRole } from '../auth/session';
 export type AccountStatus = 'active' | 'suspended';
 export type TicketStatus = 'open' | 'pending' | 'resolved' | 'closed';
 export type TicketPriority = 'low' | 'normal' | 'high' | 'urgent';
-export type ModerationType = 'avatar' | 'overlay';
+export type ModerationType = 'avatar' | 'overlay' | 'workshop';
 export type ModerationStatus = 'pending' | 'approved' | 'rejected' | 'removed';
 export type ThemePublishStatus = 'published' | 'archived';
 
 export type AdminSection = 'users' | 'tickets' | 'stats' | 'moderation';
-export type SuperadminSection = AdminSection | 'admins' | 'themes' | 'audit';
+export type SuperadminSection = AdminSection | 'admins' | 'themes' | 'audit' | 'badges';
 
 export const ADMIN_SECTIONS: { id: AdminSection; label: string }[] = [
   { id: 'users', label: 'Users' },
@@ -22,6 +22,7 @@ export const SUPERADMIN_SECTIONS: { id: SuperadminSection; label: string }[] = [
   { id: 'admins', label: 'Admins' },
   { id: 'themes', label: 'Themes' },
   { id: 'audit', label: 'Admin history' },
+  { id: 'badges', label: 'Badges' },
 ];
 
 export interface PlatformUser {
@@ -71,6 +72,7 @@ export interface ModerationItem {
   id: string;
   type: ModerationType;
   targetUid: string;
+  targetId: string;
   imageUrl: string;
   status: ModerationStatus;
   note: string;

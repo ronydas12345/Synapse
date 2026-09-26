@@ -753,7 +753,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
   {
     id: 'workshop',
     title: 'Workshop',
-    summary: 'Community browse and publish are previews — nothing uploads yet.',
+    summary: 'Browse, publish, like, remix, and follow creators in Workshop.',
     keywords:
       'workshop search tags filters recommendations publish playlists themes visual assets visibility',
     group: 'community',
@@ -761,13 +761,13 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'w-find',
         'Finding playlists',
-        'Workshop is a product preview. Cards are examples, not a live catalog. Open Workshop from Home or the marketing header.',
+        'Workshop lists public Music Paths. Open it from Home or the header, then use Home, New, Featured, and Search.',
         { type: 'highlight', route: 'workshop', target: 'workshop' }
       ),
       s(
         'w-search',
         'Searching',
-        'Search, likes, and other people’s paths are not wired. You still search your account library from the playlist switcher and Settings.',
+        'Search looks through public titles, descriptions, and usernames. Sign in to like, save, remix, or publish.',
         { type: 'info', route: 'workshop', target: 'workshop' }
       ),
       s(
@@ -791,7 +791,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'w-pub-path',
         'Publishing playlists',
-        'Nothing is uploaded from this preview. Export a .synapse file if you want to share a path as a file.',
+        'Publish from Settings → Workshop. Private stays off the catalog, unlisted is link-only, public is listed. The server awards upload badges.',
         { type: 'highlight', route: 'settings', hash: 'settings-import', target: 'export-playlist' }
       ),
       s(
@@ -809,7 +809,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'w-vis',
         'Visibility settings',
-        'Each playlist can be marked public or private on your account. That flag is not a live Workshop listing.',
+        'Playlist public/private in Settings is a library label. Workshop visibility is set when you publish (private, unlisted, or public).',
         { type: 'highlight', route: 'settings', hash: 'settings-playlists', target: 'settings-playlists' }
       ),
     ],
@@ -983,7 +983,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'as-other',
         'Other application settings',
-        'Workshop and Pro stay honest previews: no publish or billing. The rest of Settings saves to your account.',
+        'Workshop publish is live from Settings. Pro billing is still not for sale. The rest of Settings saves to your account.',
         { type: 'highlight', route: 'settings', target: 'settings-nav' }
       ),
     ],
@@ -1011,7 +1011,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'pr-workshop',
         'Advanced Workshop features',
-        'Publish, search, and recommendations will sit behind accounts. The Workshop page is a visual preview only.',
+        'Public Workshop search, likes, remix, and follows are live. Comments, trending, and collections are still later.',
         { type: 'highlight', route: 'workshop', target: 'workshop' }
       ),
       s(

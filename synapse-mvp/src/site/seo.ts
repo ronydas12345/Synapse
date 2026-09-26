@@ -1,12 +1,27 @@
 import type { AppRoute } from '../app/routes';
 import { APP_PATHS } from '../app/routes';
+
+function pathForMeta(route: AppRoute): string {
+  if (route === 'workshopItem' || route === 'publicProfile') {
+    return window.location.pathname;
+  }
+  return APP_PATHS[route];
+}
 import { SITE } from './content';
 
 const PAGE_META: Partial<Record<AppRoute, { title: string; description: string }>> = {
   home: { title: SITE.title, description: SITE.description },
   workshop: {
     title: 'Workshop — Synapse',
-    description: 'Preview of the Synapse Workshop. Sharing and discovery are not live yet.',
+    description: 'Discover, play, and remix Music Paths published to the Synapse Workshop.',
+  },
+  workshopItem: {
+    title: 'Workshop creation — Synapse',
+    description: 'A Music Path published to the Synapse Workshop.',
+  },
+  publicProfile: {
+    title: 'Creator — Synapse',
+    description: 'A Synapse creator profile, badges, and public Workshop creations.',
   },
   pricing: {
     title: 'Pricing — Synapse',
@@ -82,7 +97,7 @@ export function applyPageMeta(route: AppRoute): void {
   upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card' }, 'summary_large_image');
 
   const origin = SITE.canonicalOrigin || window.location.origin;
-  const url = `${origin}${APP_PATHS[route]}`;
+  const url = `${origin}${pathForMeta(route)}`;
   upsertMeta('meta[property="og:url"]', { property: 'og:url' }, url);
   upsertMeta('meta[property="og:image"]', { property: 'og:image' }, `${origin}${SITE.ogImage}`);
   upsertLink('canonical', url);

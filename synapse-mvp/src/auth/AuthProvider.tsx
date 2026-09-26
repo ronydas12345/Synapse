@@ -19,6 +19,7 @@ import {
 } from '../admin/syncAccount';
 import { hydrateUserWorkspace, resetUserWorkspace } from '../cloud/workspace';
 import { recordConsents } from '../admin/privacy';
+import { evaluateOwnProgress } from '../badges/api';
 
 function restoreIdentity(user: SessionUser): AccountIdentity | null {
   return firstCompleteIdentity(
@@ -102,6 +103,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         if (!cancelled && my === ticket) {
           await hydrateUserWorkspace();
           void hydratePublishedThemes();
+          void evaluateOwnProgress();
         }
       })();
     });

@@ -4,25 +4,43 @@ import {
   appHref,
   ensureAppPath,
   navigateApp,
-  pathToRoute,
+  parseAppLocation,
+  type AppLocation,
   type AppRoute,
+  type StaticAppRoute,
 } from './routes';
 
-export function useAppRoute(): AppRoute {
-  const [route, setRoute] = useState<AppRoute>(() => {
+export function useAppLocation(): AppLocation {
+  const [location, setLocation] = useState<AppLocation>(() => {
     ensureAppPath();
-    return pathToRoute(window.location.pathname);
+    return parseAppLocation(window.location.pathname);
   });
 
   useEffect(() => {
-    ensureAppPath();
-    setRoute(pathToRoute(window.location.pathname));
-    const onPop = () => setRoute(pathToRoute(window.location.pathname));
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
+    const sync = () => {
+      ensureAppPath();
+      setLocation(parseAppLocation(window.location.pathname));
+    };
+    sync();
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
   }, []);
 
-  return route;
+  return location;
+}
+
+export function useAppRoute(): AppRoute {
+  return useAppLocation().route;
+}
+
+function clickNavigates(event: React.MouseEvent<HTMLAnchorElement>): boolean {
+  return (
+    event.button === 0 &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.shiftKey &&
+    !event.altKey
+  );
 }
 
 export function AppLink({
@@ -33,7 +51,7 @@ export function AppLink({
   title,
   onNavigate,
 }: {
-  to: AppRoute;
+  to: StaticAppRoute;
   hash?: string;
   children: ReactNode;
   className?: string;
@@ -47,17 +65,40 @@ export function AppLink({
       className={className}
       title={title}
       onClick={(event) => {
-        if (
-          event.button !== 0 ||
-          event.metaKey ||
-          event.ctrlKey ||
-          event.shiftKey ||
-          event.altKey
-        ) {
-          return;
-        }
+        if (!clickNavigates(event)) return;
         event.preventDefault();
         navigateApp(APP_PATHS[to], hash);
+        onNavigate?.();
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
+export function PathLink({
+  href,
+  children,
+  className,
+  title,
+  onNavigate,
+}: {
+  href: string;
+  children: ReactNode;
+  className?: string;
+  title?: string;
+  onNavigate?: () => void;
+}) {
+  return (
+    <a
+      href={href}
+      className={className}
+      title={title}
+      onClick={(event) => {
+        if (!clickNavigates(event)) return;
+        event.preventDefault();
+        const [path, hash] = href.split('#');
+        navigateApp(path || '/', hash || '');
         onNavigate?.();
       }}
     >
