@@ -3755,3 +3755,100 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
   box-shadow: 0 0 0 3px color-mix(in srgb, #f97316 30%, transparent);
 }
 
+.synapse-playground {
+  padding: 1.25rem 1.25rem 6rem;
+}
+
+.synapse-token-balance {
+  font-size: 2.4rem;
+  font-family: var(--font-display, inherit);
+  margin: 0.2rem 0;
+}
+
+.synapse-game-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.9rem;
+}
+
+.synapse-game-card,
+.synapse-game-shell,
+.synapse-game-result {
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 12px);
+  padding: 0.9rem;
+  background: var(--bg-panel);
+}
+
+.synapse-game-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0.8rem 0;
+}
+
+.synapse-game-grid.is-six {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.synapse-game-tile,
+.synapse-game-stage,
+.synapse-game-target-btn {
+  min-height: 3.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--bg-elevated);
+  color: inherit;
+  cursor: pointer;
+}
+
+.synapse-game-tile.is-on,
+.synapse-game-stage.is-go {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 28%, var(--bg-elevated));
+}
+
+.synapse-game-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.6rem 0;
+}
+
+.synapse-game-track {
+  position: relative;
+  height: 2.2rem;
+  border-radius: 999px;
+  background: var(--bg-deep);
+  margin: 0.8rem 0;
+}
+
+.synapse-game-target {
+  position: absolute;
+  left: 42%;
+  width: 16%;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.synapse-game-marker {
+  position: absolute;
+  top: 0.15rem;
+  bottom: 0.15rem;
+  width: 0.45rem;
+  margin-left: -0.22rem;
+  border-radius: 999px;
+  background: var(--text);
+}
+
+.synapse-game-seq {
+  font-size: 1.4rem;
+  letter-spacing: 0.2em;
+}
+
+html.synapse-reduce-motion .synapse-game-marker,
+html.synapse-reduce-motion .synapse-game-tile {
+  transition: none;
+}
+

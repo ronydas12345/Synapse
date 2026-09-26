@@ -15,7 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Paths, themes, settings, profile extras, and tutorial progress save per user in Supabase (`user_workspaces`) instead of localStorage.
 - Workshop catalog: Home / New / Featured / Search, creation pages, publish (private / unlisted / public), like, save, share, remix, follows, and public creator profiles at `/u/{username}`.
 - Server-awarded badges (first creation, 10/25/100 uploads, one month, one year, admin, superadmin, 10/100 followers) and cosmetic decorations. Clients cannot insert badge rows.
-- Staff Workshop moderation, reports, overlay queue, and Superadmin badge/decoration grants.
+- Playground at `/playground`: eleven short skill games, server-awarded Tokens with a ledger, daily/weekly caps, practice mode, daily claim, and feature flags. Superadmin Game Lab can preview games, toggle flags, and adjust balances with a reason. No gambling or cash-out.
 
 ### Changed
 

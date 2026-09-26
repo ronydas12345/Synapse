@@ -41,15 +41,17 @@ import AdminDashboard from './pages/AdminDashboard';
 import SuperadminDashboard from './pages/SuperadminDashboard';
 import TutorialHelpButton from './tutorial/TutorialHelpButton';
 import CookieNotice from './pages/chrome/CookieNotice';
+import PlaygroundPage from './gamification/PlaygroundPage';
 
 const WORKSPACE_META: Record<
-  'edit' | 'listen' | 'settings' | 'profile',
+  'edit' | 'listen' | 'settings' | 'profile' | 'playground',
   { title: string; label: string }
 > = {
   edit: { title: 'Synapse · Edit', label: 'Music path · Edit' },
   listen: { title: 'Synapse · Listen', label: 'Music path · Listen' },
   settings: { title: 'Synapse · Settings', label: 'Music path · Settings' },
   profile: { title: 'Synapse · Profile', label: 'Music path · Profile' },
+  playground: { title: 'Synapse · Playground', label: 'Playground' },
 };
 
 function MarketingPage({ location }: { location: AppLocation }) {
@@ -70,7 +72,11 @@ function MarketingPage({ location }: { location: AppLocation }) {
   return <Home />;
 }
 
-function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'profile' }) {
+function WorkspaceApp({
+  route,
+}: {
+  route: 'edit' | 'listen' | 'settings' | 'profile' | 'playground';
+}) {
   const { isPlaying, setIsPlaying, playbackQueue, requestSkip } = usePathStore();
   const avatar = useProfileStore((s) => s.profile.avatarDataUrl);
   const avatarUrl = useProfileStore((s) => s.profile.avatarUrl);
@@ -80,6 +86,7 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
   const listen = route === 'listen';
   const settings = route === 'settings';
   const profile = route === 'profile';
+  const playground = route === 'playground';
   const edit = route === 'edit';
 
   return (
@@ -111,6 +118,12 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
             className={`synapse-mode-btn ${settings ? 'is-active' : ''}`}
           >
             Settings
+          </AppLink>
+          <AppLink
+            to="playground"
+            className={`synapse-mode-btn ${playground ? 'is-active' : ''}`}
+          >
+            Playground
           </AppLink>
           <AppLink
             to="profile"
@@ -175,6 +188,7 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
 
       {settings ? <SettingsPage /> : null}
       {profile ? <ProfilePage /> : null}
+      {playground ? <PlaygroundPage /> : null}
 
       <TrackMetadataAutofill />
       <Player />
@@ -201,7 +215,13 @@ export default function App() {
   useEffect(() => {
     if (isAuthRoute(route)) applyPageMeta(route);
     else if (isMarketingRoute(route)) applyPageMeta(route);
-    else if (route === 'edit' || route === 'listen' || route === 'settings' || route === 'profile') {
+    else if (
+      route === 'edit' ||
+      route === 'listen' ||
+      route === 'settings' ||
+      route === 'profile' ||
+      route === 'playground'
+    ) {
       document.title = WORKSPACE_META[route].title;
     } else if (isStaffRoute(route)) {
       applyPageMeta(route);
