@@ -16,6 +16,11 @@ describe('phase 1 catalogs', () => {
         'uploads_10',
         'uploads_100',
         'uploads_25',
+        'first_game',
+        'tokens_100',
+        'tokens_1000',
+        'game_explorer',
+        'perfect_score',
       ].sort()
     );
   });

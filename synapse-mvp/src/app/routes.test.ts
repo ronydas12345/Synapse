@@ -16,6 +16,9 @@ describe('app routes', () => {
     expect(pathToRoute('/listen/')).toBe('listen');
     expect(pathToRoute('/settings')).toBe('settings');
     expect(pathToRoute('/profile')).toBe('profile');
+    expect(pathToRoute('/playground')).toBe('playground');
+    expect(isProtectedRoute('playground')).toBe(true);
+    expect(isAppPath('/playground')).toBe(true);
     expect(pathToRoute('/workshop')).toBe('workshop');
     expect(pathToRoute('/workshop/11111111-1111-4111-8111-111111111111')).toBe(
       'workshopItem'

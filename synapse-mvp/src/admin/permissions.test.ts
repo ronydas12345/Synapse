@@ -15,6 +15,8 @@ describe('staff permissions', () => {
     expect(canUse('admin', 'adminAudit')).toBe(false);
     expect(canUse('admin', 'themePublish')).toBe(false);
     expect(canUse('admin', 'systemPermissions')).toBe(false);
+    expect(canUse('admin', 'gameLab')).toBe(false);
+    expect(canUse('superadmin', 'gameLab')).toBe(true);
     expect(canUse('superadmin', 'adminManagement')).toBe(true);
     expect(canUse('user', 'userManagement')).toBe(false);
   });
@@ -31,5 +33,6 @@ describe('staff permissions', () => {
     expect(canOpenPath('/superadmin', 'admin')).toBe(false);
     expect(canOpenPath('/admin', 'superadmin')).toBe(false);
     expect(canOpenPath('/edit', 'admin')).toBe(true);
+    expect(canOpenPath('/playground', 'user')).toBe(true);
   });
 });

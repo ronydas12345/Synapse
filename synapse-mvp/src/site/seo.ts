@@ -23,6 +23,10 @@ const PAGE_META: Partial<Record<AppRoute, { title: string; description: string }
     title: 'Creator — Synapse',
     description: 'A Synapse creator profile, badges, and public Workshop creations.',
   },
+  playground: {
+    title: 'Playground — Synapse',
+    description: 'Short skill games and virtual tokens. No gambling, wagering, or cash-out.',
+  },
   pricing: {
     title: 'Pricing — Synapse',
     description: 'Free editor. Signed-in Music Paths save to your account. Pro is planned; prices are not published yet.',

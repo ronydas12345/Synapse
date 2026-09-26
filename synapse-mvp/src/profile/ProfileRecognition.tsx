@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { PathLink } from '../app/AppLink';
+import { AppLink, PathLink } from '../app/AppLink';
 import { publicProfilePath } from '../app/routes';
 import BadgeStrip from '../badges/BadgeStrip';
 import { listEarnedBadges, setFeaturedBadge, type EarnedBadge } from '../badges/api';
 import DecorationPicker from '../decorations/DecorationPicker';
 import { equipDecoration, listUnlockedDecorations } from '../decorations/api';
 import { readOwnCreator } from '../profiles/api';
+import { loadGamificationState } from '../gamification/api';
+import { TOKEN_LABEL } from '../gamification/types';
 import { useAuthStore } from '../auth/authStore';
 import { useProfileStore } from '../profile/profileStore';
 
@@ -17,6 +19,7 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
   const [unlocked, setUnlocked] = useState<string[]>(['default']);
   const [equipped, setEquipped] = useState('default');
   const [featured, setFeatured] = useState('');
+  const [tokens, setTokens] = useState<number | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -24,16 +27,18 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
     let cancelled = false;
     void (async () => {
       try {
-        const [earned, deco, creator] = await Promise.all([
+        const [earned, deco, creator, play] = await Promise.all([
           listEarnedBadges(user.uid),
           listUnlockedDecorations(user.uid),
           readOwnCreator(user.uid),
+          loadGamificationState().catch(() => null),
         ]);
         if (cancelled) return;
         setBadges(earned);
         setUnlocked(deco.length ? deco : ['default']);
         setEquipped(creator?.equippedDecoration || 'default');
         setFeatured(creator?.featuredBadge || '');
+        if (play) setTokens(play.wallet.token_balance);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Could not load badges.');
@@ -52,8 +57,15 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
       <h2>Badges and decorations</h2>
       <p className="synapse-settings-lead">
         Badges are awarded on the server for account age, Workshop publishes,
-        followers, and staff roles. Decorations are cosmetic frames.
+        Playground games, followers, and staff roles. Decorations are cosmetic
+        frames. {TOKEN_LABEL} are virtual and have no cash value.
       </p>
+      {tokens != null ? (
+        <p>
+          {TOKEN_LABEL}: {tokens.toLocaleString()} ·{' '}
+          <AppLink to="playground">Open Playground</AppLink>
+        </p>
+      ) : null}
       {username ? (
         <p className="synapse-settings-hint">
           Public page:{' '}

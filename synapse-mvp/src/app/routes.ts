@@ -17,6 +17,7 @@ export type AppRoute =
   | 'listen'
   | 'settings'
   | 'profile'
+  | 'playground'
   | 'admin'
   | 'superadmin';
 
@@ -46,6 +47,7 @@ export type AppPath =
   | '/listen'
   | '/settings'
   | '/profile'
+  | '/playground'
   | '/admin'
   | '/superadmin';
 
@@ -74,6 +76,7 @@ export const APP_PATHS: Record<StaticAppRoute, AppPath> = {
   listen: '/listen',
   settings: '/settings',
   profile: '/profile',
+  playground: '/playground',
   admin: '/admin',
   superadmin: '/superadmin',
 };
@@ -99,12 +102,13 @@ export function isMarketingRoute(route: AppRoute): boolean {
 
 export function isWorkspaceRoute(
   route: AppRoute
-): route is 'edit' | 'listen' | 'settings' | 'profile' {
+): route is 'edit' | 'listen' | 'settings' | 'profile' | 'playground' {
   return (
     route === 'edit' ||
     route === 'listen' ||
     route === 'settings' ||
-    route === 'profile'
+    route === 'profile' ||
+    route === 'playground'
   );
 }
 
@@ -118,7 +122,7 @@ export function isAuthRoute(route: AppRoute): route is 'login' | 'signup' {
 
 export function isProtectedRoute(
   route: AppRoute
-): route is 'edit' | 'listen' | 'settings' | 'profile' | 'admin' | 'superadmin' {
+): route is 'edit' | 'listen' | 'settings' | 'profile' | 'playground' | 'admin' | 'superadmin' {
   return isWorkspaceRoute(route) || isStaffRoute(route);
 }
 
@@ -146,6 +150,7 @@ export function parseAppLocation(pathname: string): AppLocation {
   if (p === '/listen') return { route: 'listen' };
   if (p === '/settings') return { route: 'settings' };
   if (p === '/profile') return { route: 'profile' };
+  if (p === '/playground') return { route: 'playground' };
   if (p === '/admin') return { route: 'admin' };
   if (p === '/superadmin') return { route: 'superadmin' };
   return { route: 'home' };

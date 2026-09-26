@@ -93,11 +93,15 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Do I need an account?',
-    a: 'Yes for the workspace (Edit, Listen, Settings, Profile) and staff dashboards. The marketing pages stay public. Log in at `/login` or create an account at `/signup`. Username and display name are required. Your paths, themes, settings, and profile save to your Supabase account. Admins land on `/admin`; the owner lands on `/superadmin`.',
+    a: 'Yes for the workspace (Edit, Listen, Settings, Profile, Playground) and staff dashboards. The marketing pages stay public. Log in at `/login` or create an account at `/signup`. Username and display name are required. Your paths, themes, settings, and profile save to your Supabase account. Admins land on `/admin`; the owner lands on `/superadmin`.',
   },
   {
     q: 'What can I play?',
     a: 'Track nodes play YouTube videos. You paste a URL or video ID. Synapse does not host audio files as a library.',
+  },
+  {
+    q: 'What is the Playground?',
+    a: 'Signed-in accounts can open `/playground` for short skill games. Tokens are a virtual reward with no cash value. You cannot wager, cash out, or buy random chance rolls. Daily and weekly game-reward limits apply. Practice still works after the cap. The server validates results and writes the token ledger. Superadmin Game Lab is only on `/superadmin`.',
   },
   {
     q: 'Is the Workshop live?',
@@ -105,7 +109,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Where is my data stored?',
-    a: 'Your Music Paths, themes, settings, profile extras, and tutorial progress save to your Supabase account (US West) with row-level security so only you can read them. Public Workshop creations, badges, and public creator profiles are readable by other people. Sign-in identity, staff roles, support tickets, profile pictures awaiting review, and published theme presets also use Supabase. A cookie-notice flag and an optional song-credits cache can remain in this browser. Clearing site data does not delete your Synapse account.',
+    a: 'Your Music Paths, themes, settings, profile extras, and tutorial progress save to your Supabase account (US West) with row-level security so only you can read them. Public Workshop creations, badges, and public creator profiles are readable by other people. Playground token balances and the token ledger are server-written only. Sign-in identity, staff roles, support tickets, profile pictures awaiting review, and published theme presets also use Supabase. A cookie-notice flag and an optional song-credits cache can remain in this browser. Clearing site data does not delete your Synapse account.',
   },
   {
     q: 'Who can open Admin or Superadmin?',
