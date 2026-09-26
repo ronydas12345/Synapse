@@ -18,8 +18,8 @@ export default function CookieNotice() {
   return (
     <div className="synapse-cookie-notice" role="dialog" aria-label="Cookie notice">
       <p>
-        Synapse stores paths and settings on this device. Playing a track loads
-        YouTube, which may set its own cookies. See{' '}
+        Synapse stores signed-in Music Paths and settings in your account.
+        Playing a track loads YouTube, which may set its own cookies. See{' '}
         <AppLink to="cookies">Cookie settings</AppLink> and{' '}
         <AppLink to="privacy">Privacy</AppLink>.
       </p>

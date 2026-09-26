@@ -3,7 +3,6 @@ import { applyIdentityToProfile, subscribeAuth } from './client';
 import { useAuthStore } from './authStore';
 import {
   firstCompleteIdentity,
-  identityForEmail,
   readAccountCache,
   writeAccountCache,
   type AccountIdentity,
@@ -24,7 +23,6 @@ import { recordConsents } from '../admin/privacy';
 function restoreIdentity(user: SessionUser): AccountIdentity | null {
   return firstCompleteIdentity(
     readAccountCache(user.uid),
-    identityForEmail(user.email),
     { username: user.username, displayName: user.displayName }
   );
 }

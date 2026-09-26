@@ -3,6 +3,9 @@ import type { Node } from '@xyflow/react';
 import { usePathStore } from '../store';
 import { useThemeStore } from '../theme/themeStore';
 import { useTutorialStore } from './tutorialStore';
+import { isIdentityComplete } from '../auth/identity';
+import { useAuthStore } from '../auth/authStore';
+import { useProfileStore } from '../profile/profileStore';
 import type { TutorialAction } from './tutorialTypes';
 import { pathToRoute, type AppRoute } from '../app/routes';
 
@@ -84,6 +87,23 @@ export function useTutorialObservers(route: AppRoute): void {
       }
     });
     return unsub;
+  }, []);
+
+  useEffect(() => {
+    const check = () => {
+      const user = useAuthStore.getState().user;
+      const profile = useProfileStore.getState().profile;
+      if (user && isIdentityComplete(profile.username, profile.displayName)) {
+        emit({ type: 'account-ready' });
+      }
+    };
+    check();
+    const stopAuth = useAuthStore.subscribe(check);
+    const stopProfile = useProfileStore.subscribe(check);
+    return () => {
+      stopAuth();
+      stopProfile();
+    };
   }, []);
 
   useEffect(() => {

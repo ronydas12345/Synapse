@@ -275,37 +275,9 @@ body:has(.synapse-mkt),
   color: var(--text);
 }
 
-.synapse-auth-screen .synapse-auth-card,
-.synapse-auth-screen .synapse-auth-test {
+.synapse-auth-screen .synapse-auth-card {
   width: 100%;
   max-width: none;
-}
-
-.synapse-auth-test {
-  margin: 1rem 0 0;
-  max-width: 24rem;
-  padding: 0.85rem 1rem;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-md, 14px);
-  color: var(--text-muted);
-  font-size: 0.88rem;
-  line-height: 1.45;
-}
-
-.synapse-auth-test p {
-  margin: 0.2rem 0 0;
-}
-
-.synapse-auth-test-label {
-  margin: 0 0 0.35rem;
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.synapse-auth-test code {
-  color: var(--text);
 }
 
 .synapse-mkt-section {

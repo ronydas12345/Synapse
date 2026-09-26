@@ -34,7 +34,7 @@ export const PRICING = {
   note: 'Prices are not published yet. Checkout is not open.',
   free: {
     name: 'Free',
-    summary: 'The editor that runs in your browser, on this device.',
+    summary: 'The editor in your browser. Signed-in Music Paths save to your account.',
     items: [
       'Visual Music Path editor',
       'Listen mode',
@@ -43,7 +43,7 @@ export const PRICING = {
       'Sequence and weighted randomizers, with play-count limits',
       'Silence, audio, and YouTube transitions',
       'Preset and custom themes',
-      'Local profile and playlists',
+      'Account profile and playlists',
     ],
   },
   pro: {
@@ -125,6 +125,6 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Where is personal data processed?',
-    a: 'Account data is in Supabase (AWS us-west-2, United States). The static app is hosted on Vercel. Playlists stay in this browser until cloud sync ships. Details are on the Privacy Policy page.',
+    a: 'Account data and Music Paths are in Supabase (AWS us-west-2, United States). The static app is hosted on Vercel. Details are on the Privacy Policy page.',
   },
 ] as const;

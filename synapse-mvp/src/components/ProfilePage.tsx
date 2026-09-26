@@ -967,7 +967,7 @@ export default function ProfilePage() {
               </select>
             </label>
             <p className="synapse-settings-hint">
-              Cloud sharing is not live yet. Visibility is saved locally.
+              Cloud sharing is not live yet. Visibility is saved on your account.
               {authUser
                 ? ' Your Google or email sign-in is the account identity.'
                 : ' Sign in to attach this profile to an account.'}
@@ -977,7 +977,7 @@ export default function ProfilePage() {
           <p className="synapse-settings-lead">
             {profile.visibility === 'public'
               ? 'This profile is marked public. Workshop discovery is not live yet.'
-              : 'This profile is private. Optional sections below are only on this device.'}
+              : 'This profile is private. Optional sections below stay on your account.'}
           </p>
         )}
       </section>
@@ -1207,9 +1207,9 @@ export default function ProfilePage() {
                 <ListenStatsNumbers profile={profile} />
                 <ListenActivityHeatmap profile={profile} />
                 <p className="synapse-settings-hint">
-                  A listen is a track started in this browser. Streaks count consecutive
+                  A listen is a track started while you are signed in. Streaks count consecutive
                   local days with at least one listen. History starts when this profile
-                  was created on this device.
+                  was created.
                 </p>
               </SectionChrome>
             );

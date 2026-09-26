@@ -6,7 +6,6 @@ import { PlaylistNameField } from './PlaylistSwitcher';
 import { SettingsRange, SettingsSelect, SettingsToggle } from './settings/Fields';
 import { usePathStore } from '../store';
 import { allThemes, filterThemes, useThemeStore } from '../theme/themeStore';
-import { useTutorialStore } from '../tutorial/tutorialStore';
 import AuthPanel from '../auth/AuthPanel';
 import { useAuthStore } from '../auth/authStore';
 import { signOut } from '../auth/client';
@@ -40,7 +39,6 @@ const SECTIONS = [
   { id: 'visualizer', label: 'Visualizer', keywords: 'fft spectrum bars capture share theme' },
   { id: 'environment', label: 'Environment', keywords: 'weather geolocation location open-meteo' },
   { id: 'import', label: 'Import / Export', keywords: 'json package synapse playlist file import export settings' },
-  { id: 'tutorial', label: 'Tutorial', keywords: 'help walkthrough tour guide' },
   { id: 'workshop', label: 'Workshop', keywords: 'share publish' },
   { id: 'account', label: 'Account', keywords: 'profile login visibility username google oauth signin account email' },
   { id: 'privacy', label: 'Privacy / Data', keywords: 'localstorage cache clear erase metadata weather' },
@@ -113,8 +111,9 @@ export default function SettingsPage() {
             <section id="settings-playlists" className="synapse-settings-section" data-tutorial="settings-playlists">
               <h2>Playlists</h2>
               <p className="synapse-settings-lead">
-                Rename playlists stored on this device. Public/private is a local
-                label until Workshop publishing exists — nothing is uploaded.
+                Rename playlists stored on this account. Public/private is a
+                label until Workshop publishing exists — nothing is listed in
+                Workshop.
               </p>
               <ul className="synapse-settings-playlist-list">
                 {pathSummaries.map((path) => {
@@ -138,7 +137,7 @@ export default function SettingsPage() {
                         }
                       >
                         <option value="private">Private</option>
-                        <option value="public">Public (local)</option>
+                        <option value="public">Public (not listed yet)</option>
                       </select>
                       <div className="synapse-settings-playlist-actions">
                         {current ? (
@@ -192,53 +191,6 @@ export default function SettingsPage() {
               <SettingsTransfer />
             </section>
           ) : null}
-          {show('tutorial') ? (
-            <section id="settings-tutorial" className="synapse-settings-section" data-tutorial="settings-tutorial">
-              <h2>Tutorial</h2>
-              <p className="synapse-settings-lead">
-                The ? button in the header opens Help. First visit offers a short
-                tour. The full walkthrough is always under Help. Progress is stored
-                on this device. Esc leaves a tour without deleting progress.
-              </p>
-              <div className="synapse-theme-actions">
-                <button
-                  type="button"
-                  className="synapse-btn synapse-btn-ghost"
-                  onClick={() => useTutorialStore.getState().openMenu()}
-                >
-                  Open tutorial menu
-                </button>
-                <button
-                  type="button"
-                  className="synapse-btn synapse-btn-ghost"
-                  onClick={() => useTutorialStore.getState().startSimple()}
-                >
-                  Start quick tour
-                </button>
-                <button
-                  type="button"
-                  className="synapse-btn synapse-btn-ghost"
-                  onClick={() => useTutorialStore.getState().startFull()}
-                >
-                  Start full tutorial
-                </button>
-                <button
-                  type="button"
-                  className="synapse-btn synapse-btn-ghost"
-                  onClick={() => useTutorialStore.getState().showWelcomeAgain()}
-                >
-                  Show welcome again
-                </button>
-                <button
-                  type="button"
-                  className="synapse-btn synapse-btn-ghost"
-                  onClick={() => useTutorialStore.getState().resetProgress()}
-                >
-                  Reset tutorial progress
-                </button>
-              </div>
-            </section>
-          ) : null}
           {show('workshop') ? (
             <section id="settings-workshop" className="synapse-settings-section" data-tutorial="settings-workshop">
               <h2>Workshop</h2>
@@ -258,8 +210,8 @@ export default function SettingsPage() {
             <section id="settings-pro" className="synapse-settings-section" data-tutorial="settings-pro">
               <h2>Pro</h2>
               <p className="synapse-settings-lead">
-                Pro is not for sale and there is no billing, entitlement, or
-                cloud sync in this release. Plan copy lives on the pricing page.
+                Pro is not for sale and there is no billing or collaborative
+                editing in this release. Plan copy lives on the pricing page.
               </p>
               <AppLink to="pricing" className="synapse-btn synapse-btn-ghost">
                 View pricing
@@ -553,11 +505,11 @@ function AccountSection() {
       <h2>Account</h2>
       <p className="synapse-settings-lead">
         Sign in with Google or email. Username and display name are required
-        when you create an account. Picture and music sections still live on
-        your <AppLink to="profile">profile</AppLink>
-        {username ? ` (@${username})` : ''}. Paths stay on this device until
-        cloud sync exists. Sign-out hides this account; it does not erase local
-        playlists.
+        when you create an account. Picture and music sections live on your{' '}
+        <AppLink to="profile">profile</AppLink>
+        {username ? ` (@${username})` : ''}. Music Paths, themes, and settings
+        save to this account. Sign-out hides them on this browser; they reload
+        on the next login.
       </p>
       <AuthPanel variant="account" />
       <SettingsSelect
@@ -566,7 +518,7 @@ function AccountSection() {
         onChange={(value) => setVisibility(value === 'public' ? 'public' : 'private')}
       >
         <option value="private">Private</option>
-        <option value="public">Public (local)</option>
+        <option value="public">Public (not listed yet)</option>
       </SettingsSelect>
     </section>
   );
@@ -683,7 +635,7 @@ function PrivacySection() {
             window.location.reload();
           }}
         >
-          Erase local Synapse data
+          Erase leftover browser data
         </button>
       </div>
       {user ? (

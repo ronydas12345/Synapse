@@ -27,6 +27,18 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
     group: 'getting-started',
     steps: [
       s(
+        'qs-account',
+        'Your account',
+        'Create an account or log in so your Music Path can save. Google or email both work. Then the canvas opens.',
+        {
+          type: 'action',
+          route: 'signup',
+          target: 'auth-panel',
+          expectedAction: { type: 'account-ready' },
+          praise: 'You’re in. Next is the canvas.',
+        }
+      ),
+      s(
         'qs-welcome',
         'Music Paths',
         'Synapse plays a graph, not a flat list. Playback walks from the Start node through the nodes you connect.',
@@ -77,14 +89,14 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'qs-playlist',
         'Your playlist',
-        'Each Music Path is stored on this device. Rename it in the top bar, or switch paths from the playlist menu.',
+        'Each Music Path is stored on your signed-in account. Rename it in the top bar, or switch paths from the playlist menu.',
         { type: 'highlight', route: 'edit', target: 'playlist-switcher' }
       ),
       s(
         'qs-done',
         'That’s the loop',
-        'The ? button opens Help — full tutorial, topics, and search — when you want node types, branches, and themes in detail.',
-        { type: 'complete', route: 'edit', target: 'help' }
+        'The tour continues in Edit. Keep building, or open Listen for the same path as a list.',
+        { type: 'complete', route: 'edit', target: 'workspace' }
       ),
     ],
   },
@@ -97,6 +109,18 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
     group: 'getting-started',
     steps: [
       s(
+        'gs-account',
+        'Your account',
+        'Sign in or create an account first. The rest of this walkthrough lives on your workspace.',
+        {
+          type: 'action',
+          route: 'signup',
+          target: 'auth-panel',
+          expectedAction: { type: 'account-ready' },
+          praise: 'Account ready. Opening the workspace.',
+        }
+      ),
+      s(
         'gs-welcome',
         'Synapse overview',
         'Synapse is a visual Music Path: Start, songs, branches, and styles on a canvas. Playback follows the graph — not a flat playlist.',
@@ -105,13 +129,13 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'gs-nav',
         'Workspace navigation',
-        'Edit is the graph. Listen is the same path as a list. Settings holds themes and import. Profile is your local identity. The ? button reopens this tutorial anywhere.',
+        'Edit is the graph. Listen is the same path as a list. Settings holds themes and import. Profile is your identity on this account.',
         { type: 'highlight', route: 'edit', target: 'app-nav' }
       ),
       s(
         'gs-paths',
         'Music Paths',
-        'Each playlist is a Music Path stored on this device. Rename it in the top bar, or switch paths from the playlist menu.',
+        'Each playlist is a Music Path stored on your signed-in account. Rename it in the top bar, or switch paths from the playlist menu.',
         { type: 'highlight', route: 'edit', target: 'playlist-switcher' }
       ),
       s(
@@ -557,7 +581,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'st-custom',
         'Custom themes',
-        'Duplicate or Edit a theme to make a custom copy stored locally. Save / Cancel / Reset lock the editor so the live workspace does not surprise you.',
+        'Duplicate or Edit a theme to make a custom copy saved on your account. Save / Cancel / Reset lock the editor so the live workspace does not surprise you.',
         { type: 'highlight', route: 'settings', hash: 'settings-themes', target: 'theme-actions' }
       ),
       s(
@@ -743,19 +767,19 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'w-search',
         'Searching',
-        'Search, likes, and other people’s paths are not wired. You still search your local library from the playlist switcher and Settings.',
+        'Search, likes, and other people’s paths are not wired. You still search your account library from the playlist switcher and Settings.',
         { type: 'info', route: 'workshop', target: 'workshop' }
       ),
       s(
         'w-tags',
         'Tags',
-        'Example cards show tag chips for the future taxonomy. Local playlists do not have Workshop tags yet.',
+        'Example cards show tag chips for the future taxonomy. Account playlists do not have Workshop tags yet.',
         { type: 'highlight', route: 'workshop', target: 'workshop' }
       ),
       s(
         'w-filters',
         'Filters',
-        'Filters will live here with search. Today, Settings → Playlists is the list of paths on this device.',
+        'Filters will live here with search. Today, Settings → Playlists is the list of paths on your account.',
         { type: 'highlight', route: 'settings', hash: 'settings-playlists', target: 'settings-playlists' }
       ),
       s(
@@ -785,7 +809,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'w-vis',
         'Visibility settings',
-        'Each local playlist can be marked public or private on disk. That flag is not a live Workshop listing.',
+        'Each playlist can be marked public or private on your account. That flag is not a live Workshop listing.',
         { type: 'highlight', route: 'settings', hash: 'settings-playlists', target: 'settings-playlists' }
       ),
     ],
@@ -793,7 +817,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
   {
     id: 'collaboration',
     title: 'Collaboration',
-    summary: 'Shared editing, roles, cursors, and history are not on this device yet.',
+    summary: 'Shared editing, roles, cursors, and history are not live yet.',
     keywords:
       'collaborate owner editor viewer commenter realtime cursors comments history rollback permissions',
     group: 'community',
@@ -801,13 +825,13 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'co-create',
         'Creating a collaborative playlist',
-        'Collaboration needs accounts and a server. This build is single-device localStorage. Export a package to pass a path to someone else.',
+        'Collaboration needs a shared canvas that is not in this release. Your own paths already save to your account. Export a package to pass a path to someone else as a file.',
         { type: 'info', route: 'workshop', target: 'workshop' }
       ),
       s(
         'co-owner',
         'Owner permissions',
-        'Owner will be the account that published the path. Until then, whoever has the file on their machine can edit it.',
+        'Owner will be the account that published the path. Until then, export a file if you want someone else to open a copy.',
         { type: 'info', route: 'pricing', target: 'pricing' }
       ),
       s(
@@ -819,7 +843,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'co-viewer',
         'Viewer permissions',
-        'Viewers will play without editing. Listen on this device is already a view-first layout of your own path.',
+        'Viewers will play without editing. Listen is already a view-first layout of your own path.',
         { type: 'highlight', route: 'listen', target: 'listen-path' }
       ),
       s(
@@ -953,13 +977,13 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'as-privacy',
         'Privacy',
-        'Profile visibility is local. Weather uses Open-Meteo. Privacy / Data lists localStorage keys and can clear caches or erase this browser’s Synapse data.',
+        'Profile visibility saves on your account. Weather uses Open-Meteo. Privacy / Data can download your cloud copy, clear leftover browser caches, or delete the account.',
         { type: 'highlight', route: 'settings', hash: 'settings-privacy', target: 'settings-privacy' }
       ),
       s(
         'as-other',
         'Other application settings',
-        'Workshop and Pro stay honest previews: no publish, billing, or cloud. The rest of Settings is local and persisted.',
+        'Workshop and Pro stay honest previews: no publish or billing. The rest of Settings saves to your account.',
         { type: 'highlight', route: 'settings', target: 'settings-nav' }
       ),
     ],

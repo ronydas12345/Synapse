@@ -66,8 +66,8 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>On this device only:</strong> a cookie-notice choice, the auth
-          session token, and an optional song-credits cache. Paths are not kept
-          in localStorage after you sign in.
+          session token, and an optional song-credits cache. Music Paths are
+          stored in your account, not in the browser.
         </li>
       </ul>
       <p>
@@ -118,10 +118,11 @@ export default function PrivacyPage() {
 
       <h2>How long we keep it</h2>
       <p>
-        Account rows last until you delete the account or we close the service.
-        Support tickets stay while the account exists. Auth logs follow the
-        host’s retention. LocalStorage stays until you clear this site’s data or
-        use Settings → Privacy → Erase local Synapse data. After erasure we keep
+        Account rows and your workspace last until you delete the account or we
+        close the service. Support tickets stay while the account exists. Auth
+        logs follow the host’s retention. A cookie-notice flag and song-credits
+        cache stay in this browser until you clear this site’s data or use
+        Settings → Privacy → Erase leftover Synapse keys. After erasure we keep
         only what the law still requires (for example a stub that the deletion
         happened).
       </p>
@@ -187,8 +188,9 @@ export function TermsPage() {
         YouTube (and limited local) audio. It is provided as-is, currently as a
         personal project, without a paid subscription. Features marked planned,
         preview, or coming soon — including Workshop publishing, Pro, overlays,
-        and cloud playlist sync — are not a promise and are not for sale in this
-        release.
+        and collaborative editing — are not a promise and are not for sale in this
+        release. Music Paths you build while signed in are stored with your
+        account.
       </p>
       <h2>Your account</h2>
       <p>
@@ -227,8 +229,8 @@ export function TermsPage() {
       <h2>Ending the agreement</h2>
       <p>
         You can delete your account in Settings. We can stop offering the app or
-        close an account that breaks these terms. Local files on your device are
-        yours to export before you leave.
+        close an account that breaks these terms. Download your data from
+        Settings before you leave if you want a copy of your Music Paths.
       </p>
       <h2>Law</h2>
       <p>
@@ -281,9 +283,11 @@ export function CookiesPage() {
       </p>
       <h2>Your choices</h2>
       <p>
-        You can clear site data in the browser, use Settings → Erase local
-        Synapse data, or sign out. Blocking all cookies may break sign-in. There
-        is no separate “ads” switch because we do not run ads.
+        You can clear leftover site data in the browser, use Settings → Erase
+        leftover Synapse keys, sign out, or delete the account. Blocking all
+        cookies may break sign-in. There is no separate “ads” switch because we
+        do not run ads. Clearing this browser does not delete Music Paths stored
+        on your account.
       </p>
       <p>
         Related: <AppLink to="privacy">Privacy</AppLink>.

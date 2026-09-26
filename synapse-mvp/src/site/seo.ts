@@ -10,7 +10,7 @@ const PAGE_META: Partial<Record<AppRoute, { title: string; description: string }
   },
   pricing: {
     title: 'Pricing — Synapse',
-    description: 'Free editor on this device. Pro is planned; prices are not published yet.',
+    description: 'Free editor. Signed-in Music Paths save to your account. Pro is planned; prices are not published yet.',
   },
   changelog: {
     title: 'Changelog — Synapse',
@@ -18,7 +18,7 @@ const PAGE_META: Partial<Record<AppRoute, { title: string; description: string }
   },
   faq: {
     title: 'FAQ — Synapse',
-    description: 'Common questions about Music Paths, YouTube playback, and local data.',
+    description: 'Common questions about Music Paths, YouTube playback, and account data.',
   },
   privacy: {
     title: 'Privacy — Synapse',

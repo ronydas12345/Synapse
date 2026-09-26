@@ -10,11 +10,7 @@ import {
   signOut,
 } from './client';
 import { useAuthStore } from './authStore';
-import {
-  TEST_ACCOUNT,
-  identityFromFields,
-  isIdentityComplete,
-} from './identity';
+import { identityFromFields, isIdentityComplete } from './identity';
 import {
   displayNameError,
   usernameError,
@@ -101,7 +97,7 @@ export default function AuthPanel({
 
   if (variant === 'account' && !user) {
     return (
-      <div className="synapse-auth-panel">
+      <div className="synapse-auth-panel" data-tutorial="auth-panel">
         <p className="synapse-settings-lead">
           Log in to use your workspace. Username and display name are required
           when you create an account.
@@ -122,7 +118,7 @@ export default function AuthPanel({
     const userErr = usernameError(username);
     const nameErr = displayNameError(displayName);
     return (
-      <div className="synapse-auth-panel">
+      <div className="synapse-auth-panel" data-tutorial="auth-panel">
         <p className="synapse-settings-lead">
           Username and display name are required to finish this account.
         </p>
@@ -184,7 +180,7 @@ export default function AuthPanel({
     const label =
       user.displayName || profile.displayName || user.email || 'Signed in';
     return (
-      <div className="synapse-auth-panel">
+      <div className="synapse-auth-panel" data-tutorial="auth-panel">
         <div className="synapse-auth-identity">
           {user.photoURL ? (
             <img src={user.photoURL} alt="" className="synapse-auth-photo" />
@@ -234,7 +230,7 @@ export default function AuthPanel({
   const isSignup = variant === 'signup';
 
   return (
-    <div className="synapse-auth-panel">
+    <div className="synapse-auth-panel" data-tutorial="auth-panel">
       <button
         type="button"
         className="synapse-btn synapse-btn-play synapse-auth-google"
@@ -344,19 +340,6 @@ export default function AuthPanel({
         >
           {isSignup ? 'Create account' : 'Log in'}
         </button>
-        {!isSignup ? (
-          <button
-            type="button"
-            className="synapse-auth-switch"
-            onClick={() => {
-              setEmail(TEST_ACCOUNT.email);
-              setPassword(TEST_ACCOUNT.password);
-              setError(null);
-            }}
-          >
-            Fill test login
-          </button>
-        ) : null}
       </form>
       <p className="synapse-auth-switch-row">
         By continuing with Google you agree to the{' '}

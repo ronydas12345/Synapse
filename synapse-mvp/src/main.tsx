@@ -13,11 +13,11 @@ try {
 
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <TutorialProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <TutorialProvider>
           <App />
-        </AuthProvider>
-      </TutorialProvider>
+        </TutorialProvider>
+      </AuthProvider>
     </React.StrictMode>
   );
 } catch (error) {

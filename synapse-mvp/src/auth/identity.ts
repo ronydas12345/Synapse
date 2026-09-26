@@ -11,14 +11,6 @@ export interface AccountIdentity {
   displayName: string;
 }
 
-/** Throwaway email/password user for checking Auth. */
-export const TEST_ACCOUNT = {
-  email: 'tester@synapse.app',
-  password: 'SynapseTest1',
-  username: 'synapse_tester',
-  displayName: 'Synapse Tester',
-} as const;
-
 export function isIdentityComplete(
   username: string,
   displayName: string
@@ -87,15 +79,4 @@ export function writeAccountCache(uid: string, identity: AccountIdentity): void 
 export function clearAccountCache(uid?: string): void {
   if (uid) identities.delete(uid);
   else identities.clear();
-}
-
-export function identityForEmail(email: string | null): AccountIdentity | null {
-  if (!email) return null;
-  if (email.toLowerCase() === TEST_ACCOUNT.email) {
-    return {
-      username: TEST_ACCOUNT.username,
-      displayName: TEST_ACCOUNT.displayName,
-    };
-  }
-  return null;
 }

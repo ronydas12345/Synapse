@@ -65,8 +65,8 @@ export default function TutorialMenu() {
         >
           <h2 id={titleId}>Welcome to Synapse</h2>
           <p>
-            A short tour of Music Paths, tracks, and play — seven steps. The full
-            walkthrough stays under Help (?).
+            A short tour: create an account or log in, then Music Paths, tracks,
+            and play.
           </p>
           <div className="synapse-tutorial-actions">
             <button type="button" className="synapse-btn synapse-btn-play" onClick={() => startSimple()}>
@@ -94,7 +94,7 @@ export default function TutorialMenu() {
           aria-labelledby={titleId}
         >
           <h2 id={titleId}>Skip the tutorial?</h2>
-          <p>You can reopen it anytime using the ? button in the header.</p>
+          <p>You can start the short tour again from the home page later.</p>
           <div className="synapse-tutorial-actions">
             <button type="button" className="synapse-btn synapse-btn-play" onClick={confirmSkip}>
               Skip
@@ -120,7 +120,7 @@ export default function TutorialMenu() {
           <h2 id={titleId}>{runKind === 'simple' ? 'That’s the loop.' : "You're ready."}</h2>
           <p>
             {runKind === 'simple'
-              ? 'You have the Music Path essentials. The ? button opens the full tutorial when you want more detail.'
+              ? 'You have the Music Path essentials. Keep building from Edit, or open Listen for the same path as a list.'
               : 'You now know the fundamentals of Synapse. Build something of your own and experiment with the Music Path system.'}
           </p>
           <div className="synapse-tutorial-actions">

@@ -2,10 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   identityFromFields,
   isIdentityComplete,
-  identityForEmail,
   firstCompleteIdentity,
   firstFilled,
-  TEST_ACCOUNT,
 } from './identity';
 
 describe('account identity', () => {
@@ -22,13 +20,6 @@ describe('account identity', () => {
       displayName: 'Ada',
     });
     expect(identityFromFields('no', 'Ada')).toBeNull();
-  });
-
-  it('maps the test account by email', () => {
-    expect(identityForEmail(TEST_ACCOUNT.email)?.username).toBe(
-      'synapse_tester'
-    );
-    expect(identityForEmail('other@example.com')).toBeNull();
   });
 
   it('keeps a complete identity when a later source is still empty', () => {

@@ -2,7 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { actionsMatch, tokenize } from './tutorialMatch';
 import { searchHits, searchSections, SIMPLE_TUTORIAL_ID, TUTORIAL_SECTIONS, FULL_TUTORIAL_SECTIONS, getSection } from './tutorialCatalog';
 import { markSectionComplete, parseProgress, emptyProgress } from './tutorialStorage';
-import { shouldPromptFirstRun } from './tutorialStore';
+import {
+  FIRST_RUN_HOME_DELAY_MS,
+  firstPlayableStepIndex,
+  isNearDocumentBottom,
+  resolveTutorialNavigation,
+  shouldOfferFirstRun,
+  shouldPromptFirstRun,
+  stepNeedsAccount,
+} from './tutorialStore';
 import { paddedRect, placeWindow, rectsClose } from './placement';
 
 describe('tutorial engine', () => {
@@ -50,6 +58,9 @@ describe('tutorial engine', () => {
     ).toBe(true);
     expect(actionsMatch({ type: 'playing' }, { type: 'playing' })).toBe(true);
     expect(actionsMatch({ type: 'playing' }, { type: 'paused' })).toBe(false);
+    expect(actionsMatch({ type: 'account-ready' }, { type: 'account-ready' })).toBe(
+      true
+    );
   });
 
   it('searches sections by keyword', () => {
@@ -80,6 +91,7 @@ describe('tutorial engine', () => {
     expect(simple!.steps.length).toBeGreaterThanOrEqual(6);
     expect(simple!.steps.length).toBeLessThanOrEqual(8);
     expect(simple!.steps.map((st) => st.title)).toEqual([
+      'Your account',
       'Music Paths',
       'Add a Track',
       'Connect from Start',
@@ -99,6 +111,71 @@ describe('tutorial engine', () => {
     expect(shouldPromptFirstRun({ ...fresh, dismissedWelcome: true }, false)).toBe(false);
     expect(shouldPromptFirstRun({ ...fresh, skipped: true }, false)).toBe(false);
     expect(shouldPromptFirstRun({ ...fresh, completedFull: true }, false)).toBe(false);
+  });
+
+  it('waits on the home page so first-run does not block people who already know where to go', () => {
+    expect(FIRST_RUN_HOME_DELAY_MS).toBeGreaterThanOrEqual(45_000);
+    expect(FIRST_RUN_HOME_DELAY_MS).toBeLessThanOrEqual(60_000);
+    expect(shouldOfferFirstRun('home', false)).toBe(true);
+    expect(shouldOfferFirstRun('home', true)).toBe(false);
+    expect(shouldOfferFirstRun('edit', false)).toBe(false);
+    expect(shouldOfferFirstRun('login', false)).toBe(false);
+    expect(shouldOfferFirstRun('workshop', false)).toBe(false);
+  });
+
+  it('treats the home footer as reached once, without firing on a short page', () => {
+    expect(
+      isNearDocumentBottom({
+        viewportHeight: 800,
+        scrollY: 0,
+        scrollHeight: 820,
+      })
+    ).toBe(false);
+    expect(
+      isNearDocumentBottom({
+        viewportHeight: 800,
+        scrollY: 2200,
+        scrollHeight: 3000,
+      })
+    ).toBe(true);
+    expect(
+      isNearDocumentBottom({
+        viewportHeight: 800,
+        scrollY: 0,
+        scrollHeight: 4000,
+      })
+    ).toBe(false);
+  });
+
+  it('sends guests to create account instead of bouncing Edit to Log in', () => {
+    const account = getSection(SIMPLE_TUTORIAL_ID)!.steps[0];
+    const canvas = getSection(SIMPLE_TUTORIAL_ID)!.steps[1];
+    expect(stepNeedsAccount(account)).toBe(true);
+    expect(firstPlayableStepIndex(getSection(SIMPLE_TUTORIAL_ID)!.steps, true)).toBe(1);
+    expect(
+      resolveTutorialNavigation(account, {
+        accountReady: false,
+        currentRoute: 'home',
+      })
+    ).toEqual({ path: '/signup', hash: '' });
+    expect(
+      resolveTutorialNavigation(account, {
+        accountReady: false,
+        currentRoute: 'login',
+      })
+    ).toBeNull();
+    expect(
+      resolveTutorialNavigation(canvas, {
+        accountReady: false,
+        currentRoute: 'signup',
+      })
+    ).toEqual({ path: '/signup', hash: '' });
+    expect(
+      resolveTutorialNavigation(canvas, {
+        accountReady: true,
+        currentRoute: 'signup',
+      })
+    ).toEqual({ path: '/edit', hash: '' });
   });
 });
 

@@ -25,7 +25,7 @@ Workshop publishing, Pro checkout, collaborative editing, and image/GIF overlays
   - [Tutorial](#tutorial)
 - [Playlist and theme files](#playlist-and-theme-files)
 - [Architecture](#architecture)
-- [Local data and privacy](#local-data-and-privacy)
+- [Account data and privacy](#account-data-and-privacy)
 - [Development](#development)
 - [Repository layout](#repository-layout)
 - [Related docs](#related-docs)
@@ -44,9 +44,9 @@ Workshop publishing, Pro checkout, collaborative editing, and image/GIF overlays
 - Hold **Shift** while dragging nodes for alignment guides and snap.
 - Pick connection **arrow types** and visualizer **bar counts** on the theme.
 - Use **Listen** mode (`/listen`) as an indented path list instead of the graph editor.
-- Keep a **local playlist library**, export/import `.synapse` JSON (graph + dependent custom themes).
-- Keep a **local profile** (`@username`, optional sections, listen counts).
-- **Sign in** with Google or email (`/login`, `/signup`, header). Edit, Listen, Settings, Profile, `/admin`, and `/superadmin` require an account. Sign-out clears the visible account and profile; it does not wipe local playlists. The owner account opens the Superadmin dashboard; promoted admins open `/admin`.
+- Keep a **playlist library** on the signed-in account, export/import `.synapse` JSON (graph + dependent custom themes).
+- Keep a **profile** (`@username`, optional sections, listen counts) on that account.
+- **Sign in** with Google or email (`/login`, `/signup`, header). Edit, Listen, Settings, Profile, `/admin`, and `/superadmin` require an account. Sign-out clears the visible account on this browser; cloud playlists reload on the next login. The owner account opens the Superadmin dashboard; promoted admins open `/admin`.
 - Open the **tutorial** from `?` in the header.
 
 ## What is not in this release
@@ -234,8 +234,8 @@ Synapse is a Vite + React 19 + TypeScript SPA. Authentication uses Supabase Auth
 | Style nodes | `src/styleNode/` | Parse, layer merge, lerp, upstream collection |
 | Conditionals | `src/conditional/`, `src/weather/` | Date/weather match, Open-Meteo provider |
 | Playlists | `src/playlists/` | Library + sanitize/serialize `.synapse` |
-| Settings | `src/settings/` | Versioned local settings |
-| Profile | `src/profile/` | Local profile store |
+| Settings | `src/settings/` | Versioned settings (cloud workspace) |
+| Profile | `src/profile/` | Profile store (cloud workspace) |
 | Auth | `src/auth/`, `src/supabase/` | Supabase Google/email sign-in, session, roles |
 | Staff data | `src/admin/` | Profiles, roles, tickets, moderation, audit, published themes |
 | Tutorial | `src/tutorial/` | Catalog, spotlight, storage |
@@ -252,7 +252,7 @@ Synapse is a Vite + React 19 + TypeScript SPA. Authentication uses Supabase Auth
 
 ---
 
-## Local data and privacy
+## Account data and privacy
 
 Signed-in Music Paths, themes, settings, profile extras, and tutorial progress live in Postgres table `user_workspaces` (row-level security: the owner only). Profile pictures go to Storage bucket `avatars` and the moderation queue. Playing a track still uses YouTube. Weather uses Open-Meteo when a location is available.
 

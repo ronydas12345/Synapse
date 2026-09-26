@@ -3,6 +3,13 @@ import { scheduleWorkspacePersist } from '../cloud/persistGate';
 
 export const TUTORIAL_STORAGE_KEY = 'synapse_tutorial_progress';
 export const TUTORIAL_SESSION_KEY = 'synapse_tutorial_session';
+export const TUTORIAL_RUN_KEY = 'synapse_tutorial_run';
+
+export interface TutorialRunSnapshot {
+  runKind: 'simple' | 'full' | 'section';
+  sectionId: string;
+  stepIndex: number;
+}
 
 export const emptyProgress = (): TutorialProgress => ({
   version: 1,
@@ -66,6 +73,49 @@ export function saveSessionLater(): void {
   if (typeof sessionStorage === 'undefined') return;
   try {
     sessionStorage.setItem(TUTORIAL_SESSION_KEY, 'later');
+  } catch {
+    /* ignore */
+  }
+}
+
+export function loadTutorialRun(): TutorialRunSnapshot | null {
+  if (typeof sessionStorage === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(TUTORIAL_RUN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<TutorialRunSnapshot>;
+    if (
+      (parsed.runKind !== 'simple' &&
+        parsed.runKind !== 'full' &&
+        parsed.runKind !== 'section') ||
+      typeof parsed.sectionId !== 'string' ||
+      !Number.isFinite(Number(parsed.stepIndex))
+    ) {
+      return null;
+    }
+    return {
+      runKind: parsed.runKind,
+      sectionId: parsed.sectionId,
+      stepIndex: Math.max(0, Math.floor(Number(parsed.stepIndex))),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function saveTutorialRun(run: TutorialRunSnapshot): void {
+  if (typeof sessionStorage === 'undefined') return;
+  try {
+    sessionStorage.setItem(TUTORIAL_RUN_KEY, JSON.stringify(run));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearTutorialRun(): void {
+  if (typeof sessionStorage === 'undefined') return;
+  try {
+    sessionStorage.removeItem(TUTORIAL_RUN_KEY);
   } catch {
     /* ignore */
   }

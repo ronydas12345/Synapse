@@ -1,5 +1,4 @@
 import AuthPanel from '../auth/AuthPanel';
-import { TEST_ACCOUNT } from '../auth/identity';
 import AuthSwitchLink from '../auth/AuthSwitchLink';
 
 export default function LoginPage() {
@@ -13,16 +12,7 @@ export default function LoginPage() {
       <p className="synapse-auth-alt">
         Need an account? <AuthSwitchLink to="signup">Create account</AuthSwitchLink>
       </p>
-      <aside className="synapse-auth-test">
-        <p className="synapse-auth-test-label">Test user</p>
-        <p>
-          Email <code>{TEST_ACCOUNT.email}</code>
-        </p>
-        <p>
-          Password <code>{TEST_ACCOUNT.password}</code>
-        </p>
-      </aside>
-      <div className="synapse-auth-card">
+      <div className="synapse-auth-card" data-tutorial="auth-panel">
         <AuthPanel variant="login" />
       </div>
     </main>

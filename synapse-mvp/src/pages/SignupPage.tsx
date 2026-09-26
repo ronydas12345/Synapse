@@ -12,7 +12,7 @@ export default function SignupPage() {
       <p className="synapse-auth-alt">
         Already have an account? <AuthSwitchLink to="login">Log in</AuthSwitchLink>
       </p>
-      <div className="synapse-auth-card">
+      <div className="synapse-auth-card" data-tutorial="auth-panel">
         <AuthPanel variant="signup" />
       </div>
     </main>

@@ -21,7 +21,8 @@ export type TutorialAction =
   | { type: 'track-url' }
   | { type: 'node-data'; nodeType: string; field?: string }
   | { type: 'settings-section'; id: string }
-  | { type: 'theme-changed' };
+  | { type: 'theme-changed' }
+  | { type: 'account-ready' };
 
 export interface TutorialStep {
   id: string;
