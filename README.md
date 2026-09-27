@@ -272,7 +272,7 @@ Tests live next to the modules they cover (`*.test.ts`). Prefer `npm test` in `s
 
 **Do not commit** `.env`, tokens, or `env.txt.txt`. The Google Sheet agile webhook is documented in `scripts/google-apps-script/README.md` and is unrelated to running the player.
 
-Changelog for the app: `synapse-mvp/CHANGELOG.md` (also mirrored under `doc/CHANGELOG.md`). In-app page: `/changelog`.
+Changelog for the app: `synapse-mvp/CHANGELOG.md`. In-app page: `/changelog`.
 
 ---
 
@@ -293,7 +293,6 @@ Synapse/
     src/admin/              staff dashboards and Postgres API
     public/                 favicon, OG image
   supabase/migrations/      staff schema + RLS
-  doc/                      handoff notes, implementation status
   scripts/google-apps-script/  optional sprint-sheet webhook
 ```
 
@@ -304,9 +303,6 @@ Synapse/
 | Doc | Use |
 | --- | --- |
 | `synapse-mvp/CHANGELOG.md` | User-facing history |
-| `doc/IMPLEMENTATION_STATUS.md` | Audit-style status vs the original PDD |
-| `doc/SYNAPSE_EXTENSIVE_FEATURES_HANDOFF.md` | Product feature intent (includes unshipped items) |
-| `doc/SYNAPSE_CURSOR_HANDOFF.md` / `_V2.md` | Earlier engineering handoffs |
 | `scripts/google-apps-script/README.md` | Agile spreadsheet webhook |
 
-When in doubt, **the running code in `synapse-mvp/src` is the source of truth**, not a handoff that still lists a feature as missing.
+When in doubt, **the running code in `synapse-mvp/src` is the source of truth**.

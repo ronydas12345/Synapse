@@ -8,21 +8,24 @@ import {
   workshopItemPath,
 } from '../app/routes';
 import { useAuthStore } from '../auth/authStore';
+import SharePanel from '../share/SharePanel';
 import { usePathStore } from '../store';
 import {
+  addWorkshopComment,
+  deleteWorkshopComment,
   getWorkshopCreation,
+  likedCreationIds,
+  listWorkshopComments,
   reportWorkshopCreation,
   remixWorkshopCreation,
+  savedCreationIds,
+  setCreationSocial,
   setWorkshopVisibility,
   toggleWorkshopLike,
   toggleWorkshopSave,
+  type WorkshopComment,
 } from './api';
 import type { ReportReason, WorkshopCreation, WorkshopVisibility } from './types';
-
-async function copyShareLink(id: string): Promise<void> {
-  const url = `${window.location.origin}${workshopItemPath(id)}`;
-  await navigator.clipboard.writeText(url);
-}
 
 export default function CreationPage({ id }: { id: string }) {
   const user = useAuthStore((s) => s.user);
@@ -31,24 +34,37 @@ export default function CreationPage({ id }: { id: string }) {
   const [busy, setBusy] = useState('');
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [comments, setComments] = useState<WorkshopComment[]>([]);
+  const [commentBody, setCommentBody] = useState('');
   const [reportReason, setReportReason] = useState<ReportReason>('spam');
   const [reportDetails, setReportDetails] = useState('');
-  const [copied, setCopied] = useState(false);
 
   async function reload() {
     const next = await getWorkshopCreation(id);
     setItem(next);
-    if (!next) setError('This creation is private, removed, or does not exist.');
-    else setError('');
+    if (!next) {
+      setError('This creation is private, removed, or does not exist.');
+      return;
+    }
+    setError('');
+    const [likedIds, savedIds, thread] = await Promise.all([
+      user ? likedCreationIds([next.id]) : Promise.resolve(new Set<string>()),
+      user ? savedCreationIds([next.id]) : Promise.resolve(new Set<string>()),
+      listWorkshopComments(next.id),
+    ]);
+    setLiked(likedIds.has(next.id));
+    setSaved(savedIds.has(next.id));
+    setComments(thread);
   }
 
   useEffect(() => {
     void reload().catch((err) => {
       setError(err instanceof Error ? err.message : 'Could not load this creation.');
     });
-  }, [id]);
+  }, [id, user]);
 
   const own = Boolean(user && item && user.uid === item.creatorUid);
+  const shareKey = item?.shareCode || item?.id || id;
 
   async function run(label: string, fn: () => Promise<void>) {
     if (!user) {
@@ -66,8 +82,10 @@ export default function CreationPage({ id }: { id: string }) {
   }
 
   async function openRemix(listen: boolean) {
+    const creationId = item?.id;
+    if (!creationId) return;
     await run('remix', async () => {
-      const remix = await remixWorkshopCreation(id);
+      const remix = await remixWorkshopCreation(creationId);
       usePathStore.getState().importWorkshopGraph(
         `Remix of ${remix.title}`,
         remix.payload.nodes as Node[],
@@ -106,7 +124,9 @@ export default function CreationPage({ id }: { id: string }) {
         ) : null}
       </p>
       <p className="synapse-mkt-tags">
-        {item.likeCount} likes · {item.saveCount} saves · {item.remixCount} remixes
+        {item.likesEnabled ? `${item.likeCount} likes · ` : 'Likes off · '}
+        {item.saveCount} saves · {item.remixCount} remixes
+        {item.commentsEnabled ? ` · ${item.commentCount} comments` : ' · comments off'}
         {item.visibility !== 'public' ? ` · ${item.visibility}` : ''}
       </p>
       {error ? <p className="synapse-settings-error">{error}</p> : null}
@@ -119,34 +139,38 @@ export default function CreationPage({ id }: { id: string }) {
         >
           Play
         </button>
-        <button
-          type="button"
-          className="synapse-btn synapse-btn-ghost"
-          disabled={Boolean(busy)}
-          onClick={() =>
-            void run('like', async () => {
-              const on = await toggleWorkshopLike(id);
-              setLiked(on);
-              await reload();
-            })
-          }
-        >
-          {liked ? 'Liked' : 'Like'}
-        </button>
-        <button
-          type="button"
-          className="synapse-btn synapse-btn-ghost"
-          disabled={Boolean(busy)}
-          onClick={() =>
-            void run('save', async () => {
-              const on = await toggleWorkshopSave(id);
-              setSaved(on);
-              await reload();
-            })
-          }
-        >
-          {saved ? 'Saved' : 'Save'}
-        </button>
+        {item.likesEnabled || own ? (
+          <button
+            type="button"
+            className="synapse-btn synapse-btn-ghost"
+            disabled={Boolean(busy) || (!item.likesEnabled && !own)}
+            onClick={() =>
+              void run('like', async () => {
+                const on = await toggleWorkshopLike(item.id);
+                setLiked(on);
+                await reload();
+              })
+            }
+          >
+            {liked ? 'Liked' : 'Like'}
+          </button>
+        ) : null}
+        {item.savesEnabled || own ? (
+          <button
+            type="button"
+            className="synapse-btn synapse-btn-ghost"
+            disabled={Boolean(busy) || (!item.savesEnabled && !own)}
+            onClick={() =>
+              void run('save', async () => {
+                const on = await toggleWorkshopSave(item.id);
+                setSaved(on);
+                await reload();
+              })
+            }
+          >
+            {saved ? 'Saved' : 'Save'}
+          </button>
+        ) : null}
         <button
           type="button"
           className="synapse-btn synapse-btn-ghost"
@@ -155,45 +179,99 @@ export default function CreationPage({ id }: { id: string }) {
         >
           Remix
         </button>
-        <button
-          type="button"
-          className="synapse-btn synapse-btn-ghost"
-          onClick={() => {
-            void copyShareLink(id).then(() => {
-              setCopied(true);
-              window.setTimeout(() => setCopied(false), 1500);
-            });
-          }}
-        >
-          {copied ? 'Link copied' : 'Share'}
-        </button>
       </div>
+      {(item.visibility === 'public' || item.visibility === 'unlisted' || own) && item.shareCode ? (
+        <SharePanel
+          shareCode={item.shareCode}
+          path={workshopItemPath(shareKey)}
+          label="Workshop playlist"
+        />
+      ) : null}
       {own ? (
-        <label className="synapse-settings-field">
-          Visibility
-          <select
-            className="synapse-settings-input"
-            value={item.visibility}
-            onChange={(event) => {
-              const next = event.target.value as WorkshopVisibility;
-              void run('visibility', async () => {
-                await setWorkshopVisibility(id, next);
-                await reload();
-              });
-            }}
-          >
-            <option value="private">Private</option>
-            <option value="unlisted">Unlisted — anyone with the link</option>
-            <option value="public">Public — listed in Workshop</option>
-          </select>
-        </label>
+        <>
+          <label className="synapse-settings-field">
+            Visibility
+            <select
+              className="synapse-settings-input"
+              value={item.visibility}
+              onChange={(event) => {
+                const next = event.target.value as WorkshopVisibility;
+                void run('visibility', async () => {
+                  await setWorkshopVisibility(item.id, next);
+                  await reload();
+                });
+              }}
+            >
+              <option value="private">Private — only you</option>
+              <option value="unlisted">Unlisted — anyone with the ID or link</option>
+              <option value="public">Public — listed in Workshop</option>
+            </select>
+          </label>
+          <fieldset className="synapse-workshop-toggles">
+            <legend>On this playlist</legend>
+            <label>
+              <input
+                type="checkbox"
+                checked={item.likesEnabled}
+                onChange={(event) =>
+                  void run('social', async () => {
+                    await setCreationSocial(
+                      item.id,
+                      event.target.checked,
+                      item.commentsEnabled,
+                      item.savesEnabled
+                    );
+                    await reload();
+                  })
+                }
+              />
+              Allow likes
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={item.commentsEnabled}
+                onChange={(event) =>
+                  void run('social', async () => {
+                    await setCreationSocial(
+                      item.id,
+                      item.likesEnabled,
+                      event.target.checked,
+                      item.savesEnabled
+                    );
+                    await reload();
+                  })
+                }
+              />
+              Allow comments
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={item.savesEnabled}
+                onChange={(event) =>
+                  void run('social', async () => {
+                    await setCreationSocial(
+                      item.id,
+                      item.likesEnabled,
+                      item.commentsEnabled,
+                      event.target.checked
+                    );
+                    await reload();
+                  })
+                }
+              />
+              Allow saves
+            </label>
+          </fieldset>
+        </>
       ) : (
         <form
           className="synapse-workshop-report"
           onSubmit={(event) => {
             event.preventDefault();
             void run('report', async () => {
-              await reportWorkshopCreation(id, reportReason, reportDetails);
+              await reportWorkshopCreation(item.id, reportReason, reportDetails);
               setReportDetails('');
               setError('Report sent to staff.');
             });
@@ -223,6 +301,84 @@ export default function CreationPage({ id }: { id: string }) {
           </button>
         </form>
       )}
+      {item.visibility === 'public' && (item.commentsEnabled || comments.length > 0) ? (
+        <section className="synapse-workshop-comments">
+          <h2>Comments</h2>
+          {!item.commentsEnabled ? (
+            <p className="synapse-settings-lead">Comments are turned off for this playlist.</p>
+          ) : (
+            <form
+              className="synapse-workshop-comment-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void run('comment', async () => {
+                  await addWorkshopComment(item.id, commentBody);
+                  setCommentBody('');
+                  await reload();
+                });
+              }}
+            >
+              <textarea
+                className="synapse-settings-input"
+                value={commentBody}
+                onChange={(event) => setCommentBody(event.target.value)}
+                maxLength={500}
+                rows={3}
+                placeholder={user ? 'Write a comment' : 'Log in to comment'}
+                disabled={!user}
+              />
+              <button
+                type="submit"
+                className="synapse-btn synapse-btn-ghost"
+                disabled={!user || Boolean(busy) || !commentBody.trim()}
+              >
+                Post comment
+              </button>
+            </form>
+          )}
+          {comments.length === 0 ? (
+            <p className="synapse-settings-lead">No comments yet.</p>
+          ) : (
+            <ul className="synapse-workshop-comment-list">
+              {comments.map((comment) => (
+                <li key={comment.id} className="synapse-workshop-comment">
+                  <p>
+                    {comment.username ? (
+                      <PathLink href={publicProfilePath(comment.username)}>
+                        @{comment.username}
+                      </PathLink>
+                    ) : (
+                      'Someone'
+                    )}
+                    {comment.createdAt ? (
+                      <span className="synapse-profile-muted">
+                        {' '}
+                        · {new Date(comment.createdAt).toLocaleString()}
+                      </span>
+                    ) : null}
+                  </p>
+                  <p>{comment.body}</p>
+                  {user && (user.uid === comment.uid || own) ? (
+                    <button
+                      type="button"
+                      className="synapse-btn synapse-btn-ghost"
+                      disabled={Boolean(busy)}
+                      onClick={() =>
+                        void run('delete-comment', async () => {
+                          await deleteWorkshopComment(comment.id);
+                          await reload();
+                        })
+                      }
+                    >
+                      Delete
+                    </button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
     </main>
   );
 }

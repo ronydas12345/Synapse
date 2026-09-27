@@ -512,10 +512,13 @@ function AccountSection() {
       <SettingsSelect
         label="Profile visibility"
         value={visibility}
-        onChange={(value) => setVisibility(value === 'public' ? 'public' : 'private')}
+        onChange={(value) =>
+          setVisibility(value === 'public' || value === 'unlisted' ? value : 'private')
+        }
       >
         <option value="private">Private</option>
-        <option value="public">Public (not listed yet)</option>
+        <option value="unlisted">Unlisted (ID or link only)</option>
+        <option value="public">Public</option>
       </SettingsSelect>
     </section>
   );

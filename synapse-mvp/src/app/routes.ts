@@ -1,10 +1,12 @@
 import { documentPrefersReducedMotion } from '../settings/motion';
+import { isWorkshopShareKey, SHARE_CODE_RE } from '../share/ids';
 
 export type AppRoute =
   | 'home'
   | 'workshop'
   | 'workshopItem'
   | 'publicProfile'
+  | 'shareLookup'
   | 'pricing'
   | 'changelog'
   | 'faq'
@@ -24,11 +26,13 @@ export type AppRoute =
 export const CREATION_ID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const PUBLIC_USERNAME_RE = /^[a-z0-9_]{3,20}$/;
+export { SHARE_CODE_RE };
 
 export type AppLocation = {
   route: AppRoute;
   workshopId?: string;
   username?: string;
+  shareRef?: string;
 };
 
 export type AppPath =
@@ -52,14 +56,23 @@ export type AppPath =
   | '/superadmin';
 
 export function workshopItemPath(id: string): string {
-  return `/workshop/${id}`;
+  const value = id.trim().toLowerCase();
+  if (SHARE_CODE_RE.test(value)) return `/p/${value}`;
+  return `/workshop/${value}`;
 }
 
 export function publicProfilePath(username: string): string {
-  return `/u/${username}`;
+  return `/u/${username.trim().toLowerCase()}`;
 }
 
-export type StaticAppRoute = Exclude<AppRoute, 'workshopItem' | 'publicProfile'>;
+export function shareLookupPath(id: string): string {
+  return `/s/${id.trim().toLowerCase()}`;
+}
+
+export type StaticAppRoute = Exclude<
+  AppRoute,
+  'workshopItem' | 'publicProfile' | 'shareLookup'
+>;
 
 export const APP_PATHS: Record<StaticAppRoute, AppPath> = {
   home: '/',
@@ -88,6 +101,7 @@ const MARKETING: ReadonlySet<AppRoute> = new Set([
   'workshop',
   'workshopItem',
   'publicProfile',
+  'shareLookup',
   'pricing',
   'changelog',
   'faq',
@@ -128,13 +142,27 @@ export function isProtectedRoute(
 
 export function parseAppLocation(pathname: string): AppLocation {
   const p = pathname.replace(/\/+$/, '') || '/';
+  const shortPlaylist = p.match(/^\/p\/([^/]+)$/);
+  if (
+    shortPlaylist &&
+    isWorkshopShareKey(shortPlaylist[1])
+  ) {
+    return { route: 'workshopItem', workshopId: shortPlaylist[1].toLowerCase() };
+  }
   const item = p.match(/^\/workshop\/([^/]+)$/);
-  if (item && CREATION_ID_RE.test(item[1])) {
+  if (item && isWorkshopShareKey(item[1])) {
     return { route: 'workshopItem', workshopId: item[1].toLowerCase() };
   }
   const profile = p.match(/^\/u\/([^/]+)$/);
-  if (profile && PUBLIC_USERNAME_RE.test(profile[1])) {
-    return { route: 'publicProfile', username: profile[1] };
+  if (profile && (PUBLIC_USERNAME_RE.test(profile[1]) || SHARE_CODE_RE.test(profile[1]))) {
+    return { route: 'publicProfile', username: profile[1].toLowerCase() };
+  }
+  const lookup = p.match(/^\/s\/([^/]+)$/);
+  if (
+    lookup &&
+    (isWorkshopShareKey(lookup[1]) || PUBLIC_USERNAME_RE.test(lookup[1]))
+  ) {
+    return { route: 'shareLookup', shareRef: lookup[1].toLowerCase() };
   }
   if (p === '/') return { route: 'home' };
   if (p === '/workshop') return { route: 'workshop' };
@@ -173,10 +201,20 @@ export function routeToUiMode(
 export function isAppPath(pathname: string): boolean {
   const p = pathname.replace(/\/+$/, '') || '/';
   if (PATH_SET.has(p)) return true;
-  if (/^\/workshop\/[0-9a-f-]{36}$/i.test(p) && CREATION_ID_RE.test(p.slice('/workshop/'.length))) {
+  if (/^\/p\/[^/]+$/.test(p) && isWorkshopShareKey(p.slice('/p/'.length))) {
     return true;
   }
-  if (/^\/u\/[a-z0-9_]{3,20}$/.test(p)) return true;
+  if (/^\/workshop\/[^/]+$/.test(p) && isWorkshopShareKey(p.slice('/workshop/'.length))) {
+    return true;
+  }
+  if (/^\/u\/[^/]+$/.test(p)) {
+    const handle = p.slice('/u/'.length);
+    if (PUBLIC_USERNAME_RE.test(handle) || SHARE_CODE_RE.test(handle)) return true;
+  }
+  if (/^\/s\/[^/]+$/.test(p)) {
+    const ref = p.slice('/s/'.length);
+    if (isWorkshopShareKey(ref) || PUBLIC_USERNAME_RE.test(ref)) return true;
+  }
   return false;
 }
 
@@ -219,6 +257,6 @@ export function ensureAppPath(): void {
     window.history.replaceState({}, '', APP_PATHS.login);
     return;
   }
-  if (PATH_SET.has(p)) return;
+  if (isAppPath(p)) return;
   window.history.replaceState({}, '', APP_PATHS.home);
 }

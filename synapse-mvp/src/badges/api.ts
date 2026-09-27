@@ -1,4 +1,4 @@
-import { supabase, throwIfError } from '../supabase/client';
+import { supabase, isMissingSchema, throwIfError } from '../supabase/client';
 import type { BadgeDef } from './catalog';
 import { BADGE_CATALOG, badgeDef } from './catalog';
 
@@ -19,6 +19,7 @@ export async function listEarnedBadges(uid: string): Promise<EarnedBadge[]> {
     .from('user_badges')
     .select('badge_id, awarded_at')
     .eq('uid', uid);
+  if (isMissingSchema(error)) return [];
   throwIfError(error);
   const earned = (data ?? [])
     .map((row) => asBadge(String(row.badge_id), (row.awarded_at as string) || null))

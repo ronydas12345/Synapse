@@ -110,7 +110,9 @@ if (stepNeedsAccount(step) && !opts.accountReady) {
   }
   if (stepNeedsAccount(step) && opts.accountReady) return null;
   if (!step.route) return null;
-  if (step.route === 'workshopItem' || step.route === 'publicProfile') return null;
+  if (step.route === 'workshopItem' || step.route === 'publicProfile' || step.route === 'shareLookup') {
+    return null;
+  }
   if (isProtectedRoute(step.route) && !opts.accountReady) {
     rememberReturnPath(APP_PATHS[step.route]);
     return { path: APP_PATHS.signup, hash: '' };

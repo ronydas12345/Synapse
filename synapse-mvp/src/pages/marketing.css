@@ -1018,3 +1018,202 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
   object-fit: cover;
   border-radius: 999px;
 }
+
+.synapse-share-panel {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 36rem;
+  margin: 1rem 0;
+}
+
+.synapse-share-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.synapse-share-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.04em;
+}
+
+.synapse-share-link {
+  word-break: break-all;
+}
+
+.synapse-workshop-toggles {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+  border: 1px solid var(--border, currentColor);
+  padding: 0.75rem 1rem;
+  max-width: 36rem;
+}
+
+.synapse-workshop-toggles label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.synapse-workshop-comments {
+  margin-top: 2rem;
+  max-width: 40rem;
+}
+
+.synapse-workshop-comment-form,
+.synapse-workshop-comment-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.synapse-workshop-comment-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+}
+
+.synapse-workshop-comment {
+  border-top: 1px solid var(--border, currentColor);
+  padding: 0.75rem 0;
+}
+
+.synapse-saved-creators {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.synapse-share-panel {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 36rem;
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+  border-radius: 12px;
+}
+
+.synapse-share-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+}
+
+.synapse-share-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.06em;
+}
+
+.synapse-share-link {
+  word-break: break-all;
+}
+
+.synapse-workshop-toggles {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+  border: 0;
+  padding: 0;
+}
+
+.synapse-workshop-toggles legend {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.synapse-workshop-comments {
+  margin-top: 1.5rem;
+  max-width: 40rem;
+}
+
+.synapse-workshop-comment-form,
+.synapse-workshop-comment-list {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  list-style: none;
+}
+
+.synapse-workshop-comment {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.synapse-saved-creators {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0;
+  margin: 0.5rem 0 1rem;
+  list-style: none;
+}
+
+.synapse-share-box {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  max-width: 40rem;
+}
+
+.synapse-share-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.synapse-share-row code {
+  flex: 1 1 12rem;
+  overflow-wrap: anywhere;
+}
+
+.synapse-workshop-comments {
+  margin-top: 1.5rem;
+}
+
+.synapse-workshop-comment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.synapse-workshop-comment-form {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 36rem;
+}
+
+.synapse-saved-creators {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.synapse-share-panel {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  max-width: 40rem;
+}
+
+.synapse-workshop-toggles {
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  display: grid;
+  gap: 0.4rem;
+  max-width: 28rem;
+}

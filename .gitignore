@@ -32,3 +32,6 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local product notes and handoffs (not shipped with the app)
+/doc/

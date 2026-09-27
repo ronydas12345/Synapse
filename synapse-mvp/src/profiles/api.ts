@@ -1,4 +1,4 @@
-import { supabase, throwIfError } from '../supabase/client';
+import { supabase, isMissingSchema, throwIfError } from '../supabase/client';
 
 export interface PublicCreator {
   uid: string;
@@ -9,59 +9,72 @@ export interface PublicCreator {
   equippedDecoration: string;
   featuredBadge: string;
   followerCount: number;
+  shareCode: string;
+  followsEnabled: boolean;
+  savesEnabled: boolean;
+  visibility: 'public' | 'unlisted' | 'private';
   createdAt: string | null;
 }
 
-function mapCreator(row: {
-  uid: string;
-  username: string;
-  display_name: string;
-  photo_url: string;
-  bio: string;
-  equipped_decoration: string;
-  featured_badge: string;
-  follower_count: number;
-  created_at: string | null;
-}): PublicCreator {
+function mapCreator(row: Record<string, unknown>): PublicCreator {
+  const vis = row.visibility;
   return {
-    uid: row.uid,
-    username: row.username,
-    displayName: row.display_name,
-    photoUrl: row.photo_url || '',
-    bio: row.bio || '',
-    equippedDecoration: row.equipped_decoration || 'default',
-    featuredBadge: row.featured_badge || '',
-    followerCount: Number(row.follower_count) || 0,
-    createdAt: row.created_at,
+    uid: str(row.uid),
+    username: str(row.username),
+    displayName: str(row.display_name ?? row.displayName),
+    photoUrl: str(row.photo_url ?? row.photoUrl),
+    bio: str(row.bio),
+    equippedDecoration: str(row.equipped_decoration ?? row.equippedDecoration) || 'default',
+    featuredBadge: str(row.featured_badge ?? row.featuredBadge),
+    followerCount: Number(row.follower_count ?? row.followerCount) || 0,
+    shareCode: str(row.share_id ?? row.shareId ?? row.share_code ?? row.shareCode),
+    followsEnabled: row.follows_enabled !== false && row.followsEnabled !== false,
+    savesEnabled: row.saves_enabled !== false && row.savesEnabled !== false,
+    visibility:
+      vis === 'public' || vis === 'unlisted' || vis === 'private' ? vis : 'private',
+    createdAt:
+      typeof row.created_at === 'string'
+        ? row.created_at
+        : typeof row.createdAt === 'string'
+          ? row.createdAt
+          : null,
   };
+}
+
+function str(value: unknown): string {
+  return typeof value === 'string' ? value : '';
 }
 
 export async function readPublicCreator(
   username: string
 ): Promise<PublicCreator | null> {
-  const { data, error } = await supabase
-    .from('creator_public')
-    .select(
-      'uid, username, display_name, photo_url, bio, equipped_decoration, featured_badge, follower_count, created_at'
-    )
-    .eq('username', username)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc('get_creator', { p_id: username });
+  if (isMissingSchema(error)) {
+    const fallback = await supabase
+      .from('creator_public')
+      .select('*')
+      .or(`username.eq.${username},share_id.eq.${username},share_code.eq.${username}`)
+      .maybeSingle();
+    if (isMissingSchema(fallback.error)) return null;
+    throwIfError(fallback.error);
+    if (!fallback.data) return null;
+    return mapCreator(fallback.data as Record<string, unknown>);
+  }
   throwIfError(error);
-  if (!data) return null;
-  return mapCreator(data);
+  if (!data || typeof data !== 'object') return null;
+  return mapCreator(data as Record<string, unknown>);
 }
 
 export async function readOwnCreator(uid: string): Promise<PublicCreator | null> {
   const { data, error } = await supabase
     .from('creator_public')
-    .select(
-      'uid, username, display_name, photo_url, bio, equipped_decoration, featured_badge, follower_count, created_at'
-    )
+    .select('*')
     .eq('uid', uid)
     .maybeSingle();
+  if (isMissingSchema(error)) return null;
   throwIfError(error);
   if (!data) return null;
-  return mapCreator(data);
+  return mapCreator(data as Record<string, unknown>);
 }
 
 export async function followCreator(uid: string): Promise<void> {
@@ -81,12 +94,49 @@ export async function isFollowing(followeeUid: string, followerUid: string): Pro
     .eq('follower_uid', followerUid)
     .eq('followee_uid', followeeUid)
     .maybeSingle();
+  if (isMissingSchema(error)) return false;
   throwIfError(error);
   return Boolean(data);
 }
 
+export async function isCreatorSaved(creatorUid: string, viewerUid: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('creator_saves')
+    .select('creator_uid')
+    .eq('uid', viewerUid)
+    .eq('creator_uid', creatorUid)
+    .maybeSingle();
+  if (error) return false;
+  return Boolean(data);
+}
+
+export async function toggleCreatorSave(uid: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('toggle_creator_save', { p_uid: uid });
+  throwIfError(error);
+  return data === true;
+}
+
+export async function listSavedCreators(): Promise<PublicCreator[]> {
+  const { data, error } = await supabase.rpc('list_saved_creators');
+  if (isMissingSchema(error)) return [];
+  throwIfError(error);
+  if (!Array.isArray(data)) return [];
+  return data.map((row) => mapCreator(row as Record<string, unknown>));
+}
+
+export async function setProfileSocial(input: {
+  followsEnabled: boolean;
+  savesEnabled: boolean;
+}): Promise<void> {
+  const { error } = await supabase.rpc('set_profile_social', {
+    p_follows: input.followsEnabled,
+    p_saves: input.savesEnabled,
+  });
+  throwIfError(error);
+}
+
 export async function syncProfilePublicFields(input: {
-  visibility: 'public' | 'private';
+  visibility: 'public' | 'unlisted' | 'private';
   bio: string;
 }): Promise<void> {
   const { data: session } = await supabase.auth.getUser();
