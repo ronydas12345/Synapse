@@ -33,7 +33,7 @@ const FEATURES = [
   },
   {
     title: 'Workshop',
-    body: 'Discover and share Music Paths. Publish from Settings, browse /workshop, follow creators, and share public or unlisted playlists by ID or link.',
+    body: 'Discover and share Music Paths and themes. Publish from Settings with curated tags, browse /workshop, follow creators, and share public or unlisted items by ID or link.',
     status: 'Available',
   },
 ] as const;

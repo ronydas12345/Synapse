@@ -1,6 +1,7 @@
 export type WorkshopVisibility = 'private' | 'unlisted' | 'public';
 export type WorkshopStatus = 'active' | 'pending' | 'rejected' | 'removed';
 export type WorkshopTab = 'home' | 'new' | 'featured' | 'search' | 'saved';
+export type WorkshopKind = 'playlist' | 'theme';
 export type ReportReason = 'spam' | 'abuse' | 'overlay' | 'copyright' | 'other';
 
 export interface WorkshopPayload {
@@ -17,6 +18,8 @@ export interface WorkshopCard {
   creatorDisplayName: string;
   title: string;
   description: string;
+  kind: WorkshopKind;
+  tags: string[];
   featured: boolean;
   likeCount: number;
   saveCount: number;
@@ -30,11 +33,14 @@ export interface WorkshopCard {
   visibility: WorkshopVisibility;
 }
 
+import type { SynapseTheme } from '../theme/types';
+
 export interface WorkshopCreation extends WorkshopCard {
   status: WorkshopStatus;
   remixOf: string | null;
   sourcePathId: string;
   payload: WorkshopPayload;
+  theme: SynapseTheme | null;
 }
 
 export interface WorkshopReport {

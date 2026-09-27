@@ -4,7 +4,8 @@ import { useAuthStore } from '../auth/authStore';
 import { APP_PATHS, navigateApp, publicProfilePath } from '../app/routes';
 import { listSavedCreators, type PublicCreator } from '../profiles/api';
 import { listSavedCreations, listWorkshop } from './api';
-import type { WorkshopCard as Card, WorkshopTab } from './types';
+import type { WorkshopCard as Card, WorkshopKind, WorkshopTab } from './types';
+import TagPicker from './TagPicker';
 import WorkshopCard from './WorkshopCard';
 
 const TABS: { id: WorkshopTab; label: string }[] = [
@@ -27,6 +28,8 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
   const signedIn = Boolean(useAuthStore((s) => s.user));
   const [tab, setTab] = useState<WorkshopTab>(() => (preview ? 'home' : tabFromHash()));
   const [query, setQuery] = useState('');
+  const [kind, setKind] = useState<WorkshopKind | 'all'>('all');
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [creators, setCreators] = useState<PublicCreator[]>([]);
   const [error, setError] = useState('');
@@ -66,7 +69,10 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
           }
           return;
         }
-        const rows = await listWorkshop(tab === 'home' ? 'new' : tab, search);
+        const rows = await listWorkshop(tab === 'home' ? 'new' : tab, search, {
+          kind,
+          tags: tagFilter,
+        });
         if (!cancelled) {
           setCards(preview ? rows.slice(0, 6) : rows);
           setCreators([]);
@@ -83,7 +89,7 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
     return () => {
       cancelled = true;
     };
-  }, [tab, search, preview, signedIn]);
+  }, [tab, search, preview, signedIn, kind, tagFilter]);
 
   const featured = useMemo(
     () => (tab === 'home' ? cards.filter((card) => card.featured).slice(0, 4) : []),
@@ -111,9 +117,9 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
       <p className="synapse-mkt-kicker">Workshop</p>
       <h2 id="workshop-title">Build it. Share it. Discover something new.</h2>
       <p className="synapse-mkt-lead">
-        Public Music Paths live here. Like, save, comment, remix, and follow.
-        Unlisted playlists and profiles share with an ID or a link. Private
-        drafts stay on your account until you publish.
+        Public Music Paths and themes live here. Filter by type or tags, then
+        like, save, comment, remix, and follow. Unlisted items share with an ID
+        or a link. Private drafts stay on your account until you publish.
       </p>
       {preview ? null : (
         <div className="synapse-workshop-tabs" role="tablist" aria-label="Workshop views">
@@ -130,6 +136,21 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
                 {item.label}
               </button>
             )
+          )}
+          {preview || tab === 'saved' ? null : (
+            <select
+                className="synapse-settings-input"
+                value={kind}
+                onChange={(event) => {
+                  setKind(event.target.value as WorkshopKind | 'all');
+                  setTagFilter([]);
+                }}
+                aria-label="Content type"
+              >
+                <option value="all">All types</option>
+                <option value="playlist">Playlists</option>
+                <option value="theme">Themes</option>
+              </select>
           )}
           {signedIn ? (
             <button
@@ -151,15 +172,44 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
         </div>
       )}
       {tab === 'search' && !preview ? (
-        <label className="synapse-settings-field">
-          Search titles, descriptions, and usernames
-          <input
-            className="synapse-settings-input"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search Workshop"
-          />
-        </label>
+        <div className="synapse-workshop-filters">
+          <label className="synapse-settings-field">
+            Search titles, descriptions, usernames, and tags
+            <input
+              className="synapse-settings-input"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search Workshop"
+            />
+          </label>
+          <label className="synapse-settings-field">
+            Content type
+            <select
+              className="synapse-settings-input"
+              value={kind}
+              onChange={(event) => {
+                setKind(event.target.value as WorkshopKind | 'all');
+                setTagFilter([]);
+              }}
+            >
+              <option value="all">Playlists and themes</option>
+              <option value="playlist">Playlists</option>
+              <option value="theme">Themes</option>
+            </select>
+          </label>
+          {kind === 'all' ? (
+            <p className="synapse-settings-lead">
+              Choose Playlists or Themes to filter by that catalog’s tags.
+            </p>
+          ) : (
+            <TagPicker
+              kind={kind}
+              value={tagFilter}
+              onChange={setTagFilter}
+              label={kind === 'theme' ? 'Theme tags' : 'Playlist tags'}
+            />
+          )}
+        </div>
       ) : null}
       {error ? <p className="synapse-settings-error">{error}</p> : null}
       {loading ? <p className="synapse-settings-lead">Loading Workshop…</p> : null}
@@ -172,7 +222,7 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
         <p className="synapse-settings-lead">
           {tab === 'search'
             ? 'No matching public creations.'
-            : 'No public creations yet. Publish a Music Path from Settings → Workshop.'}
+            : 'No public creations yet. Publish a Music Path or theme from Settings → Workshop.'}
         </p>
       ) : null}
       {tab === 'saved' && creators.length > 0 ? (
@@ -190,7 +240,7 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
         </>
       ) : null}
       {tab === 'saved' && cards.length > 0 ? (
-        <h3 className="synapse-workshop-sub">Saved playlists</h3>
+          <h3 className="synapse-workshop-sub">Saved creations</h3>
       ) : null}
       {featured.length > 0 ? (
         <>

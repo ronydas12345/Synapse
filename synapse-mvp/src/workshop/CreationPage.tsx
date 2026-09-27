@@ -10,6 +10,7 @@ import {
 import { useAuthStore } from '../auth/authStore';
 import SharePanel from '../share/SharePanel';
 import { usePathStore } from '../store';
+import { useThemeStore } from '../theme/themeStore';
 import {
   addWorkshopComment,
   deleteWorkshopComment,
@@ -20,11 +21,14 @@ import {
   remixWorkshopCreation,
   savedCreationIds,
   setCreationSocial,
+  setWorkshopTags,
   setWorkshopVisibility,
   toggleWorkshopLike,
   toggleWorkshopSave,
   type WorkshopComment,
 } from './api';
+import TagChips from './TagChips';
+import TagPicker from './TagPicker';
 import type { ReportReason, WorkshopCreation, WorkshopVisibility } from './types';
 
 export default function CreationPage({ id }: { id: string }) {
@@ -86,12 +90,28 @@ export default function CreationPage({ id }: { id: string }) {
     if (!creationId) return;
     await run('remix', async () => {
       const remix = await remixWorkshopCreation(creationId);
+      if (remix.kind === 'theme') {
+        if (!remix.theme) throw new Error('This theme could not be imported.');
+        const id = useThemeStore.getState().addCustomTheme(remix.theme);
+        if (id) useThemeStore.getState().setActiveId(id);
+        navigateApp(APP_PATHS.settings, 'settings-themes');
+        return;
+      }
       usePathStore.getState().importWorkshopGraph(
         `Remix of ${remix.title}`,
         remix.payload.nodes as Node[],
         remix.payload.edges as Edge[]
       );
       navigateApp(listen ? APP_PATHS.listen : APP_PATHS.edit);
+    });
+  }
+
+  async function useTheme() {
+    if (!item?.theme) return;
+    await run('theme', async () => {
+      const id = useThemeStore.getState().addCustomTheme(item.theme!);
+      if (id) useThemeStore.getState().setActiveId(id);
+      navigateApp(APP_PATHS.settings, 'settings-themes');
     });
   }
 
@@ -105,9 +125,18 @@ export default function CreationPage({ id }: { id: string }) {
 
   return (
     <main id="main" className="synapse-mkt-main synapse-mkt-page synapse-workshop-creation">
-      <p className="synapse-mkt-kicker">{item.featured ? 'Featured creation' : 'Workshop'}</p>
+      <p className="synapse-mkt-kicker">
+        {item.featured
+          ? 'Featured creation'
+          : item.kind === 'theme'
+            ? 'Workshop theme'
+            : 'Workshop playlist'}
+      </p>
       <h1>{item.title}</h1>
-      <p className="synapse-mkt-lead">{item.description || 'A published Music Path.'}</p>
+      <p className="synapse-mkt-lead">
+        {item.description ||
+          (item.kind === 'theme' ? 'A published theme.' : 'A published Music Path.')}
+      </p>
       <p className="synapse-workshop-meta">
         {item.creatorUsername ? (
           <PathLink href={publicProfilePath(item.creatorUsername)}>
@@ -123,6 +152,7 @@ export default function CreationPage({ id }: { id: string }) {
           </>
         ) : null}
       </p>
+      <TagChips kind={item.kind} ids={item.tags} />
       <p className="synapse-mkt-tags">
         {item.likesEnabled ? `${item.likeCount} likes · ` : 'Likes off · '}
         {item.saveCount} saves · {item.remixCount} remixes
@@ -131,14 +161,25 @@ export default function CreationPage({ id }: { id: string }) {
       </p>
       {error ? <p className="synapse-settings-error">{error}</p> : null}
       <div className="synapse-workshop-actions">
-        <button
-          type="button"
-          className="synapse-btn synapse-btn-play"
-          disabled={Boolean(busy)}
-          onClick={() => void openRemix(true)}
-        >
-          Play
-        </button>
+        {item.kind === 'theme' ? (
+          <button
+            type="button"
+            className="synapse-btn synapse-btn-play"
+            disabled={Boolean(busy) || !item.theme}
+            onClick={() => void useTheme()}
+          >
+            Use theme
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="synapse-btn synapse-btn-play"
+            disabled={Boolean(busy)}
+            onClick={() => void openRemix(true)}
+          >
+            Play
+          </button>
+        )}
         {item.likesEnabled || own ? (
           <button
             type="button"
@@ -177,14 +218,14 @@ export default function CreationPage({ id }: { id: string }) {
           disabled={Boolean(busy)}
           onClick={() => void openRemix(false)}
         >
-          Remix
+          {item.kind === 'theme' ? 'Remix theme' : 'Remix'}
         </button>
       </div>
       {(item.visibility === 'public' || item.visibility === 'unlisted' || own) && item.shareCode ? (
         <SharePanel
           shareCode={item.shareCode}
           path={workshopItemPath(shareKey)}
-          label="Workshop playlist"
+          label={item.kind === 'theme' ? 'Workshop theme' : 'Workshop playlist'}
         />
       ) : null}
       {own ? (
@@ -208,7 +249,7 @@ export default function CreationPage({ id }: { id: string }) {
             </select>
           </label>
           <fieldset className="synapse-workshop-toggles">
-            <legend>On this playlist</legend>
+            <legend>On this {item.kind === 'theme' ? 'theme' : 'playlist'}</legend>
             <label>
               <input
                 type="checkbox"
@@ -264,6 +305,17 @@ export default function CreationPage({ id }: { id: string }) {
               Allow saves
             </label>
           </fieldset>
+          <TagPicker
+            kind={item.kind}
+            value={item.tags}
+            onChange={(next) =>
+              void run('tags', async () => {
+                await setWorkshopTags(item.id, next);
+                await reload();
+              })
+            }
+            label="Tags on this creation"
+          />
         </>
       ) : (
         <form

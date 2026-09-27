@@ -39,7 +39,7 @@ export default function SavedCollections({
   return (
     <div className="synapse-saved-collections">
       {error ? <p className="synapse-settings-error">{error}</p> : null}
-      <h3 className="synapse-workshop-sub">Saved Workshop playlists</h3>
+      <h3 className="synapse-workshop-sub">Saved Workshop creations</h3>
       {cards.length === 0 ? (
         <p className="synapse-settings-lead">No saved Workshop creations yet.</p>
       ) : (
