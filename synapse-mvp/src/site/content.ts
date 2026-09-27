@@ -63,25 +63,25 @@ export const WORKSHOP_EXAMPLES = [
   {
     name: 'Morning / evening split',
     creator: 'Synapse',
-    tags: ['example', 'time of day'],
+    tags: ['chill', 'focus'],
     kind: 'Music Path',
   },
   {
     name: 'Weighted night mix',
     creator: 'Synapse',
-    tags: ['example', 'randomizer'],
+    tags: ['lo-fi', 'night'],
     kind: 'Music Path',
   },
   {
     name: 'Cherry Tree',
     creator: 'Synapse',
-    tags: ['example', 'theme'],
+    tags: ['cute', 'pink'],
     kind: 'Theme',
   },
   {
     name: 'Cyberpunk',
     creator: 'Synapse',
-    tags: ['example', 'theme'],
+    tags: ['cyberpunk', 'neon'],
     kind: 'Theme',
   },
 ] as const;

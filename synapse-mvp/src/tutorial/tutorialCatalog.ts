@@ -767,20 +767,20 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'w-search',
         'Searching',
-        'Search looks through public titles, descriptions, and usernames. Sign in to like, save, remix, or publish.',
+        'Search looks through public titles, descriptions, usernames, and tags. Filter by playlist or theme. Sign in to like, save, remix, or publish.',
         { type: 'info', route: 'workshop', target: 'workshop' }
       ),
       s(
         'w-tags',
         'Tags',
-        'Example cards show tag chips for the future taxonomy. Account playlists do not have Workshop tags yet.',
+        'Creators pick up to eight curated tags. Playlists and themes have separate vocabularies. Search the tag list instead of scrolling every option. Staff can remove a misleading tag.',
         { type: 'highlight', route: 'workshop', target: 'workshop' }
       ),
       s(
         'w-filters',
         'Filters',
-        'Filters will live here with search. Today, Settings → Playlists is the list of paths on your account.',
-        { type: 'highlight', route: 'settings', hash: 'settings-playlists', target: 'settings-playlists' }
+        'On Search, combine a text query, content type, and tags. Home, New, and Featured can also limit the list to playlists or themes.',
+        { type: 'highlight', route: 'workshop', target: 'workshop' }
       ),
       s(
         'w-rec',

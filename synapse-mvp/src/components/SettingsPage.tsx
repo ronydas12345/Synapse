@@ -40,7 +40,7 @@ const SECTIONS = [
   { id: 'visualizer', label: 'Visualizer', keywords: 'fft spectrum bars capture share theme' },
   { id: 'environment', label: 'Environment', keywords: 'weather geolocation location open-meteo' },
   { id: 'import', label: 'Import / Export', keywords: 'json package synapse playlist file import export settings' },
-  { id: 'workshop', label: 'Workshop', keywords: 'share publish' },
+  { id: 'workshop', label: 'Workshop', keywords: 'share publish tags playlist theme catalog search' },
   { id: 'account', label: 'Account', keywords: 'profile login visibility username google oauth signin account email' },
   { id: 'privacy', label: 'Privacy / Data', keywords: 'localstorage cache clear erase metadata weather' },
   { id: 'pro', label: 'Pro', keywords: 'billing premium' },
