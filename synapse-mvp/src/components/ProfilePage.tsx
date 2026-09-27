@@ -35,6 +35,7 @@ import AuthPanel from '../auth/AuthPanel';
 import { useAuthStore } from '../auth/authStore';
 import { uploadAvatarFromDataUrl, removeOwnAvatar } from '../cloud/avatar';
 import ProfileRecognition from '../profile/ProfileRecognition';
+import SavedCollections from '../workshop/SavedCollections';
 import { usePathStore } from '../store';
 
 type DropEdge = 'before' | 'after';
@@ -884,7 +885,9 @@ export default function ProfilePage() {
                     : 'Signed in'
                 : profile.visibility === 'public'
                   ? 'Public profile'
-                  : 'Private profile'}
+                  : profile.visibility === 'unlisted'
+                    ? 'Unlisted profile'
+                    : 'Private profile'}
             </p>
             <h1 className="synapse-profile-title">
               {profile.displayName.trim() || 'Your profile'}
@@ -960,15 +963,21 @@ export default function ProfilePage() {
                 className="synapse-settings-input"
                 value={profile.visibility}
                 onChange={(e) =>
-                  setVisibility(e.target.value === 'public' ? 'public' : 'private')
+                  setVisibility(
+                    e.target.value === 'public' || e.target.value === 'unlisted'
+                      ? e.target.value
+                      : 'private'
+                  )
                 }
               >
                 <option value="private">Private — only you</option>
+                <option value="unlisted">Unlisted — anyone with the ID or link</option>
                 <option value="public">Public — /u/username and Workshop</option>
               </select>
             </label>
             <p className="synapse-settings-hint">
-              Public profiles are at /u/your_username. Followers, badges, and
+              Public profiles are listed at /u/your_username. Unlisted profiles
+              stay off lists but open from the ID or link. Followers, badges, and
               public Workshop creations show there.
               {authUser
                 ? ' Your Google or email sign-in is the account identity.'
@@ -979,12 +988,23 @@ export default function ProfilePage() {
           <p className="synapse-settings-lead">
             {profile.visibility === 'public'
               ? 'This profile is public at /u/' + (profile.username || 'username') + '.'
-              : 'This profile is private. Optional sections below stay on your account.'}
+              : profile.visibility === 'unlisted'
+                ? 'This profile is unlisted. Anyone with the ID or /u/username can open it.'
+                : 'This profile is private. Optional sections below stay on your account.'}
           </p>
         )}
       </section>
 
       <ProfileRecognition editing={editing} />
+      {authUser ? (
+        <section className="synapse-profile-section">
+          <h2>Saved</h2>
+          <p className="synapse-settings-lead">
+            Bookmarked Workshop playlists and creator profiles live on your account.
+          </p>
+          <SavedCollections />
+        </section>
+      ) : null}
 
       <SectionDragProvider editing={editing} onReorder={reorderSections}>
         {visibleOrder.map((id) => {

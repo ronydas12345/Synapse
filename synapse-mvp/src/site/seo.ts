@@ -2,7 +2,7 @@ import type { AppRoute } from '../app/routes';
 import { APP_PATHS } from '../app/routes';
 
 function pathForMeta(route: AppRoute): string {
-  if (route === 'workshopItem' || route === 'publicProfile') {
+  if (route === 'workshopItem' || route === 'publicProfile' || route === 'shareLookup') {
     return window.location.pathname;
   }
   return APP_PATHS[route];
@@ -22,6 +22,10 @@ const PAGE_META: Partial<Record<AppRoute, { title: string; description: string }
   publicProfile: {
     title: 'Creator — Synapse',
     description: 'A Synapse creator profile, badges, and public Workshop creations.',
+  },
+  shareLookup: {
+    title: 'Shared ID — Synapse',
+    description: 'Open a shared Synapse playlist or creator profile.',
   },
   pricing: {
     title: 'Pricing — Synapse',

@@ -761,7 +761,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'w-find',
         'Finding playlists',
-        'Workshop lists public Music Paths. Open it from Home or the header, then use Home, New, Featured, and Search.',
+        'Workshop lists public Music Paths. Open it from Home or the header, then use Home, New, Featured, Search, and Saved. Share a public or unlisted creation with its short ID or link.',
         { type: 'highlight', route: 'workshop', target: 'workshop' }
       ),
       s(
@@ -861,7 +861,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'co-comments',
         'Comments',
-        'Graph comments are local annotations. Threaded Workshop comments are a future community feature.',
+        'Graph comments are local annotations. Public Workshop creations can have comments unless the creator turns them off.',
         { type: 'highlight', route: 'edit', target: 'node-comment' }
       ),
       s(
@@ -1011,7 +1011,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'pr-workshop',
         'Advanced Workshop features',
-        'Public Workshop search, likes, remix, and follows are live. Comments, trending, and collections are still later.',
+        'Public Workshop search, likes, comments, remix, follows, and saved lists are live. Creators can disable likes, comments, saves, and followers. Trending is still later.',
         { type: 'highlight', route: 'workshop', target: 'workshop' }
       ),
       s(

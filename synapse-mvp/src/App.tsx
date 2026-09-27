@@ -31,6 +31,7 @@ import Home from './pages/Home/Home';
 import WorkshopPage from './pages/WorkshopPage';
 import CreationPage from './workshop/CreationPage';
 import PublicProfilePage from './profiles/PublicProfilePage';
+import ShareLookupPage from './share/ShareLookupPage';
 import PricingPage from './pages/PricingPage';
 import ChangelogPage from './pages/ChangelogPage';
 import FaqPage from './pages/FaqPage';
@@ -58,6 +59,9 @@ function MarketingPage({ location }: { location: AppLocation }) {
   }
   if (location.route === 'publicProfile' && location.username) {
     return <PublicProfilePage username={location.username} />;
+  }
+  if (location.route === 'shareLookup' && location.shareRef) {
+    return <ShareLookupPage shareRef={location.shareRef} />;
   }
   const route = location.route;
   if (route === 'workshop') return <WorkshopPage />;

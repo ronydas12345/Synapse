@@ -2,12 +2,18 @@ import { useEffect, useState } from 'react';
 import { PathLink } from '../app/AppLink';
 import { publicProfilePath } from '../app/routes';
 import BadgeStrip from '../badges/BadgeStrip';
-import { listEarnedBadges, setFeaturedBadge, type EarnedBadge } from '../badges/api';
+import {
+  evaluateOwnProgress,
+  listEarnedBadges,
+  setFeaturedBadge,
+  type EarnedBadge,
+} from '../badges/api';
 import DecorationPicker from '../decorations/DecorationPicker';
 import { equipDecoration, listUnlockedDecorations } from '../decorations/api';
-import { readOwnCreator } from '../profiles/api';
+import { readOwnCreator, setProfileSocial } from '../profiles/api';
 import { useAuthStore } from '../auth/authStore';
 import { useProfileStore } from '../profile/profileStore';
+import SharePanel from '../share/SharePanel';
 
 export default function ProfileRecognition({ editing }: { editing: boolean }) {
   const user = useAuthStore((s) => s.user);
@@ -17,6 +23,9 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
   const [unlocked, setUnlocked] = useState<string[]>(['default']);
   const [equipped, setEquipped] = useState('default');
   const [featured, setFeatured] = useState('');
+  const [shareCode, setShareCode] = useState('');
+  const [followsEnabled, setFollowsEnabled] = useState(true);
+  const [savesEnabled, setSavesEnabled] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -24,6 +33,7 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
     let cancelled = false;
     void (async () => {
       try {
+        await evaluateOwnProgress();
         const [earned, deco, creator] = await Promise.all([
           listEarnedBadges(user.uid),
           listUnlockedDecorations(user.uid),
@@ -34,6 +44,9 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
         setUnlocked(deco.length ? deco : ['default']);
         setEquipped(creator?.equippedDecoration || 'default');
         setFeatured(creator?.featuredBadge || '');
+        setShareCode(creator?.shareCode || '');
+        setFollowsEnabled(creator?.followsEnabled !== false);
+        setSavesEnabled(creator?.savesEnabled !== false);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Could not load badges.');
@@ -46,6 +59,16 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
   }, [user]);
 
   if (!user) return null;
+
+  const sharePath = username ? publicProfilePath(username) : shareCode ? publicProfilePath(shareCode) : '';
+
+  function saveSocial(next: { followsEnabled: boolean; savesEnabled: boolean }) {
+    setFollowsEnabled(next.followsEnabled);
+    setSavesEnabled(next.savesEnabled);
+    void setProfileSocial(next).catch((err) => {
+      setError(err instanceof Error ? err.message : 'Could not save social settings.');
+    });
+  }
 
   return (
     <section className="synapse-profile-section">
@@ -60,8 +83,13 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
           <PathLink href={publicProfilePath(username)}>/u/{username}</PathLink>
           {visibility === 'public'
             ? ' (listed while the profile is public)'
-            : ' (visible after you set the profile to public)'}
+            : visibility === 'unlisted'
+              ? ' (unlisted — share the ID or link)'
+              : ' (visible after you set the profile to public or unlisted)'}
         </p>
+      ) : null}
+      {shareCode && sharePath && visibility !== 'private' ? (
+        <SharePanel shareCode={shareCode} path={sharePath} label="profile" />
       ) : null}
       {error ? <p className="synapse-settings-error">{error}</p> : null}
       <BadgeStrip badges={badges} featuredId={featured} />
@@ -87,6 +115,37 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
             ))}
           </select>
         </label>
+      ) : null}
+      {editing ? (
+        <fieldset className="synapse-workshop-toggles">
+          <legend>Follows and profile saves</legend>
+          <label>
+            <input
+              type="checkbox"
+              checked={followsEnabled}
+              onChange={(event) =>
+                saveSocial({
+                  followsEnabled: event.target.checked,
+                  savesEnabled,
+                })
+              }
+            />
+            Allow followers
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={savesEnabled}
+              onChange={(event) =>
+                saveSocial({
+                  followsEnabled,
+                  savesEnabled: event.target.checked,
+                })
+              }
+            />
+            Allow people to save this profile
+          </label>
+        </fieldset>
       ) : null}
       {editing ? (
         <DecorationPicker

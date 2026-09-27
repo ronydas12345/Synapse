@@ -20,12 +20,23 @@ describe('app routes', () => {
     expect(pathToRoute('/workshop/11111111-1111-4111-8111-111111111111')).toBe(
       'workshopItem'
     );
+    expect(pathToRoute('/p/a2b3c4d5e6')).toBe('workshopItem');
+    expect(pathToRoute('/s/a2b3c4d5e6')).toBe('shareLookup');
     expect(pathToRoute('/u/ada_lovelace')).toBe('publicProfile');
+    expect(pathToRoute('/p/a2b3c4d5e6')).toBe('workshopItem');
+    expect(pathToRoute('/s/a2b3c4d5e6')).toBe('shareLookup');
+    expect(pathToRoute('/u/a2b3c4d5e6')).toBe('publicProfile');
+    expect(isAppPath('/p/a2b3c4d5e6')).toBe(true);
+    expect(isAppPath('/s/a2b3c4d5e6')).toBe(true);
+    expect(pathToRoute('/u/a2b3c4d5e6')).toBe('publicProfile');
     expect(isAppPath('/workshop/11111111-1111-4111-8111-111111111111')).toBe(true);
+    expect(isAppPath('/p/a2b3c4d5e6')).toBe(true);
+    expect(isAppPath('/s/a2b3c4d5e6')).toBe(true);
     expect(isAppPath('/u/ada_lovelace')).toBe(true);
     expect(isAppPath('/u/no')).toBe(false);
     expect(isMarketingRoute('workshopItem')).toBe(true);
     expect(isMarketingRoute('publicProfile')).toBe(true);
+    expect(isMarketingRoute('shareLookup')).toBe(true);
     expect(pathToRoute('/pricing')).toBe('pricing');
     expect(pathToRoute('/login')).toBe('login');
     expect(pathToRoute('/signin')).toBe('login');

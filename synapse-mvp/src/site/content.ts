@@ -101,11 +101,11 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Is the Workshop live?',
-    a: 'Yes. Signed-in accounts can publish Music Paths from Settings → Workshop as private, unlisted, or public. Public creations appear on /workshop. Anyone with the link can open an unlisted creation. Like, save, remix, and follow live on creation and creator pages. Staff moderate reports, Workshop listings, profile pictures, and overlay reports.',
+    a: 'Yes. Signed-in accounts can publish Music Paths from Settings → Workshop as private, unlisted, or public. Public creations appear on /workshop. Anyone with the ID or link can open an unlisted creation or profile. Like, save, comment, remix, follow, and bookmark live on creation and creator pages. Creators can turn likes, comments, saves, and follows off. Staff moderate reports, Workshop listings, profile pictures, and overlay reports.',
   },
   {
     q: 'Where is my data stored?',
-    a: 'Your Music Paths, themes, settings, profile extras, and tutorial progress save to your Supabase account (US West) with row-level security so only you can read them. Public Workshop creations, badges, and public creator profiles are readable by other people. Sign-in identity, staff roles, support tickets, profile pictures awaiting review, and published theme presets also use Supabase. A cookie-notice flag and an optional song-credits cache can remain in this browser. Clearing site data does not delete your Synapse account.',
+    a: 'Your Music Paths, themes, settings, profile extras, and tutorial progress save to your Supabase account (US West) with row-level security so only you can read them. Public Workshop creations, badges, and public or unlisted creator profiles are readable by other people who have the listing or the share ID. Sign-in identity, staff roles, support tickets, profile pictures awaiting review, and published theme presets also use Supabase. A cookie-notice flag and an optional song-credits cache can remain in this browser. Clearing site data does not delete your Synapse account.',
   },
   {
     q: 'Who can open Admin or Superadmin?',

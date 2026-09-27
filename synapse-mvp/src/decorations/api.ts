@@ -1,10 +1,11 @@
-import { supabase, throwIfError } from '../supabase/client';
+import { supabase, isMissingSchema, throwIfError } from '../supabase/client';
 
 export async function listUnlockedDecorations(uid: string): Promise<string[]> {
   const { data, error } = await supabase
     .from('user_decorations')
     .select('decoration_id')
     .eq('uid', uid);
+  if (isMissingSchema(error)) return ['default'];
   throwIfError(error);
   return (data ?? []).map((row) => String(row.decoration_id));
 }

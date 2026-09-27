@@ -33,8 +33,8 @@ const FEATURES = [
   },
   {
     title: 'Workshop',
-    body: 'Discover and share Music Paths. Publish from Settings, browse /workshop, and open creator profiles.',
-    status: 'Coming soon',
+    body: 'Discover and share Music Paths. Publish from Settings, browse /workshop, follow creators, and share public or unlisted playlists by ID or link.',
+    status: 'Available',
   },
 ] as const;
 

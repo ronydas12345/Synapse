@@ -10,11 +10,12 @@ export default function WorkshopCard({
   card: WorkshopCard;
   featuredBadge?: string;
 }) {
+  const href = workshopItemPath(card.shareCode || card.id);
   return (
     <article className="synapse-mkt-workshop-card synapse-workshop-card">
-      <PathLink href={workshopItemPath(card.id)} className="synapse-workshop-card-link">
+      <PathLink href={href} className="synapse-workshop-card-link">
         <p className="synapse-mkt-status">
-          {card.featured ? 'Featured' : 'Workshop'}
+          {card.featured ? 'Featured' : card.visibility === 'unlisted' ? 'Unlisted' : 'Workshop'}
         </p>
         <h3>{card.title}</h3>
         <p>{card.description || 'A published Music Path.'}</p>
@@ -31,6 +32,7 @@ export default function WorkshopCard({
       </p>
       <p className="synapse-mkt-tags">
         {card.likeCount} likes · {card.saveCount} saves · {card.remixCount} remixes
+        {card.commentCount ? ` · ${card.commentCount} comments` : ''}
       </p>
     </article>
   );
