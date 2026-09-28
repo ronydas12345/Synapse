@@ -4,6 +4,7 @@ import { applyTheme } from './applyTheme';
 import { emptyTheme, parseTheme, parseThemeJson, themeToJson } from './parseTheme';
 import { BUILTIN_THEMES, DEFAULT_THEME_ID, getBuiltinTheme } from './presets';
 import type { SynapseTheme } from './types';
+import { parseTagMap, sanitizeTagIds } from '../workshop/tags';
 
 export const THEME_STORAGE_KEY = 'synapse_theme_state';
 const STORAGE_KEY = THEME_STORAGE_KEY;
@@ -12,11 +13,13 @@ interface PersistedThemeState {
   schemaVersion: 1;
   activeId: string;
   customThemes: SynapseTheme[];
+  themeTags: Record<string, string[]>;
 }
 
 interface ThemeState {
   activeId: string;
   customThemes: SynapseTheme[];
+  themeTags: Record<string, string[]>;
   draft: SynapseTheme | null;
   setActiveId: (id: string) => void;
   startEdit: (id?: string) => void;
@@ -35,6 +38,7 @@ interface ThemeState {
   ingestPublished: (themes: SynapseTheme[]) => void;
   exportActive: () => string | null;
   deleteCustom: (id: string) => void;
+  setThemeTags: (id: string, tags: string[]) => void;
 }
 
 function persist(activeId: string, customThemes: SynapseTheme[]) {
@@ -43,13 +47,15 @@ function persist(activeId: string, customThemes: SynapseTheme[]) {
   scheduleWorkspacePersist();
 }
 
-function load(): Pick<ThemeState, 'activeId' | 'customThemes'> {
-  return { activeId: DEFAULT_THEME_ID, customThemes: [] };
+function load(): Pick<ThemeState, 'activeId' | 'customThemes' | 'themeTags'> {
+  return { activeId: DEFAULT_THEME_ID, customThemes: [], themeTags: {} };
 }
 
-export function parseThemeState(raw: unknown): Pick<ThemeState, 'activeId' | 'customThemes'> {
+export function parseThemeState(
+  raw: unknown
+): Pick<ThemeState, 'activeId' | 'customThemes' | 'themeTags'> {
   if (!raw || typeof raw !== 'object') {
-    return { activeId: DEFAULT_THEME_ID, customThemes: [] };
+    return { activeId: DEFAULT_THEME_ID, customThemes: [], themeTags: {} };
   }
   const parsed = raw as PersistedThemeState;
   const customThemes = Array.isArray(parsed.customThemes)
@@ -62,10 +68,17 @@ export function parseThemeState(raw: unknown): Pick<ThemeState, 'activeId' | 'cu
     (getBuiltinTheme(parsed.activeId) || customThemes.some((t) => t.id === parsed.activeId))
       ? parsed.activeId
       : DEFAULT_THEME_ID;
-  return { activeId, customThemes };
+  return {
+    activeId,
+    customThemes,
+    themeTags: parseTagMap('theme', parsed.themeTags),
+  };
 }
 
-export function readLegacyTheme(): Pick<ThemeState, 'activeId' | 'customThemes'> | null {
+export function readLegacyTheme(): Pick<
+  ThemeState,
+  'activeId' | 'customThemes' | 'themeTags'
+> | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
@@ -109,6 +122,7 @@ if (typeof document !== 'undefined') {
 export const useThemeStore = create<ThemeState>((set, get) => ({
   activeId: initial.activeId,
   customThemes: initial.customThemes,
+  themeTags: initial.themeTags,
   draft: null,
 
   setActiveId: (id) => {
@@ -121,15 +135,23 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   },
 
   startEdit: (id) => {
-    const { activeId, customThemes } = get();
+    const { activeId, customThemes, themeTags } = get();
     const source = resolveTheme(id || activeId, customThemes);
+    const draftId = source.builtin ? `custom-${Date.now()}` : source.id;
     const draft: SynapseTheme = {
       ...structuredClone(source),
       builtin: false,
-      id: source.builtin ? `custom-${Date.now()}` : source.id,
+      id: draftId,
       name: source.builtin ? `${source.name} copy` : source.name,
     };
-    set({ draft });
+    const copied = source.builtin ? themeTags[source.id] : undefined;
+    set({
+      draft,
+      themeTags:
+        copied?.length && !themeTags[draftId]
+          ? { ...themeTags, [draftId]: copied }
+          : themeTags,
+    });
   },
 
   updateDraft: (patch) => {
@@ -164,19 +186,34 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   },
 
   cancelEdit: () => {
-    const { activeId, customThemes } = get();
+    const { activeId, customThemes, draft, themeTags } = get();
     applyTheme(resolveTheme(activeId, customThemes));
+    if (
+      draft &&
+      !getBuiltinTheme(draft.id) &&
+      !customThemes.some((theme) => theme.id === draft.id)
+    ) {
+      const nextTags = { ...themeTags };
+      delete nextTags[draft.id];
+      persist(activeId, customThemes);
+      set({ draft: null, themeTags: nextTags });
+      return;
+    }
     set({ draft: null });
   },
 
   duplicateActive: () => {
-    const { activeId, customThemes } = get();
+    const { activeId, customThemes, themeTags } = get();
     const source = resolveTheme(activeId, customThemes);
     const copy = emptyTheme(`custom-${Date.now()}`, `${source.name} copy`);
     copy.colors = { ...source.colors };
     copy.typography = { ...source.typography };
     copy.style = { ...source.style };
-    set({ draft: copy });
+    const copied = themeTags[source.id];
+    set({
+      draft: copy,
+      themeTags: copied?.length ? { ...themeTags, [copy.id]: copied } : themeTags,
+    });
   },
 
   resetDraft: () => {
@@ -247,19 +284,32 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   },
 
   deleteCustom: (id) => {
-    const { customThemes, activeId, draft } = get();
+    const { customThemes, activeId, draft, themeTags } = get();
     if (draft) return;
     const next = customThemes.filter((t) => t.id !== id);
     const nextActive = activeId === id ? DEFAULT_THEME_ID : activeId;
+    const nextTags = { ...themeTags };
+    delete nextTags[id];
     applyTheme(resolveTheme(nextActive, next));
     persist(nextActive, next);
-    set({ customThemes: next, activeId: nextActive });
+    set({ customThemes: next, activeId: nextActive, themeTags: nextTags });
+  },
+
+  setThemeTags: (id, tags) => {
+    if (!id) return;
+    const { activeId, customThemes, themeTags } = get();
+    const cleaned = sanitizeTagIds('theme', tags);
+    const next = { ...themeTags };
+    if (cleaned.length) next[id] = cleaned;
+    else delete next[id];
+    set({ themeTags: next });
+    persist(activeId, customThemes);
   },
 }));
 
 export function snapshotThemeState(): PersistedThemeState {
-  const { activeId, customThemes } = useThemeStore.getState();
-  return { schemaVersion: 1, activeId, customThemes };
+  const { activeId, customThemes, themeTags } = useThemeStore.getState();
+  return { schemaVersion: 1, activeId, customThemes, themeTags };
 }
 
 export function replaceThemeState(raw: unknown): void {
@@ -268,6 +318,7 @@ export function replaceThemeState(raw: unknown): void {
   useThemeStore.setState({
     activeId: next.activeId,
     customThemes: next.customThemes,
+    themeTags: next.themeTags,
     draft: null,
   });
 }

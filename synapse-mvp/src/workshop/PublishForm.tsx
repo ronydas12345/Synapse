@@ -11,7 +11,10 @@ import type { WorkshopKind, WorkshopVisibility } from './types';
 export default function PublishForm() {
   const pathSummaries = usePathStore((s) => s.pathSummaries);
   const activePathId = usePathStore((s) => s.activePathId);
+  const setPlaylistTags = usePathStore((s) => s.setPlaylistTags);
   const customThemes = useThemeStore((s) => s.customThemes);
+  const themeTags = useThemeStore((s) => s.themeTags);
+  const setThemeTags = useThemeStore((s) => s.setThemeTags);
   const themes = useMemo(() => allThemes(customThemes), [customThemes]);
   const [kind, setKind] = useState<WorkshopKind>('playlist');
   const [pathId, setPathId] = useState(activePathId);
@@ -21,7 +24,6 @@ export default function PublishForm() {
   );
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<WorkshopVisibility>('public');
-  const [tags, setTags] = useState<string[]>([]);
   const [likesEnabled, setLikesEnabled] = useState(true);
   const [commentsEnabled, setCommentsEnabled] = useState(true);
   const [savesEnabled, setSavesEnabled] = useState(true);
@@ -29,6 +31,11 @@ export default function PublishForm() {
   const [busy, setBusy] = useState(false);
 
   const selectedTheme = themes.find((theme) => theme.id === themeId) || themes[0];
+  const selectedPath = pathSummaries.find((path) => path.id === pathId);
+  const tags =
+    kind === 'theme'
+      ? themeTags[selectedTheme?.id || ''] || []
+      : selectedPath?.tags || [];
 
   async function publish() {
     setBusy(true);
@@ -86,7 +93,8 @@ export default function PublishForm() {
       <p className="synapse-settings-lead">
         Publishing copies a Music Path or a theme to Workshop. Private stays
         off the catalog. Unlisted is reachable by ID or link. Public appears on
-        Home, New, Featured, and Search. Tags come from the curated list only.
+        Home, New, Featured, and Search. Add tags here or in Playlists / Themes
+        before you publish. Tags come from the curated list only.
       </p>
       <label className="synapse-settings-field">
         Type
@@ -96,7 +104,6 @@ export default function PublishForm() {
           onChange={(event) => {
             const next = event.target.value as WorkshopKind;
             setKind(next);
-            setTags([]);
             if (next === 'theme') {
               setTitle(selectedTheme?.name || '');
             } else {
@@ -168,7 +175,18 @@ export default function PublishForm() {
           onChange={(event) => setDescription(event.target.value)}
         />
       </label>
-      <TagPicker kind={kind} value={tags} onChange={setTags} />
+      <TagPicker
+        kind={kind}
+        value={tags}
+        onChange={(next) => {
+          if (kind === 'theme') {
+            if (selectedTheme) setThemeTags(selectedTheme.id, next);
+            return;
+          }
+          if (pathId) setPlaylistTags(pathId, next);
+        }}
+        label={kind === 'theme' ? 'Theme tags' : 'Playlist tags'}
+      />
       <label className="synapse-settings-field">
         Visibility
         <select

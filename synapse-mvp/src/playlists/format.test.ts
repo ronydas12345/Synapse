@@ -31,6 +31,7 @@ function samplePath(overrides?: Partial<StoredMusicPath>): StoredMusicPath {
     id: 'path-abc',
     name: 'Late Night Focus',
     visibility: 'private',
+    tags: [],
     updatedAt: '2026-09-06T00:00:00.000Z',
     nodes,
     edges,
@@ -50,6 +51,16 @@ describe('playlist file format', () => {
     expect(parsed.playlist.edges[0]?.source).toBe('start');
     expect(parsed.themeId).toBe('standard-dark');
     expect(JSON.parse(json).type).toBe(PLAYLIST_TYPE);
+  });
+
+  it('round-trips playlist Workshop tags', () => {
+    const path = samplePath({ tags: ['lo-fi', 'focus'] });
+    const json = serializePlaylistJson(path);
+    const parsed = parsePlaylistFile(json);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.playlist.tags).toEqual(['lo-fi', 'focus']);
+    expect(JSON.parse(json).tags).toEqual(['lo-fi', 'focus']);
   });
 
   it('accepts the legacy portable path shape', () => {

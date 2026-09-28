@@ -1,6 +1,7 @@
 import type { Edge, Node } from '@xyflow/react';
 import { scheduleWorkspacePersist } from '../cloud/persistGate';
 import { normalizeWorkspaceGraph } from '../randomizerDrop';
+import { sanitizeTagIds } from '../workshop/tags';
 
 export const LEGACY_GRAPH_KEY = 'synapse_graph_state';
 export const LIBRARY_KEY = 'synapse_path_library';
@@ -9,6 +10,7 @@ export interface StoredMusicPath {
   id: string;
   name: string;
   visibility: 'public' | 'private';
+  tags: string[];
   nodes: Node[];
   edges: Edge[];
   updatedAt: string;
@@ -24,6 +26,7 @@ export interface PathSummary {
   id: string;
   name: string;
   visibility: 'public' | 'private';
+  tags: string[];
 }
 
 export function defaultStartNode(): Node {
@@ -64,6 +67,7 @@ function normalizePath(raw: Partial<StoredMusicPath> | undefined, fallbackName: 
     id: typeof raw?.id === 'string' && raw.id ? raw.id : makePathId(),
     name: String(raw?.name || fallbackName).slice(0, 60) || fallbackName,
     visibility: raw?.visibility === 'public' ? 'public' : 'private',
+    tags: sanitizeTagIds('playlist', raw?.tags),
     nodes: graph.nodes,
     edges: graph.edges,
     updatedAt:
@@ -133,6 +137,7 @@ export function summaries(lib: PathLibrary): PathSummary[] {
     id: p.id,
     name: p.name,
     visibility: p.visibility,
+    tags: p.tags,
   }));
 }
 
@@ -200,6 +205,17 @@ export function setPathVisibility(
   const next: PathLibrary = {
     ...lib,
     paths: lib.paths.map((p) => (p.id === id ? { ...p, visibility } : p)),
+  };
+  persistLibrary(next);
+  return next;
+}
+
+export function setPathTags(lib: PathLibrary, id: string, tags: string[]): PathLibrary {
+  const next: PathLibrary = {
+    ...lib,
+    paths: lib.paths.map((p) =>
+      p.id === id ? { ...p, tags: sanitizeTagIds('playlist', tags) } : p
+    ),
   };
   persistLibrary(next);
   return next;

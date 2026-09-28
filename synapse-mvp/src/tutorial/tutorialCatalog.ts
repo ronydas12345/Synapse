@@ -773,7 +773,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'w-tags',
         'Tags',
-        'Creators pick up to eight curated tags. Playlists and themes have separate vocabularies. Search the tag list instead of scrolling every option. Staff can remove a misleading tag.',
+        'Creators pick up to eight curated tags in Settings before publishing. Playlists and themes have separate vocabularies. Search the tag list instead of scrolling every option. Staff can remove a misleading tag.',
         { type: 'highlight', route: 'workshop', target: 'workshop' }
       ),
       s(
@@ -791,13 +791,13 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'w-pub-path',
         'Publishing playlists',
-        'Publish from Settings → Workshop. Private stays off the catalog, unlisted is link-only, public is listed. The server awards upload badges.',
+        'Publish from Settings → Workshop. Add tags on the playlist in Settings → Playlists, or in the publish form. Private stays off the catalog, unlisted is link-only, public is listed. The server awards upload badges.',
         { type: 'highlight', route: 'settings', hash: 'settings-import', target: 'export-playlist' }
       ),
       s(
         'w-pub-theme',
         'Publishing themes',
-        'Export theme JSON from Settings → Themes. Workshop theme posts will wrap the same schema later.',
+        'Pick tags for the selected theme in Settings → Themes, then publish from Settings → Workshop. Workshop theme posts use the same Synapse theme JSON.',
         { type: 'highlight', route: 'settings', hash: 'settings-themes', target: 'theme-actions' }
       ),
       s(

@@ -533,6 +533,19 @@ export function tagLabel(kind: WorkshopKind, id: string): string {
   return tagDef(kind, id)?.label || id;
 }
 
+export function parseTagMap(
+  kind: WorkshopKind,
+  raw: unknown
+): Record<string, string[]> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const out: Record<string, string[]> = {};
+  for (const [id, value] of Object.entries(raw as Record<string, unknown>)) {
+    const tags = sanitizeTagIds(kind, value);
+    if (id && tags.length) out[id] = tags;
+  }
+  return out;
+}
+
 export function sanitizeTagIds(kind: WorkshopKind, raw: unknown): string[] {
   const values = Array.isArray(raw) ? raw : [];
   const out: string[] = [];
