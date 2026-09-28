@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { listAllTickets, listUsers } from './api';
+import { staffGamificationStats } from '../gamification/api';
 import type { PlatformUser, SupportTicket } from './model';
 
 export default function StatsPanel() {
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [play, setPlay] = useState<Record<string, number> | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    void Promise.all([listUsers(), listAllTickets()])
-      .then(([nextUsers, nextTickets]) => {
+    void Promise.all([listUsers(), listAllTickets(), staffGamificationStats().catch(() => null)])
+      .then(([nextUsers, nextTickets, nextPlay]) => {
         setUsers(nextUsers);
         setTickets(nextTickets);
+        setPlay(nextPlay);
       })
       .catch((err) =>
         setError(err instanceof Error ? err.message : 'Could not load stats.')
@@ -36,6 +39,13 @@ export default function StatsPanel() {
         <Stat label="Open tickets" value={stats.openTickets} />
         <Stat label="Ticket volume" value={stats.ticketVolume} />
         <Stat label="Cloud / storage" value="Not metered" />
+        {play ? (
+          <>
+            <Stat label="Playground users" value={String(play.playgroundUsers)} />
+            <Stat label="Games today" value={String(play.gamesToday)} />
+            <Stat label="Tokens earned" value={String(play.tokensEarned)} />
+          </>
+        ) : null}
       </div>
       <h3>Last 14 days · new tickets</h3>
       <div className="synapse-staff-bars" role="img" aria-label="Tickets by day">

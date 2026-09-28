@@ -118,11 +118,12 @@ Requires a current Node.js (the app is ESM, Vite 8, React 19).
 | `/edit` | Graph editor (Studio). Requires sign-in |
 | `/listen` | Listen screen. Requires sign-in |
 | `/settings` | Themes, appearance, playlists, import/export, and other local settings. Requires sign-in |
-| `/profile` | Local profile. Requires sign-in |
+| `/profile` | Profile. Requires sign-in |
+| `/playground` | Skill games and virtual Tokens. Requires sign-in |
 | `/admin` | Admin dashboard. Admins only; Superadmin is redirected away |
 | `/superadmin` | Superadmin dashboard. Superadmin only; admins are redirected away |
 
-Marketing routes do **not** mount the YouTube player. Workspace routes (`/edit`, `/listen`, `/settings`, `/profile`) require sign-in. After login they keep the player mounted so playback can continue while you switch those pages. Staff sign-in uses the same `/login` page; role routing sends admins to `/admin` and Superadmin to `/superadmin`. Each role can open only its own dashboard, even when tools overlap. Those dashboards are enforced by routing and Supabase row-level security, not only by hiding UI.
+Marketing routes do **not** mount the YouTube player. Workspace routes (`/edit`, `/listen`, `/settings`, `/profile`, `/playground`) require sign-in. After login they keep the player mounted so playback can continue while you switch those pages. Staff sign-in uses the same `/login` page; role routing sends admins to `/admin` and Superadmin to `/superadmin`. Each role can open only its own dashboard, even when tools overlap. Those dashboards are enforced by routing and Supabase row-level security, not only by hiding UI.
 
 The header **Open Synapse** control goes to the workspace if you are signed in, or `/login` if you are not. The `?` button opens the tutorial (workspace; also requires sign-in).
 
@@ -237,6 +238,7 @@ Synapse is a Vite + React 19 + TypeScript SPA. Authentication uses Supabase Auth
 | Playlists | `src/playlists/` | Library + sanitize/serialize `.synapse` |
 | Settings | `src/settings/` | Versioned settings (cloud workspace) |
 | Profile | `src/profile/`, `src/profiles/`, `src/badges/`, `src/decorations/` | Cloud profile, public `/u/` pages, badges, decorations |
+| Playground | `src/gamification/` | Skill games, token RPCs, Superadmin Game Lab |
 | Workshop | `src/workshop/` | Catalog, publish RPC, like/save/remix/report |
 | Auth | `src/auth/`, `src/supabase/` | Supabase Google/email sign-in, session, roles |
 | Staff data | `src/admin/` | Profiles, roles, tickets, moderation, audit, published themes, badges |
@@ -250,13 +252,13 @@ Synapse is a Vite + React 19 + TypeScript SPA. Authentication uses Supabase Auth
 - Do not unmount `.synapse-deck-screen` (YouTube iframe); it stays the first child of `.synapse-deck`.
 - Do not load/unload YouTube for settings UI.
 - Imported theme/playlist JSON must not execute code; fonts stay on the allowlist.
-- Do not invent billing APIs in the UI. Workshop publish uses Supabase RPCs; clients cannot write `user_badges`.
+- Do not invent billing APIs in the UI. Workshop publish uses Supabase RPCs; clients cannot write `user_badges`. Playground tokens are server-awarded through RPCs; clients cannot write wallets or the token ledger.
 
 ---
 
 ## Account data and privacy
 
-Signed-in Music Paths, themes, settings, profile extras, and tutorial progress live in Postgres table `user_workspaces` (row-level security: the owner only). Profile pictures go to Storage bucket `avatars` and the moderation queue. Playing a track still uses YouTube. Weather uses Open-Meteo when a location is available.
+Signed-in Music Paths, themes, settings, profile extras, and tutorial progress live in Postgres table `user_workspaces` (row-level security: the owner only). Playground wallets and the token ledger are server-written only. Profile pictures go to Storage bucket `avatars` and the moderation queue. Playing a track still uses YouTube. Weather uses Open-Meteo when a location is available.
 
 The browser may still hold a cookie-notice flag, the Supabase auth session, and an optional song-credits cache (`synapse_yt_metadata_v1`). Settings → **Privacy / Data** can download your cloud copy or delete the account.
 
@@ -270,7 +272,7 @@ Tests live next to the modules they cover (`*.test.ts`). Prefer `npm test` in `s
 
 **Do not commit** `.env`, tokens, or `env.txt.txt`. The Google Sheet agile webhook is documented in `scripts/google-apps-script/README.md` and is unrelated to running the player.
 
-Changelog for the app: `synapse-mvp/CHANGELOG.md` (also mirrored under `doc/CHANGELOG.md`). In-app page: `/changelog`.
+Changelog for the app: `synapse-mvp/CHANGELOG.md`. In-app page: `/changelog`.
 
 ---
 
@@ -291,7 +293,6 @@ Synapse/
     src/admin/              staff dashboards and Postgres API
     public/                 favicon, OG image
   supabase/migrations/      staff schema + RLS
-  doc/                      handoff notes, implementation status
   scripts/google-apps-script/  optional sprint-sheet webhook
 ```
 
@@ -302,9 +303,6 @@ Synapse/
 | Doc | Use |
 | --- | --- |
 | `synapse-mvp/CHANGELOG.md` | User-facing history |
-| `doc/IMPLEMENTATION_STATUS.md` | Audit-style status vs the original PDD |
-| `doc/SYNAPSE_EXTENSIVE_FEATURES_HANDOFF.md` | Product feature intent (includes unshipped items) |
-| `doc/SYNAPSE_CURSOR_HANDOFF.md` / `_V2.md` | Earlier engineering handoffs |
 | `scripts/google-apps-script/README.md` | Agile spreadsheet webhook |
 
-When in doubt, **the running code in `synapse-mvp/src` is the source of truth**, not a handoff that still lists a feature as missing.
+When in doubt, **the running code in `synapse-mvp/src` is the source of truth**.

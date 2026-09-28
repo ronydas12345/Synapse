@@ -1,4 +1,4 @@
-export type BadgeCategory = 'account' | 'creator' | 'community' | 'staff';
+export type BadgeCategory = 'account' | 'creator' | 'community' | 'staff' | 'play';
 
 export interface BadgeDef {
   id: string;
@@ -67,6 +67,36 @@ export const BADGE_CATALOG: BadgeDef[] = [
     name: '100 Followers',
     description: 'Reached 100 followers.',
     category: 'community',
+  },
+  {
+    id: 'first_game',
+    name: 'First Game',
+    description: 'Finished a Playground game.',
+    category: 'play',
+  },
+  {
+    id: 'tokens_100',
+    name: 'First 100 Tokens',
+    description: 'Earned 100 tokens over the lifetime of the account.',
+    category: 'play',
+  },
+  {
+    id: 'tokens_1000',
+    name: 'First 1,000 Tokens',
+    description: 'Earned 1,000 tokens over the lifetime of the account.',
+    category: 'play',
+  },
+  {
+    id: 'game_explorer',
+    name: 'Game Explorer',
+    description: 'Completed five different Playground games.',
+    category: 'play',
+  },
+  {
+    id: 'perfect_score',
+    name: 'Perfect Score',
+    description: 'Scored 100 on a Playground game.',
+    category: 'play',
   },
 ];
 

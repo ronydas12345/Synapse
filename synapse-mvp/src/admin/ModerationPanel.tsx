@@ -7,7 +7,9 @@ import {
   reviewWorkshopReport,
   setWorkshopFeatured,
   setWorkshopStatus,
+  staffRemoveWorkshopTag,
 } from '../workshop/api';
+import TagChips from '../workshop/TagChips';
 import type { WorkshopCreation, WorkshopStatus } from '../workshop/types';
 import type { ModerationItem, ModerationStatus } from './model';
 import { workshopItemPath } from '../app/routes';
@@ -22,8 +24,8 @@ export default function ModerationPanel() {
       <h2>Moderation</h2>
       <p className="synapse-settings-lead">
         Profile pictures wait here until staff approve them. Overlay reports and
-        Workshop reports use the same queue. Removing a Workshop creation hides
-        it from the catalog.
+        Workshop reports use the same queue. Staff can strip misleading tags
+        from a creation. Removing a Workshop creation hides it from the catalog.
       </p>
       <div className="synapse-workshop-tabs">
         {(['avatar', 'overlay', 'workshop', 'reports'] as Queue[]).map((id) => (
@@ -148,6 +150,8 @@ function WorkshopQueue() {
           <thead>
             <tr>
               <th>Title</th>
+              <th>Type</th>
+              <th>Tags</th>
               <th>Creator</th>
               <th>Visibility</th>
               <th>Status</th>
@@ -160,6 +164,26 @@ function WorkshopQueue() {
               <tr key={row.id}>
                 <td>
                   <a href={workshopItemPath(row.id)}>{row.title}</a>
+                </td>
+                <td>{row.kind}</td>
+                <td>
+                  {row.tags.length ? (
+                    <TagChips
+                      kind={row.kind}
+                      ids={row.tags}
+                      onRemove={(tag) => {
+                        setBusy(true);
+                        void staffRemoveWorkshopTag(row.id, tag)
+                          .then(reload)
+                          .catch((err) =>
+                            setError(err instanceof Error ? err.message : 'Could not remove tag.')
+                          )
+                          .finally(() => setBusy(false));
+                      }}
+                    />
+                  ) : (
+                    '—'
+                  )}
                 </td>
                 <td>@{row.creatorUsername || row.creatorUid.slice(0, 8)}</td>
                 <td>{row.visibility}</td>

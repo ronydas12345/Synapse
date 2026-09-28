@@ -1,6 +1,7 @@
 import { PathLink } from '../app/AppLink';
 import { publicProfilePath, workshopItemPath } from '../app/routes';
 import { FeaturedBadgeMark } from '../badges/BadgeStrip';
+import TagChips from './TagChips';
 import type { WorkshopCard } from './types';
 
 export default function WorkshopCard({
@@ -10,14 +11,24 @@ export default function WorkshopCard({
   card: WorkshopCard;
   featuredBadge?: string;
 }) {
+  const href = workshopItemPath(card.shareCode || card.id);
   return (
     <article className="synapse-mkt-workshop-card synapse-workshop-card">
-      <PathLink href={workshopItemPath(card.id)} className="synapse-workshop-card-link">
+      <PathLink href={href} className="synapse-workshop-card-link">
         <p className="synapse-mkt-status">
-          {card.featured ? 'Featured' : 'Workshop'}
+          {card.featured
+            ? 'Featured'
+            : card.kind === 'theme'
+              ? 'Theme'
+              : card.visibility === 'unlisted'
+                ? 'Unlisted'
+                : 'Playlist'}
         </p>
         <h3>{card.title}</h3>
-        <p>{card.description || 'A published Music Path.'}</p>
+        <p>
+          {card.description ||
+            (card.kind === 'theme' ? 'A published theme.' : 'A published Music Path.')}
+        </p>
       </PathLink>
       <p className="synapse-workshop-meta">
         {card.creatorUsername ? (
@@ -29,8 +40,10 @@ export default function WorkshopCard({
         )}
         {featuredBadge ? <FeaturedBadgeMark id={featuredBadge} /> : null}
       </p>
+      <TagChips kind={card.kind} ids={card.tags} />
       <p className="synapse-mkt-tags">
         {card.likeCount} likes · {card.saveCount} saves · {card.remixCount} remixes
+        {card.commentCount ? ` · ${card.commentCount} comments` : ''}
       </p>
     </article>
   );

@@ -9,7 +9,8 @@ export type StaffCapability =
   | 'adminManagement'
   | 'adminAudit'
   | 'themePublish'
-  | 'systemPermissions';
+  | 'systemPermissions'
+  | 'gameLab';
 
 const CAPABILITIES: Record<StaffCapability, ReadonlySet<AuthRole>> = {
   userManagement: new Set(['admin', 'superadmin']),
@@ -20,6 +21,7 @@ const CAPABILITIES: Record<StaffCapability, ReadonlySet<AuthRole>> = {
   adminAudit: new Set(['superadmin']),
   themePublish: new Set(['superadmin']),
   systemPermissions: new Set(['superadmin']),
+  gameLab: new Set(['superadmin']),
 };
 
 export function canUse(role: AuthRole, capability: StaffCapability): boolean {
@@ -47,6 +49,7 @@ export function canOpenPath(path: AppPath, role: AuthRole): boolean {
     path === '/edit' ||
     path === '/listen' ||
     path === '/settings' ||
-    path === '/profile'
+    path === '/profile' ||
+    path === '/playground'
   );
 }

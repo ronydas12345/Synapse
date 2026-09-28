@@ -6,6 +6,7 @@ const ALLOWED = new Set<AppPath>([
   '/listen',
   '/settings',
   '/profile',
+  '/playground',
   '/admin',
   '/superadmin',
 ]);

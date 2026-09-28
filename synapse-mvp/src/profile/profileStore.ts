@@ -4,6 +4,7 @@ import { scheduleWorkspacePersist } from '../cloud/persistGate';
 import { localDayKey } from './listenStats';
 import {
   OPTIONAL_SECTIONS,
+  asProfileVisibility,
   emptyProfile,
   type FavoriteSong,
   type OptionalSectionId,
@@ -130,7 +131,7 @@ function sanitizeProfile(raw: unknown): UserProfile {
     schemaVersion: 1,
     username: normalizeUsername(String(p.username || '')),
     displayName: String(p.displayName || '').slice(0, 40),
-    visibility: p.visibility === 'public' ? 'public' : 'private',
+    visibility: asProfileVisibility(p.visibility),
     avatarDataUrl:
       typeof p.avatarDataUrl === 'string' && p.avatarDataUrl.startsWith('data:image/')
         ? p.avatarDataUrl

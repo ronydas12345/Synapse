@@ -761,26 +761,26 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'w-find',
         'Finding playlists',
-        'Workshop lists public Music Paths. Open it from Home or the header, then use Home, New, Featured, and Search.',
+        'Workshop lists public Music Paths. Open it from Home or the header, then use Home, New, Featured, Search, and Saved. Share a public or unlisted creation with its short ID or link.',
         { type: 'highlight', route: 'workshop', target: 'workshop' }
       ),
       s(
         'w-search',
         'Searching',
-        'Search looks through public titles, descriptions, and usernames. Sign in to like, save, remix, or publish.',
+        'Search looks through public titles, descriptions, usernames, and tags. Filter by playlist or theme. Sign in to like, save, remix, or publish.',
         { type: 'info', route: 'workshop', target: 'workshop' }
       ),
       s(
         'w-tags',
         'Tags',
-        'Example cards show tag chips for the future taxonomy. Account playlists do not have Workshop tags yet.',
+        'Creators pick up to eight curated tags in Settings before publishing. Playlists and themes have separate vocabularies. Search the tag list instead of scrolling every option. Staff can remove a misleading tag.',
         { type: 'highlight', route: 'workshop', target: 'workshop' }
       ),
       s(
         'w-filters',
         'Filters',
-        'Filters will live here with search. Today, Settings → Playlists is the list of paths on your account.',
-        { type: 'highlight', route: 'settings', hash: 'settings-playlists', target: 'settings-playlists' }
+        'On Search, combine a text query, content type, and tags. Home, New, and Featured can also limit the list to playlists or themes.',
+        { type: 'highlight', route: 'workshop', target: 'workshop' }
       ),
       s(
         'w-rec',
@@ -791,13 +791,13 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'w-pub-path',
         'Publishing playlists',
-        'Publish from Settings → Workshop. Private stays off the catalog, unlisted is link-only, public is listed. The server awards upload badges.',
+        'Publish from Settings → Workshop. Add tags on the playlist in Settings → Playlists, or in the publish form. Private stays off the catalog, unlisted is link-only, public is listed. The server awards upload badges.',
         { type: 'highlight', route: 'settings', hash: 'settings-import', target: 'export-playlist' }
       ),
       s(
         'w-pub-theme',
         'Publishing themes',
-        'Export theme JSON from Settings → Themes. Workshop theme posts will wrap the same schema later.',
+        'Pick tags for the selected theme in Settings → Themes, then publish from Settings → Workshop. Workshop theme posts use the same Synapse theme JSON.',
         { type: 'highlight', route: 'settings', hash: 'settings-themes', target: 'theme-actions' }
       ),
       s(
@@ -861,7 +861,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'co-comments',
         'Comments',
-        'Graph comments are local annotations. Threaded Workshop comments are a future community feature.',
+        'Graph comments are local annotations. Public Workshop creations can have comments unless the creator turns them off.',
         { type: 'highlight', route: 'edit', target: 'node-comment' }
       ),
       s(
@@ -1011,7 +1011,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'pr-workshop',
         'Advanced Workshop features',
-        'Public Workshop search, likes, remix, and follows are live. Comments, trending, and collections are still later.',
+        'Public Workshop search, likes, comments, remix, follows, and saved lists are live. Creators can disable likes, comments, saves, and followers. Trending is still later.',
         { type: 'highlight', route: 'workshop', target: 'workshop' }
       ),
       s(

@@ -8,15 +8,15 @@ revoke all on schema internal from public, anon, authenticated;
 -- Catalogs
 -- ---------------------------------------------------------------------------
 
-create table public.badge_defs (
+create table if not exists public.badge_defs (
   id text primary key check (id ~ '^[a-z0-9_]+$'),
   name text not null check (char_length(name) between 1 and 40),
   description text not null check (char_length(description) between 1 and 200),
-  category text not null check (category in ('account', 'creator', 'community', 'staff')),
+  category text not null,
   sort_order int not null default 0
 );
 
-create table public.decoration_defs (
+create table if not exists public.decoration_defs (
   id text primary key check (id ~ '^[a-z0-9_]+$'),
   name text not null check (char_length(name) between 1 and 40),
   description text not null check (char_length(description) between 1 and 200),
@@ -44,7 +44,7 @@ insert into public.decoration_defs (id, name, description, css_class, sort_order
   ('admin', 'Admin', 'Staff decoration for Admins.', 'synapse-deco-admin', 50),
   ('superadmin', 'Superadmin', 'Staff decoration for the owner.', 'synapse-deco-superadmin', 60);
 
-create table public.user_badges (
+create table if not exists public.user_badges (
   uid uuid not null references auth.users (id) on delete cascade,
   badge_id text not null references public.badge_defs (id),
   awarded_at timestamptz not null default now(),
@@ -53,7 +53,7 @@ create table public.user_badges (
 
 create index user_badges_badge_idx on public.user_badges (badge_id);
 
-create table public.user_decorations (
+create table if not exists public.user_decorations (
   uid uuid not null references auth.users (id) on delete cascade,
   decoration_id text not null references public.decoration_defs (id),
   unlocked_at timestamptz not null default now(),
@@ -66,7 +66,7 @@ create table public.user_decorations (
 
 alter table public.profiles
   add column if not exists visibility text not null default 'private'
-    check (visibility in ('public', 'private')),
+    check (visibility in ('public', 'unlisted', 'private')),
   add column if not exists bio text not null default ''
     check (char_length(bio) <= 500),
   add column if not exists equipped_decoration text not null default 'default'
@@ -74,7 +74,7 @@ alter table public.profiles
   add column if not exists featured_badge text not null default ''
     check (featured_badge = '' or char_length(featured_badge) <= 40);
 
-create table public.creator_public (
+create table if not exists public.creator_public (
   uid uuid primary key references public.profiles (uid) on delete cascade,
   username text not null unique,
   display_name text not null,
@@ -87,7 +87,7 @@ create table public.creator_public (
   created_at timestamptz not null
 );
 
-create table public.follows (
+create table if not exists public.follows (
   follower_uid uuid not null references auth.users (id) on delete cascade,
   followee_uid uuid not null references auth.users (id) on delete cascade,
   created_at timestamptz not null default now(),
@@ -97,7 +97,7 @@ create table public.follows (
 
 create index follows_followee_idx on public.follows (followee_uid);
 
-create table public.workshop_creations (
+create table if not exists public.workshop_creations (
   id uuid primary key default gen_random_uuid(),
   creator_uid uuid not null references auth.users (id) on delete cascade,
   creator_username text not null default '',
@@ -138,21 +138,21 @@ create index workshop_public_featured_idx
 
 create index workshop_creator_idx on public.workshop_creations (creator_uid, updated_at desc);
 
-create table public.workshop_likes (
+create table if not exists public.workshop_likes (
   creation_id uuid not null references public.workshop_creations (id) on delete cascade,
   uid uuid not null references auth.users (id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (creation_id, uid)
 );
 
-create table public.workshop_saves (
+create table if not exists public.workshop_saves (
   creation_id uuid not null references public.workshop_creations (id) on delete cascade,
   uid uuid not null references auth.users (id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (creation_id, uid)
 );
 
-create table public.workshop_reports (
+create table if not exists public.workshop_reports (
   id uuid primary key default gen_random_uuid(),
   creation_id uuid not null references public.workshop_creations (id) on delete cascade,
   reporter_uid uuid not null references auth.users (id) on delete cascade,

@@ -8,7 +8,13 @@ export type ModerationStatus = 'pending' | 'approved' | 'rejected' | 'removed';
 export type ThemePublishStatus = 'published' | 'archived';
 
 export type AdminSection = 'users' | 'tickets' | 'stats' | 'moderation';
-export type SuperadminSection = AdminSection | 'admins' | 'themes' | 'audit' | 'badges';
+export type SuperadminSection =
+  | AdminSection
+  | 'admins'
+  | 'themes'
+  | 'audit'
+  | 'badges'
+  | 'gamelab';
 
 export const ADMIN_SECTIONS: { id: AdminSection; label: string }[] = [
   { id: 'users', label: 'Users' },
@@ -23,6 +29,7 @@ export const SUPERADMIN_SECTIONS: { id: SuperadminSection; label: string }[] = [
   { id: 'themes', label: 'Themes' },
   { id: 'audit', label: 'Admin history' },
   { id: 'badges', label: 'Badges' },
+  { id: 'gamelab', label: 'Game Lab' },
 ];
 
 export interface PlatformUser {

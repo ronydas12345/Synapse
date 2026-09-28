@@ -14,6 +14,7 @@ import { useProfileStore } from '../profile/profileStore';
 import { useAppSettings } from '../settings/settingsStore';
 import SupportForm from '../admin/SupportForm';
 import PublishForm from '../workshop/PublishForm';
+import TagPicker from '../workshop/TagPicker';
 import { GRID_SIZE_OPTIONS } from '../settings/types';
 import {
   clearMetadataCache,
@@ -29,9 +30,9 @@ import {
 import { useWeatherSnapshot } from '../weather/useWeatherSnapshot';
 
 const SECTIONS = [
-  { id: 'themes', label: 'Themes', keywords: 'theme appearance color font preset dark light arrow bezier edge rectangular triangular visualizer bar' },
+  { id: 'themes', label: 'Themes', keywords: 'theme appearance color font preset dark light arrow bezier edge rectangular triangular visualizer bar tags workshop' },
   { id: 'appearance', label: 'Appearance', keywords: 'motion reduce animation theme light dark' },
-  { id: 'playlists', label: 'Playlists', keywords: 'rename library path name export visibility public private' },
+  { id: 'playlists', label: 'Playlists', keywords: 'rename library path name export visibility public private tags workshop' },
   { id: 'general', label: 'General', keywords: 'language english startup edit listen confirm delete' },
   { id: 'canvas', label: 'Canvas / Workspace', keywords: 'grid zoom minimap snap fit view' },
   { id: 'connections', label: 'Connections / Arrows', keywords: 'arrow edge bezier rectangular straight triangular' },
@@ -40,7 +41,7 @@ const SECTIONS = [
   { id: 'visualizer', label: 'Visualizer', keywords: 'fft spectrum bars capture share theme' },
   { id: 'environment', label: 'Environment', keywords: 'weather geolocation location open-meteo' },
   { id: 'import', label: 'Import / Export', keywords: 'json package synapse playlist file import export settings' },
-  { id: 'workshop', label: 'Workshop', keywords: 'share publish' },
+  { id: 'workshop', label: 'Workshop', keywords: 'share publish tags playlist theme catalog search' },
   { id: 'account', label: 'Account', keywords: 'profile login visibility username google oauth signin account email' },
   { id: 'privacy', label: 'Privacy / Data', keywords: 'localstorage cache clear erase metadata weather' },
   { id: 'pro', label: 'Pro', keywords: 'billing premium' },
@@ -55,6 +56,7 @@ export default function SettingsPage() {
   const switchPlaylist = usePathStore((s) => s.switchPlaylist);
   const exportPlaylistFile = usePathStore((s) => s.exportPlaylistFile);
   const setPlaylistVisibility = usePathStore((s) => s.setPlaylistVisibility);
+  const setPlaylistTags = usePathStore((s) => s.setPlaylistTags);
   const q = query.trim().toLowerCase();
   const themeQueryHits = filterThemes(allThemes(customThemes), q);
   const sections = useMemo(
@@ -112,9 +114,9 @@ export default function SettingsPage() {
             <section id="settings-playlists" className="synapse-settings-section" data-tutorial="settings-playlists">
               <h2>Playlists</h2>
               <p className="synapse-settings-lead">
-                Rename playlists stored on this account. Public/private on a
-                playlist is a local label. To list a path in Workshop, publish
-                it from the Workshop section.
+                Rename playlists stored on this account. Add Workshop tags on
+                the current playlist here, then publish from the Workshop
+                section. Public/private on a playlist is a local label.
               </p>
               <ul className="synapse-settings-playlist-list">
                 {pathSummaries.map((path) => {
@@ -167,6 +169,19 @@ export default function SettingsPage() {
                   );
                 })}
               </ul>
+              {pathSummaries.some((path) => path.id === activePathId) ? (
+                <TagPicker
+                  kind="playlist"
+                  value={
+                    pathSummaries.find((path) => path.id === activePathId)?.tags || []
+                  }
+                  onChange={(next) => setPlaylistTags(activePathId, next)}
+                  label={`Tags for ${
+                    pathSummaries.find((path) => path.id === activePathId)?.name ||
+                    'this playlist'
+                  }`}
+                />
+              ) : null}
             </section>
           ) : null}
           {show('general') ? <GeneralSection /> : null}
@@ -512,10 +527,13 @@ function AccountSection() {
       <SettingsSelect
         label="Profile visibility"
         value={visibility}
-        onChange={(value) => setVisibility(value === 'public' ? 'public' : 'private')}
+        onChange={(value) =>
+          setVisibility(value === 'public' || value === 'unlisted' ? value : 'private')
+        }
       >
         <option value="private">Private</option>
-        <option value="public">Public (not listed yet)</option>
+        <option value="unlisted">Unlisted (ID or link only)</option>
+        <option value="public">Public</option>
       </SettingsSelect>
     </section>
   );

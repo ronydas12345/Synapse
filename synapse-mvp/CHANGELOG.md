@@ -13,9 +13,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Minimize control on the bottom deck. The YouTube surface stays mounted so playback continues on Edit, Listen, Settings, and Profile.
 - Canvas multi-select (Shift-click or box-select) with copy, paste, and duplicate (Ctrl/Cmd+C, V, D).
 - Paths, themes, settings, profile extras, and tutorial progress save per user in Supabase (`user_workspaces`) instead of localStorage.
-- Workshop catalog: Home / New / Featured / Search, creation pages, publish (private / unlisted / public), like, save, share, remix, follows, and public creator profiles at `/u/{username}`.
+- Workshop catalog: Home / New / Featured / Search / Saved, creation pages, publish (private / unlisted / public), like, save, comments, share IDs, remix, follows, and public or unlisted creator profiles at `/u/{username}` or `/p/{id}` / `/u/{id}`.
+- Curated Workshop tags for playlists and themes (separate vocabularies, searchable picker, max eight, no custom tags). Choose tags in Settings → Playlists, Settings → Themes, or the publish form before you post. Search and staff moderation can use them. Themes can be published to Workshop and applied from a creation page.
+- Short share IDs on public and unlisted users and Workshop playlists. Paste the ID, `/p/{id}`, `/u/{id}`, or `/s/{id}`. Creators can disable likes, comments, saves, and followers.
 - Server-awarded badges (first creation, 10/25/100 uploads, one month, one year, admin, superadmin, 10/100 followers) and cosmetic decorations. Clients cannot insert badge rows.
-- Staff Workshop moderation, reports, overlay queue, and Superadmin badge/decoration grants.
+- Playground at `/playground`: eleven short skill games, server-awarded Tokens with a ledger, daily/weekly caps, practice mode, daily claim, and feature flags. Superadmin Game Lab can preview games, toggle flags, and adjust balances with a reason. No gambling or cash-out.
 
 ### Changed
 
@@ -25,7 +27,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - Reload keeps the Supabase session. Names load from the profile row before the app decides anyone is signed out.
-- Login no longer shows a test user or a fill-test-login control.
+- Workshop listing and badge pages no longer fail when the API schema cache is still catching up. Publish, badges, and public profiles read the live Workshop tables.
 
 ## [0.3.0] — 2026-08-30
 

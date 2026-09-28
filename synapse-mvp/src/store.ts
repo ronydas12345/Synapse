@@ -15,6 +15,7 @@ import {
   emptyLibrary,
   renamePath,
   saveActiveGraph,
+  setPathTags,
   setPathVisibility,
   summaries,
   type PathLibrary,
@@ -84,6 +85,7 @@ interface PathState {
   switchPlaylist: (id: string) => void;
   renamePlaylist: (id: string, name: string) => void;
   setPlaylistVisibility: (id: string, visibility: 'public' | 'private') => void;
+  setPlaylistTags: (id: string, tags: string[]) => void;
   exportPlaylistFile: (
     id: string,
     kind?: 'playlist' | 'package'
@@ -485,6 +487,10 @@ export const usePathStore = create<PathState>((set, get) => ({
     library = setPathVisibility(library, id, visibility);
     set({ pathSummaries: summaries(library) });
   },
+  setPlaylistTags: (id, tags) => {
+    library = setPathTags(library, id, tags);
+    set({ pathSummaries: summaries(library) });
+  },
   exportPlaylistFile: (id, kind = 'playlist') => {
     const current = usePathStore.getState();
     library = saveActiveGraph(library, current.nodes, current.edges);
@@ -539,6 +545,7 @@ export const usePathStore = create<PathState>((set, get) => ({
       id: '',
       name,
       visibility: 'private',
+      tags: [],
       nodes,
       edges,
       updatedAt: new Date().toISOString(),

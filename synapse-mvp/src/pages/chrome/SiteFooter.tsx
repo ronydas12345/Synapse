@@ -30,6 +30,9 @@ export default function SiteFooter() {
               <AppLink to="workshop">Workshop</AppLink>
             </li>
             <li>
+              <AppLink to="playground">Playground</AppLink>
+            </li>
+            <li>
               <AppLink to="home" hash="themes">
                 Themes
               </AppLink>

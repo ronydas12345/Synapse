@@ -124,6 +124,11 @@ export default function SiteHeader() {
             {route === 'home' ? <HomeThemePicker /> : null}
             <AuthControls onNavigate={close} />
             {signedIn ? (
+              <AppLink to="playground" onNavigate={close}>
+                Playground
+              </AppLink>
+            ) : null}
+            {signedIn ? (
               <AppLink to="profile" onNavigate={close}>
                 {username ? `@${username}` : 'Profile'}
               </AppLink>

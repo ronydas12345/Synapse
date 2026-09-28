@@ -10,7 +10,12 @@ export const OPTIONAL_SECTIONS = [
 
 export type OptionalSectionId = (typeof OPTIONAL_SECTIONS)[number];
 
-export type ProfileVisibility = 'public' | 'private';
+export type ProfileVisibility = 'public' | 'unlisted' | 'private';
+
+export function asProfileVisibility(value: unknown): ProfileVisibility {
+  if (value === 'public' || value === 'unlisted') return value;
+  return 'private';
+}
 
 export interface FavoriteSong {
   id: string;

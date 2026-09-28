@@ -8,6 +8,7 @@ import AdminsPanel from '../admin/AdminsPanel';
 import ThemesPanel from '../admin/ThemesPanel';
 import AuditPanel from '../admin/AuditPanel';
 import BadgeManagerPanel from '../admin/BadgeManagerPanel';
+import GameLabPanel from '../gamification/GameLabPanel';
 
 export default function SuperadminDashboard() {
   return (
@@ -20,6 +21,7 @@ export default function SuperadminDashboard() {
         if (section === 'themes') return <ThemesPanel />;
         if (section === 'audit') return <AuditPanel />;
         if (section === 'badges') return <BadgeManagerPanel />;
+        if (section === 'gamelab') return <GameLabPanel />;
         return <UsersPanel />;
       }}
     </StaffShell>
