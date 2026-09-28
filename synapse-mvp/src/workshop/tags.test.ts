@@ -8,6 +8,7 @@ import {
   catalogCategories,
   filterTagCatalog,
   groupTags,
+  parseTagMap,
   sanitizeTagIds,
   tagDef,
   tagIdsMatchingQuery,
@@ -38,6 +39,9 @@ describe('workshop tags', () => {
     ).toEqual(['chill', 'focus', 'lo-fi']);
     const many = PLAYLIST_TAGS.slice(0, MAX_WORKSHOP_TAGS + 4).map((tag) => tag.id);
     expect(sanitizeTagIds('playlist', many)).toHaveLength(MAX_WORKSHOP_TAGS);
+    expect(parseTagMap('theme', { 'standard-dark': ['pink', 'nope'] })).toEqual({
+      'standard-dark': ['pink'],
+    });
   });
 
   it('filters the catalog instead of dumping every tag', () => {

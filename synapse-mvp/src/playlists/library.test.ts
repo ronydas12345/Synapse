@@ -32,5 +32,25 @@ describe('playlist library', () => {
     });
     expect(parsed.activeId).toBe('p1');
     expect(parsed.paths[0].name).toBe('Focus');
+    expect(parsed.paths[0].tags).toEqual([]);
+  });
+
+  it('keeps curated playlist tags on a stored path', () => {
+    const parsed = parseLibrary({
+      schemaVersion: 1,
+      activeId: 'p1',
+      paths: [
+        {
+          id: 'p1',
+          name: 'Focus',
+          visibility: 'private',
+          tags: ['chill', 'made-up', 'focus'],
+          nodes: [{ id: 'start', type: 'start', position: { x: 0, y: 0 }, data: {} }],
+          edges: [],
+          updatedAt: '2026-09-21T00:00:00.000Z',
+        },
+      ],
+    });
+    expect(parsed.paths[0].tags).toEqual(['chill', 'focus']);
   });
 });

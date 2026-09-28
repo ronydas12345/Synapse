@@ -4,6 +4,7 @@ import { parseTheme, themeToJson } from '../theme/parseTheme';
 import { THEME_TYPE, type SynapseTheme } from '../theme/types';
 import { normalizeWorkspaceGraph } from '../randomizerDrop';
 import { makePathId, type StoredMusicPath } from './library';
+import { sanitizeTagIds } from '../workshop/tags';
 
 export const PLAYLIST_TYPE = 'synapse-playlist';
 export const PACKAGE_TYPE = 'synapse-package';
@@ -43,6 +44,7 @@ export interface PlaylistFile {
   id: string;
   name: string;
   visibility: 'public' | 'private';
+  tags: string[];
   updatedAt: string;
   nodes: Node[];
   edges: Edge[];
@@ -285,6 +287,7 @@ function parsePlaylistObject(raw: Record<string, unknown>, notices: string[]): S
     id: id || makePathId(),
     name: sanitizePlaylistName(raw.name),
     visibility: raw.visibility === 'public' ? 'public' : 'private',
+    tags: sanitizeTagIds('playlist', raw.tags),
     nodes: graph.nodes,
     edges: graph.edges,
     updatedAt:
@@ -482,6 +485,7 @@ export function serializePlaylist(
     id: path.id,
     name: sanitizePlaylistName(path.name),
     visibility: path.visibility === 'public' ? 'public' : 'private',
+    tags: sanitizeTagIds('playlist', path.tags),
     updatedAt: path.updatedAt,
     nodes: exportableNodes(path.nodes),
     edges: exportableEdges(path.edges),

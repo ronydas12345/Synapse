@@ -11,6 +11,7 @@ import type { ThemeEdgeType } from '../theme/types';
 import { THEME_EDGE_TYPE_OPTIONS } from '../theme/edgeType';
 import { FONT_OPTIONS } from '../theme/fonts';
 import { VISUALIZER_BAR_OPTIONS } from '../theme/visualizerBars';
+import TagPicker from '../workshop/TagPicker';
 
 export function ThemeVisualizerBarSelect() {
   const draft = useThemeStore((s) => s.draft);
@@ -99,6 +100,8 @@ export default function ThemeSettings({ hintQuery = '' }: { hintQuery?: string }
   const importJson = useThemeStore((s) => s.importJson);
   const exportActive = useThemeStore((s) => s.exportActive);
   const deleteCustom = useThemeStore((s) => s.deleteCustom);
+  const themeTags = useThemeStore((s) => s.themeTags);
+  const setThemeTags = useThemeStore((s) => s.setThemeTags);
 
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -254,6 +257,12 @@ export default function ThemeSettings({ hintQuery = '' }: { hintQuery?: string }
 
       <ThemeEdgeTypeSelect />
       <ThemeVisualizerBarSelect />
+      <TagPicker
+        kind="theme"
+        value={themeTags[preview.id] || []}
+        onChange={(next) => setThemeTags(preview.id, next)}
+        label={`Workshop tags for ${preview.name}`}
+      />
 
       {draft ? (
         <div className="synapse-theme-editor">
