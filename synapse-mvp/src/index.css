@@ -397,6 +397,12 @@ body {
   margin: 0 0.12rem;
 }
 
+.synapse-topbar > .synapse-help-btn,
+.synapse-mkt-header-actions .synapse-help-btn,
+.synapse-mkt-drawer .synapse-help-btn {
+  flex-shrink: 0;
+}
+
 .synapse-transport {
   display: flex;
   align-items: center;
@@ -3753,5 +3759,128 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
 .synapse-deco-superadmin {
   border: 3px solid #f97316;
   box-shadow: 0 0 0 3px color-mix(in srgb, #f97316 30%, transparent);
+}
+
+.synapse-command-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 1.85rem;
+  padding: 0 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.synapse-command-btn:hover,
+.synapse-command-btn:focus-visible {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  outline: none;
+}
+
+.synapse-command-kbd {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 0.08rem 0.28rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-deep);
+  color: var(--text-faint);
+}
+
+.synapse-command-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  align-items: start;
+  justify-items: center;
+  padding: 12vh 1rem 2rem;
+  background: color-mix(in srgb, var(--bg-void) 62%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.synapse-command-dialog {
+  width: min(36rem, 100%);
+  max-height: min(32rem, 70vh);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+}
+
+.synapse-command-input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  padding: 0.9rem 1rem;
+  outline: none;
+}
+
+.synapse-command-list {
+  overflow: auto;
+  padding: 0.4rem 0.35rem 0.6rem;
+}
+
+.synapse-command-group-label,
+.synapse-command-empty {
+  margin: 0.45rem 0.65rem 0.2rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+}
+
+.synapse-command-empty {
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font-ui);
+  padding: 1rem 0.65rem;
+}
+
+.synapse-command-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  text-align: left;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  padding: 0.5rem 0.65rem;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+}
+
+.synapse-command-item.is-active,
+.synapse-command-item:hover {
+  background: var(--accent-dim);
+}
+
+@media (max-width: 720px) {
+  .synapse-command-btn-label {
+    display: none;
+  }
 }
 

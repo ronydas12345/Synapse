@@ -9,6 +9,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+export function isSchemaCacheError(
+  error: { message: string; code?: string } | null
+): boolean {
+  if (!error) return false;
+  const message = error.message || '';
+  return (
+    error.code === 'PGRST202' ||
+    error.code === 'PGRST205' ||
+    /schema cache|could not find the function|function [\w.]+ does not exist/i.test(
+      message
+    )
+  );
+}
+
 export function throwIfError(
   error: { message: string; code?: string } | null
 ): void {
@@ -16,11 +30,8 @@ export function throwIfError(
   if (error.code === '23505') {
     throw new Error('That username is already taken.');
   }
-  if (
-    error.code === 'PGRST202' ||
-    error.code === 'PGRST205' ||
-    /does not exist|schema cache/i.test(error.message)
-  ) {
+  if (isSchemaCacheError(error)) {
+    console.warn('Supabase schema cache miss', error);
     throw new Error('This feature is still connecting. Refresh in a moment and try again.');
   }
   throw new Error(error.message);
@@ -31,10 +42,7 @@ export function isMissingSchema(
 ): boolean {
   return Boolean(
     error &&
-      (error.code === 'PGRST202' ||
-        error.code === 'PGRST205' ||
-        /does not exist|schema cache|permission denied for function is_staff/i.test(
-          error.message
-        ))
+      (isSchemaCacheError(error) ||
+        /permission denied for function is_staff/i.test(error.message))
   );
 }

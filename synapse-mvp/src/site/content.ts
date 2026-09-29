@@ -113,7 +113,11 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'How do I copy nodes on the canvas?',
-    a: 'Shift-click or drag a box on empty canvas to select several nodes. Ctrl+C / Cmd+C copies, Ctrl+V pastes, Ctrl+D duplicates. Middle- or right-drag pans while box-select is on.',
+    a: 'Shift-click or drag a box on empty canvas to select several nodes. Ctrl+C / Cmd+C copies, Ctrl+V pastes, Ctrl+D duplicates. Middle- or right-drag pans while box-select is on. Ctrl/Cmd+K opens the command palette for navigation, Play/Pause/Stop, adding nodes, and Settings sections.',
+  },
+  {
+    q: 'How do I jump around the app quickly?',
+    a: 'Press Ctrl/Cmd+K (or click Commands) to search pages, playlists, themes, playback, and settings. Pause keeps the queue; Stop ends the session. Workshop is in the workspace top nav next to Listen.',
   },
   {
     q: 'Can I hide the bottom player?',

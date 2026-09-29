@@ -217,7 +217,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'b-select',
         'Selecting nodes',
-        'Click a node to select it. Shift-click to add more. Drag a box on empty canvas to multi-select (middle- or right-drag pans). Ctrl+C / Ctrl+V copies and pastes the selection; Ctrl+D duplicates it.',
+        'Click a node to select it. Shift-click to add more. Drag a box on empty canvas to multi-select (middle- or right-drag pans). Ctrl+C / Ctrl+V copies and pastes the selection; Ctrl+D duplicates it. Ctrl/Cmd+K opens the command palette for Play, Stop, add node, and jump to Settings.',
         {
           type: 'action',
           route: 'edit',

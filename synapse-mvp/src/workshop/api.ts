@@ -1,4 +1,4 @@
-import { supabase, isMissingSchema, throwIfError } from '../supabase/client';
+import { supabase, isMissingSchema, isSchemaCacheError, throwIfError } from '../supabase/client';
 import { workshopItemPath } from '../app/routes';
 import { parseTheme } from '../theme/parseTheme';
 import type { SynapseTheme } from '../theme/types';
@@ -101,11 +101,18 @@ export async function listWorkshop(
   const tags = Array.isArray(filters.tags) ? filters.tags.filter(Boolean) : [];
   const q = query.trim();
   if (tab === 'search' || kind || tags.length) {
-    const { data, error } = await supabase.rpc('search_workshop', {
+    let { data, error } = await supabase.rpc('search_workshop', {
       p_query: tab === 'search' ? q : '',
       p_kind: kind,
       p_tags: tags,
     });
+    if (isSchemaCacheError(error)) {
+      const retry = await supabase.rpc('search_workshop', {
+        p_query: tab === 'search' ? q : '',
+      });
+      data = retry.data;
+      error = retry.error;
+    }
     if (!isMissingSchema(error)) {
       throwIfError(error);
       const mapped = ((data ?? []) as Record<string, unknown>[]).map((row) =>
@@ -195,16 +202,32 @@ export async function publishWorkshopCreation(input: {
   tags?: string[];
 }): Promise<string> {
   const kind = input.kind === 'theme' ? 'theme' : 'playlist';
-  const { data, error } = await supabase.rpc('publish_workshop_creation', {
+  const tags = sanitizeTagIds(kind, input.tags);
+  const base = {
     p_source_path_id: input.sourcePathId,
     p_title: input.title,
     p_description: input.description,
     p_visibility: input.visibility,
     p_payload: input.payload,
     p_remix_of: input.remixOf ?? null,
+  };
+  let { data, error } = await supabase.rpc('publish_workshop_creation', {
+    ...base,
     p_kind: kind,
-    p_tags: sanitizeTagIds(kind, input.tags),
+    p_tags: tags,
   });
+  if (isSchemaCacheError(error)) {
+    const retry = await supabase.rpc('publish_workshop_creation', base);
+    data = retry.data;
+    error = retry.error;
+    if (!error && tags.length && data) {
+      const tagged = await supabase.rpc('set_workshop_tags', {
+        p_id: String(data),
+        p_tags: tags,
+      });
+      if (tagged.error && !isSchemaCacheError(tagged.error)) throwIfError(tagged.error);
+    }
+  }
   throwIfError(error);
   return String(data);
 }

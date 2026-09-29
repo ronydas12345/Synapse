@@ -8,6 +8,7 @@ import { useAuthStore } from '../../auth/authStore';
 import { useProfileStore } from '../../profile/profileStore';
 import HomeThemePicker from '../Home/components/HomeThemePicker';
 import TutorialHelpButton from '../../tutorial/TutorialHelpButton';
+import { CommandPaletteButton } from '../../commandPalette/CommandPalette';
 import OpenWorkspaceLink from '../../components/OpenWorkspaceLink';
 
 const NAV = [
@@ -74,6 +75,7 @@ export default function SiteHeader() {
         <div className="synapse-mkt-header-actions">
           {route === 'home' ? <HomeThemePicker compact /> : null}
           <TutorialHelpButton />
+          <CommandPaletteButton />
           <AuthControls onNavigate={close} />
           {signedIn && role === 'admin' ? (
             <AppLink to="admin" className="synapse-mkt-text-link" onNavigate={close}>
@@ -122,6 +124,8 @@ export default function SiteHeader() {
               </AppLink>
             ))}
             {route === 'home' ? <HomeThemePicker /> : null}
+            <TutorialHelpButton />
+            <CommandPaletteButton />
             <AuthControls onNavigate={close} />
             {signedIn ? (
               <AppLink to="profile" onNavigate={close}>

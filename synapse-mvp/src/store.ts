@@ -55,6 +55,8 @@ interface PathState {
   skipRequestId: number;
   /** Incremented when user hits Previous — Player owns restart vs prior item. */
   previousRequestId: number;
+  /** Incremented when user hits Stop — Player ends the session. */
+  stopRequestId: number;
   /** Incremented when the playback marker is dropped on a new origin. */
   playbackOriginRequestId: number;
   /** Current page. Transient — URL is the source of truth. */
@@ -76,6 +78,7 @@ interface PathState {
   setUiMode: (mode: 'home' | 'studio' | 'listen' | 'settings' | 'profile') => void;
   requestSkip: () => void;
   requestPrevious: () => void;
+  requestStop: () => void;
   deleteEdge: (edgeId: string) => void;
   deleteNode: (nodeId: string) => void;
   initializeFromStorage: () => void;
@@ -139,6 +142,7 @@ export const usePathStore = create<PathState>((set, get) => ({
   selectedPlaybackStartNodeId: null,
   skipRequestId: 0,
   previousRequestId: 0,
+  stopRequestId: 0,
   playbackOriginRequestId: 0,
   uiMode: 'studio',
 
@@ -263,6 +267,8 @@ export const usePathStore = create<PathState>((set, get) => ({
     set((state) => ({ skipRequestId: state.skipRequestId + 1 })),
   requestPrevious: () =>
     set((state) => ({ previousRequestId: state.previousRequestId + 1 })),
+  requestStop: () =>
+    set((state) => ({ stopRequestId: state.stopRequestId + 1 })),
   deleteEdge: (edgeId) => set((state) => {
     const edge = state.edges.find((e) => e.id === edgeId);
     const newEdges = state.edges.filter((e) => e.id !== edgeId);

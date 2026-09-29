@@ -36,6 +36,7 @@ import { getAppliedEdgeType, subscribeAppliedTheme } from '../theme/applyTheme';
 import { toReactFlowEdgeType } from '../theme/edgeType';
 import { confirmDestructive, useAppSettings } from '../settings/settingsStore';
 import { documentPrefersReducedMotion } from '../settings/motion';
+import { FIT_VIEW_EVENT } from '../commandPalette/commands';
 import {
   canDropPlaybackMarkerOn,
   dataTransferIsPlaybackMarker,
@@ -488,6 +489,17 @@ function ReactFlowContent() {
     }, 50);
     return () => window.clearTimeout(id);
   }, [activePathId, fitViewOnSwitch, fitView]);
+
+  useEffect(() => {
+    const onFit = () => {
+      fitView({
+        padding: 0.2,
+        duration: documentPrefersReducedMotion() ? 0 : 200,
+      });
+    };
+    window.addEventListener(FIT_VIEW_EVENT, onFit);
+    return () => window.removeEventListener(FIT_VIEW_EVENT, onFit);
+  }, [fitView]);
 
   // Sync store changes to React Flow (when settings are updated or nodes deleted from sidebar)
   // IMPORTANT: This only runs when structure or data actually changes, not on every position update

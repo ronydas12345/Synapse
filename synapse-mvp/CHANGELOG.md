@@ -17,7 +17,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Curated Workshop tags for playlists and themes (separate vocabularies, searchable picker, max eight, no custom tags). Choose tags in Settings → Playlists, Settings → Themes, or the publish form before you post. Search and staff moderation can use them. Themes can be published to Workshop and applied from a creation page.
 - Short share IDs on public and unlisted users and Workshop playlists. Paste the ID, `/p/{id}`, `/u/{id}`, or `/s/{id}`. Creators can disable likes, comments, saves, and followers.
 - Server-awarded badges (first creation, 10/25/100 uploads, one month, one year, admin, superadmin, 10/100 followers) and cosmetic decorations. Clients cannot insert badge rows.
-- Staff Workshop moderation, reports, overlay queue, and Superadmin badge/decoration grants.
+- Global command palette (`Ctrl/Cmd+K`) for navigation, playback, playlists, nodes, settings sections, themes, and help.
+- Stop in the Edit header and command palette, distinct from Pause (Pause keeps the queue).
+- Workshop in the workspace top nav. Help stays available after sign-in.
 
 ### Changed
 

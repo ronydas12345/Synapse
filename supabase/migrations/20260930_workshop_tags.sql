@@ -138,7 +138,13 @@ declare
   title text := trim(coalesce(p_title, ''));
   vis text := coalesce(p_visibility, 'private');
   source text := trim(coalesce(p_source_path_id, ''));
-  creation_kind text := coalesce(nullif(trim(p_kind), ''), 'playlist');
+  creation_kind text := coalesce(
+    nullif(trim(p_kind), ''),
+    case
+      when trim(coalesce(p_source_path_id, '')) like 'theme:%' then 'theme'
+      else 'playlist'
+    end
+  );
   chosen text[] := internal.normalize_workshop_tags(creation_kind, p_tags);
   uname text;
   dname text;

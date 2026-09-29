@@ -65,6 +65,7 @@ export default function Player() {
     currentTrackIndex,
     skipRequestId,
     previousRequestId,
+    stopRequestId,
     setCurrentTrackIndex,
     setIsPlaying,
     setCurrentPlayingNodeId,
@@ -230,6 +231,23 @@ export default function Player() {
       parseQueueKey(state.playbackQueue[newIndex] || '')?.nodeId
     );
   }, [previousRequestId]);
+
+  useEffect(() => {
+    if (stopRequestId === 0) return;
+    sessionActiveRef.current = false;
+    advancingRef.current = false;
+    activeItemKeyRef.current = null;
+    clearSilenceTimer();
+    stopLocalAudio();
+    adapterRef.current?.stop();
+    endPlaybackStyleSession();
+    const state = usePathStore.getState();
+    state.setIsPlaying(false);
+    state.setPlaybackQueue([]);
+    state.setCurrentTrackIndex(0);
+    state.setCurrentPlayingNodeId(null);
+    setStatusMessage('Stopped');
+  }, [stopRequestId]);
 
   // Mount YouTube once (do not recreate when callbacks change)
   useEffect(() => {

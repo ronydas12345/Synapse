@@ -1,110 +1,49 @@
 import { Music, GitBranch, Plus, Play, Square, Dice5, MessageSquare, ArrowRight, Palette } from 'lucide-react';
+import { useCallback, type ReactNode } from 'react';
 import { usePathStore } from '../store';
-import { useCallback } from 'react';
-import { defaultStyleNodeData } from '../styleNode/parse';
-import { defaultTrackNodeData } from '../settings/nodeDefaults';
+import {
+  addCanvasNode,
+  canvasNodeDragPayload,
+  CANVAS_NODE_TYPES,
+  type CanvasNodeType,
+} from '../canvas/addNode';
 
-interface NodeType {
-  type: string;
-  label: string;
-  icon: React.ReactNode;
-  defaultData: Record<string, any>;
-}
+const NODE_ICONS: Record<CanvasNodeType, ReactNode> = {
+  start: <Play className="w-4 h-4" />,
+  track: <Music className="w-4 h-4" />,
+  conditional: <GitBranch className="w-4 h-4" />,
+  randomizer: <Dice5 className="w-4 h-4" />,
+  transition: <ArrowRight className="w-4 h-4" />,
+  style: <Palette className="w-4 h-4" />,
+  comment: <MessageSquare className="w-4 h-4" />,
+  end: <Square className="w-4 h-4" />,
+};
 
-const NODE_TYPES: NodeType[] = [
-  {
-    type: 'start',
-    label: 'Start Node',
-    icon: <Play className="w-4 h-4" />,
-    defaultData: { label: 'Start' },
-  },
-  {
-    type: 'track',
-    label: 'Track Node',
-    icon: <Music className="w-4 h-4" />,
-    defaultData: {
-      videoId: '',
-      songTitle: '',
-      artist: '',
-      album: '',
-      startTime: 0,
-      endTime: 0,
-      duration: 0,
-      volume: 100,
-      label: '',
-      playCount: 1,
-    },
-  },
-  {
-    type: 'conditional',
-    label: 'Conditional',
-    icon: <GitBranch className="w-4 h-4" />,
-    defaultData: { numPaths: 2, weights: [10, 10], mode: 'random', pathTimeRanges: [[{ start: 0, end: 23 }], [{ start: 0, end: 23 }]] },
-  },
-  {
-    type: 'randomizer',
-    label: 'Randomizer/Sequence',
-    icon: <Dice5 className="w-4 h-4" />,
-    defaultData: { tracks: [], weights: [], isCollapsed: false, playCount: 1, mode: 'sequence' },
-  },
-  {
-    type: 'transition',
-    label: 'Transition',
-    icon: <ArrowRight className="w-4 h-4" />,
-    defaultData: { type: 'silence', duration: 1, audioFile: null, videoId: '' },
-  },
-  {
-    type: 'style',
-    label: 'Style',
-    icon: <Palette className="w-4 h-4" />,
-    defaultData: defaultStyleNodeData(),
-  },
-  {
-    type: 'comment',
-    label: 'Comment',
-    icon: <MessageSquare className="w-4 h-4" />,
-    defaultData: { text: '', linkedNodeId: null },
-  },
-  {
-    type: 'end',
-    label: 'End Node',
-    icon: <Square className="w-4 h-4" />,
-    defaultData: { label: 'End' },
-  },
-];
+const NODE_LABELS: Record<CanvasNodeType, string> = {
+  start: 'Start Node',
+  track: 'Track Node',
+  conditional: 'Conditional',
+  randomizer: 'Randomizer/Sequence',
+  transition: 'Transition',
+  style: 'Style',
+  comment: 'Comment',
+  end: 'End Node',
+};
 
 export default function Sidebar() {
-  const { nodes, setNodes, normalizeSplitters } = usePathStore();
+  const nodes = usePathStore((s) => s.nodes);
+  const normalizeSplitters = usePathStore((s) => s.normalizeSplitters);
 
-  const dataForNode = (nodeType: NodeType) =>
-    nodeType.type === 'track' ? defaultTrackNodeData() : { ...nodeType.defaultData };
+  const handleAddNode = useCallback((type: CanvasNodeType) => {
+    const error = addCanvasNode(type);
+    if (error) alert(error);
+  }, []);
 
-  const handleAddNode = useCallback(
-    (nodeType: NodeType) => {
-      if (nodeType.type === 'start' && nodes.some(n => n.type === 'start')) {
-        alert('There can only be one start node');
-        return;
-      }
-
-      const newNode = {
-        id: `${nodeType.type}-${Date.now()}`,
-        type: nodeType.type,
-        position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
-        data: dataForNode(nodeType),
-      };
-      setNodes([...nodes, newNode as any]);
-    },
-    [nodes, setNodes]
-  );
-
-  const onDragStart = (e: React.DragEvent<HTMLDivElement>, nodeType: NodeType) => {
+  const onDragStart = (e: React.DragEvent<HTMLDivElement>, type: CanvasNodeType) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData(
       'application/reactflow',
-      JSON.stringify({
-        type: nodeType.type,
-        defaultData: dataForNode(nodeType),
-      })
+      JSON.stringify(canvasNodeDragPayload(type))
     );
   };
 
@@ -121,18 +60,20 @@ export default function Sidebar() {
       </div>
 
       <div className="space-y-2">
-        {NODE_TYPES.map((nodeType, idx) => (
-          <div key={`${nodeType.type}-${idx}`}>
+        {CANVAS_NODE_TYPES.map((nodeType) => (
+          <div key={nodeType.type}>
             <div
               draggable
-              onDragStart={(e) => onDragStart(e, nodeType)}
-              onClick={() => handleAddNode(nodeType)}
+              onDragStart={(e) => onDragStart(e, nodeType.type)}
+              onClick={() => handleAddNode(nodeType.type)}
               className="synapse-rack-item group"
               data-tutorial={`rack-${nodeType.type}`}
             >
-              <div className="synapse-rack-icon">{nodeType.icon}</div>
+              <div className="synapse-rack-icon">{NODE_ICONS[nodeType.type]}</div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[var(--text)] m-0">{nodeType.label}</p>
+                <p className="text-sm font-medium text-[var(--text)] m-0">
+                  {NODE_LABELS[nodeType.type]}
+                </p>
                 <p className="text-[0.65rem] text-[var(--text-faint)] m-0 mt-0.5 font-mono tracking-wide">
                   Drag or click
                 </p>
@@ -159,7 +100,7 @@ export default function Sidebar() {
       <div className="mt-2 pt-3 border-t border-[var(--border)]">
         <p className="synapse-section-label">Guide</p>
         <p className="text-xs text-[var(--text-muted)] mb-3 m-0 leading-relaxed">
-          Tip: Click nodes on canvas to edit. Click edges to delete.
+          Tip: Click nodes on canvas to edit. Click edges to delete. Ctrl/Cmd+K opens commands.
         </p>
         <div className="synapse-inspector-card text-xs text-[var(--text-muted)]">
           <p className="font-semibold mb-2 text-[var(--text)] m-0" style={{ fontFamily: 'var(--font-display)' }}>

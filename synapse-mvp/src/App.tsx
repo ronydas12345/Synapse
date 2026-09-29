@@ -41,6 +41,7 @@ import SignupPage from './pages/SignupPage';
 import AdminDashboard from './pages/AdminDashboard';
 import SuperadminDashboard from './pages/SuperadminDashboard';
 import TutorialHelpButton from './tutorial/TutorialHelpButton';
+import CommandPalette, { CommandPaletteButton } from './commandPalette/CommandPalette';
 import CookieNotice from './pages/chrome/CookieNotice';
 
 const WORKSPACE_META: Record<
@@ -75,7 +76,7 @@ function MarketingPage({ location }: { location: AppLocation }) {
 }
 
 function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'profile' }) {
-  const { isPlaying, setIsPlaying, playbackQueue, requestSkip } = usePathStore();
+  const { isPlaying, setIsPlaying, playbackQueue, requestSkip, requestStop } = usePathStore();
   const avatar = useProfileStore((s) => s.profile.avatarDataUrl);
   const avatarUrl = useProfileStore((s) => s.profile.avatarUrl);
   const username = useProfileStore((s) => s.profile.username);
@@ -110,6 +111,9 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
           <AppLink to="listen" className={`synapse-mode-btn ${listen ? 'is-active' : ''}`}>
             Listen
           </AppLink>
+          <AppLink to="workshop" className="synapse-mode-btn">
+            Workshop
+          </AppLink>
           <AppLink
             to="settings"
             className={`synapse-mode-btn ${settings ? 'is-active' : ''}`}
@@ -142,8 +146,9 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
               Superadmin
             </AppLink>
           ) : null}
+          <TutorialHelpButton />
         </nav>
-        <TutorialHelpButton />
+        <CommandPaletteButton />
         <AuthControls compact />
         {edit ? (
           <div className="synapse-transport" data-tutorial="header-transport">
@@ -162,6 +167,14 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
               className="synapse-btn synapse-btn-ghost"
             >
               Skip
+            </button>
+            <button
+              type="button"
+              onClick={() => requestStop()}
+              disabled={!isPlaying && playbackQueue.length === 0}
+              className="synapse-btn synapse-btn-ghost"
+            >
+              Stop
             </button>
           </div>
         ) : (
@@ -233,6 +246,7 @@ export default function App() {
     <>
       <ThemeRoot />
       <RequireAuth>{page}</RequireAuth>
+      <CommandPalette />
       <CookieNotice />
     </>
   );
