@@ -1051,9 +1051,14 @@ function ReactFlowContent() {
         onPaneClick={() => usePathStore.getState().setSelection([])}
         onSelectionChange={({ nodes: selected }) => {
           const ids = selected.filter((n) => !n.hidden).map((n) => n.id);
-          const prev = usePathStore.getState().selectedNodeIds;
+          const store = usePathStore.getState();
+          const inspecting = store.inspectorNodeId
+            ? store.nodes.find((n) => n.id === store.inspectorNodeId)
+            : undefined;
+          if (ids.length === 0 && inspecting?.hidden) return;
+          const prev = store.selectedNodeIds;
           if (ids.length === prev.length && ids.every((id) => prev.includes(id))) return;
-          usePathStore.getState().setSelection(ids);
+          store.setSelection(ids);
         }}
         onEdgeClick={onEdgeClick}
         onDragOver={onDragOver}

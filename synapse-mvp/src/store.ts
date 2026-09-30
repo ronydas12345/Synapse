@@ -38,12 +38,15 @@ import {
 import { normalizeStackedConditionals } from './conditional/normalize';
 import { bringNodesOntoPage as layoutOntoPage } from './canvas/bringOntoPage';
 import { FIT_NODES_EVENT } from './canvas/fitEvents';
+import { resolveInspectorNodeId, sequencesContaining } from './nodes/pathContext';
 
 interface PathState {
   nodes: Node[];
   edges: Edge[];
   selectedNodeId: string | null;
   selectedNodeIds: string[];
+  /** Inspector target; can be a parked sequence track while the owner stays selected. */
+  inspectorNodeId: string | null;
   commentLinkingId: string | null;
   isPlaying: boolean;
   currentTrackIndex: number;
@@ -71,6 +74,7 @@ interface PathState {
   onConnect: (connection: Connection) => void;
   selectNode: (id: string | null) => void;
   setSelection: (ids: string[]) => void;
+  inspectNestedTrack: (trackId: string) => void;
   setCommentLinkingId: (id: string | null) => void;
   updateNodeData: (id: string, data: any) => void;
   setPlaybackQueue: (queue: string[]) => void;
@@ -131,6 +135,7 @@ const playbackReset = {
   selectedPlaybackStartNodeId: null as string | null,
   selectedNodeId: null as string | null,
   selectedNodeIds: [] as string[],
+  inspectorNodeId: null as string | null,
   commentLinkingId: null as string | null,
 };
 
@@ -138,6 +143,7 @@ export const usePathStore = create<PathState>((set, get) => ({
   ...libraryView(),
   selectedNodeId: null,
   selectedNodeIds: [],
+  inspectorNodeId: null,
   commentLinkingId: null,
   isPlaying: false,
   currentTrackIndex: 0,
@@ -234,11 +240,34 @@ export const usePathStore = create<PathState>((set, get) => ({
     set({
       selectedNodeId: id,
       selectedNodeIds: id ? [id] : [],
+      inspectorNodeId: id,
     }),
   setSelection: (ids) =>
-    set({
+    set((state) => ({
       selectedNodeIds: ids,
       selectedNodeId: ids.length === 1 ? ids[0] : null,
+      inspectorNodeId: resolveInspectorNodeId(
+        state.nodes,
+        ids,
+        state.inspectorNodeId
+      ),
+    })),
+  inspectNestedTrack: (trackId) =>
+    set((state) => {
+      const owners = sequencesContaining(state.nodes, trackId);
+      const ownerId = owners[0]?.id ?? null;
+      if (!ownerId) {
+        return {
+          selectedNodeId: trackId,
+          selectedNodeIds: [trackId],
+          inspectorNodeId: trackId,
+        };
+      }
+      return {
+        selectedNodeId: ownerId,
+        selectedNodeIds: [ownerId],
+        inspectorNodeId: trackId,
+      };
     }),
   setCommentLinkingId: (id) => set({ commentLinkingId: id }),
   updateNodeData: (id, data) =>
@@ -325,11 +354,22 @@ export const usePathStore = create<PathState>((set, get) => ({
     );
     saveToStorage(reconciled.nodes, reconciled.edges);
     const remainingIds = state.selectedNodeIds.filter((id) => id !== nodeId);
+    const inspectorId =
+      state.inspectorNodeId === nodeId
+        ? remainingIds.length === 1
+          ? remainingIds[0]
+          : null
+        : resolveInspectorNodeId(
+            reconciled.nodes,
+            remainingIds,
+            state.inspectorNodeId
+          );
     return {
       nodes: reconciled.nodes,
       edges: reconciled.edges,
       selectedNodeIds: remainingIds,
       selectedNodeId: remainingIds.length === 1 ? remainingIds[0] : null,
+      inspectorNodeId: inspectorId,
       selectedPlaybackStartNodeId:
         state.selectedPlaybackStartNodeId === nodeId
           ? null
@@ -481,6 +521,8 @@ export const usePathStore = create<PathState>((set, get) => ({
       edges: next.edges,
       selectedNodeIds: next.selectedIds,
       selectedNodeId: next.selectedIds.length === 1 ? next.selectedIds[0] : null,
+      inspectorNodeId:
+        next.selectedIds.length === 1 ? next.selectedIds[0] : null,
     });
     return next.selectedIds;
   },

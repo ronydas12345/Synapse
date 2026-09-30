@@ -10,6 +10,7 @@ import {
   InspectorNameField,
   type InspectorMainTab,
 } from './inspector/InspectorChrome';
+import { sequencesContaining } from '../nodes/pathContext';
 import TrackYoutubeTab from './inspector/TrackYoutubeTab';
 import TrackPathTab from './inspector/TrackPathTab';
 import { extractYouTubeId, formatClock } from '../playback';
@@ -182,16 +183,75 @@ function SliderInput({ label, value, min = 0, max = 100, step = 1, suffix = '', 
   );
 }
 
+function inspectorJumpSections(
+  type: string | undefined,
+  tab: InspectorMainTab,
+  isTrack: boolean
+): { id: string; label: string }[] {
+  if (isTrack && tab !== 'settings') return [];
+  if (type === 'track') {
+    return [
+      { id: 'inspector-global', label: 'Global' },
+      { id: 'inspector-local', label: 'Local' },
+      { id: 'inspector-playback', label: 'Playback' },
+      { id: 'inspector-time', label: 'Time' },
+      { id: 'inspector-count', label: 'Count' },
+    ];
+  }
+  if (type === 'randomizer') {
+    return [
+      { id: 'inspector-mode', label: 'Mode' },
+      { id: 'inspector-seq-count', label: 'Count' },
+      { id: 'inspector-seq-tracks', label: 'Tracks' },
+    ];
+  }
+  if (type === 'conditional' || type === 'splitter') {
+    return [
+      { id: 'inspector-cond-type', label: 'Type' },
+      { id: 'inspector-cond-paths', label: 'Paths' },
+    ];
+  }
+  if (type === 'style') {
+    return [
+      { id: 'inspector-style-theme', label: 'Theme' },
+      { id: 'inspector-style-layers', label: 'Layers' },
+      { id: 'inspector-style-timing', label: 'Timing' },
+    ];
+  }
+  if (type === 'transition') {
+    return [
+      { id: 'inspector-trans-type', label: 'Type' },
+      { id: 'inspector-trans-details', label: 'Details' },
+    ];
+  }
+  return [];
+}
+
 export default function NodeInspector() {
-  const { nodes, edges, setNodes, setEdges, selectedNodeId, selectNode, updateNodeData, deleteNode } = usePathStore();
+  const {
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    selectedNodeId,
+    inspectorNodeId,
+    selectNode,
+    inspectNestedTrack,
+    updateNodeData,
+    deleteNode,
+  } = usePathStore();
   const customThemes = useThemeStore((s) => s.customThemes);
   const nodeDefaults = useAppSettings((s) => s.nodes);
-  const selectedNode = nodes.find((n) => n.id === selectedNodeId) as any;
+  const viewingId = inspectorNodeId || selectedNodeId;
+  const selectedNode = nodes.find((n) => n.id === viewingId) as any;
   const [tab, setTab] = useState<InspectorMainTab>('settings');
+  const nestedIn = selectedNode
+    ? sequencesContaining(nodes, selectedNode.id)
+    : [];
 
   useEffect(() => {
     setTab('settings');
-  }, [selectedNodeId]);
+  }, [viewingId]);
 
   if (!selectedNode) return null;
 
@@ -202,12 +262,6 @@ export default function NodeInspector() {
   };
 
   const isTrack = selectedNode.type === 'track';
-  const trackJumps = [
-    { id: 'inspector-global', label: 'Global' },
-    { id: 'inspector-playback', label: 'Playback' },
-    { id: 'inspector-time', label: 'Time' },
-    { id: 'inspector-count', label: 'Count' },
-  ];
 
   return (
     <div className="synapse-inspector">
@@ -229,10 +283,29 @@ export default function NodeInspector() {
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
+      {nestedIn.length > 0 ? (
+        <div className="synapse-inspector-nested">
+          <p className="text-xs text-[var(--text-muted)] m-0 leading-relaxed">
+            Inside {nestedIn[0].mode === 'randomizer' ? 'Randomizer' : 'Sequence'}{' '}
+            <strong className="text-[var(--text)]">{nestedIn[0].name}</strong>
+            {nestedIn[0].total > 0
+              ? ` · ${nestedIn[0].index + 1} of ${nestedIn[0].total}`
+              : ''}
+            . Settings apply here — no need to drag the track out.
+          </p>
+          <button
+            type="button"
+            className="synapse-btn synapse-btn-ghost text-xs"
+            onClick={() => selectNode(nestedIn[0].id)}
+          >
+            Back to {nestedIn[0].name}
+          </button>
+        </div>
+      ) : null}
       {isTrack ? (
         <InspectorMainTabs value={tab} onChange={setTab} />
       ) : null}
-      {isTrack && tab === 'settings' ? <InspectorJumpTabs sections={trackJumps} /> : null}
+      <InspectorJumpTabs sections={inspectorJumpSections(selectedNode.type, tab, isTrack)} />
       <div className="synapse-inspector-card space-y-3 text-sm">
         <InspectorNameField
           nodeId={selectedNode.id}
@@ -243,7 +316,7 @@ export default function NodeInspector() {
           <label>Node Type</label>
           <p className="text-[var(--text-muted)] capitalize font-mono text-xs m-0">{selectedNode.type}</p>
         </div>
-        <BringOntoPageButtons selected />
+        {!selectedNode.hidden ? <BringOntoPageButtons selected /> : null}
         {isTrack && tab === 'youtube' ? (
           <TrackYoutubeTab
             data={selectedNode.data}
@@ -280,7 +353,7 @@ export default function NodeInspector() {
                   Apply to this track
                 </button>
               </div>
-              <h4 className="text-xs font-semibold text-[var(--text)] uppercase m-0">Local</h4>
+              <h4 id="inspector-local" className="text-xs font-semibold text-[var(--text)] uppercase m-0">Local</h4>
               <div>
                 <label className="text-[var(--text)] block mb-1">Song Title</label>
                 <RevertibleTextInput
@@ -460,8 +533,7 @@ export default function NodeInspector() {
         )}
         {(selectedNode.type === 'conditional' || selectedNode.type === 'splitter') && (
           <>
-            <div className="border-t border-[var(--border)] pt-3">
-              <h4 className="text-xs font-semibold text-[var(--text)] uppercase mb-3">Conditional Settings</h4>
+            <div id="inspector-cond-type" className="border-t border-[var(--border)] pt-3">
               <label className="text-[var(--text)] block mb-2 text-sm">Conditional Type</label>
               <select
                 value={selectedNode.data?.mode || 'random'}
@@ -482,7 +554,7 @@ export default function NodeInspector() {
               </select>
             </div>
 
-            <div className="border-t border-[var(--border)] pt-3">
+            <div id="inspector-cond-paths" className="border-t border-[var(--border)] pt-3">
               <label className="text-[var(--text)] block mb-1">Number of Paths</label>
               <RevertibleNumberInput
                 min={2}
@@ -648,7 +720,7 @@ export default function NodeInspector() {
         )}
         {selectedNode.type === 'transition' && (
           <>
-            <div>
+            <div id="inspector-trans-type">
               <label className="text-[var(--text)] block mb-1">Transition Type</label>
               <select
                 className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
@@ -661,7 +733,7 @@ export default function NodeInspector() {
               </select>
             </div>
             {selectedNode.data?.type === 'silence' && (
-              <div>
+              <div id="inspector-trans-details">
                 <label className="text-[var(--text)] block mb-1">Duration (seconds)</label>
                 <RevertibleNumberInput
                   min={0.1}
@@ -676,7 +748,7 @@ export default function NodeInspector() {
               </div>
             )}
             {selectedNode.data?.type === 'audio' && (
-              <div>
+              <div id="inspector-trans-details">
                 <label className="text-[var(--text)] block mb-1">Audio File (max 5MB)</label>
                 {selectedNode.data?.audioFile ? (
                   <div className="space-y-2">
@@ -745,7 +817,7 @@ export default function NodeInspector() {
               </div>
             )}
             {selectedNode.data?.type === 'youtube' && (
-              <div>
+              <div id="inspector-trans-details">
                 <label className="text-[var(--text)] block mb-1">YouTube Video ID</label>
                 <RevertibleTextInput
                   placeholder="dQw4w9wgxcq"
@@ -762,7 +834,7 @@ export default function NodeInspector() {
         )}
         {selectedNode.type === 'randomizer' && (
           <>
-            <div>
+            <div id="inspector-mode">
               <label className="text-[var(--text)] block mb-1">Playback Mode</label>
               <select
                 className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
@@ -781,7 +853,7 @@ export default function NodeInspector() {
                 ))}
               </select>
             </div>
-            <div>
+            <div id="inspector-seq-count">
               <label className="text-[var(--text)] block mb-1">Play Count</label>
               <RevertibleNumberInput
                 min={1}
@@ -794,11 +866,11 @@ export default function NodeInspector() {
               />
               <p className="text-xs text-[var(--text-faint)] mt-1 mb-3">How many times to play all tracks</p>
             </div>
+            <div id="inspector-seq-tracks">
             <p className="text-xs text-[var(--text-muted)] leading-relaxed m-0 mb-3">
-              Drag a track onto this {selectedNode.data?.mode === 'randomizer' ? 'randomizer' : 'sequence'} to move it in. The track leaves the canvas and appears in the list. Drag a list item out to restore it.
+              Drag a track onto this {selectedNode.data?.mode === 'randomizer' ? 'randomizer' : 'sequence'} to move it in. Click a track in the list to edit its settings without dragging it back out.
             </p>
-            {selectedNode.data?.tracks && selectedNode.data.tracks.length > 0 && (
-              <div>
+            {selectedNode.data?.tracks && selectedNode.data.tracks.length > 0 ? (
                 <label className="text-[var(--text)] block mb-2">
                   {selectedNode.data?.mode === 'randomizer' ? 'Tracks & Weights' : 'Order'}
                 </label>
@@ -813,9 +885,14 @@ export default function NodeInspector() {
                     return (
                       <div key={trackId} className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="flex-1 text-xs text-[var(--text)] truncate">
+                          <button
+                            type="button"
+                            className="flex-1 text-left text-xs text-[var(--text)] truncate hover:text-[var(--accent)]"
+                            title="Open track settings"
+                            onClick={() => inspectNestedTrack(trackId)}
+                          >
                             {i + 1}. {meta.title}
-                          </span>
+                          </button>
                           <button
                             type="button"
                             onClick={() => {
@@ -828,6 +905,7 @@ export default function NodeInspector() {
                               if (restored) {
                                 setNodes(restored.nodes);
                                 setEdges(restored.edges);
+                                selectNode(selectedNode.id);
                               }
                             }}
                             className="p-1 text-[var(--danger)] hover:bg-[color-mix(in_srgb,var(--danger)_28%,transparent)] hover:text-[var(--text)] rounded transition"
@@ -867,7 +945,7 @@ export default function NodeInspector() {
               const themes = allThemes(customThemes);
               return (
                 <>
-                  <div>
+                  <div id="inspector-style-theme">
                     <label className="text-[var(--text)] block mb-1">Saved theme</label>
                     <select
                       className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
@@ -889,7 +967,7 @@ export default function NodeInspector() {
                       ))}
                     </select>
                   </div>
-                  <div>
+                  <div id="inspector-style-layers">
                     <label className="text-[var(--text)] block mb-2">Applies to</label>
                     <div className="space-y-1.5">
                       {STYLE_LAYER_IDS.map((layer) => (
@@ -914,7 +992,7 @@ export default function NodeInspector() {
                       ))}
                     </div>
                   </div>
-                  <div>
+                  <div id="inspector-style-timing">
                     <label className="text-[var(--text)] block mb-1">
                       Delay ({(style.delayMs / 1000).toFixed(style.delayMs % 1000 === 0 ? 0 : 1)}s)
                     </label>

@@ -31,6 +31,28 @@ export function sequencesContaining(
   return out;
 }
 
+/**
+ * Keep inspecting a parked sequence track when the canvas still has that
+ * sequence selected. Empty or multi-select clears the inspector.
+ */
+export function resolveInspectorNodeId(
+  nodes: Node[],
+  canvasIds: string[],
+  currentInspectorId: string | null
+): string | null {
+  if (canvasIds.length === 0) return null;
+  if (canvasIds.length > 1) return null;
+  const canvasId = canvasIds[0];
+  if (
+    currentInspectorId &&
+    currentInspectorId !== canvasId &&
+    sequencesContaining(nodes, currentInspectorId).some((seq) => seq.id === canvasId)
+  ) {
+    return currentInspectorId;
+  }
+  return canvasId;
+}
+
 export function neighborLabels(
   nodes: Node[],
   edges: Edge[],

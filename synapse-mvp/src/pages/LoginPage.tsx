@@ -6,8 +6,7 @@ export default function LoginPage() {
     <main id="main" className="synapse-auth-screen-main">
       <h1>Log in</h1>
       <p className="synapse-mkt-lead">
-        Use Google or email. After sign-in, users go to the workspace; admins
-        and the owner go to their dashboards. Marketing pages stay public.
+        Use Google sign-in or email.
       </p>
       <p className="synapse-auth-alt">
         Need an account? <AuthSwitchLink to="signup">Create account</AuthSwitchLink>

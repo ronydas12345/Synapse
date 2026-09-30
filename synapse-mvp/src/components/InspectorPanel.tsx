@@ -4,8 +4,9 @@ import { BringOntoPageButtons } from './inspector/InspectorChrome';
 
 export default function InspectorPanel() {
   const selectedNodeIds = usePathStore((s) => s.selectedNodeIds);
+  const inspectorNodeId = usePathStore((s) => s.inspectorNodeId);
   const count = selectedNodeIds.length;
-  const open = count >= 1;
+  const open = count >= 1 || Boolean(inspectorNodeId);
 
   return (
     <aside
@@ -14,7 +15,7 @@ export default function InspectorPanel() {
       data-tutorial="inspector"
     >
       <div className="synapse-inspector-rail-inner">
-        {count > 1 ? (
+        {count > 1 && !inspectorNodeId ? (
           <div className="synapse-inspector">
             <p className="synapse-section-label">Inspector</p>
             <h3

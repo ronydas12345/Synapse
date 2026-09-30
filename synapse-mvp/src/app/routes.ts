@@ -219,8 +219,28 @@ export function appHref(path: string, hash = ''): string {
 }
 
 function scrollToHash(hash: string): void {
+  const el = document.getElementById(hash);
+  if (!el) return;
+  const settingsPane = el.closest('.synapse-settings') as HTMLElement | null;
+  if (settingsPane) {
+    const reduced = documentPrefersReducedMotion();
+    const tabs = settingsPane.querySelector(
+      '.synapse-settings-bar'
+    ) as HTMLElement | null;
+    const offset = (tabs?.getBoundingClientRect().height ?? 0) + 8;
+    const top =
+      el.getBoundingClientRect().top -
+      settingsPane.getBoundingClientRect().top +
+      settingsPane.scrollTop -
+      offset;
+    settingsPane.scrollTo({
+      top: Math.max(0, top),
+      behavior: reduced ? 'auto' : 'smooth',
+    });
+    return;
+  }
   const reduced = documentPrefersReducedMotion();
-  document.getElementById(hash)?.scrollIntoView({
+  el.scrollIntoView({
     block: 'start',
     behavior: reduced ? 'auto' : 'smooth',
   });

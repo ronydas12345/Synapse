@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { Edge, Node } from '@xyflow/react';
-import { neighborLabels, queuePosition, sequencesContaining } from './pathContext';
+import {
+  neighborLabels,
+  queuePosition,
+  resolveInspectorNodeId,
+  sequencesContaining,
+} from './pathContext';
 
 function node(
   id: string,
@@ -54,5 +59,17 @@ describe('pathContext', () => {
       total: 3,
     });
     expect(queuePosition(['track:a'], 'missing')).toBeNull();
+  });
+
+  it('keeps a parked track in the inspector while its sequence stays selected', () => {
+    const nodes = [
+      node('seq', 'randomizer', { name: 'travel', tracks: ['t1'] }),
+      node('t1', 'track', {}),
+    ];
+    expect(resolveInspectorNodeId(nodes, ['seq'], 't1')).toBe('t1');
+    expect(resolveInspectorNodeId(nodes, ['seq'], 'seq')).toBe('seq');
+    expect(resolveInspectorNodeId(nodes, [], 't1')).toBeNull();
+    expect(resolveInspectorNodeId(nodes, ['seq', 'other'], 't1')).toBeNull();
+    expect(resolveInspectorNodeId(nodes, ['other'], 't1')).toBe('other');
   });
 });

@@ -1,6 +1,7 @@
 import { usePathStore } from '../../store';
 import { nodeCustomName, nodeTypeLabel } from '../../nodes/nodeName';
 import { RevertibleTextInput } from '../fields/RevertibleField';
+import { scrollWithin } from '../../ui/scrollWithin';
 
 export function InspectorNameField({
   nodeId,
@@ -74,10 +75,11 @@ export function InspectorJumpTabs({
           type="button"
           className="synapse-inspector-jump"
           onClick={() => {
-            document.getElementById(section.id)?.scrollIntoView({
-              block: 'start',
-              behavior: 'smooth',
-            });
+            scrollWithin(
+              document.getElementById(section.id),
+              '.synapse-inspector-rail-inner',
+              '.synapse-inspector-jumps'
+            );
           }}
         >
           {section.label}

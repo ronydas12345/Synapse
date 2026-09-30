@@ -31,7 +31,7 @@ interface RandomizerNodeProps {
 }
 
 function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
-  const { updateNodeData, nodes, edges, setNodes, setEdges, currentPlayingNodeId } = usePathStore();
+  const { updateNodeData, nodes, edges, setNodes, setEdges, currentPlayingNodeId, inspectNestedTrack, inspectorNodeId } = usePathStore();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -261,12 +261,21 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
                       }}
                       className={`nodrag nopan synapse-node-row is-seq is-item cursor-move ${
                         draggedOverIndex === index ? 'is-drag' : ''
-                      }`}
+                      } ${inspectorNodeId === trackId ? 'is-inspecting' : ''}`}
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="synapse-node-row-title truncate">
+                        <button
+                          type="button"
+                          className="synapse-node-row-title truncate nodrag nopan text-left w-full"
+                          title="Open track settings"
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            inspectNestedTrack(trackId);
+                          }}
+                        >
                           {index + 1}. {getTrackLabel(trackId)}
-                        </div>
+                        </button>
                         {showWeights ? (
                           <div className="flex items-center gap-1 nodrag nopan">
                             <input

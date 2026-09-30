@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppLink } from '../app/AppLink';
+import { APP_PATHS, navigateApp } from '../app/routes';
 import ThemeSettings, { ThemeEdgeTypeSelect, ThemeVisualizerBarSelect } from './ThemeSettings';
 import PlaylistTransfer, { downloadTextFile } from './PlaylistTransfer';
 import { PlaylistNameField } from './PlaylistSwitcher';
@@ -28,6 +29,7 @@ import {
   refreshWeather,
 } from '../weather/client';
 import { useWeatherSnapshot } from '../weather/useWeatherSnapshot';
+import { scrollWithin } from '../ui/scrollWithin';
 
 const SECTIONS = [
   { id: 'themes', label: 'Themes', keywords: 'theme appearance color font preset dark light arrow bezier edge rectangular triangular visualizer bar tags workshop' },
@@ -74,9 +76,56 @@ export default function SettingsPage() {
   );
   const show = (id: (typeof SECTIONS)[number]['id']) =>
     sections.some((s) => s.id === id);
+  const [activeId, setActiveId] = useState<(typeof SECTIONS)[number]['id']>(
+    sections[0]?.id ?? 'themes'
+  );
+
+  useEffect(() => {
+    const hash = window.location.hash.replace(/^#/, '');
+    const fromHash = SECTIONS.find((s) => `settings-${s.id}` === hash);
+    if (fromHash && show(fromHash.id)) {
+      setActiveId(fromHash.id);
+      window.requestAnimationFrame(() => {
+        scrollWithin(
+          document.getElementById(hash),
+          '.synapse-settings',
+          '.synapse-settings-bar'
+        );
+      });
+    }
+  }, [q]);
+
+  useEffect(() => {
+    const root = document.querySelector('.synapse-settings');
+    if (!root) return;
+    const observed = sections
+      .map((s) => document.getElementById(`settings-${s.id}`))
+      .filter((el): el is HTMLElement => Boolean(el));
+    if (observed.length === 0) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        const id = visible[0]?.target.id.replace(/^settings-/, '');
+        if (id && sections.some((s) => s.id === id)) {
+          setActiveId(id as (typeof SECTIONS)[number]['id']);
+        }
+      },
+      { root, rootMargin: '-15% 0px -70% 0px', threshold: 0.1 }
+    );
+    observed.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [sections]);
+
+  const jumpTo = (id: (typeof SECTIONS)[number]['id']) => {
+    setActiveId(id);
+    navigateApp(APP_PATHS.settings, `settings-${id}`, true);
+  };
 
   return (
     <div className="synapse-settings" id="workspace-main">
+      <div className="synapse-settings-bar">
       <div className="synapse-settings-head">
         <div>
           <p className="synapse-section-label">Synapse</p>
@@ -90,14 +139,27 @@ export default function SettingsPage() {
           aria-label="Search settings"
         />
       </div>
+      <nav
+        className="synapse-settings-tabs"
+        aria-label="Settings sections"
+        data-tutorial="settings-nav"
+      >
+        {sections.map((s) => (
+          <a
+            key={s.id}
+            href={`#settings-${s.id}`}
+            className={`synapse-settings-tab ${activeId === s.id ? 'is-active' : ''}`}
+            onClick={(e) => {
+              e.preventDefault();
+              jumpTo(s.id);
+            }}
+          >
+            {s.label}
+          </a>
+        ))}
+      </nav>
+      </div>
       <div className="synapse-settings-layout">
-        <nav className="synapse-settings-nav" aria-label="Settings sections" data-tutorial="settings-nav">
-          {sections.map((s) => (
-            <a key={s.id} href={`#settings-${s.id}`} className="synapse-settings-nav-item">
-              {s.label}
-            </a>
-          ))}
-        </nav>
         <div className="synapse-settings-main">
           {show('themes') ? (
             <section id="settings-themes" className="synapse-settings-section" data-tutorial="settings-themes">

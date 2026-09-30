@@ -30,8 +30,14 @@ export default function TrackPathTab({ nodeId }: { nodeId: string }) {
           <ul className="m-0 pl-4 space-y-1">
             {sequences.map((seq) => (
               <li key={seq.id}>
-                {seq.name} · {seq.mode === 'randomizer' ? 'Randomizer' : 'Sequence'} ·{' '}
-                {seq.index + 1} of {seq.total}
+                <button
+                  type="button"
+                  className="synapse-inspector-jump"
+                  onClick={() => usePathStore.getState().selectNode(seq.id)}
+                >
+                  {seq.name} · {seq.mode === 'randomizer' ? 'Randomizer' : 'Sequence'} ·{' '}
+                  {seq.index + 1} of {seq.total}
+                </button>
               </li>
             ))}
           </ul>

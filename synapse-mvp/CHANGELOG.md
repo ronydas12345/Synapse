@@ -22,6 +22,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Workshop in the workspace top nav. Help stays available after sign-in.
 - Custom names on Sequence and other nodes, plus Bring selected/all onto page to pack named groups (travel, childhood, techno, …) onto one canvas view.
 - Inspector tabs on a selected track: Settings (global defaults and local), YouTube song info, and playlist/sequence context, with jump chips under Node Settings.
+- Sticky section tabs on the Settings page so you can jump to Themes, Playback, Account, and the rest without scrolling the whole list.
+- Open settings for a track that is parked inside a Sequence or Randomizer from the node list or inspector, without dragging it back onto the canvas.
 - Playback speed on the bottom deck.
 
 ### Changed
