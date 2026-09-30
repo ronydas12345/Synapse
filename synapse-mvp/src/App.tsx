@@ -98,7 +98,6 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
             <AppLink to="home" className="synapse-brand-link">
               <SynapseWordmark />
             </AppLink>
-            <PlaylistSwitcher />
           </div>
         </div>
         <nav className="synapse-mode-toggle" aria-label="App pages" data-tutorial="app-nav">
@@ -148,6 +147,9 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
           ) : null}
           <TutorialHelpButton />
         </nav>
+        <div className="synapse-topbar-playlist">
+          <PlaylistSwitcher />
+        </div>
         <CommandPaletteButton />
         <AuthControls compact />
         {edit ? (

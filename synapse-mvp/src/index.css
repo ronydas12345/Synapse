@@ -153,9 +153,9 @@ body {
 }
 
 .synapse-topbar-brand {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
-  padding-right: 1rem;
+  padding-right: 0.5rem;
 }
 
 .synapse-topbar-brand-row {
@@ -252,8 +252,17 @@ body {
   z-index: 41;
   min-width: 0;
   flex: 0 0 auto;
-  margin-left: 0.45rem;
+  margin-left: 0;
   overflow: visible;
+}
+
+.synapse-topbar-playlist {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  margin-left: auto;
+  flex: 0 1 auto;
 }
 
 .synapse-playlist-trigger {
@@ -695,6 +704,104 @@ body {
   margin-top: 0;
   padding-top: 0;
   border-top: none;
+}
+
+.synapse-inspector-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0 0 0.55rem;
+  padding: 0.2rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+}
+
+.synapse-inspector-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  border: none;
+  border-radius: 6px;
+  padding: 0.38rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.synapse-inspector-tab.is-active {
+  color: var(--text);
+  background: var(--bg-elevated);
+}
+
+.synapse-inspector-jumps {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0 0 0.7rem;
+  padding: 0.2rem 0 0.45rem;
+  background: var(--bg-panel);
+}
+
+.synapse-inspector-jump {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-deep);
+  cursor: pointer;
+}
+
+.synapse-inspector-jump:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.synapse-inspector-bring {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.synapse-inspector-thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-deep);
+}
+
+.synapse-node-name-pill {
+  display: inline-block;
+  margin-top: 0.15rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.synapse-transport-speed {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.synapse-transport-speed input[type='range'] {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .synapse-workspace {

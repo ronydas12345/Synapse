@@ -1,6 +1,7 @@
 import type { Edge, Node } from '@xyflow/react';
 import { parseQueueKey } from './engine/types';
 import { getTrackDisplayMeta } from './trackMetadata';
+import { nodeCustomName, nodeTypeLabel } from './nodes/nodeName';
 import { conditionalModeLabel } from './nodeMode';
 import { formatDatePath, formatWeatherPath } from './conditional/format';
 import { parsePathDateRules, parsePathWeather } from './conditional/parse';
@@ -51,20 +52,24 @@ export function weightPercents(weights: number[]): number[] {
 
 export function nodeListLabel(node: Node | undefined): { title: string; subtitle: string } {
   if (!node) return { title: 'Missing node', subtitle: '' };
+  const custom = nodeCustomName(node.data);
   if (node.type === 'track') {
     const meta = getTrackDisplayMeta(node.data);
-    return { title: meta.title, subtitle: meta.artist };
+    return {
+      title: meta.title,
+      subtitle: [custom, meta.artist].filter(Boolean).join(' · '),
+    };
   }
   if (node.type === 'transition') {
     return {
-      title: 'Transition',
+      title: custom || 'Transition',
       subtitle: String(node.data?.type || 'silence'),
     };
   }
   if (node.type === 'style') {
     const parsed = parseStyleNodeData(node.data);
     return {
-      title: 'Style',
+      title: custom || 'Style',
       subtitle: styleThemeDisplayName(
         parsed.themeId,
         allThemes(useThemeStore.getState().customThemes)
@@ -72,15 +77,18 @@ export function nodeListLabel(node: Node | undefined): { title: string; subtitle
     };
   }
   if (node.type === 'randomizer') {
-    const mode = node.data?.mode === 'randomizer' ? 'Weighted Random' : 'Sequence';
-    return { title: mode, subtitle: 'Sequence / Randomizer' };
+    const mode = nodeTypeLabel('randomizer', node.data);
+    return { title: custom || mode, subtitle: custom ? mode : 'Sequence / Randomizer' };
   }
   if (node.type === 'conditional' || node.type === 'splitter') {
-    return { title: 'Conditional', subtitle: conditionalModeLabel(String(node.data?.mode || 'random')) };
+    return {
+      title: custom || 'Conditional',
+      subtitle: conditionalModeLabel(String(node.data?.mode || 'random')),
+    };
   }
-  if (node.type === 'start') return { title: 'Start', subtitle: '' };
-  if (node.type === 'end') return { title: 'End', subtitle: '' };
-  return { title: String(node.data?.label || node.type || node.id), subtitle: '' };
+  if (node.type === 'start') return { title: custom || 'Start', subtitle: '' };
+  if (node.type === 'end') return { title: custom || 'End', subtitle: '' };
+  return { title: custom || String(node.data?.label || node.type || node.id), subtitle: '' };
 }
 
 function pathLetter(index: number): string {

@@ -1,5 +1,17 @@
 import { Trash2, ChevronDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { usePathStore } from '../store';
+import { useAppSettings } from '../settings/settingsStore';
+import { RevertibleNumberInput, RevertibleTextInput, RevertibleTextarea } from './fields/RevertibleField';
+import {
+  BringOntoPageButtons,
+  InspectorJumpTabs,
+  InspectorMainTabs,
+  InspectorNameField,
+  type InspectorMainTab,
+} from './inspector/InspectorChrome';
+import TrackYoutubeTab from './inspector/TrackYoutubeTab';
+import TrackPathTab from './inspector/TrackPathTab';
 import { extractYouTubeId, formatClock } from '../playback';
 import { getTrackDisplayMeta } from '../trackMetadata';
 import { restoreTrackFromRandomizer } from '../randomizerDrop';
@@ -98,7 +110,13 @@ function TimeRangeFields({
             className="w-16 p-1 text-center text-xs font-mono"
             defaultValue={formatClock(start)}
             key={`start-${start.toFixed(1)}-${duration}`}
-            onBlur={(e) => onClockBlur(e.target.value, 'start')}
+            onBlur={(e) => {
+              if (e.target.value.trim() === '') {
+                e.target.value = formatClock(start);
+                return;
+              }
+              onClockBlur(e.target.value, 'start');
+            }}
           />
         </div>
       </div>
@@ -120,7 +138,13 @@ function TimeRangeFields({
             className="w-16 p-1 text-center text-xs font-mono"
             defaultValue={formatClock(endDisplay)}
             key={`end-${endDisplay.toFixed(1)}-${duration}`}
-            onBlur={(e) => onClockBlur(e.target.value, 'end')}
+            onBlur={(e) => {
+              if (e.target.value.trim() === '') {
+                e.target.value = formatClock(endDisplay);
+                return;
+              }
+              onClockBlur(e.target.value, 'end');
+            }}
           />
         </div>
       </div>
@@ -143,13 +167,12 @@ function SliderInput({ label, value, min = 0, max = 100, step = 1, suffix = '', 
           className="flex-1 cursor-pointer"
         />
         <div className="flex items-center gap-1 min-w-fit">
-          <input
-            type="number"
+          <RevertibleNumberInput
             min={min}
             max={max}
             step={step}
             value={value}
-            onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+            onCommit={onChange}
             className="w-14 p-1 text-center text-xs"
           />
           <span className="text-[0.65rem] text-[var(--text-faint)] font-mono">{suffix}</span>
@@ -162,7 +185,13 @@ function SliderInput({ label, value, min = 0, max = 100, step = 1, suffix = '', 
 export default function NodeInspector() {
   const { nodes, edges, setNodes, setEdges, selectedNodeId, selectNode, updateNodeData, deleteNode } = usePathStore();
   const customThemes = useThemeStore((s) => s.customThemes);
+  const nodeDefaults = useAppSettings((s) => s.nodes);
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) as any;
+  const [tab, setTab] = useState<InspectorMainTab>('settings');
+
+  useEffect(() => {
+    setTab('settings');
+  }, [selectedNodeId]);
 
   if (!selectedNode) return null;
 
@@ -171,6 +200,14 @@ export default function NodeInspector() {
       deleteNode(selectedNode.id);
     }
   };
+
+  const isTrack = selectedNode.type === 'track';
+  const trackJumps = [
+    { id: 'inspector-global', label: 'Global' },
+    { id: 'inspector-playback', label: 'Playback' },
+    { id: 'inspector-time', label: 'Time' },
+    { id: 'inspector-count', label: 'Count' },
+  ];
 
   return (
     <div className="synapse-inspector">
@@ -192,62 +229,95 @@ export default function NodeInspector() {
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
+      {isTrack ? (
+        <InspectorMainTabs value={tab} onChange={setTab} />
+      ) : null}
+      {isTrack && tab === 'settings' ? <InspectorJumpTabs sections={trackJumps} /> : null}
       <div className="synapse-inspector-card space-y-3 text-sm">
+        <InspectorNameField
+          nodeId={selectedNode.id}
+          type={selectedNode.type}
+          data={selectedNode.data}
+        />
         <div>
           <label>Node Type</label>
           <p className="text-[var(--text-muted)] capitalize font-mono text-xs m-0">{selectedNode.type}</p>
         </div>
-        {selectedNode.type === 'track' && (
+        <BringOntoPageButtons selected />
+        {isTrack && tab === 'youtube' ? (
+          <TrackYoutubeTab
+            data={selectedNode.data}
+            onAutofill={() =>
+              updateNodeData(selectedNode.id, {
+                metadataVideoId: '',
+                metadataRefreshRequested: true,
+                metadataStatus: 'idle',
+              })
+            }
+          />
+        ) : null}
+        {isTrack && tab === 'path' ? <TrackPathTab nodeId={selectedNode.id} /> : null}
+        {(!isTrack || tab === 'settings') && selectedNode.type === 'track' && (
           <>
             <div className="space-y-3" data-tutorial="track-metadata">
+              <div id="inspector-global" className="border border-[var(--border)] rounded p-2 space-y-2">
+                <h4 className="text-xs font-semibold text-[var(--text)] uppercase m-0">Global</h4>
+                <p className="text-xs text-[var(--text-muted)] m-0 leading-relaxed">
+                  Defaults for new tracks (Settings → Nodes): volume {nodeDefaults.defaultVolume}%,
+                  speed {nodeDefaults.defaultSpeed}%, play count {nodeDefaults.defaultPlayCount}.
+                </p>
+                <button
+                  type="button"
+                  className="synapse-btn synapse-btn-ghost text-xs"
+                  onClick={() =>
+                    updateNodeData(selectedNode.id, {
+                      volume: nodeDefaults.defaultVolume,
+                      speed: nodeDefaults.defaultSpeed,
+                      playCount: nodeDefaults.defaultPlayCount,
+                    })
+                  }
+                >
+                  Apply to this track
+                </button>
+              </div>
+              <h4 className="text-xs font-semibold text-[var(--text)] uppercase m-0">Local</h4>
               <div>
                 <label className="text-[var(--text)] block mb-1">Song Title</label>
-                <input
-                  type="text"
+                <RevertibleTextInput
                   placeholder="Song title"
                   className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                   value={selectedNode.data?.songTitle || ''}
-                  onChange={(e) => updateNodeData(selectedNode.id, { songTitle: e.target.value })}
+                  onCommit={(songTitle) => updateNodeData(selectedNode.id, { songTitle })}
                 />
               </div>
               <div>
                 <label className="text-[var(--text)] block mb-1">Artist</label>
-                <input
-                  type="text"
+                <RevertibleTextInput
                   placeholder="Artist"
                   className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                   value={selectedNode.data?.artist || ''}
-                  onChange={(e) => updateNodeData(selectedNode.id, { artist: e.target.value })}
+                  onCommit={(artist) => updateNodeData(selectedNode.id, { artist })}
                 />
               </div>
               <div>
                 <label className="text-[var(--text)] block mb-1">Album</label>
-                <input
-                  type="text"
+                <RevertibleTextInput
                   placeholder="Album"
                   className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                   value={selectedNode.data?.album || ''}
-                  onChange={(e) => updateNodeData(selectedNode.id, { album: e.target.value })}
+                  onCommit={(album) => updateNodeData(selectedNode.id, { album })}
                 />
               </div>
               <div>
                 <label className="text-[var(--text)] block mb-1">YouTube Video ID or URL</label>
-                <input
-                  type="text"
+                <RevertibleTextInput
                   placeholder="dQw4w9wgVcQ or youtube.com/watch?v=…"
                   className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                   data-tutorial="track-url"
                   value={selectedNode.data?.videoId || ''}
-                  onChange={(e) => {
-                    const raw = e.target.value;
+                  onCommit={(raw) => {
                     const id = extractYouTubeId(raw);
-                    updateNodeData(selectedNode.id, {
-                      videoId: id || raw,
-                    });
-                  }}
-                  onBlur={(e) => {
-                    const id = extractYouTubeId(e.target.value);
-                    if (id) updateNodeData(selectedNode.id, { videoId: id });
+                    updateNodeData(selectedNode.id, { videoId: id || raw });
                   }}
                 />
                 <div className="flex items-center gap-2 mt-2">
@@ -281,7 +351,7 @@ export default function NodeInspector() {
               </div>
             </div>
 
-            <div className="border-t border-[var(--border)] pt-3">
+            <div id="inspector-playback" className="border-t border-[var(--border)] pt-3">
               <h4 className="text-xs font-semibold text-[var(--text)] uppercase mb-2">Playback</h4>
               <div className="space-y-3">
                 <SliderInput
@@ -307,7 +377,7 @@ export default function NodeInspector() {
               </div>
             </div>
 
-            <div className="border-t border-[var(--border)] pt-3">
+            <div id="inspector-time" className="border-t border-[var(--border)] pt-3">
               <h4 className="text-xs font-semibold text-[var(--text)] uppercase mb-2">Time Range</h4>
               <TimeRangeFields
                 startTime={Number(selectedNode.data?.startTime) || 0}
@@ -369,7 +439,7 @@ export default function NodeInspector() {
               </div>
             </details>
 
-            <div className="border-t border-[var(--border)] pt-3">
+            <div id="inspector-count" className="border-t border-[var(--border)] pt-3">
               <h4 className="text-xs font-semibold text-[var(--text)] uppercase mb-2">Playback Count</h4>
               <div className="space-y-3">
                 <SliderInput
@@ -414,16 +484,15 @@ export default function NodeInspector() {
 
             <div className="border-t border-[var(--border)] pt-3">
               <label className="text-[var(--text)] block mb-1">Number of Paths</label>
-              <input
-                type="number"
-                min="2"
-                max="10"
+              <RevertibleNumberInput
+                min={2}
+                max={10}
                 className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                 value={selectedNode.data?.numPaths || 2}
-                onChange={(e) => {
+                onCommit={(numPaths) => {
                   updateNodeData(
                     selectedNode.id,
-                    resizeConditionalPaths(selectedNode.data, parseInt(e.target.value) || 2)
+                    resizeConditionalPaths(selectedNode.data, numPaths)
                   );
                 }}
               />
@@ -441,14 +510,13 @@ export default function NodeInspector() {
                     <div key={`path-${i}`} className="border-t border-[var(--border)] pt-3">
                       <label className="text-[var(--text)] block mb-1">Path {String.fromCharCode(65 + i)} Weight</label>
                       <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          min="1"
+                        <RevertibleNumberInput
+                          min={1}
                           className="flex-1 p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                           value={weight}
-                          onChange={(e) => {
+                          onCommit={(next) => {
                             const newWeights = [...(selectedNode.data?.weights as number[])];
-                            newWeights[i] = Math.max(1, parseInt(e.target.value) || 1);
+                            newWeights[i] = Math.max(1, next);
                             updateNodeData(selectedNode.id, { weights: newWeights });
                           }}
                         />
@@ -479,14 +547,12 @@ export default function NodeInspector() {
                           <div key={rangeIdx} className="flex gap-2 items-end bg-[var(--bg-deep)] p-2 rounded">
                             <div className="flex-1">
                               <label className="text-xs text-[var(--text-muted)] block mb-1">Start (0-23)</label>
-                              <input
-                                type="number"
-                                min="0"
-                                max="23"
+                              <RevertibleNumberInput
+                                min={0}
+                                max={23}
                                 className="w-full p-2 bg-[var(--bg-hover)] border border-[var(--border)] rounded text-[var(--text)] text-sm"
                                 value={range.start}
-                                onChange={(e) => {
-                                  const newStart = Math.max(0, Math.min(23, parseInt(e.target.value) || 0));
+                                onCommit={(newStart) => {
                                   const newTimeRanges = Array.from({ length: selectedNode.data?.numPaths || 2 }, (_, i) =>
                                     allTimeRanges[i] || [{ start: 0, end: 23 }]
                                   );
@@ -498,14 +564,12 @@ export default function NodeInspector() {
                             </div>
                             <div className="flex-1">
                               <label className="text-xs text-[var(--text-muted)] block mb-1">End (0-23)</label>
-                              <input
-                                type="number"
-                                min="0"
-                                max="23"
+                              <RevertibleNumberInput
+                                min={0}
+                                max={23}
                                 className="w-full p-2 bg-[var(--bg-hover)] border border-[var(--border)] rounded text-[var(--text)] text-sm"
                                 value={range.end}
-                                onChange={(e) => {
-                                  const newEnd = Math.max(0, Math.min(23, parseInt(e.target.value) || 0));
+                                onCommit={(newEnd) => {
                                   const newTimeRanges = Array.from({ length: selectedNode.data?.numPaths || 2 }, (_, i) =>
                                     allTimeRanges[i] || [{ start: 0, end: 23 }]
                                   );
@@ -599,14 +663,15 @@ export default function NodeInspector() {
             {selectedNode.data?.type === 'silence' && (
               <div>
                 <label className="text-[var(--text)] block mb-1">Duration (seconds)</label>
-                <input
-                  type="number"
-                  min="0.1"
-                  max="30"
-                  step="0.1"
+                <RevertibleNumberInput
+                  min={0.1}
+                  max={30}
+                  step={0.1}
                   className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                   value={selectedNode.data?.duration || 1}
-                  onChange={(e) => updateNodeData(selectedNode.id, { duration: Math.max(0.1, parseFloat(e.target.value) || 1) })}
+                  onCommit={(duration) =>
+                    updateNodeData(selectedNode.id, { duration: Math.max(0.1, duration) })
+                  }
                 />
               </div>
             )}
@@ -682,12 +747,14 @@ export default function NodeInspector() {
             {selectedNode.data?.type === 'youtube' && (
               <div>
                 <label className="text-[var(--text)] block mb-1">YouTube Video ID</label>
-                <input
-                  type="text"
+                <RevertibleTextInput
                   placeholder="dQw4w9wgxcq"
                   className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                   value={selectedNode.data?.videoId || ''}
-                  onChange={(e) => updateNodeData(selectedNode.id, { videoId: e.target.value })}
+                  onCommit={(videoId) => {
+                    const id = extractYouTubeId(videoId);
+                    updateNodeData(selectedNode.id, { videoId: id || videoId });
+                  }}
                 />
               </div>
             )}
@@ -716,13 +783,14 @@ export default function NodeInspector() {
             </div>
             <div>
               <label className="text-[var(--text)] block mb-1">Play Count</label>
-              <input
-                type="number"
-                min="1"
-                max="100"
+              <RevertibleNumberInput
+                min={1}
+                max={100}
                 className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                 value={selectedNode.data?.playCount || 1}
-                onChange={(e) => updateNodeData(selectedNode.id, { playCount: Math.max(1, parseInt(e.target.value) || 1) })}
+                onCommit={(playCount) =>
+                  updateNodeData(selectedNode.id, { playCount: Math.max(1, playCount) })
+                }
               />
               <p className="text-xs text-[var(--text-faint)] mt-1 mb-3">How many times to play all tracks</p>
             </div>
@@ -771,13 +839,12 @@ export default function NodeInspector() {
                         {selectedNode.data?.mode === 'randomizer' ? (
                           <div className="flex items-center gap-2 px-1">
                             <label className="text-xs text-[var(--text-muted)]">Weight:</label>
-                            <input
-                              type="number"
-                              min="1"
+                            <RevertibleNumberInput
+                              min={1}
                               value={weight}
-                              onChange={(e) => {
+                              onCommit={(next) => {
                                 const newWeights = [...(selectedNode.data?.weights || [])];
-                                newWeights[i] = Math.max(1, parseInt(e.target.value) || 1);
+                                newWeights[i] = Math.max(1, next);
                                 updateNodeData(selectedNode.id, { weights: newWeights });
                               }}
                               className="w-16 text-xs px-1 py-0 bg-[var(--bg-hover)] border border-[var(--border)] rounded text-[var(--text)] text-center"
@@ -864,16 +931,15 @@ export default function NodeInspector() {
                         })
                       }
                     />
-                    <input
-                      type="number"
+                    <RevertibleNumberInput
                       min={0}
                       max={MAX_STYLE_DELAY_MS / 1000}
                       step={0.1}
                       className="w-full p-2 mt-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
                       value={Number((style.delayMs / 1000).toFixed(1))}
-                      onChange={(e) =>
+                      onCommit={(seconds) =>
                         updateNodeData(selectedNode.id, {
-                          delayMs: Math.round(Number(e.target.value) * 1000),
+                          delayMs: Math.round(seconds * 1000),
                         })
                       }
                     />
@@ -928,10 +994,11 @@ export default function NodeInspector() {
           <>
             <div>
               <label className="text-[var(--text)] block mb-1">Comment Text</label>
-              <textarea
+              <RevertibleTextarea
                 placeholder="Add a note or comment..."
+                allowEmpty
                 value={selectedNode.data?.text || ''}
-                onChange={(e) => updateNodeData(selectedNode.id, { text: e.target.value })}
+                onCommit={(text) => updateNodeData(selectedNode.id, { text })}
                 className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)] text-sm resize-none h-24 focus:outline-none focus:border-[var(--border)]"
               />
             </div>

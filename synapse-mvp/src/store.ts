@@ -35,6 +35,9 @@ import {
   collectCopySet,
   type NodeClipboard,
 } from './canvas/clipboard';
+import { normalizeStackedConditionals } from './conditional/normalize';
+import { bringNodesOntoPage as layoutOntoPage } from './canvas/bringOntoPage';
+import { FIT_NODES_EVENT } from './canvas/fitEvents';
 
 interface PathState {
   nodes: Node[];
@@ -96,7 +99,8 @@ interface PathState {
   importPlaylistFile: (text: string) => { error: string | null; notices: string[] };
   importWorkshopGraph: (name: string, nodes: Node[], edges: Edge[]) => void;
   copySelection: () => NodeClipboard | null;
-  pasteClipboard: (clipboard: NodeClipboard) => string[];
+  pasteClipboard: (payload: NodeClipboard) => string[];
+  bringNodesOntoPage: (scope: 'selected' | 'all') => void;
 }
 
 let library: PathLibrary = emptyLibrary();
@@ -334,124 +338,27 @@ export const usePathStore = create<PathState>((set, get) => ({
   }),
   normalizeSplitters: () =>
     set((state) => {
-      let newNodes = [...state.nodes];
-      let newEdges = [...state.edges];
-      let changed = false;
-
-      // Keep flattening until no more stacked splitters/conditionals
-      let hasStackedSplitters = true;
-      while (hasStackedSplitters) {
-        hasStackedSplitters = false;
-
-        // Find parent-child splitter/conditional pairs
-        for (const splitter of newNodes.filter((n) => n.type === 'splitter' || n.type === 'conditional')) {
-          const directChildren = newEdges
-            .filter((e) => e.source === splitter.id)
-            .map((e) => ({ edge: e, node: newNodes.find((n) => n.id === e.target) }));
-
-          const splitterChildren = directChildren.filter((item) => item.node?.type === 'splitter' || item.node?.type === 'conditional');
-
-          if (splitterChildren.length > 0) {
-            hasStackedSplitters = true;
-            changed = true;
-
-            const parentWeights = (splitter.data?.weights as number[]) || [];
-            const flatPaths: { target: string; weight: number }[] = [];
-
-            // Process each direct child
-            for (const { edge: parentEdge, node: childSplitter } of directChildren) {
-              const childIndex = directChildren.findIndex((item) => item.node?.id === childSplitter?.id);
-              const parentWeight = parentWeights[childIndex] || 10;
-
-              if (childSplitter?.type === 'splitter' || childSplitter?.type === 'conditional') {
-                // Flatten: multiply weights proportionally
-                const childWeights = (childSplitter.data?.weights as number[]) || [];
-                const childTotalWeight = childWeights.reduce((a: number, b: number) => a + b, 0) || 1;
-                const grandchildren = newEdges.filter((e) => e.source === childSplitter.id);
-
-                for (let i = 0; i < grandchildren.length; i++) {
-                  const childWeight = childWeights[i] || 10;
-                  // Proportional weight: multiply parent weight by child's proportion
-                  const proportionalWeight = (parentWeight * childWeight) / childTotalWeight;
-                  flatPaths.push({
-                    target: grandchildren[i].target,
-                    weight: proportionalWeight,
-                  });
-                }
-
-                // Delete child splitter edges
-                for (let i = newEdges.length - 1; i >= 0; i--) {
-                  if (newEdges[i].source === childSplitter.id) {
-                    newEdges.splice(i, 1);
-                  }
-                }
-
-                // Delete parent-to-child edge
-                newEdges.splice(
-                  newEdges.findIndex((e) => e.id === parentEdge.id),
-                  1
-                );
-              } else {
-                // Not a splitter, keep as is
-                flatPaths.push({
-                  target: childSplitter?.id || '',
-                  weight: parentWeight,
-                });
-              }
-            }
-
-            // Delete child splitter nodes
-            for (let i = newNodes.length - 1; i >= 0; i--) {
-              if (
-                (newNodes[i].type === 'splitter' || newNodes[i].type === 'conditional') &&
-                splitterChildren.some((item) => item.node?.id === newNodes[i].id)
-              ) {
-                newNodes.splice(i, 1);
-              }
-            }
-
-            // Update parent splitter with new paths
-            const currentSplitter = newNodes.find((n) => n.id === splitter.id);
-            if (currentSplitter) {
-              // Convert decimal weights to integers, preserving proportions
-              const newWeights = flatPaths.map((p) => Math.round(p.weight));
-              
-              currentSplitter.data = {
-                ...currentSplitter.data,
-                numPaths: flatPaths.length,
-                weights: newWeights,
-              };
-
-              // Remove all old edges from this splitter
-              for (let i = newEdges.length - 1; i >= 0; i--) {
-                if (newEdges[i].source === splitter.id) {
-                  newEdges.splice(i, 1);
-                }
-              }
-
-              // Create new edges from parent to all flattened destinations with correct handle IDs
-              for (let i = 0; i < flatPaths.length; i++) {
-                newEdges.push({
-                  id: `${splitter.id}-${flatPaths[i].target}-${i}-${Date.now()}`,
-                  source: splitter.id,
-                  sourceHandle: String.fromCharCode(65 + i), // A, B, C, etc.
-                  target: flatPaths[i].target,
-                  markerEnd: { type: 'arrowclosed' as const },
-                } as Edge);
-              }
-            }
-
-            // Only process one parent per iteration to avoid index issues
-            break;
-          }
-        }
-      }
-
-      if (changed) {
-        saveToStorage(newNodes, newEdges);
-        return { nodes: newNodes, edges: newEdges };
-      }
-      return state;
+      const next = normalizeStackedConditionals(state.nodes, state.edges);
+      if (next.nodes === state.nodes) return state;
+      saveToStorage(next.nodes, next.edges);
+      return { nodes: next.nodes, edges: next.edges };
+    }),
+  bringNodesOntoPage: (scope) =>
+    set((state) => {
+      const laid = layoutOntoPage(
+        state.nodes,
+        state.edges,
+        scope,
+        state.selectedNodeIds
+      );
+      if (!laid) return state;
+      saveToStorage(laid.nodes, state.edges);
+      window.setTimeout(() => {
+        window.dispatchEvent(
+          new CustomEvent(FIT_NODES_EVENT, { detail: { nodeIds: laid.focusIds } })
+        );
+      }, 30);
+      return { nodes: laid.nodes };
     }),
   initializeFromStorage: () => {
     library = emptyLibrary();

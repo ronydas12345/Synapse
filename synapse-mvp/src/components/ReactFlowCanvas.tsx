@@ -36,7 +36,8 @@ import { getAppliedEdgeType, subscribeAppliedTheme } from '../theme/applyTheme';
 import { toReactFlowEdgeType } from '../theme/edgeType';
 import { confirmDestructive, useAppSettings } from '../settings/settingsStore';
 import { documentPrefersReducedMotion } from '../settings/motion';
-import { FIT_VIEW_EVENT } from '../commandPalette/commands';
+import { isTypingTarget } from '../ui/isTypingTarget';
+import { FIT_VIEW_EVENT, FIT_NODES_EVENT } from '../canvas/fitEvents';
 import {
   canDropPlaybackMarkerOn,
   dataTransferIsPlaybackMarker,
@@ -497,8 +498,24 @@ function ReactFlowContent() {
         duration: documentPrefersReducedMotion() ? 0 : 200,
       });
     };
+    const onFitNodes = (event: Event) => {
+      const ids = (event as CustomEvent<{ nodeIds?: string[] }>).detail?.nodeIds;
+      if (ids?.length) {
+        fitView({
+          nodes: ids.map((id) => ({ id })),
+          padding: 0.24,
+          duration: documentPrefersReducedMotion() ? 0 : 200,
+        });
+        return;
+      }
+      onFit();
+    };
     window.addEventListener(FIT_VIEW_EVENT, onFit);
-    return () => window.removeEventListener(FIT_VIEW_EVENT, onFit);
+    window.addEventListener(FIT_NODES_EVENT, onFitNodes);
+    return () => {
+      window.removeEventListener(FIT_VIEW_EVENT, onFit);
+      window.removeEventListener(FIT_NODES_EVENT, onFitNodes);
+    };
   }, [fitView]);
 
   // Sync store changes to React Flow (when settings are updated or nodes deleted from sidebar)
@@ -963,8 +980,7 @@ function ReactFlowContent() {
       const key = event.key.toLowerCase();
       if (!(event.ctrlKey || event.metaKey)) return;
       const target = event.target as HTMLElement | null;
-      const tag = target?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) return;
+      if (isTypingTarget(target)) return;
       if (key === 'c') {
         event.preventDefault();
         void copySelectionToClipboard();

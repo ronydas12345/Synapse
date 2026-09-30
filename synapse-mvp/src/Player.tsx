@@ -714,6 +714,11 @@ export default function Player() {
     }
   }, [masterVolume, currentNode?.data?.volume]);
 
+  useEffect(() => {
+    const speedPct = currentNode?.data?.speed != null ? Number(currentNode.data.speed) : 100;
+    adapterRef.current?.setPlaybackRate(speedPct / 100);
+  }, [currentNode?.data?.speed]);
+
   const toggleMinimized = () => {
     setMinimized((current) => {
       const next = !current;
@@ -768,6 +773,14 @@ export default function Player() {
           onSeekBy={handleSeekBy}
           onSeekTo={handleSeekTo}
           onJump={(id) => setPlaybackStartNode(id)}
+          speed={
+            currentNode?.data?.speed != null ? Number(currentNode.data.speed) : 100
+          }
+          onSpeedChange={(speed) => {
+            if (currentParsed?.kind === 'track' && currentNodeId) {
+              updateNodeData(currentNodeId, { speed });
+            }
+          }}
         />
       ) : (
         <>
@@ -812,6 +825,14 @@ export default function Player() {
               onNext={() => requestSkip()}
               onSeekBy={handleSeekBy}
               onSeekTo={handleSeekTo}
+              speed={
+                currentNode?.data?.speed != null ? Number(currentNode.data.speed) : 100
+              }
+              onSpeedChange={(speed) => {
+                if (currentParsed?.kind === 'track' && currentNodeId) {
+                  updateNodeData(currentNodeId, { speed });
+                }
+              }}
             />
           </div>
           {showVisualizer ? (

@@ -3,13 +3,14 @@ import { Palette } from 'lucide-react';
 import { usePathStore } from '../../store';
 import { allThemes, useThemeStore } from '../../theme/themeStore';
 import { parseStyleNodeData, styleThemeDisplayName, formatStyleNodeTiming } from '../../styleNode/parse';
+import { nodeCustomName } from '../../nodes/nodeName';
 
 export default function StyleNode({ data = {}, id }: { data?: unknown; id: string }) {
   const { currentPlayingNodeId } = usePathStore();
   const customThemes = useThemeStore((s) => s.customThemes);
   const isPlaying = currentPlayingNodeId === id;
   const parsed = parseStyleNodeData(data);
-  const name = styleThemeDisplayName(parsed.themeId, allThemes(customThemes));
+  const themeName = styleThemeDisplayName(parsed.themeId, allThemes(customThemes));
 
   return (
     <div className={`synapse-node w-64 overflow-hidden is-style ${isPlaying ? 'is-playing' : ''}`} data-tutorial="node-style">
@@ -25,12 +26,12 @@ export default function StyleNode({ data = {}, id }: { data?: unknown; id: strin
             className="text-sm text-[var(--text)] truncate"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Style
+            {nodeCustomName(data) || 'Style'}
           </strong>
         </div>
       </div>
       <div className="px-3 py-3">
-        <p className="text-xs text-[var(--text)] truncate">{name}</p>
+        <p className="text-xs text-[var(--text)] truncate">{themeName}</p>
         <p className="text-xs text-[var(--text-muted)] mt-1">{formatStyleNodeTiming(parsed)}</p>
       </div>
       <Handle type="target" position={Position.Left} className="synapse-handle" />

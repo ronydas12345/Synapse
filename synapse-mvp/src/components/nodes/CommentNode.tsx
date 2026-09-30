@@ -1,5 +1,7 @@
 import { usePathStore } from '../../store';
 import { Link2 } from 'lucide-react';
+import { nodeCustomName } from '../../nodes/nodeName';
+import { RevertibleTextarea } from '../fields/RevertibleField';
 
 export default function CommentNode({ data = {}, id }: any) {
   const { updateNodeData, nodes, commentLinkingId, setCommentLinkingId } = usePathStore();
@@ -17,7 +19,7 @@ export default function CommentNode({ data = {}, id }: any) {
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="w-2.5 h-2.5 rounded-full bg-[var(--text-faint)] flex-shrink-0" />
           <strong className="text-sm text-[var(--text)] truncate" style={{ fontFamily: 'var(--font-display)' }}>
-            Comment
+            {nodeCustomName(data) || 'Comment'}
           </strong>
         </div>
         <button
@@ -61,9 +63,10 @@ export default function CommentNode({ data = {}, id }: any) {
       )}
 
       <div className="px-3 py-3">
-        <textarea
+        <RevertibleTextarea
+          allowEmpty
           value={data?.text || ''}
-          onChange={(e) => updateNodeData(id, { text: e.target.value })}
+          onCommit={(text) => updateNodeData(id, { text })}
           placeholder="Add a note..."
           className="nodrag nopan nowheel synapse-node-note"
         />

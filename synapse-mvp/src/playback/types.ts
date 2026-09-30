@@ -23,6 +23,8 @@ export interface PlaybackAdapter {
   getDuration?(): number;
   seekTo?(seconds: number): void;
   seekBy?(delta: number, start?: number, end?: number): void;
+  setVolume?(volume: number): void;
+  setPlaybackRate?(rate: number): void;
   setOnEnded(cb: (() => void) | null): void;
   setOnError(cb: ((message: string) => void) | null): void;
 }

@@ -113,11 +113,15 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'How do I copy nodes on the canvas?',
-    a: 'Shift-click or drag a box on empty canvas to select several nodes. Ctrl+C / Cmd+C copies, Ctrl+V pastes, Ctrl+D duplicates. Middle- or right-drag pans while box-select is on. Ctrl/Cmd+K opens the command palette for navigation, Play/Pause/Stop, adding nodes, and Settings sections.',
+    a: 'Shift-click or drag a box on empty canvas to select several nodes. Ctrl+C / Cmd+C copies, Ctrl+V pastes, Ctrl+D duplicates. Middle- or right-drag pans while box-select is on. Ctrl/Cmd+K opens the command palette for navigation, Play/Pause/Stop, adding nodes, and Settings sections. Holding Shift to snap alignment does not start while a text box is focused.',
   },
   {
     q: 'How do I jump around the app quickly?',
-    a: 'Press Ctrl/Cmd+K (or click Commands) to search pages, playlists, themes, playback, and settings. Pause keeps the queue; Stop ends the session. Workshop is in the workspace top nav next to Listen.',
+    a: 'Press Ctrl/Cmd+K (or click Commands) to search pages, playlists, themes, playback, and settings. Pause keeps the queue; Stop ends the session. Workshop is in the workspace top nav next to Listen. The playlist name sits to the right of that nav, not beside the Synapse mark.',
+  },
+  {
+    q: 'Can I name sequences and gather them on the canvas?',
+    a: 'Yes. Every node has a Name field in the inspector (travel, childhood, techno, and so on). Bring selected onto page keeps their spacing and moves them to one page; Bring all onto page packs named groups together. Speed for the current song is on the bottom deck.',
   },
   {
     q: 'Can I hide the bottom player?',

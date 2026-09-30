@@ -17,10 +17,11 @@ export const CANVAS_NODE_TYPES = [
 export type CanvasNodeType = (typeof CANVAS_NODE_TYPES)[number]['type'];
 
 function defaultData(type: CanvasNodeType): Record<string, unknown> {
-  if (type === 'start') return { label: 'Start' };
+  if (type === 'start') return { label: 'Start', name: '' };
   if (type === 'track') return defaultTrackNodeData();
   if (type === 'conditional') {
     return {
+      name: '',
       numPaths: 2,
       weights: [10, 10],
       mode: 'random',
@@ -29,6 +30,7 @@ function defaultData(type: CanvasNodeType): Record<string, unknown> {
   }
   if (type === 'randomizer') {
     return {
+      name: '',
       tracks: [],
       weights: [],
       isCollapsed: false,
@@ -37,11 +39,11 @@ function defaultData(type: CanvasNodeType): Record<string, unknown> {
     };
   }
   if (type === 'transition') {
-    return { type: 'silence', duration: 1, audioFile: null, videoId: '' };
+    return { name: '', type: 'silence', duration: 1, audioFile: null, videoId: '' };
   }
-  if (type === 'style') return { ...defaultStyleNodeData() };
-  if (type === 'comment') return { text: '', linkedNodeId: null };
-  return { label: 'End' };
+  if (type === 'style') return { ...defaultStyleNodeData(), name: '' };
+  if (type === 'comment') return { name: '', text: '', linkedNodeId: null };
+  return { label: 'End', name: '' };
 }
 
 export function canvasNodeDragPayload(type: CanvasNodeType): {

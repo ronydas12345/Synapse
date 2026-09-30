@@ -7,6 +7,7 @@ import {
   CANVAS_NODE_TYPES,
   type CanvasNodeType,
 } from '../canvas/addNode';
+import { BringOntoPageButtons } from './inspector/InspectorChrome';
 
 const NODE_ICONS: Record<CanvasNodeType, ReactNode> = {
   start: <Play className="w-4 h-4" />,
@@ -32,6 +33,7 @@ const NODE_LABELS: Record<CanvasNodeType, string> = {
 
 export default function Sidebar() {
   const nodes = usePathStore((s) => s.nodes);
+  const selectedNodeIds = usePathStore((s) => s.selectedNodeIds);
   const normalizeSplitters = usePathStore((s) => s.normalizeSplitters);
 
   const handleAddNode = useCallback((type: CanvasNodeType) => {
@@ -84,12 +86,16 @@ export default function Sidebar() {
         ))}
       </div>
 
+      <div className="mt-2 space-y-2">
+        <BringOntoPageButtons selected={selectedNodeIds.length > 0} />
+      </div>
+
       {nodes.some((n) => n.type === 'conditional') && (
         <div className="mt-1">
           <button
             onClick={normalizeSplitters}
             className="synapse-btn-secondary"
-            title="Flatten stacked conditionals into one with preserved probabilities"
+            title="Flatten stacked weighted-random conditionals, keeping path odds. Weather, time, and day conditionals stay separate."
           >
             Normalize Conditionals
           </button>

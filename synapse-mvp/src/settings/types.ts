@@ -26,6 +26,7 @@ export interface CanvasSettings {
 export interface NodeSettings {
   defaultVolume: number;
   defaultPlayCount: number;
+  defaultSpeed: number;
 }
 
 export interface PlaybackSettings {

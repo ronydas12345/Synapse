@@ -26,6 +26,7 @@ describe('app settings schema', () => {
     expect(parsed.canvas.snapToGrid).toBe(true);
     expect(parsed.nodes.defaultVolume).toBe(100);
     expect(parsed.nodes.defaultPlayCount).toBe(1);
+    expect(parsed.nodes.defaultSpeed).toBe(100);
     expect(parsed.playback.masterVolume).toBe(0);
     expect(parsed.visualizer.visible).toBe(false);
   });

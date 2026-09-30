@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import type { OverlayGuide } from './alignGuides';
+import { isTypingTarget } from './ui/isTypingTarget';
 
 type AlignOverlay = {
   shift: boolean;
@@ -17,6 +18,7 @@ function emit() {
 
 function onKeyDown(event: KeyboardEvent) {
   if (event.key !== 'Shift') return;
+  if (isTypingTarget(event.target)) return;
   if (overlay.shift) return;
   overlay = { ...overlay, shift: true };
   emit();

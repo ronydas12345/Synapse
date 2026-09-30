@@ -303,6 +303,14 @@ export class YouTubeIframeAdapter implements PlaybackAdapter {
     }
   }
 
+  setPlaybackRate(rate: number): void {
+    try {
+      this.player?.setPlaybackRate(clampRate(rate));
+    } catch {
+      // Some videos reject non-1 rates
+    }
+  }
+
   stop(): void {
     this.bumpSessionAndSuppress(1500);
     try {

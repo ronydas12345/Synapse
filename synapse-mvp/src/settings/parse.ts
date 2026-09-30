@@ -40,6 +40,7 @@ export function defaultSettings(): AppSettings {
     nodes: {
       defaultVolume: 100,
       defaultPlayCount: 1,
+      defaultSpeed: 100,
     },
     playback: {
       masterVolume: 100,
@@ -115,6 +116,7 @@ function parseNodes(raw: unknown, fallback: NodeSettings): NodeSettings {
   return {
     defaultVolume: clampInt(src.defaultVolume, 0, 100, fallback.defaultVolume),
     defaultPlayCount: clampInt(src.defaultPlayCount, 1, 99, fallback.defaultPlayCount),
+    defaultSpeed: clampInt(src.defaultSpeed, 25, 200, fallback.defaultSpeed),
   };
 }
 

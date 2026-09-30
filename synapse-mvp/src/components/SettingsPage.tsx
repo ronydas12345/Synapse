@@ -402,6 +402,14 @@ function NodesSection() {
         max={99}
         onChange={(defaultPlayCount) => updateNodes({ defaultPlayCount })}
       />
+      <SettingsRange
+        label="Default playback speed"
+        value={nodes.defaultSpeed}
+        min={25}
+        max={200}
+        suffix="%"
+        onChange={(defaultSpeed) => updateNodes({ defaultSpeed })}
+      />
     </section>
   );
 }

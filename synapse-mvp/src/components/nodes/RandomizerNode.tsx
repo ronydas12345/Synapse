@@ -5,6 +5,7 @@ import { useState, memo } from 'react';
 import { addTrackToRandomizerList, moveSequenceItemBetweenRandomizers, parseSequenceItemPayload, reorderRandomizerTracks, restoreTrackFromRandomizer, SEQUENCE_ITEM_MIME, syncParkedTracks } from '../../randomizerDrop';
 import { getTrackDisplayMeta } from '../../trackMetadata';
 import { RANDOMIZER_MODE_OPTIONS, randomizerModePatch } from '../../nodeMode';
+import { nodeCustomName, nodeTypeLabel } from '../../nodes/nodeName';
 
 const spinnerHideStyles = `
   input[type="number"].hide-spinners::-webkit-outer-spin-button,
@@ -181,7 +182,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
               className="text-sm text-[var(--text)] truncate"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              {mode === 'randomizer' ? 'Randomizer' : 'Sequence'}
+              {nodeCustomName(data) || nodeTypeLabel('randomizer', data)}
             </strong>
             {tracks.length > 0 ? (
               <span className="text-[0.65rem] text-[var(--text-faint)] font-mono">

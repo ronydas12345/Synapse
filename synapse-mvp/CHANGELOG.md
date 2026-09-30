@@ -20,11 +20,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Global command palette (`Ctrl/Cmd+K`) for navigation, playback, playlists, nodes, settings sections, themes, and help.
 - Stop in the Edit header and command palette, distinct from Pause (Pause keeps the queue).
 - Workshop in the workspace top nav. Help stays available after sign-in.
+- Custom names on Sequence and other nodes, plus Bring selected/all onto page to pack named groups (travel, childhood, techno, …) onto one canvas view.
+- Inspector tabs on a selected track: Settings (global defaults and local), YouTube song info, and playlist/sequence context, with jump chips under Node Settings.
+- Playback speed on the bottom deck.
 
 ### Changed
 
 - Sign-out still clears the on-screen account. Cloud playlists stay on the signed-in user and reload on the next login.
 - The first-run tutorial waits about 50 seconds on the home page so people who already know where to go can click through. Scrolling to the bottom also opens it once. The tour starts with create-account or log in, then continues on Edit. Help (?) still opens it immediately for signed-out visitors. Signed-in accounts do not get the home-page prompt.
+- Playlist name and switcher sit with Commands on the right of the workspace header, not beside the Synapse wordmark.
+- Empty inspector text fields restore the previous value when you click away. Shift-snap does not arm while a text box is focused.
 
 ### Fixed
 

@@ -229,7 +229,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'b-inspector',
         'Node settings',
-        'The inspector is where YouTube IDs, weights, times, and Style themes live. Multi-select is for moving, copying, and pasting. Click one node to edit it.',
+        'The inspector is where YouTube IDs, weights, times, and Style themes live. Click a song for Settings (global and local), YouTube info, and playlist/sequence context. Jump chips under Node Settings scroll to each section. Multi-select is for moving, copying, and pasting.',
         { type: 'highlight', route: 'edit', target: 'inspector' }
       ),
       s(
@@ -263,7 +263,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'ag-shift',
         'Hold Shift',
-        'Hold Shift while the pointer is on the canvas. Nearby node edges show thin grey dashes. Dragging a node with Shift held snaps it onto those guides instead of only drawing them.',
+        'Hold Shift while the pointer is on the canvas. Nearby node edges show thin grey dashes. Dragging a node with Shift held snaps it onto those guides instead of only drawing them. Shift does not arm snap while a text box is focused.',
         { type: 'highlight', route: 'edit', target: 'canvas' }
       ),
       s(
@@ -391,7 +391,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'c-random',
         'Weighted random mode',
-        'In the inspector, Weighted Random uses the path weights. Higher weight is more likely. Normalize Conditionals flattens stacked splitters.',
+        'In the inspector, Weighted Random uses the path weights. Higher weight is more likely. Normalize Conditionals flattens stacked weighted-random splitters and multiplies their weights. Weather, time-range, and day conditionals are not merged.',
         { type: 'highlight', route: 'edit', target: 'conditional-mode' }
       ),
       s(
@@ -431,7 +431,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'r-seq',
         'Sequence mode',
-        'Sequence plays listed tracks in order. Weights are hidden in this mode but kept if you switch back to random.',
+        'Sequence plays listed tracks in order. Name it in the inspector (travel, childhood, techno, …). Bring selected or all named nodes onto one canvas page from the rack, inspector, or Ctrl/Cmd+K. Weights are hidden in this mode but kept if you switch back to random.',
         { type: 'highlight', route: 'edit', target: 'rack-randomizer' }
       ),
       s(

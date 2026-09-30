@@ -14,6 +14,8 @@ interface DeckTransportProps {
   onSeekBy: (delta: number) => void;
   onSeekTo: (seconds: number) => void;
   showPlayButton?: boolean;
+  speed?: number;
+  onSpeedChange?: (speed: number) => void;
 }
 
 export default function DeckTransport({
@@ -27,6 +29,8 @@ export default function DeckTransport({
   onSeekBy,
   onSeekTo,
   showPlayButton = true,
+  speed,
+  onSpeedChange,
 }: DeckTransportProps) {
   const max = duration > 0 ? duration : 0;
 
@@ -105,6 +109,22 @@ export default function DeckTransport({
         />
         <span className="synapse-clock">{formatClock(duration)}</span>
       </div>
+      {onSpeedChange ? (
+        <label className="synapse-transport-speed">
+          <span>Speed</span>
+          <input
+            type="range"
+            min={25}
+            max={200}
+            step={5}
+            value={speed ?? 100}
+            disabled={disabled}
+            aria-label="Playback speed"
+            onChange={(e) => onSpeedChange(Number(e.target.value))}
+          />
+          <span className="synapse-clock">{speed ?? 100}%</span>
+        </label>
+      ) : null}
     </div>
   );
 }

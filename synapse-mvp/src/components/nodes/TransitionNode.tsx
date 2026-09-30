@@ -2,6 +2,7 @@ import { Handle, Position } from '@xyflow/react';
 import { ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePathStore } from '../../store';
 import { useState } from 'react';
+import { nodeCustomName } from '../../nodes/nodeName';
 
 export default function TransitionNode({ data = {}, id }: any) {
   const { updateNodeData, currentPlayingNodeId } = usePathStore();
@@ -32,7 +33,7 @@ export default function TransitionNode({ data = {}, id }: any) {
             {isPlaying && <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--accent-warm)]" />}
           </div>
           <strong className="text-sm text-[var(--text)] truncate" style={{ fontFamily: 'var(--font-display)' }}>
-            Transition
+            {nodeCustomName(data) || 'Transition'}
           </strong>
         </div>
         {isCollapsed ? (

@@ -1189,8 +1189,8 @@ export default function ProfilePage() {
             return (
               <SectionChrome key={id} id={id} onHide={hideSection}>
                 <p className="synapse-settings-hint">
-                  Switch playlists from the menu next to Synapse. New playlists
-                  start empty.
+                  Switch playlists from the name field to the right of the page
+                  nav, away from the Synapse mark. New playlists start empty.
                 </p>
                 {shownPaths.length === 0 ? (
                   <p className="synapse-settings-lead">No playlists yet.</p>

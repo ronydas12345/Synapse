@@ -13,6 +13,7 @@ import {
   type SpacingGuide,
 } from '../alignGuides';
 import { setAlignShift, useAlignOverlay } from '../alignGuideStore';
+import { isTypingTarget } from '../ui/isTypingTarget';
 
 function tickOffset(guide: SpacingGuide, size: number): { x: number; y: number } {
   const dx = guide.x2 - guide.x1;
@@ -137,7 +138,7 @@ export default function AlignGuides({
     const onMove = (event: PointerEvent) => {
       const rect = el.getBoundingClientRect();
       setPointer({ x: event.clientX - rect.left, y: event.clientY - rect.top });
-      if (event.shiftKey) setAlignShift(true);
+      if (event.shiftKey && !isTypingTarget(document.activeElement)) setAlignShift(true);
     };
     const onLeave = () => setPointer(null);
     el.addEventListener('pointerenter', onMove);

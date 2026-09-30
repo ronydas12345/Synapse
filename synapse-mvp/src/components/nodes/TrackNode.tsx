@@ -2,6 +2,7 @@ import { Handle, Position } from '@xyflow/react';
 import { Music } from 'lucide-react';
 import { usePathStore } from '../../store';
 import { getTrackDisplayMeta } from '../../trackMetadata';
+import { nodeCustomName } from '../../nodes/nodeName';
 
 function CreditLine({
   value,
@@ -23,6 +24,7 @@ export default function TrackNode({ data = {}, id }: any) {
   const { currentPlayingNodeId } = usePathStore();
   const isPlaying = currentPlayingNodeId === id;
   const meta = getTrackDisplayMeta(data);
+  const customName = nodeCustomName(data);
 
   return (
     <div
@@ -48,6 +50,9 @@ export default function TrackNode({ data = {}, id }: any) {
             >
               {meta.title}
             </strong>
+            {customName ? (
+              <span className="synapse-node-name-pill">{customName}</span>
+            ) : null}
             {isPlaying ? (
               <span className="synapse-now-playing-pill">Now playing</span>
             ) : null}

@@ -8,6 +8,7 @@ import { APP_PATHS, navigateApp, pathToRoute, type AppRoute } from '../app/route
 import { signOut } from '../auth/client';
 import type { AuthRole } from '../auth/session';
 import { addCanvasNode, CANVAS_NODE_TYPES } from '../canvas/addNode';
+import { FIT_VIEW_EVENT } from '../canvas/fitEvents';
 import { confirmDestructive } from '../settings/settingsStore';
 import { usePathStore } from '../store';
 import { allThemes, useThemeStore } from '../theme/themeStore';
@@ -48,7 +49,7 @@ const SETTINGS: { id: string; label: string; keywords: string }[] = [
   { id: 'general', label: 'General', keywords: 'language startup confirm' },
   { id: 'canvas', label: 'Canvas / Workspace', keywords: 'grid snap minimap zoom' },
   { id: 'connections', label: 'Connections / Arrows', keywords: 'edge bezier' },
-  { id: 'nodes', label: 'Nodes', keywords: 'volume play count defaults' },
+  { id: 'nodes', label: 'Nodes', keywords: 'volume play count speed defaults' },
   { id: 'playback', label: 'Playback', keywords: 'volume skip youtube' },
   { id: 'visualizer', label: 'Visualizer', keywords: 'spectrum fft' },
   { id: 'environment', label: 'Environment', keywords: 'weather location' },
@@ -59,7 +60,7 @@ const SETTINGS: { id: string; label: string; keywords: string }[] = [
   { id: 'support', label: 'Support', keywords: 'faq help ticket' },
 ];
 
-export const FIT_VIEW_EVENT = 'synapse:fit-view';
+export { FIT_VIEW_EVENT, FIT_NODES_EVENT } from '../canvas/fitEvents';
 
 function go(path: string, hash = ''): void {
   navigateApp(path, hash);
@@ -227,6 +228,22 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       when: (c) => c.signedIn,
       run: () =>
         onEdit(() => window.dispatchEvent(new Event(FIT_VIEW_EVENT))),
+    },
+    {
+      id: 'bring-selected',
+      group: 'Editor',
+      label: 'Bring selected onto page',
+      keywords: 'layout gather selected sequence name',
+      when: (c) => c.signedIn,
+      run: () => onEdit(() => usePathStore.getState().bringNodesOntoPage('selected')),
+    },
+    {
+      id: 'bring-all',
+      group: 'Editor',
+      label: 'Bring all onto page',
+      keywords: 'layout gather named travel childhood techno',
+      when: (c) => c.signedIn,
+      run: () => onEdit(() => usePathStore.getState().bringNodesOntoPage('all')),
     },
     {
       id: 'normalize',

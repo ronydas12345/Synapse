@@ -6,6 +6,7 @@ import { CONDITIONAL_MODE_OPTIONS, conditionalModePatch } from '../../nodeMode';
 import { formatDatePath, formatWeatherPath } from '../../conditional/format';
 import { parsePathDateRules, parsePathWeather } from '../../conditional/parse';
 import type { DateRule, WeatherState } from '../../conditional/types';
+import { nodeCustomName } from '../../nodes/nodeName';
 
 const spinnerHideStyles = `
   input[type="number"].hide-spinners::-webkit-outer-spin-button,
@@ -71,7 +72,7 @@ function ConditionalNode({ data = {}, id }: { data?: Record<string, unknown>; id
               {isPlaying && <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--accent-warm)]" />}
             </div>
             <strong className="text-sm text-[var(--text)] truncate" style={{ fontFamily: 'var(--font-display)' }}>
-              Conditional
+              {nodeCustomName(data) || 'Conditional'}
             </strong>
           </div>
           {isCollapsed ? (

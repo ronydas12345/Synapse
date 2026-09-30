@@ -1,5 +1,6 @@
 import { usePathStore } from '../store';
 import NodeInspector from './NodeInspector';
+import { BringOntoPageButtons } from './inspector/InspectorChrome';
 
 export default function InspectorPanel() {
   const selectedNodeIds = usePathStore((s) => s.selectedNodeIds);
@@ -28,6 +29,9 @@ export default function InspectorPanel() {
               Shift-click or drag a box on empty canvas to change the
               selection. Click one node to edit it.
             </p>
+            <div className="mt-3">
+              <BringOntoPageButtons selected />
+            </div>
           </div>
         ) : (
           <NodeInspector />

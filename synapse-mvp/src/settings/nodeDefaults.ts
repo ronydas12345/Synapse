@@ -1,7 +1,7 @@
 import { getAppSettings } from './settingsStore';
 
 export function defaultTrackNodeData(): Record<string, unknown> {
-  const { defaultVolume, defaultPlayCount } = getAppSettings().nodes;
+  const { defaultVolume, defaultPlayCount, defaultSpeed } = getAppSettings().nodes;
   return {
     videoId: '',
     songTitle: '',
@@ -11,7 +11,9 @@ export function defaultTrackNodeData(): Record<string, unknown> {
     endTime: 0,
     duration: 0,
     volume: defaultVolume,
+    speed: defaultSpeed,
     label: '',
+    name: '',
     playCount: defaultPlayCount,
   };
 }

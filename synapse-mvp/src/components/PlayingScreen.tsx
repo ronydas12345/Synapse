@@ -23,6 +23,8 @@ interface PlayingScreenProps {
   onSeekBy: (delta: number) => void;
   onSeekTo: (seconds: number) => void;
   onJump: (nodeId: string) => void;
+  speed?: number;
+  onSpeedChange?: (speed: number) => void;
 }
 
 function PathRow({
@@ -121,6 +123,8 @@ export default function PlayingScreen({
   onSeekBy,
   onSeekTo,
   onJump,
+  speed,
+  onSpeedChange,
 }: PlayingScreenProps) {
   const nowRef = useRef<HTMLLIElement>(null);
   const showVisualizer = useAppSettings((s) => s.visualizer.visible);
@@ -180,6 +184,8 @@ export default function PlayingScreen({
           onNext={onNext}
           onSeekBy={onSeekBy}
           onSeekTo={onSeekTo}
+          speed={speed}
+          onSpeedChange={onSpeedChange}
         />
 
         {showVisualizer ? (
