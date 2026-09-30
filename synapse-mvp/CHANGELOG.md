@@ -35,6 +35,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Reload keeps the Supabase session. Names load from the profile row before the app decides anyone is signed out.
 - Workshop listing and badge pages no longer fail when the API schema cache is still catching up. Publish, badges, and public profiles read the live Workshop tables.
+- Home marketing header no longer lets the Synapse wordmark overlap Home or Pricing overlap the theme picker. The bar uses the full window width, and the inline nav collapses sooner on Home where the theme control is extra.
 
 ## [0.3.0] — 2026-08-30
 

@@ -52,12 +52,15 @@ body:has(.synapse-mkt),
 
 .synapse-mkt-header-inner {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
   align-items: center;
-  gap: 0.55rem 0.7rem;
-  max-width: 72rem;
+  column-gap: 1.25rem;
+  row-gap: 0.55rem;
+  width: 100%;
+  max-width: none;
   margin: 0 auto;
-  padding: 0.5rem 1.1rem;
+  padding: 0.5rem 1.5rem;
+  box-sizing: border-box;
 }
 
 .synapse-mkt-logo {
@@ -66,7 +69,7 @@ body:has(.synapse-mkt),
   gap: 0;
   text-decoration: none;
   color: inherit;
-  min-width: 0;
+  min-width: max-content;
   flex-shrink: 0;
 }
 
@@ -79,7 +82,7 @@ body:has(.synapse-mkt),
   justify-content: center;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 0.1rem;
+  gap: 0.15rem;
   min-width: 0;
 }
 
@@ -104,8 +107,12 @@ body:has(.synapse-mkt),
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 0.35rem;
-  min-width: 0;
+  gap: 0.4rem;
+  min-width: max-content;
+}
+
+.synapse-mkt-header-actions .synapse-command-btn-label {
+  display: none;
 }
 
 .synapse-mkt-header-actions .synapse-mkt-theme-pick.is-compact {
@@ -856,13 +863,36 @@ body:has(.synapse-mkt),
   }
 }
 
+@media (max-width: 1320px) {
+  .synapse-mkt-header:has(.synapse-mkt-theme-pick.is-compact) .synapse-mkt-header-inner {
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+
+  .synapse-mkt-header:has(.synapse-mkt-theme-pick.is-compact) .synapse-mkt-nav {
+    display: none;
+  }
+
+  .synapse-mkt-header:has(.synapse-mkt-theme-pick.is-compact) .synapse-mkt-header-actions {
+    justify-self: end;
+  }
+
+  .synapse-mkt-header:has(.synapse-mkt-theme-pick.is-compact) .synapse-mkt-burger,
+  .synapse-mkt-header:has(.synapse-mkt-theme-pick.is-compact) .synapse-mkt-drawer {
+    display: grid;
+  }
+}
+
 @media (max-width: 1140px) {
   .synapse-mkt-header-inner {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: max-content minmax(0, 1fr);
   }
 
   .synapse-mkt-nav {
     display: none;
+  }
+
+  .synapse-mkt-header-actions {
+    justify-self: end;
   }
 
   .synapse-mkt-header-actions .synapse-mkt-theme-pick {
