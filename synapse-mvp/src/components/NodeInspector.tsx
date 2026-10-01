@@ -867,75 +867,77 @@ export default function NodeInspector() {
               <p className="text-xs text-[var(--text-faint)] mt-1 mb-3">How many times to play all tracks</p>
             </div>
             <div id="inspector-seq-tracks">
-            <p className="text-xs text-[var(--text-muted)] leading-relaxed m-0 mb-3">
-              Drag a track onto this {selectedNode.data?.mode === 'randomizer' ? 'randomizer' : 'sequence'} to move it in. Click a track in the list to edit its settings without dragging it back out.
-            </p>
-            {selectedNode.data?.tracks && selectedNode.data.tracks.length > 0 ? (
-                <label className="text-[var(--text)] block mb-2">
-                  {selectedNode.data?.mode === 'randomizer' ? 'Tracks & Weights' : 'Order'}
-                </label>
-                <div className="bg-[var(--bg-deep)] rounded p-2 space-y-3 max-h-48 overflow-y-auto">
-                  {selectedNode.data.tracks.map((trackId: string, i: number) => {
-                    const trackNode = nodes.find((n) => n.id === trackId);
-                    const meta = getTrackDisplayMeta(trackNode?.data);
-                    const weight = selectedNode.data?.weights?.[i] || 10;
-                    const totalWeight = (selectedNode.data?.weights || []).reduce((a: number, b: number) => a + b, 0) || 1;
-                    const percentage = Math.round((weight / totalWeight) * 100);
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed m-0 mb-3">
+                Drag a track onto this {selectedNode.data?.mode === 'randomizer' ? 'randomizer' : 'sequence'} to move it in. Click a track in the list to edit its settings without dragging it back out.
+              </p>
+              {selectedNode.data?.tracks && selectedNode.data.tracks.length > 0 ? (
+                <>
+                  <label className="text-[var(--text)] block mb-2">
+                    {selectedNode.data?.mode === 'randomizer' ? 'Tracks & Weights' : 'Order'}
+                  </label>
+                  <div className="bg-[var(--bg-deep)] rounded p-2 space-y-3 max-h-48 overflow-y-auto">
+                    {selectedNode.data.tracks.map((trackId: string, i: number) => {
+                      const trackNode = nodes.find((n) => n.id === trackId);
+                      const meta = getTrackDisplayMeta(trackNode?.data);
+                      const weight = selectedNode.data?.weights?.[i] || 10;
+                      const totalWeight = (selectedNode.data?.weights || []).reduce((a: number, b: number) => a + b, 0) || 1;
+                      const percentage = Math.round((weight / totalWeight) * 100);
 
-                    return (
-                      <div key={trackId} className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            className="flex-1 text-left text-xs text-[var(--text)] truncate hover:text-[var(--accent)]"
-                            title="Open track settings"
-                            onClick={() => inspectNestedTrack(trackId)}
-                          >
-                            {i + 1}. {meta.title}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const restored = restoreTrackFromRandomizer(
-                                nodes,
-                                edges,
-                                selectedNode.id,
-                                trackId
-                              );
-                              if (restored) {
-                                setNodes(restored.nodes);
-                                setEdges(restored.edges);
-                                selectNode(selectedNode.id);
-                              }
-                            }}
-                            className="p-1 text-[var(--danger)] hover:bg-[color-mix(in_srgb,var(--danger)_28%,transparent)] hover:text-[var(--text)] rounded transition"
-                            title="Remove from sequence and restore to canvas"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                        {selectedNode.data?.mode === 'randomizer' ? (
-                          <div className="flex items-center gap-2 px-1">
-                            <label className="text-xs text-[var(--text-muted)]">Weight:</label>
-                            <RevertibleNumberInput
-                              min={1}
-                              value={weight}
-                              onCommit={(next) => {
-                                const newWeights = [...(selectedNode.data?.weights || [])];
-                                newWeights[i] = Math.max(1, next);
-                                updateNodeData(selectedNode.id, { weights: newWeights });
+                      return (
+                        <div key={trackId} className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              className="flex-1 text-left text-xs text-[var(--text)] truncate hover:text-[var(--accent)]"
+                              title="Open track settings"
+                              onClick={() => inspectNestedTrack(trackId)}
+                            >
+                              {i + 1}. {meta.title}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const restored = restoreTrackFromRandomizer(
+                                  nodes,
+                                  edges,
+                                  selectedNode.id,
+                                  trackId
+                                );
+                                if (restored) {
+                                  setNodes(restored.nodes);
+                                  setEdges(restored.edges);
+                                  selectNode(selectedNode.id);
+                                }
                               }}
-                              className="w-16 text-xs px-1 py-0 bg-[var(--bg-hover)] border border-[var(--border)] rounded text-[var(--text)] text-center"
-                            />
-                            <span className="text-xs text-[var(--text-muted)] flex-1">({percentage}%)</span>
+                              className="p-1 text-[var(--danger)] hover:bg-[color-mix(in_srgb,var(--danger)_28%,transparent)] hover:text-[var(--text)] rounded transition"
+                              title="Remove from sequence and restore to canvas"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
                           </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+                          {selectedNode.data?.mode === 'randomizer' ? (
+                            <div className="flex items-center gap-2 px-1">
+                              <label className="text-xs text-[var(--text-muted)]">Weight:</label>
+                              <RevertibleNumberInput
+                                min={1}
+                                value={weight}
+                                onCommit={(next) => {
+                                  const newWeights = [...(selectedNode.data?.weights || [])];
+                                  newWeights[i] = Math.max(1, next);
+                                  updateNodeData(selectedNode.id, { weights: newWeights });
+                                }}
+                                className="w-16 text-xs px-1 py-0 bg-[var(--bg-hover)] border border-[var(--border)] rounded text-[var(--text)] text-center"
+                              />
+                              <span className="text-xs text-[var(--text-muted)] flex-1">({percentage}%)</span>
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : null}
+            </div>
           </>
         )}
         {selectedNode.type === 'style' && (
