@@ -1,4 +1,4 @@
-import { supabase, isMissingSchema, throwIfError } from '../supabase/client';
+import { supabase, isMissingSchema, isSchemaCacheError, throwIfError } from '../supabase/client';
 
 export interface PublicCreator {
   uid: string;
@@ -139,16 +139,28 @@ export async function syncProfilePublicFields(input: {
   visibility: 'public' | 'unlisted' | 'private';
   bio: string;
 }): Promise<void> {
-  const { data: session } = await supabase.auth.getUser();
-  const uid = session.user?.id;
-  if (!uid) return;
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      visibility: input.visibility,
-      bio: input.bio.slice(0, 500),
-    })
-    .eq('uid', uid);
-  if (error && /column .* does not exist/i.test(error.message)) return;
+  const bio = input.bio.slice(0, 500);
+  const { error } = await supabase.rpc('set_profile_public', {
+    p_visibility: input.visibility,
+    p_bio: bio,
+  });
+  if (!error) return;
+  if (isSchemaCacheError(error) || isMissingSchema(error)) {
+    const { data: session } = await supabase.auth.getUser();
+    const uid = session.user?.id;
+    if (!uid) return;
+    const fallback = await supabase
+      .from('profiles')
+      .update({
+        visibility: input.visibility,
+        bio,
+      })
+      .eq('uid', uid);
+    if (fallback.error && /column .* does not exist/i.test(fallback.error.message)) {
+      return;
+    }
+    throwIfError(fallback.error);
+    return;
+  }
   throwIfError(error);
 }

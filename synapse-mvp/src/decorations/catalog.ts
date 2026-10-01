@@ -71,3 +71,9 @@ export function nameplateClass(id: string | null | undefined): string {
   if (key === 'one_year') return 'synapse-nameplate synapse-nameplate-gold';
   return '';
 }
+
+export function decorationFromRole(role: string | null | undefined): string {
+  if (role === 'superadmin') return 'superadmin';
+  if (role === 'admin') return 'admin';
+  return 'default';
+}

@@ -80,7 +80,7 @@ export default function PublicProfilePage({ username }: { username: string }) {
 
   return (
     <main id="main" className="synapse-mkt-main synapse-mkt-page synapse-public-profile">
-      <div className="synapse-public-profile-hero">
+      <div className="synapse-public-profile-hero" data-deco={creator.equippedDecoration || 'default'}>
         <DecorationFrame id={creator.equippedDecoration}>
           {creator.photoUrl ? (
             <img src={creator.photoUrl} alt="" width={72} height={72} />
@@ -88,7 +88,7 @@ export default function PublicProfilePage({ username }: { username: string }) {
             <span aria-hidden="true">@</span>
           )}
         </DecorationFrame>
-        <div>
+        <div className="synapse-profile-hero-copy">
           <h1 className={nameplateClass(creator.equippedDecoration)}>
             {creator.displayName}
           </h1>
@@ -97,6 +97,7 @@ export default function PublicProfilePage({ username }: { username: string }) {
             {creator.followerCount} follower{creator.followerCount === 1 ? '' : 's'}
             {creator.visibility === 'unlisted' ? ' · unlisted' : ''}
           </p>
+          <BadgeStrip badges={badges} featuredId={creator.featuredBadge} compact />
         </div>
       </div>
       {creator.bio ? <p className="synapse-mkt-lead">{creator.bio}</p> : null}

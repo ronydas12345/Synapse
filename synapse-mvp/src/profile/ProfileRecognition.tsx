@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PathLink } from '../app/AppLink';
 import { publicProfilePath } from '../app/routes';
 import BadgeStrip from '../badges/BadgeStrip';
@@ -18,9 +18,15 @@ import SharePanel from '../share/SharePanel';
 export default function ProfileRecognition({
   editing,
   onEquippedChange,
+  onRecognition,
 }: {
   editing: boolean;
   onEquippedChange?: (id: string) => void;
+  onRecognition?: (next: {
+    equipped?: string;
+    badges?: EarnedBadge[];
+    featured?: string;
+  }) => void;
 }) {
   const user = useAuthStore((s) => s.user);
   const username = useProfileStore((s) => s.profile.username);
@@ -33,6 +39,10 @@ export default function ProfileRecognition({
   const [followsEnabled, setFollowsEnabled] = useState(true);
   const [savesEnabled, setSavesEnabled] = useState(true);
   const [error, setError] = useState('');
+  const onEquippedRef = useRef(onEquippedChange);
+  const onRecognitionRef = useRef(onRecognition);
+  onEquippedRef.current = onEquippedChange;
+  onRecognitionRef.current = onRecognition;
 
   useEffect(() => {
     if (!user) return;
@@ -45,17 +55,23 @@ export default function ProfileRecognition({
           /* Badges already on the account still load. */
         }
         const [earned, deco, creator] = await Promise.all([
-          listEarnedBadges(user.uid),
-          listUnlockedDecorations(user.uid),
-          readOwnCreator(user.uid),
+          listEarnedBadges(user.uid).catch(() => [] as EarnedBadge[]),
+          listUnlockedDecorations(user.uid).catch(() => ['default']),
+          readOwnCreator(user.uid).catch(() => null),
         ]);
         if (cancelled) return;
+        const nextEquipped = creator?.equippedDecoration || 'default';
+        const nextFeatured = creator?.featuredBadge || '';
         setBadges(earned);
         setUnlocked(deco.length ? deco : ['default']);
-        const nextEquipped = creator?.equippedDecoration || 'default';
         setEquipped(nextEquipped);
-        onEquippedChange?.(nextEquipped);
-        setFeatured(creator?.featuredBadge || '');
+        setFeatured(nextFeatured);
+        onEquippedRef.current?.(nextEquipped);
+        onRecognitionRef.current?.({
+          equipped: nextEquipped,
+          badges: earned,
+          featured: nextFeatured,
+        });
         setShareCode(creator?.shareCode || '');
         setFollowsEnabled(creator?.followsEnabled !== false);
         setSavesEnabled(creator?.savesEnabled !== false);
@@ -68,7 +84,7 @@ export default function ProfileRecognition({
     return () => {
       cancelled = true;
     };
-  }, [user, onEquippedChange]);
+  }, [user]);
 
   if (!user) return null;
 
@@ -84,6 +100,7 @@ export default function ProfileRecognition({
 
   function saveFeatured(id: string) {
     setFeatured(id);
+    onRecognition?.({ featured: id });
     void setFeaturedBadge(id).catch((err) => {
       setError(err instanceof Error ? err.message : 'Could not save badge.');
     });
@@ -166,21 +183,20 @@ export default function ProfileRecognition({
           </label>
         </fieldset>
       ) : null}
-      {editing ? (
-        <DecorationPicker
-          equipped={equipped}
-          unlocked={unlocked}
-          onEquip={(id) => {
-            setEquipped(id);
-            onEquippedChange?.(id);
-            void equipDecoration(id).catch((err) => {
-              setError(err instanceof Error ? err.message : 'Could not equip decoration.');
-            });
-          }}
-        />
-      ) : (
-        <p className="synapse-settings-hint">Equipped decoration: {equipped}</p>
-      )}
+      <DecorationPicker
+        equipped={equipped}
+        unlocked={unlocked}
+        disabled={!editing}
+        onEquip={(id) => {
+          if (!editing) return;
+          setEquipped(id);
+          onEquippedChange?.(id);
+          onRecognition?.({ equipped: id });
+          void equipDecoration(id).catch((err) => {
+            setError(err instanceof Error ? err.message : 'Could not equip decoration.');
+          });
+        }}
+      />
     </section>
   );
 }

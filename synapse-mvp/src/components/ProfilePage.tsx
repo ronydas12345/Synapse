@@ -35,8 +35,10 @@ import AuthPanel from '../auth/AuthPanel';
 import { useAuthStore } from '../auth/authStore';
 import { uploadAvatarFromDataUrl, removeOwnAvatar } from '../cloud/avatar';
 import ProfileRecognition from '../profile/ProfileRecognition';
-import { nameplateClass } from '../decorations/catalog';
+import { decorationDef, decorationFromRole, nameplateClass } from '../decorations/catalog';
 import DecorationFrame from '../decorations/DecorationFrame';
+import BadgeStrip from '../badges/BadgeStrip';
+import type { EarnedBadge } from '../badges/api';
 import SavedCollections from '../workshop/SavedCollections';
 import { usePathStore } from '../store';
 
@@ -798,6 +800,9 @@ export default function ProfilePage() {
   const [songError, setSongError] = useState('');
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [equipped, setEquipped] = useState('default');
+  const [heroBadges, setHeroBadges] = useState<EarnedBadge[]>([]);
+  const [featuredBadge, setFeaturedBadge] = useState('');
+  const [decoReady, setDecoReady] = useState(false);
   const [avatarError, setAvatarError] = useState('');
 
   const userErr = usernameError(profile.username);
@@ -858,12 +863,18 @@ export default function ProfilePage() {
   const publicPaths = pathSummaries.filter((p) => p.visibility === 'public');
   const shownPaths =
     profile.visibility === 'public' && !editing ? publicPaths : pathSummaries;
+  const displayDeco = decoReady
+    ? equipped
+    : equipped !== 'default'
+      ? equipped
+      : decorationFromRole(authRole);
+  const deco = decorationDef(displayDeco);
 
   return (
     <div className="synapse-profile" data-tutorial="profile" id="workspace-main">
-      <div className="synapse-profile-hero">
+      <div className="synapse-profile-hero" data-deco={deco.id}>
         <div className="synapse-profile-identity">
-          <DecorationFrame id={equipped} className="synapse-profile-deco">
+          <DecorationFrame id={displayDeco} className="synapse-profile-deco">
             <button
               type="button"
               className="synapse-profile-avatar"
@@ -880,7 +891,7 @@ export default function ProfilePage() {
               )}
             </button>
           </DecorationFrame>
-          <div>
+          <div className="synapse-profile-hero-copy">
             <p className="synapse-section-label">
               {authUser
                 ? authRole === 'superadmin'
@@ -894,7 +905,7 @@ export default function ProfilePage() {
                     ? 'Unlisted profile'
                     : 'Private profile'}
             </p>
-            <h1 className={`synapse-profile-title ${nameplateClass(equipped)}`.trim()}>
+            <h1 className={`synapse-profile-title ${nameplateClass(displayDeco)}`.trim()}>
               {profile.displayName.trim() || 'Your profile'}
             </h1>
             <p className="synapse-profile-handle">
@@ -903,6 +914,11 @@ export default function ProfilePage() {
                 ? ' · picture in review'
                 : ''}
             </p>
+            <BadgeStrip
+              badges={heroBadges}
+              featuredId={featuredBadge}
+              compact
+            />
           </div>
         </div>
         <div className="synapse-profile-actions">
@@ -1000,7 +1016,18 @@ export default function ProfilePage() {
         )}
       </section>
 
-      <ProfileRecognition editing={editing} onEquippedChange={setEquipped} />
+      <ProfileRecognition
+        editing={editing}
+        onEquippedChange={setEquipped}
+        onRecognition={(next) => {
+          if (next.equipped !== undefined) {
+            setEquipped(next.equipped);
+            setDecoReady(true);
+          }
+          if (next.badges) setHeroBadges(next.badges);
+          if (next.featured !== undefined) setFeaturedBadge(next.featured);
+        }}
+      />
       {authUser ? (
         <section className="synapse-profile-section">
           <h2>Saved</h2>

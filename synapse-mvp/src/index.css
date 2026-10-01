@@ -2783,14 +2783,45 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 1rem;
-  align-items: center;
+  align-items: flex-end;
   flex-shrink: 0;
   z-index: 12;
-  padding: 1.35rem 1.75rem 1rem;
+  padding: 2.1rem 1.75rem 1.2rem;
   overflow: visible;
-  background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
-  backdrop-filter: blur(16px);
+  position: relative;
   border-bottom: 1px solid var(--border-strong);
+  background: var(--bg-panel);
+}
+
+.synapse-profile-hero[data-deco='one_month'] {
+  background:
+    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #cbd5e1 28%, transparent), transparent 58%),
+    linear-gradient(180deg, color-mix(in srgb, #334155 22%, var(--bg-panel)), var(--bg-panel));
+}
+
+.synapse-profile-hero[data-deco='one_year'] {
+  background:
+    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #facc15 32%, transparent), transparent 58%),
+    linear-gradient(180deg, color-mix(in srgb, #854d0e 28%, var(--bg-panel)), var(--bg-panel));
+}
+
+.synapse-profile-hero[data-deco='creator'] {
+  background:
+    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #4ade80 28%, transparent), transparent 58%),
+    linear-gradient(180deg, color-mix(in srgb, #14532d 28%, var(--bg-panel)), var(--bg-panel));
+}
+
+.synapse-profile-hero[data-deco='admin'] {
+  background:
+    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #60a5fa 32%, transparent), transparent 58%),
+    linear-gradient(180deg, color-mix(in srgb, #1e3a8a 30%, var(--bg-panel)), var(--bg-panel));
+}
+
+.synapse-profile-hero[data-deco='superadmin'] {
+  background:
+    radial-gradient(80% 140% at 8% 0%, color-mix(in srgb, #f97316 38%, transparent), transparent 56%),
+    radial-gradient(50% 80% at 90% 0%, color-mix(in srgb, #facc15 18%, transparent), transparent 50%),
+    linear-gradient(180deg, color-mix(in srgb, #7c2d12 38%, var(--bg-panel)), var(--bg-panel));
 }
 
 .synapse-profile-body {
@@ -2805,9 +2836,32 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
 
 .synapse-profile-identity {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 1rem;
   min-width: 0;
+}
+
+.synapse-profile-hero-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.synapse-profile-hero .synapse-badge-strip,
+.synapse-public-profile-hero .synapse-badge-strip {
+  margin: 0.45rem 0 0;
+}
+
+.synapse-profile-deco {
+  width: 5.75rem;
+  height: 5.75rem;
+  flex-shrink: 0;
+}
+
+.synapse-profile-deco .synapse-deco-ornament {
+  width: 4.4rem;
+  height: 2.2rem;
+  top: -1.15rem;
 }
 
 .synapse-profile-avatar {
@@ -4041,6 +4095,17 @@ button.synapse-badge {
   width: 4.5rem;
   height: 4.5rem;
   overflow: visible;
+}
+
+.synapse-deco.synapse-profile-deco {
+  width: 5.75rem;
+  height: 5.75rem;
+}
+
+.synapse-deco.synapse-profile-deco .synapse-deco-ornament {
+  width: 4.4rem;
+  height: 2.2rem;
+  top: -1.15rem;
 }
 
 .synapse-deco-face {

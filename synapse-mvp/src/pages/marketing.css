@@ -1111,10 +1111,44 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
 .synapse-public-profile-hero {
   display: flex;
   gap: 1rem;
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: 1rem;
   overflow: visible;
-  padding-top: 0.85rem;
+  padding: 1.6rem 1.1rem 1.1rem;
+  border-radius: var(--radius-md, 14px);
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+
+.synapse-public-profile-hero[data-deco='one_month'] {
+  background:
+    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #cbd5e1 28%, transparent), transparent 58%),
+    var(--bg-panel);
+}
+
+.synapse-public-profile-hero[data-deco='one_year'] {
+  background:
+    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #facc15 32%, transparent), transparent 58%),
+    var(--bg-panel);
+}
+
+.synapse-public-profile-hero[data-deco='creator'] {
+  background:
+    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #4ade80 28%, transparent), transparent 58%),
+    var(--bg-panel);
+}
+
+.synapse-public-profile-hero[data-deco='admin'] {
+  background:
+    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #60a5fa 32%, transparent), transparent 58%),
+    var(--bg-panel);
+}
+
+.synapse-public-profile-hero[data-deco='superadmin'] {
+  background:
+    radial-gradient(80% 140% at 8% 0%, color-mix(in srgb, #f97316 38%, transparent), transparent 56%),
+    radial-gradient(50% 80% at 90% 0%, color-mix(in srgb, #facc15 18%, transparent), transparent 50%),
+    var(--bg-panel);
 }
 
 .synapse-public-profile-hero img {

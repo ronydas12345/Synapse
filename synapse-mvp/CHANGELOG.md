@@ -25,6 +25,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Sticky section tabs on the Settings page so you can jump to Themes, Playback, Account, and the rest without scrolling the whole list.
 - Open settings for a track that is parked inside a Sequence or Randomizer from the node list or inspector, without dragging it back onto the canvas.
 - Playback speed on the bottom deck.
+- Profile header shows the equipped frame, crown/ornament, nameplate, and compact badges on a decoration banner instead of only listing them further down the page.
 - Profile decorations now show the handoff ornaments: silver/gold rings, creator laurel, admin star, and the Superuser crown. Staff frames also tint the display name.
 - Badges pick up color, gems, and sheen as their tier goes up (bronze through Superadmin).
 
@@ -41,7 +42,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Workshop listing and badge pages no longer fail when the API schema cache is still catching up. Publish, badges, and public profiles read the live Workshop tables.
 - Home marketing header no longer lets the Synapse wordmark overlap Home or Pricing overlap the theme picker. The bar uses the full window width, and the inline nav collapses sooner on Home where the theme control is extra.
 - Equipping a profile frame (or featured badge) no longer fails with `column reference "uid" is ambiguous`.
-- Profile load no longer flashes that same `uid` error: progress evaluation was deleting staff badges with an unqualified `uid` while RLS also read `creator_public.uid`. The frame still saved (or already looked changed) so it seemed harmless.
+- Public / unlisted / private profile visibility writes through `set_profile_public` instead of a table UPDATE that collided on `uid`. Staff helper functions are no longer inlined into RLS, which was still raising `column reference "uid" is ambiguous`.
 - Profile edit lets you feature a badge by clicking it, even if progress evaluation fails to refresh awards.
 
 ## [0.3.0] — 2026-08-30
