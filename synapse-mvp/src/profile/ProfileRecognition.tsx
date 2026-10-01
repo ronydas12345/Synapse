@@ -33,7 +33,11 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
     let cancelled = false;
     void (async () => {
       try {
-        await evaluateOwnProgress();
+        try {
+          await evaluateOwnProgress();
+        } catch {
+          /* Badges already on the account still load. */
+        }
         const [earned, deco, creator] = await Promise.all([
           listEarnedBadges(user.uid),
           listUnlockedDecorations(user.uid),
@@ -70,6 +74,13 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
     });
   }
 
+  function saveFeatured(id: string) {
+    setFeatured(id);
+    void setFeaturedBadge(id).catch((err) => {
+      setError(err instanceof Error ? err.message : 'Could not save badge.');
+    });
+  }
+
   return (
     <section className="synapse-profile-section">
       <h2>Badges and decorations</h2>
@@ -92,30 +103,30 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
         <SharePanel shareCode={shareCode} path={sharePath} label="profile" />
       ) : null}
       {error ? <p className="synapse-settings-error">{error}</p> : null}
-      <BadgeStrip badges={badges} featuredId={featured} />
-      {editing && badges.length > 0 ? (
-        <label className="synapse-settings-field">
-          Featured badge
-          <select
-            className="synapse-settings-input"
-            value={featured}
-            onChange={(event) => {
-              const id = event.target.value;
-              setFeatured(id);
-              void setFeaturedBadge(id).catch((err) => {
-                setError(err instanceof Error ? err.message : 'Could not save badge.');
-              });
-            }}
-          >
-            <option value="">None</option>
-            {badges.map((badge) => (
-              <option key={badge.id} value={badge.id}>
-                {badge.def.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : null}
+      {editing ? (
+        <div className="synapse-badge-picker">
+          <p className="synapse-settings-hint">
+            Click a badge to feature it on your public profile. Click it again
+            to clear.
+          </p>
+          {badges.length > 0 ? (
+            <button
+              type="button"
+              className={`synapse-btn synapse-btn-ghost${featured === '' ? ' is-on' : ''}`}
+              onClick={() => saveFeatured('')}
+            >
+              No featured badge
+            </button>
+          ) : null}
+          <BadgeStrip
+            badges={badges}
+            featuredId={featured}
+            onPick={saveFeatured}
+          />
+        </div>
+      ) : (
+        <BadgeStrip badges={badges} featuredId={featured} />
+      )}
       {editing ? (
         <fieldset className="synapse-workshop-toggles">
           <legend>Follows and profile saves</legend>

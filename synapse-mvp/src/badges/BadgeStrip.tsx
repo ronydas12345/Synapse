@@ -5,10 +5,12 @@ export default function BadgeStrip({
   badges,
   featuredId,
   compact = false,
+  onPick,
 }: {
   badges: EarnedBadge[];
   featuredId?: string;
   compact?: boolean;
+  onPick?: (id: string) => void;
 }) {
   if (badges.length === 0) {
     return compact ? null : (
@@ -20,18 +22,43 @@ export default function BadgeStrip({
   const shown = compact ? [featured, ...rest].filter(Boolean).slice(0, 4) : [featured, ...rest];
   return (
     <ul className={`synapse-badge-strip${compact ? ' is-compact' : ''}`}>
-      {shown.filter((badge): badge is EarnedBadge => Boolean(badge)).map((badge) => (
-        <li
-          key={badge.id}
-          className={`synapse-badge${badge.id === featuredId ? ' is-featured' : ''}`}
-          title={badge.def.description}
-        >
-          <span className="synapse-badge-name">{badge.def.name}</span>
-          {compact ? null : (
-            <span className="synapse-badge-copy">{badge.def.description}</span>
-          )}
-        </li>
-      ))}
+      {shown.filter((badge): badge is EarnedBadge => Boolean(badge)).map((badge) => {
+        const selected = badge.id === featuredId;
+        const body = (
+          <>
+            <span className="synapse-badge-name">{badge.def.name}</span>
+            {compact ? null : (
+              <span className="synapse-badge-copy">{badge.def.description}</span>
+            )}
+          </>
+        );
+        return (
+          <li key={badge.id}>
+            {onPick ? (
+              <button
+                type="button"
+                className={`synapse-badge${selected ? ' is-featured' : ''}`}
+                title={
+                  selected
+                    ? `${badge.def.description} (featured — click to clear)`
+                    : `Feature ${badge.def.name}`
+                }
+                aria-pressed={selected}
+                onClick={() => onPick(selected ? '' : badge.id)}
+              >
+                {body}
+              </button>
+            ) : (
+              <div
+                className={`synapse-badge${selected ? ' is-featured' : ''}`}
+                title={badge.def.description}
+              >
+                {body}
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

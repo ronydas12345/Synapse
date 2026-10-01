@@ -3816,10 +3816,28 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
 }
 
 .synapse-badge {
+  text-align: left;
+  font: inherit;
+  color: inherit;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 8px);
   padding: 0.45rem 0.65rem;
   background: var(--bg-panel);
+}
+
+button.synapse-badge {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.synapse-badge-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0.5rem 0 0.75rem;
 }
 
 .synapse-badge.is-featured {
