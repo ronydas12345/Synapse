@@ -1,4 +1,5 @@
-import { DECORATION_CATALOG, decorationClass } from './catalog';
+import { DECORATION_CATALOG } from './catalog';
+import DecorationFrame from './DecorationFrame';
 
 export default function DecorationPicker({
   equipped,
@@ -25,7 +26,7 @@ export default function DecorationPicker({
             onClick={() => onEquip(item.id)}
             title={locked ? `Locked — ${item.description}` : item.description}
           >
-            <span className={decorationClass(item.id)} aria-hidden="true" />
+            <DecorationFrame id={item.id} />
             <span>
               {item.name}
               {locked ? ' (locked)' : ''}

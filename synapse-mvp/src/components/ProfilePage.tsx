@@ -35,6 +35,8 @@ import AuthPanel from '../auth/AuthPanel';
 import { useAuthStore } from '../auth/authStore';
 import { uploadAvatarFromDataUrl, removeOwnAvatar } from '../cloud/avatar';
 import ProfileRecognition from '../profile/ProfileRecognition';
+import { nameplateClass } from '../decorations/catalog';
+import DecorationFrame from '../decorations/DecorationFrame';
 import SavedCollections from '../workshop/SavedCollections';
 import { usePathStore } from '../store';
 
@@ -795,6 +797,7 @@ export default function ProfilePage() {
   const [songBusy, setSongBusy] = useState(false);
   const [songError, setSongError] = useState('');
   const [avatarOpen, setAvatarOpen] = useState(false);
+  const [equipped, setEquipped] = useState('default');
   const [avatarError, setAvatarError] = useState('');
 
   const userErr = usernameError(profile.username);
@@ -860,21 +863,23 @@ export default function ProfilePage() {
     <div className="synapse-profile" data-tutorial="profile" id="workspace-main">
       <div className="synapse-profile-hero">
         <div className="synapse-profile-identity">
-          <button
-            type="button"
-            className="synapse-profile-avatar"
-            onClick={() => {
-              setAvatarError('');
-              setAvatarOpen(true);
-            }}
-            aria-label="Edit profile picture"
-          >
-            {photo ? (
-              <img src={photo} alt="" />
-            ) : (
-              <UserRound className="w-10 h-10" />
-            )}
-          </button>
+          <DecorationFrame id={equipped} className="synapse-profile-deco">
+            <button
+              type="button"
+              className="synapse-profile-avatar"
+              onClick={() => {
+                setAvatarError('');
+                setAvatarOpen(true);
+              }}
+              aria-label="Edit profile picture"
+            >
+              {photo ? (
+                <img src={photo} alt="" />
+              ) : (
+                <UserRound className="w-10 h-10" />
+              )}
+            </button>
+          </DecorationFrame>
           <div>
             <p className="synapse-section-label">
               {authUser
@@ -889,7 +894,7 @@ export default function ProfilePage() {
                     ? 'Unlisted profile'
                     : 'Private profile'}
             </p>
-            <h1 className="synapse-profile-title">
+            <h1 className={`synapse-profile-title ${nameplateClass(equipped)}`.trim()}>
               {profile.displayName.trim() || 'Your profile'}
             </h1>
             <p className="synapse-profile-handle">
@@ -995,7 +1000,7 @@ export default function ProfilePage() {
         )}
       </section>
 
-      <ProfileRecognition editing={editing} />
+      <ProfileRecognition editing={editing} onEquippedChange={setEquipped} />
       {authUser ? (
         <section className="synapse-profile-section">
           <h2>Saved</h2>

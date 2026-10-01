@@ -3,7 +3,8 @@ import { APP_PATHS, navigateApp, publicProfilePath } from '../app/routes';
 import { useAuthStore } from '../auth/authStore';
 import BadgeStrip from '../badges/BadgeStrip';
 import { listEarnedBadges, type EarnedBadge } from '../badges/api';
-import { decorationClass } from '../decorations/catalog';
+import { nameplateClass } from '../decorations/catalog';
+import DecorationFrame from '../decorations/DecorationFrame';
 import SharePanel from '../share/SharePanel';
 import {
   followCreator,
@@ -80,15 +81,17 @@ export default function PublicProfilePage({ username }: { username: string }) {
   return (
     <main id="main" className="synapse-mkt-main synapse-mkt-page synapse-public-profile">
       <div className="synapse-public-profile-hero">
-        <span className={decorationClass(creator.equippedDecoration)}>
+        <DecorationFrame id={creator.equippedDecoration}>
           {creator.photoUrl ? (
             <img src={creator.photoUrl} alt="" width={72} height={72} />
           ) : (
             <span aria-hidden="true">@</span>
           )}
-        </span>
+        </DecorationFrame>
         <div>
-          <h1>{creator.displayName}</h1>
+          <h1 className={nameplateClass(creator.equippedDecoration)}>
+            {creator.displayName}
+          </h1>
           <p className="synapse-profile-handle">@{creator.username}</p>
           <p className="synapse-settings-lead">
             {creator.followerCount} follower{creator.followerCount === 1 ? '' : 's'}

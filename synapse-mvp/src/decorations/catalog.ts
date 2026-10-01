@@ -1,8 +1,11 @@
+export type DecorationOrnament = 'none' | 'ring' | 'laurel' | 'star' | 'crown';
+
 export interface DecorationDef {
   id: string;
   name: string;
   description: string;
   cssClass: string;
+  ornament: DecorationOrnament;
 }
 
 export const DECORATION_CATALOG: DecorationDef[] = [
@@ -11,36 +14,42 @@ export const DECORATION_CATALOG: DecorationDef[] = [
     name: 'Default',
     description: 'Standard profile frame.',
     cssClass: 'synapse-deco-default',
+    ornament: 'none',
   },
   {
     id: 'one_month',
     name: 'One Month',
-    description: 'Unlocked with the One Month badge.',
+    description: 'Silver ring unlocked with the One Month badge.',
     cssClass: 'synapse-deco-one-month',
+    ornament: 'ring',
   },
   {
     id: 'one_year',
     name: 'One Year',
-    description: 'Unlocked with the One Year badge.',
+    description: 'Gold filigree unlocked with the One Year badge.',
     cssClass: 'synapse-deco-one-year',
+    ornament: 'ring',
   },
   {
     id: 'creator',
     name: 'Creator',
-    description: 'Unlocked after publishing a Workshop creation.',
+    description: 'Laurel wreath unlocked after publishing a Workshop creation.',
     cssClass: 'synapse-deco-creator',
+    ornament: 'laurel',
   },
   {
     id: 'admin',
     name: 'Admin',
-    description: 'Staff decoration for Admins.',
+    description: 'Staff star for Admins.',
     cssClass: 'synapse-deco-admin',
+    ornament: 'star',
   },
   {
     id: 'superadmin',
-    name: 'Superadmin',
-    description: 'Staff decoration for the owner.',
+    name: 'Superuser',
+    description: 'Owner crown for the Superadmin account.',
     cssClass: 'synapse-deco-superadmin',
+    ornament: 'crown',
   },
 ];
 
@@ -52,4 +61,13 @@ export function decorationDef(id: string | null | undefined): DecorationDef {
 
 export function decorationClass(id: string | null | undefined): string {
   return `synapse-deco ${decorationDef(id).cssClass}`;
+}
+
+export function nameplateClass(id: string | null | undefined): string {
+  const key = decorationDef(id).id;
+  if (key === 'superadmin') return 'synapse-nameplate synapse-nameplate-superuser';
+  if (key === 'admin') return 'synapse-nameplate synapse-nameplate-admin';
+  if (key === 'creator') return 'synapse-nameplate synapse-nameplate-creator';
+  if (key === 'one_year') return 'synapse-nameplate synapse-nameplate-gold';
+  return '';
 }

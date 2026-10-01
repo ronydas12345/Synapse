@@ -2786,7 +2786,8 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
   align-items: center;
   flex-shrink: 0;
   z-index: 12;
-  padding: 1rem 1.75rem;
+  padding: 1.35rem 1.75rem 1rem;
+  overflow: visible;
   background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-strong);
@@ -3823,6 +3824,8 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
   border-radius: var(--radius-sm, 8px);
   padding: 0.45rem 0.65rem;
   background: var(--bg-panel);
+  position: relative;
+  overflow: hidden;
 }
 
 button.synapse-badge {
@@ -3840,12 +3843,36 @@ button.synapse-badge {
   margin: 0.5rem 0 0.75rem;
 }
 
+.synapse-badge-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.synapse-badge-mark {
+  display: inline-flex;
+  gap: 0.12rem;
+  flex-shrink: 0;
+}
+
+.synapse-badge-gem {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+}
+
 .synapse-badge.is-featured {
-  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 55%, transparent),
+    0 0 18px color-mix(in srgb, currentColor 22%, transparent);
 }
 
 .synapse-badge.is-inline {
   display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   font-size: 0.75rem;
   padding: 0.15rem 0.4rem;
 }
@@ -3853,6 +3880,7 @@ button.synapse-badge {
 .synapse-badge-name {
   display: block;
   font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .synapse-badge-copy {
@@ -3861,23 +3889,140 @@ button.synapse-badge {
   font-size: 0.85rem;
 }
 
+.synapse-badge-t1 {
+  color: #d7b48a;
+  border-color: color-mix(in srgb, #b45309 45%, var(--border));
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, #b45309 16%, var(--bg-panel)),
+    var(--bg-panel)
+  );
+}
+
+.synapse-badge-t2 {
+  color: #d5dee8;
+  border-color: color-mix(in srgb, #94a3b8 55%, var(--border));
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, #cbd5e1 18%, var(--bg-panel)),
+    var(--bg-panel)
+  );
+}
+
+.synapse-badge-t3 {
+  color: #f5d76e;
+  border-color: color-mix(in srgb, #eab308 60%, var(--border));
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, #eab308 20%, var(--bg-panel)),
+    var(--bg-panel)
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #facc15 28%, transparent);
+}
+
+.synapse-badge-t4 {
+  color: #e0f2fe;
+  border-color: color-mix(in srgb, #67e8f9 55%, var(--border));
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, #22d3ee 10%, transparent),
+      transparent 40%
+    ),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, #38bdf8 22%, var(--bg-panel)),
+      var(--bg-panel)
+    );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #67e8f9 35%, transparent),
+    0 0 16px color-mix(in srgb, #22d3ee 18%, transparent);
+}
+
+.synapse-badge-t5 {
+  color: #ffe7a3;
+  border-color: color-mix(in srgb, #f97316 70%, #facc15);
+  background:
+    radial-gradient(
+      120% 80% at 10% 0%,
+      color-mix(in srgb, #f97316 28%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, #f59e0b 26%, var(--bg-panel)),
+      var(--bg-panel)
+    );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #fde68a 45%, transparent),
+    0 0 22px color-mix(in srgb, #f97316 28%, transparent);
+  text-shadow: 0 0 12px color-mix(in srgb, #facc15 35%, transparent);
+}
+
+.synapse-badge-t4::after,
+.synapse-badge-t5::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    color-mix(in srgb, white 22%, transparent) 45%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: synapse-badge-sheen 3.6s ease-in-out infinite;
+}
+
+.synapse-badge-t5::before {
+  content: "";
+  position: absolute;
+  top: 0.35rem;
+  right: 0.45rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #fff7d1, #f59e0b);
+  box-shadow: 0 0 10px #facc15;
+}
+
+@keyframes synapse-badge-sheen {
+  0%,
+  55% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .synapse-badge-t4::after,
+  .synapse-badge-t5::after {
+    animation: none;
+  }
+}
+
 .synapse-deco-picker {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
   gap: 0.5rem;
+  overflow: visible;
 }
 
 .synapse-deco-option {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.6rem;
+  gap: 0.55rem;
+  padding: 1.1rem 0.6rem 0.6rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 8px);
   background: var(--bg-panel);
   color: inherit;
   cursor: pointer;
+  overflow: visible;
 }
 
 .synapse-deco-option.is-on {
@@ -3890,45 +4035,144 @@ button.synapse-badge {
 }
 
 .synapse-deco {
+  position: relative;
   display: grid;
   place-items: center;
   width: 4.5rem;
   height: 4.5rem;
+  overflow: visible;
+}
+
+.synapse-deco-face {
+  width: 100%;
+  height: 100%;
   border-radius: 999px;
   overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--bg-elevated);
+}
+
+.synapse-deco-ornament {
+  position: absolute;
+  left: 50%;
+  top: -0.85rem;
+  width: 3.4rem;
+  height: 1.7rem;
+  transform: translateX(-50%);
+  z-index: 2;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
+}
+
+.synapse-deco-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.synapse-deco-ornament[data-kind='laurel'] {
+  inset: -0.45rem;
+  width: auto;
+  height: auto;
+  top: -0.45rem;
+  left: -0.45rem;
+  transform: none;
+  filter: none;
+}
+
+.synapse-deco-svg-wreath {
+  width: 100%;
+  height: 100%;
+}
+
+.synapse-deco-one-month .synapse-deco-ornament,
+.synapse-deco-one-year .synapse-deco-ornament {
+  color: #f5d76e;
+  top: -0.35rem;
+  height: 0.9rem;
+}
+
+.synapse-deco-one-month .synapse-deco-ornament {
+  color: #e2e8f0;
 }
 
 .synapse-deco img,
-.synapse-public-profile-hero .synapse-deco img {
+.synapse-public-profile-hero .synapse-deco img,
+.synapse-deco-face .synapse-profile-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.synapse-deco-default {
+.synapse-deco-face .synapse-profile-avatar {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.synapse-deco-default .synapse-deco-face {
   border: 2px solid var(--border);
 }
 
-.synapse-deco-one-month {
-  border: 2px solid color-mix(in srgb, var(--accent) 70%, white);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+.synapse-deco-one-month .synapse-deco-face {
+  border: 2px solid color-mix(in srgb, #cbd5e1 80%, white);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, #94a3b8 30%, transparent),
+    0 0 16px color-mix(in srgb, #e2e8f0 18%, transparent);
 }
 
-.synapse-deco-one-year {
-  border: 3px solid gold;
+.synapse-deco-one-year .synapse-deco-face {
+  border: 3px solid #f5d76e;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, #eab308 35%, transparent),
+    0 0 18px color-mix(in srgb, #facc15 28%, transparent);
 }
 
-.synapse-deco-creator {
-  border: 2px solid color-mix(in srgb, var(--accent) 80%, #3b82f6);
+.synapse-deco-creator .synapse-deco-face {
+  border: 2px solid #4ade80;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #22c55e 28%, transparent);
 }
 
-.synapse-deco-admin {
+.synapse-deco-admin .synapse-deco-face {
   border: 2px solid #60a5fa;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, #3b82f6 32%, transparent),
+    0 0 16px color-mix(in srgb, #60a5fa 24%, transparent);
 }
 
-.synapse-deco-superadmin {
+.synapse-deco-superadmin .synapse-deco-face {
   border: 3px solid #f97316;
-  box-shadow: 0 0 0 3px color-mix(in srgb, #f97316 30%, transparent);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, #f97316 35%, transparent),
+    0 0 22px color-mix(in srgb, #f59e0b 32%, transparent);
+}
+
+.synapse-nameplate-gold {
+  background: linear-gradient(90deg, #fde68a, #f5d76e 40%, #fff7d1 70%, #eab308);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.synapse-nameplate-creator {
+  color: #86efac;
+}
+
+.synapse-nameplate-admin {
+  color: #93c5fd;
+  text-shadow: 0 0 12px color-mix(in srgb, #60a5fa 35%, transparent);
+}
+
+.synapse-nameplate-superuser {
+  background: linear-gradient(90deg, #fdba74, #facc15 35%, #fff7ed 55%, #f97316);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, #f97316 40%, transparent));
 }
 
 .synapse-command-btn {

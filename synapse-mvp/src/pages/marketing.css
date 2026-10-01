@@ -1113,6 +1113,8 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
   gap: 1rem;
   align-items: center;
   margin-bottom: 1rem;
+  overflow: visible;
+  padding-top: 0.85rem;
 }
 
 .synapse-public-profile-hero img {

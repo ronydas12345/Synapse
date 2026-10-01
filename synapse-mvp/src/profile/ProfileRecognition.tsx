@@ -15,7 +15,13 @@ import { useAuthStore } from '../auth/authStore';
 import { useProfileStore } from '../profile/profileStore';
 import SharePanel from '../share/SharePanel';
 
-export default function ProfileRecognition({ editing }: { editing: boolean }) {
+export default function ProfileRecognition({
+  editing,
+  onEquippedChange,
+}: {
+  editing: boolean;
+  onEquippedChange?: (id: string) => void;
+}) {
   const user = useAuthStore((s) => s.user);
   const username = useProfileStore((s) => s.profile.username);
   const visibility = useProfileStore((s) => s.profile.visibility);
@@ -46,7 +52,9 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
         if (cancelled) return;
         setBadges(earned);
         setUnlocked(deco.length ? deco : ['default']);
-        setEquipped(creator?.equippedDecoration || 'default');
+        const nextEquipped = creator?.equippedDecoration || 'default';
+        setEquipped(nextEquipped);
+        onEquippedChange?.(nextEquipped);
         setFeatured(creator?.featuredBadge || '');
         setShareCode(creator?.shareCode || '');
         setFollowsEnabled(creator?.followsEnabled !== false);
@@ -60,7 +68,7 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, onEquippedChange]);
 
   if (!user) return null;
 
@@ -164,6 +172,7 @@ export default function ProfileRecognition({ editing }: { editing: boolean }) {
           unlocked={unlocked}
           onEquip={(id) => {
             setEquipped(id);
+            onEquippedChange?.(id);
             void equipDecoration(id).catch((err) => {
               setError(err instanceof Error ? err.message : 'Could not equip decoration.');
             });

@@ -29,5 +29,14 @@ describe('phase 1 catalogs', () => {
       'admin',
       'superadmin',
     ]);
+    expect(DECORATION_CATALOG.find((item) => item.id === 'superadmin')?.ornament).toBe(
+      'crown'
+    );
+  });
+
+  it('gives higher badges a higher visual tier', () => {
+    expect(BADGE_CATALOG.find((badge) => badge.id === 'first_creation')?.tier).toBe(1);
+    expect(BADGE_CATALOG.find((badge) => badge.id === 'uploads_100')?.tier).toBe(4);
+    expect(BADGE_CATALOG.find((badge) => badge.id === 'superadmin')?.tier).toBe(5);
   });
 });
