@@ -119,7 +119,13 @@ export function normalizeStackedConditionals(
           handlePathIndex(edge.sourceHandle, order)
         );
         const child = byId.get(edge.target);
-        const nested = child ? flattenRandomChild(parentWeight, child, edges) : null;
+        if (!child) {
+          if (edge.target) {
+            flat.push({ target: edge.target, num: parentWeight, den: 1 });
+          }
+          return;
+        }
+        const nested = flattenRandomChild(parentWeight, child, edges);
         if (nested) {
           removeNodeIds.add(child.id);
           removeEdgeIds.add(edge.id);
