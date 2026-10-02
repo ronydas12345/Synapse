@@ -36,6 +36,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - The first-run tutorial waits about 50 seconds on the home page so people who already know where to go can click through. Scrolling to the bottom also opens it once. The tour starts with create-account or log in, then continues on Edit. Help (?) still opens it immediately for signed-out visitors. Signed-in accounts do not get the home-page prompt.
 - Playlist name and switcher sit with Commands on the right of the workspace header, not beside the Synapse wordmark.
 - Empty inspector text fields restore the previous value when you click away. Shift-snap does not arm while a text box is focused.
+- The public profile link sits in Identity as an underlined theme accent. Profile frames use a small corner wash instead of full-panel gradients.
 
 ### Fixed
 

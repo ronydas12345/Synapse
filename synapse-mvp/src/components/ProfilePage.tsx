@@ -875,9 +875,6 @@ export default function ProfilePage() {
   return (
     <div className="synapse-profile" data-tutorial="profile" id="workspace-main">
       <div className="synapse-profile-hero" data-deco={deco.id}>
-        <div className="synapse-profile-hero-top">
-          <ProfileNavLinks here="settings" username={profile.username} />
-        </div>
         <div className="synapse-profile-identity">
           <DecorationFrame id={displayDeco} className="synapse-profile-deco">
             <button
@@ -958,6 +955,7 @@ export default function ProfilePage() {
 
       <section className="synapse-profile-section synapse-profile-identity-card" data-section="identity">
         <h2>Identity</h2>
+        <ProfileNavLinks here="settings" username={profile.username} />
         <AuthPanel variant="account" />
         {editing ? (
           <>

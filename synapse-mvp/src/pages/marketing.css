@@ -1125,37 +1125,43 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
 }
 
 .synapse-profile-nav a {
-  font-weight: 650;
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.synapse-profile-nav a:hover {
+  color: color-mix(in srgb, var(--accent) 62%, var(--text));
 }
 
 .synapse-public-profile-hero[data-deco='one_month'] {
   background:
-    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #cbd5e1 28%, transparent), transparent 58%),
+    radial-gradient(42% 90% at 4% 0%, color-mix(in srgb, #cbd5e1 12%, transparent), transparent 72%),
     var(--bg-panel);
 }
 
 .synapse-public-profile-hero[data-deco='one_year'] {
   background:
-    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #facc15 32%, transparent), transparent 58%),
+    radial-gradient(42% 90% at 4% 0%, color-mix(in srgb, #facc15 11%, transparent), transparent 72%),
     var(--bg-panel);
 }
 
 .synapse-public-profile-hero[data-deco='creator'] {
   background:
-    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #4ade80 28%, transparent), transparent 58%),
+    radial-gradient(42% 90% at 4% 0%, color-mix(in srgb, #4ade80 10%, transparent), transparent 72%),
     var(--bg-panel);
 }
 
 .synapse-public-profile-hero[data-deco='admin'] {
   background:
-    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #60a5fa 32%, transparent), transparent 58%),
+    radial-gradient(42% 90% at 4% 0%, color-mix(in srgb, #60a5fa 11%, transparent), transparent 72%),
     var(--bg-panel);
 }
 
 .synapse-public-profile-hero[data-deco='superadmin'] {
   background:
-    radial-gradient(80% 140% at 8% 0%, color-mix(in srgb, #f97316 38%, transparent), transparent 56%),
-    radial-gradient(50% 80% at 90% 0%, color-mix(in srgb, #facc15 18%, transparent), transparent 50%),
+    radial-gradient(46% 92% at 5% 0%, color-mix(in srgb, #f97316 12%, transparent), transparent 74%),
     var(--bg-panel);
 }
 

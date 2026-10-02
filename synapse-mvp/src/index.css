@@ -2793,49 +2793,49 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
   background: var(--bg-panel);
 }
 
-.synapse-profile-hero-top {
-  flex: 1 0 100%;
-  align-self: flex-start;
-}
-
 .synapse-profile-nav {
-  margin: 0;
+  margin: 0.15rem 0 0.65rem;
 }
 
 .synapse-profile-nav a {
-  font-weight: 650;
   color: var(--accent);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.synapse-profile-nav a:hover {
+  color: color-mix(in srgb, var(--accent) 62%, var(--text));
 }
 
 .synapse-profile-hero[data-deco='one_month'] {
   background:
-    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #cbd5e1 28%, transparent), transparent 58%),
-    linear-gradient(180deg, color-mix(in srgb, #334155 22%, var(--bg-panel)), var(--bg-panel));
+    radial-gradient(42% 90% at 4% 0%, color-mix(in srgb, #cbd5e1 12%, transparent), transparent 72%),
+    var(--bg-panel);
 }
 
 .synapse-profile-hero[data-deco='one_year'] {
   background:
-    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #facc15 32%, transparent), transparent 58%),
-    linear-gradient(180deg, color-mix(in srgb, #854d0e 28%, var(--bg-panel)), var(--bg-panel));
+    radial-gradient(42% 90% at 4% 0%, color-mix(in srgb, #facc15 11%, transparent), transparent 72%),
+    var(--bg-panel);
 }
 
 .synapse-profile-hero[data-deco='creator'] {
   background:
-    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #4ade80 28%, transparent), transparent 58%),
-    linear-gradient(180deg, color-mix(in srgb, #14532d 28%, var(--bg-panel)), var(--bg-panel));
+    radial-gradient(42% 90% at 4% 0%, color-mix(in srgb, #4ade80 10%, transparent), transparent 72%),
+    var(--bg-panel);
 }
 
 .synapse-profile-hero[data-deco='admin'] {
   background:
-    radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #60a5fa 32%, transparent), transparent 58%),
-    linear-gradient(180deg, color-mix(in srgb, #1e3a8a 30%, var(--bg-panel)), var(--bg-panel));
+    radial-gradient(42% 90% at 4% 0%, color-mix(in srgb, #60a5fa 11%, transparent), transparent 72%),
+    var(--bg-panel);
 }
 
 .synapse-profile-hero[data-deco='superadmin'] {
   background:
-    radial-gradient(80% 140% at 8% 0%, color-mix(in srgb, #f97316 38%, transparent), transparent 56%),
-    radial-gradient(50% 80% at 90% 0%, color-mix(in srgb, #facc15 18%, transparent), transparent 50%),
-    linear-gradient(180deg, color-mix(in srgb, #7c2d12 38%, var(--bg-panel)), var(--bg-panel));
+    radial-gradient(46% 92% at 5% 0%, color-mix(in srgb, #f97316 12%, transparent), transparent 74%),
+    var(--bg-panel);
 }
 
 .synapse-profile-body {
@@ -4141,7 +4141,6 @@ button.synapse-badge {
   transform: translateX(-50%);
   z-index: 2;
   pointer-events: none;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
 }
 
 .synapse-deco-svg {
@@ -4197,61 +4196,39 @@ button.synapse-badge {
 }
 
 .synapse-deco-one-month .synapse-deco-face {
-  border: 2px solid color-mix(in srgb, #cbd5e1 80%, white);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, #94a3b8 30%, transparent),
-    0 0 16px color-mix(in srgb, #e2e8f0 18%, transparent);
+  border: 2px solid color-mix(in srgb, #cbd5e1 55%, var(--border));
 }
 
 .synapse-deco-one-year .synapse-deco-face {
-  border: 3px solid #f5d76e;
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, #eab308 35%, transparent),
-    0 0 18px color-mix(in srgb, #facc15 28%, transparent);
+  border: 2px solid color-mix(in srgb, #eab308 50%, var(--border));
 }
 
 .synapse-deco-creator .synapse-deco-face {
-  border: 2px solid #4ade80;
-  box-shadow: 0 0 0 3px color-mix(in srgb, #22c55e 28%, transparent);
+  border: 2px solid color-mix(in srgb, #4ade80 45%, var(--border));
 }
 
 .synapse-deco-admin .synapse-deco-face {
-  border: 2px solid #60a5fa;
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, #3b82f6 32%, transparent),
-    0 0 16px color-mix(in srgb, #60a5fa 24%, transparent);
+  border: 2px solid color-mix(in srgb, #60a5fa 48%, var(--border));
 }
 
 .synapse-deco-superadmin .synapse-deco-face {
-  border: 3px solid #f97316;
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, #f97316 35%, transparent),
-    0 0 22px color-mix(in srgb, #f59e0b 32%, transparent);
+  border: 2px solid color-mix(in srgb, #f97316 50%, var(--border));
 }
 
 .synapse-nameplate-gold {
-  background: linear-gradient(90deg, #fde68a, #f5d76e 40%, #fff7d1 70%, #eab308);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: color-mix(in srgb, #eab308 55%, var(--text));
 }
 
 .synapse-nameplate-creator {
-  color: #86efac;
+  color: color-mix(in srgb, #4ade80 48%, var(--text));
 }
 
 .synapse-nameplate-admin {
-  color: #93c5fd;
-  text-shadow: 0 0 12px color-mix(in srgb, #60a5fa 35%, transparent);
+  color: color-mix(in srgb, #60a5fa 50%, var(--text));
 }
 
 .synapse-nameplate-superuser {
-  background: linear-gradient(90deg, #fdba74, #facc15 35%, #fff7ed 55%, #f97316);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: none;
-  filter: drop-shadow(0 0 10px color-mix(in srgb, #f97316 40%, transparent));
+  color: color-mix(in srgb, #f97316 52%, var(--text));
 }
 
 .synapse-command-btn {
