@@ -2861,6 +2861,10 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
   gap: 0.2rem;
 }
 
+.synapse-profile-hero-copy .synapse-profile-nav {
+  margin: 0.15rem 0 0;
+}
+
 .synapse-profile-hero .synapse-badge-strip,
 .synapse-public-profile-hero .synapse-badge-strip {
   margin: 0.45rem 0 0;

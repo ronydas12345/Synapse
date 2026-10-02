@@ -87,9 +87,6 @@ export default function PublicProfilePage({ username }: { username: string }) {
 
   return (
     <main id="main" className="synapse-mkt-main synapse-mkt-page synapse-public-profile">
-      {own ? (
-        <ProfileNavLinks here="public" username={ownUsername || creator.username} />
-      ) : null}
       <div
         className="synapse-public-profile-hero"
         data-deco={creator.equippedDecoration || 'default'}
@@ -106,6 +103,12 @@ export default function PublicProfilePage({ username }: { username: string }) {
             {creator.displayName}
           </h1>
           <p className="synapse-profile-handle">@{creator.username}</p>
+          {own ? (
+            <ProfileNavLinks
+              here="public"
+              username={ownUsername || creator.username}
+            />
+          ) : null}
           <p className="synapse-settings-lead">
             {creator.followerCount} follower{creator.followerCount === 1 ? '' : 's'}
             {creator.visibility === 'unlisted' ? ' · unlisted' : ''}
@@ -114,17 +117,8 @@ export default function PublicProfilePage({ username }: { username: string }) {
         </div>
       </div>
       {creator.bio ? <p className="synapse-mkt-lead">{creator.bio}</p> : null}
+      {!own ? (
       <div className="synapse-workshop-actions">
-        {own ? (
-          <button
-            type="button"
-            className="synapse-btn synapse-btn-ghost"
-            onClick={() => navigateApp(APP_PATHS.profile)}
-          >
-            Profile settings
-          </button>
-        ) : (
-          <>
             {creator.followsEnabled ? (
               <button
                 type="button"
@@ -174,9 +168,8 @@ export default function PublicProfilePage({ username }: { username: string }) {
                 {bookmarked ? 'Saved' : 'Save creator'}
               </button>
             ) : null}
-          </>
-        )}
       </div>
+      ) : null}
       {error ? <p className="synapse-settings-error">{error}</p> : null}
       {(creator.visibility === 'public' ||
         creator.visibility === 'unlisted' ||

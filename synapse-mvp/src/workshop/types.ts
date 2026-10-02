@@ -2,6 +2,14 @@ export type WorkshopVisibility = 'private' | 'unlisted' | 'public';
 export type WorkshopStatus = 'active' | 'pending' | 'rejected' | 'removed';
 export type WorkshopTab = 'home' | 'new' | 'featured' | 'search' | 'saved';
 export type WorkshopKind = 'playlist' | 'theme';
+export type WorkshopBrowseKind = WorkshopKind | 'all' | 'user';
+
+export const WORKSHOP_BROWSE_OPTIONS: { id: WorkshopBrowseKind; label: string }[] = [
+  { id: 'all', label: 'All types' },
+  { id: 'playlist', label: 'Playlists' },
+  { id: 'theme', label: 'Themes' },
+  { id: 'user', label: 'Users' },
+];
 export type ReportReason = 'spam' | 'abuse' | 'overlay' | 'copyright' | 'other';
 
 export interface WorkshopPayload {

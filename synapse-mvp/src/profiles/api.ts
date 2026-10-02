@@ -124,6 +124,35 @@ export async function listSavedCreators(): Promise<PublicCreator[]> {
   return data.map((row) => mapCreator(row as Record<string, unknown>));
 }
 
+export async function listPublicCreators(
+  query = '',
+  order: 'followers' | 'new' = 'followers'
+): Promise<PublicCreator[]> {
+  const cleaned = query
+    .trim()
+    .replace(/[^a-zA-Z0-9_ -]/g, '')
+    .replace(/\s+/g, '%')
+    .slice(0, 80);
+  let request = supabase
+    .from('creator_public')
+    .select('*')
+    .eq('visibility', 'public')
+    .limit(60);
+  if (cleaned) {
+    request = request.or(
+      `username.ilike.%${cleaned}%,display_name.ilike.%${cleaned}%`
+    );
+  }
+  request =
+    order === 'new'
+      ? request.order('created_at', { ascending: false })
+      : request.order('follower_count', { ascending: false });
+  const { data, error } = await request;
+  if (isMissingSchema(error)) return [];
+  throwIfError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => mapCreator(row));
+}
+
 export async function setProfileSocial(input: {
   followsEnabled: boolean;
   savesEnabled: boolean;

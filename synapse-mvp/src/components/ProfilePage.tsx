@@ -35,7 +35,7 @@ import AuthPanel from '../auth/AuthPanel';
 import { useAuthStore } from '../auth/authStore';
 import { uploadAvatarFromDataUrl, removeOwnAvatar } from '../cloud/avatar';
 import ProfileRecognition from '../profile/ProfileRecognition';
-import { decorationDef, decorationFromRole, nameplateClass } from '../decorations/catalog';
+import { decorationDef, nameplateClass } from '../decorations/catalog';
 import DecorationFrame from '../decorations/DecorationFrame';
 import BadgeStrip from '../badges/BadgeStrip';
 import type { EarnedBadge } from '../badges/api';
@@ -865,11 +865,7 @@ export default function ProfilePage() {
   const publicPaths = pathSummaries.filter((p) => p.visibility === 'public');
   const shownPaths =
     profile.visibility === 'public' && !editing ? publicPaths : pathSummaries;
-  const displayDeco = decoReady
-    ? equipped
-    : equipped !== 'default'
-      ? equipped
-      : decorationFromRole(authRole);
+  const displayDeco = decoReady ? equipped : 'default';
   const deco = decorationDef(displayDeco);
 
   return (
@@ -916,6 +912,7 @@ export default function ProfilePage() {
                 ? ' · picture in review'
                 : ''}
             </p>
+            <ProfileNavLinks here="settings" username={profile.username} />
             <BadgeStrip
               badges={heroBadges}
               featuredId={featuredBadge}
@@ -955,7 +952,6 @@ export default function ProfilePage() {
 
       <section className="synapse-profile-section synapse-profile-identity-card" data-section="identity">
         <h2>Identity</h2>
-        <ProfileNavLinks here="settings" username={profile.username} />
         <AuthPanel variant="account" />
         {editing ? (
           <>

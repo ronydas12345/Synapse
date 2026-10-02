@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { PathLink } from '../app/AppLink';
 import { useAuthStore } from '../auth/authStore';
-import { APP_PATHS, navigateApp, publicProfilePath } from '../app/routes';
-import { listSavedCreators, type PublicCreator } from '../profiles/api';
+import { APP_PATHS, navigateApp } from '../app/routes';
+import { listSavedCreators, listPublicCreators, type PublicCreator } from '../profiles/api';
 import { listSavedCreations, listWorkshop } from './api';
-import type { WorkshopCard as Card, WorkshopKind, WorkshopTab } from './types';
+import {
+  WORKSHOP_BROWSE_OPTIONS,
+  type WorkshopBrowseKind,
+  type WorkshopCard as Card,
+  type WorkshopTab,
+} from './types';
+import CreatorCard from './CreatorCard';
 import TagPicker from './TagPicker';
 import WorkshopCard from './WorkshopCard';
 
@@ -28,7 +33,7 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
   const signedIn = Boolean(useAuthStore((s) => s.user));
   const [tab, setTab] = useState<WorkshopTab>(() => (preview ? 'home' : tabFromHash()));
   const [query, setQuery] = useState('');
-  const [kind, setKind] = useState<WorkshopKind | 'all'>('all');
+  const [kind, setKind] = useState<WorkshopBrowseKind>('all');
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [creators, setCreators] = useState<PublicCreator[]>([]);
@@ -69,8 +74,20 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
           }
           return;
         }
+        if (kind === 'user') {
+          const rows = await listPublicCreators(
+            search,
+            tab === 'new' ? 'new' : 'followers'
+          );
+          if (!cancelled) {
+            setCards([]);
+            setCreators(preview ? rows.slice(0, 6) : rows);
+            setError('');
+          }
+          return;
+        }
         const rows = await listWorkshop(tab === 'home' ? 'new' : tab, search, {
-          kind,
+          kind: kind === 'all' ? 'all' : kind,
           tags: tagFilter,
         });
         if (!cancelled) {
@@ -117,9 +134,9 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
       <p className="synapse-mkt-kicker">Workshop</p>
       <h2 id="workshop-title">Build it. Share it. Discover something new.</h2>
       <p className="synapse-mkt-lead">
-        Public Music Paths and themes live here. Filter by type or tags, then
-        like, save, comment, remix, and follow. Unlisted items share with an ID
-        or a link. Private drafts stay on your account until you publish.
+        Public Music Paths, themes, and users live here. Filter by type or tags,
+        then like, save, comment, remix, and follow. Unlisted items share with an
+        ID or a link. Private drafts stay on your account until you publish.
       </p>
       {preview ? null : (
         <div className="synapse-workshop-tabs" role="tablist" aria-label="Workshop views">
@@ -142,14 +159,16 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
                 className="synapse-settings-input"
                 value={kind}
                 onChange={(event) => {
-                  setKind(event.target.value as WorkshopKind | 'all');
+                  setKind(event.target.value as WorkshopBrowseKind);
                   setTagFilter([]);
                 }}
                 aria-label="Content type"
               >
-                <option value="all">All types</option>
-                <option value="playlist">Playlists</option>
-                <option value="theme">Themes</option>
+                {WORKSHOP_BROWSE_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
           )}
           {signedIn ? (
@@ -188,26 +207,30 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
               className="synapse-settings-input"
               value={kind}
               onChange={(event) => {
-                setKind(event.target.value as WorkshopKind | 'all');
+                setKind(event.target.value as WorkshopBrowseKind);
                 setTagFilter([]);
               }}
             >
-              <option value="all">Playlists and themes</option>
-              <option value="playlist">Playlists</option>
-              <option value="theme">Themes</option>
+              {WORKSHOP_BROWSE_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </label>
-          {kind === 'all' ? (
-            <p className="synapse-settings-lead">
-              Choose Playlists or Themes to filter by that catalog’s tags.
-            </p>
-          ) : (
+          {kind === 'playlist' || kind === 'theme' ? (
             <TagPicker
               kind={kind}
               value={tagFilter}
               onChange={setTagFilter}
               label={kind === 'theme' ? 'Theme tags' : 'Playlist tags'}
             />
+          ) : (
+            <p className="synapse-settings-lead">
+              {kind === 'user'
+                ? 'Users lists public profiles by name and username.'
+                : 'Choose Playlists or Themes to filter by that catalog’s tags.'}
+            </p>
           )}
         </div>
       ) : null}
@@ -218,7 +241,14 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
           Nothing saved yet. Bookmark a public playlist or creator from its page.
         </p>
       ) : null}
-      {!loading && tab !== 'saved' && cards.length === 0 ? (
+      {!loading && tab !== 'saved' && kind === 'user' && creators.length === 0 ? (
+        <p className="synapse-settings-lead">
+          {tab === 'search'
+            ? 'No matching public profiles.'
+            : 'No public profiles yet. Set a profile to public from Profile settings.'}
+        </p>
+      ) : null}
+      {!loading && tab !== 'saved' && kind !== 'user' && cards.length === 0 ? (
         <p className="synapse-settings-lead">
           {tab === 'search'
             ? 'No matching public creations.'
@@ -228,21 +258,24 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
       {tab === 'saved' && creators.length > 0 ? (
         <>
           <h3 className="synapse-workshop-sub">Saved creators</h3>
-          <ul className="synapse-saved-creators">
+          <div className="synapse-mkt-workshop-row">
             {creators.map((creator) => (
-              <li key={creator.uid}>
-                <PathLink href={publicProfilePath(creator.username || creator.shareCode)}>
-                  {creator.displayName} @{creator.username}
-                </PathLink>
-              </li>
+              <CreatorCard key={creator.uid} creator={creator} />
             ))}
-          </ul>
+          </div>
         </>
+      ) : null}
+      {tab !== 'saved' && kind === 'user' && creators.length > 0 ? (
+        <div className="synapse-mkt-workshop-row">
+          {creators.map((creator) => (
+            <CreatorCard key={creator.uid} creator={creator} />
+          ))}
+        </div>
       ) : null}
       {tab === 'saved' && cards.length > 0 ? (
           <h3 className="synapse-workshop-sub">Saved creations</h3>
       ) : null}
-      {featured.length > 0 ? (
+      {kind !== 'user' && featured.length > 0 ? (
         <>
           <h3 className="synapse-workshop-sub">Featured</h3>
           <div className="synapse-mkt-workshop-row">
@@ -252,11 +285,13 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
           </div>
         </>
       ) : null}
+      {kind !== 'user' ? (
       <div className="synapse-mkt-workshop-row">
         {rest.map((card) => (
           <WorkshopCard key={card.id} card={card} />
         ))}
       </div>
+      ) : null}
     </section>
   );
 }
