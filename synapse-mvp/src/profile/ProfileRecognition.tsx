@@ -99,9 +99,12 @@ export default function ProfileRecognition({
   }
 
   function saveFeatured(id: string) {
+    const previous = featured;
     setFeatured(id);
     onRecognition?.({ featured: id });
     void setFeaturedBadge(id).catch((err) => {
+      setFeatured(previous);
+      onRecognition?.({ featured: previous });
       setError(err instanceof Error ? err.message : 'Could not save badge.');
     });
   }
@@ -189,10 +192,14 @@ export default function ProfileRecognition({
         disabled={!editing}
         onEquip={(id) => {
           if (!editing) return;
+          const previous = equipped;
           setEquipped(id);
           onEquippedChange?.(id);
           onRecognition?.({ equipped: id });
           void equipDecoration(id).catch((err) => {
+            setEquipped(previous);
+            onEquippedChange?.(previous);
+            onRecognition?.({ equipped: previous });
             setError(err instanceof Error ? err.message : 'Could not equip decoration.');
           });
         }}

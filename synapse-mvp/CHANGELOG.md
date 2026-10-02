@@ -43,6 +43,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Workshop listing and badge pages no longer fail when the API schema cache is still catching up. Publish, badges, and public profiles read the live Workshop tables.
 - Home marketing header no longer lets the Synapse wordmark overlap Home or Pricing overlap the theme picker. The bar uses the full window width, and the inline nav collapses sooner on Home where the theme control is extra.
 - Equipping a profile frame (or featured badge) no longer fails with `column reference "uid" is ambiguous`.
+- If a frame or featured badge fails to save, the picker snaps back instead of looking equipped.
 - Public / unlisted / private profile visibility writes through `set_profile_public` instead of a table UPDATE that collided on `uid`. Staff helper functions are no longer inlined into RLS, which was still raising `column reference "uid" is ambiguous`.
 - Profile edit lets you feature a badge by clicking it, even if progress evaluation fails to refresh awards.
 
