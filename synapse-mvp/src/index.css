@@ -2793,6 +2793,20 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
   background: var(--bg-panel);
 }
 
+.synapse-profile-hero-top {
+  flex: 1 0 100%;
+  align-self: flex-start;
+}
+
+.synapse-profile-nav {
+  margin: 0;
+}
+
+.synapse-profile-nav a {
+  font-weight: 650;
+  color: var(--accent);
+}
+
 .synapse-profile-hero[data-deco='one_month'] {
   background:
     radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #cbd5e1 28%, transparent), transparent 58%),

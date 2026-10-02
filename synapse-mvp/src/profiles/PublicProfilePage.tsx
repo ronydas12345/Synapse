@@ -5,6 +5,8 @@ import BadgeStrip from '../badges/BadgeStrip';
 import { listEarnedBadges, type EarnedBadge } from '../badges/api';
 import { nameplateClass } from '../decorations/catalog';
 import DecorationFrame from '../decorations/DecorationFrame';
+import ProfileRecognition from '../profile/ProfileRecognition';
+import { useProfileStore } from '../profile/profileStore';
 import SharePanel from '../share/SharePanel';
 import {
   followCreator,
@@ -15,12 +17,17 @@ import {
   unfollowCreator,
   type PublicCreator,
 } from './api';
+import ProfileNavLinks from './ProfileNavLinks';
+import ProfileVisibilityField from './ProfileVisibilityField';
 import { listCreatorWorkshop } from '../workshop/api';
 import WorkshopCard from '../workshop/WorkshopCard';
 import type { WorkshopCard as Card } from '../workshop/types';
 
 export default function PublicProfilePage({ username }: { username: string }) {
   const user = useAuthStore((s) => s.user);
+  const ownUsername = useProfileStore((s) => s.profile.username);
+  const setVisibility = useProfileStore((s) => s.setVisibility);
+  const storeVisibility = useProfileStore((s) => s.profile.visibility);
   const [creator, setCreator] = useState<PublicCreator | null>(null);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
@@ -80,7 +87,13 @@ export default function PublicProfilePage({ username }: { username: string }) {
 
   return (
     <main id="main" className="synapse-mkt-main synapse-mkt-page synapse-public-profile">
-      <div className="synapse-public-profile-hero" data-deco={creator.equippedDecoration || 'default'}>
+      {own ? (
+        <ProfileNavLinks here="public" username={ownUsername || creator.username} />
+      ) : null}
+      <div
+        className="synapse-public-profile-hero"
+        data-deco={creator.equippedDecoration || 'default'}
+      >
         <DecorationFrame id={creator.equippedDecoration}>
           {creator.photoUrl ? (
             <img src={creator.photoUrl} alt="" width={72} height={72} />
@@ -108,7 +121,7 @@ export default function PublicProfilePage({ username }: { username: string }) {
             className="synapse-btn synapse-btn-ghost"
             onClick={() => navigateApp(APP_PATHS.profile)}
           >
-            Edit profile
+            Profile settings
           </button>
         ) : (
           <>
@@ -173,6 +186,16 @@ export default function PublicProfilePage({ username }: { username: string }) {
           path={sharePath}
           label="profile"
         />
+      ) : null}
+      {own ? (
+        <section className="synapse-profile-section">
+          <h2>Profile settings</h2>
+          <ProfileVisibilityField
+            value={storeVisibility}
+            onChange={setVisibility}
+          />
+          <ProfileRecognition editing />
+        </section>
       ) : null}
       <section>
         <h2>Badges</h2>

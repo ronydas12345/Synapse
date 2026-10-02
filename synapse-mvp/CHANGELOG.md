@@ -25,6 +25,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Sticky section tabs on the Settings page so you can jump to Themes, Playback, Account, and the rest without scrolling the whole list.
 - Open settings for a track that is parked inside a Sequence or Randomizer from the node list or inspector, without dragging it back onto the canvas.
 - Playback speed on the bottom deck.
+- Own `/u/` pages include profile settings (visibility, badges, decorations) and a link to Profile settings. The workspace profile page links back to the public profile.
 - Profile header shows the equipped frame, crown/ornament, nameplate, and compact badges on a decoration banner instead of only listing them further down the page.
 - Profile decorations now show the handoff ornaments: silver/gold rings, creator laurel, admin star, and the Superuser crown. Staff frames also tint the display name.
 - Badges pick up color, gems, and sheen as their tier goes up (bronze through Superadmin).

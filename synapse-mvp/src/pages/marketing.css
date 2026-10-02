@@ -1120,6 +1120,14 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
   background: var(--bg-panel);
 }
 
+.synapse-profile-nav {
+  margin: 0 0 0.85rem;
+}
+
+.synapse-profile-nav a {
+  font-weight: 650;
+}
+
 .synapse-public-profile-hero[data-deco='one_month'] {
   background:
     radial-gradient(70% 130% at 6% 0%, color-mix(in srgb, #cbd5e1 28%, transparent), transparent 58%),

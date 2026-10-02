@@ -40,6 +40,8 @@ import DecorationFrame from '../decorations/DecorationFrame';
 import BadgeStrip from '../badges/BadgeStrip';
 import type { EarnedBadge } from '../badges/api';
 import SavedCollections from '../workshop/SavedCollections';
+import ProfileNavLinks from '../profiles/ProfileNavLinks';
+import ProfileVisibilityField from '../profiles/ProfileVisibilityField';
 import { usePathStore } from '../store';
 
 type DropEdge = 'before' | 'after';
@@ -873,6 +875,9 @@ export default function ProfilePage() {
   return (
     <div className="synapse-profile" data-tutorial="profile" id="workspace-main">
       <div className="synapse-profile-hero" data-deco={deco.id}>
+        <div className="synapse-profile-hero-top">
+          <ProfileNavLinks here="settings" username={profile.username} />
+        </div>
         <div className="synapse-profile-identity">
           <DecorationFrame id={displayDeco} className="synapse-profile-deco">
             <button
@@ -978,24 +983,10 @@ export default function ProfilePage() {
               />
             </label>
             {nameErr ? <p className="synapse-settings-error">{nameErr}</p> : null}
-            <label className="synapse-settings-field">
-              Profile visibility
-              <select
-                className="synapse-settings-input"
-                value={profile.visibility}
-                onChange={(e) =>
-                  setVisibility(
-                    e.target.value === 'public' || e.target.value === 'unlisted'
-                      ? e.target.value
-                      : 'private'
-                  )
-                }
-              >
-                <option value="private">Private — only you</option>
-                <option value="unlisted">Unlisted — anyone with the ID or link</option>
-                <option value="public">Public — /u/username and Workshop</option>
-              </select>
-            </label>
+            <ProfileVisibilityField
+              value={profile.visibility}
+              onChange={setVisibility}
+            />
             <p className="synapse-settings-hint">
               Public profiles are listed at /u/your_username. Unlisted profiles
               stay off lists but open from the ID or link. Followers, badges, and
