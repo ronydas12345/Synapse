@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '../auth/authStore';
 import { APP_PATHS, navigateApp } from '../app/routes';
-import { listSavedCreators, listPublicCreators, type PublicCreator } from '../profiles/api';
+import { listSavedCreators, listPublicCreators, readPublicCreatorsByUids, type PublicCreator } from '../profiles/api';
 import { listSavedCreations, listWorkshop } from './api';
 import {
   WORKSHOP_BROWSE_OPTIONS,
@@ -21,6 +21,28 @@ const TABS: { id: WorkshopTab; label: string }[] = [
   { id: 'saved', label: 'Saved' },
 ];
 
+async function authorsFor(cards: Card[], known: PublicCreator[]): Promise<PublicCreator[]> {
+  const byUid = new Map(known.map((creator) => [creator.uid, creator]));
+  const missing = cards.map((card) => card.creatorUid).filter((uid) => uid && !byUid.has(uid));
+  if (missing.length === 0) return [...byUid.values()];
+  const extra = await readPublicCreatorsByUids(missing);
+  for (const creator of extra) byUid.set(creator.uid, creator);
+  return [...byUid.values()];
+}
+
+function authorFor(authors: PublicCreator[], card: Card): PublicCreator | null {
+  return (
+    authors.find((creator) => creator.uid === card.creatorUid) ||
+    authors.find(
+      (creator) =>
+        creator.username &&
+        card.creatorUsername &&
+        creator.username.toLowerCase() === card.creatorUsername.toLowerCase()
+    ) ||
+    null
+  );
+}
+
 function tabFromHash(): WorkshopTab {
   const hash = window.location.hash.replace(/^#/, '');
   if (hash === 'new' || hash === 'featured' || hash === 'search' || hash === 'saved') {
@@ -37,6 +59,7 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [creators, setCreators] = useState<PublicCreator[]>([]);
+  const [authors, setAuthors] = useState<PublicCreator[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -67,9 +90,11 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
             listSavedCreations(),
             listSavedCreators(),
           ]);
+          const savedAuthors = await authorsFor(savedCards, savedCreators);
           if (!cancelled) {
             setCards(savedCards);
             setCreators(savedCreators);
+            setAuthors(savedAuthors);
             setError('');
           }
           return;
@@ -82,6 +107,7 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
           if (!cancelled) {
             setCards([]);
             setCreators(preview ? rows.slice(0, 6) : rows);
+            setAuthors([]);
             setError('');
           }
           return;
@@ -90,9 +116,24 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
           kind: kind === 'all' ? 'all' : kind,
           tags: tagFilter,
         });
+        let userRows: PublicCreator[] = [];
+        if (kind === 'all') {
+          try {
+            userRows = await listPublicCreators(
+              search,
+              tab === 'new' ? 'new' : 'followers'
+            );
+          } catch (err) {
+            console.error('Could not load public profiles', err);
+          }
+        }
+        const shownCards = preview ? rows.slice(0, 6) : rows;
+        const shownCreators = preview ? userRows.slice(0, 6) : userRows;
+        const shownAuthors = await authorsFor(shownCards, shownCreators);
         if (!cancelled) {
-          setCards(preview ? rows.slice(0, 6) : rows);
-          setCreators([]);
+          setCards(shownCards);
+          setCreators(shownCreators);
+          setAuthors(shownAuthors);
           setError('');
         }
       } catch (err) {
@@ -248,7 +289,11 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
             : 'No public profiles yet. Set a profile to public from Profile settings.'}
         </p>
       ) : null}
-      {!loading && tab !== 'saved' && kind !== 'user' && cards.length === 0 ? (
+      {!loading &&
+      tab !== 'saved' &&
+      kind !== 'user' &&
+      cards.length === 0 &&
+      (kind !== 'all' || creators.length === 0) ? (
         <p className="synapse-settings-lead">
           {tab === 'search'
             ? 'No matching public creations.'
@@ -265,12 +310,15 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
           </div>
         </>
       ) : null}
-      {tab !== 'saved' && kind === 'user' && creators.length > 0 ? (
-        <div className="synapse-mkt-workshop-row">
-          {creators.map((creator) => (
-            <CreatorCard key={creator.uid} creator={creator} />
-          ))}
-        </div>
+      {tab !== 'saved' && (kind === 'user' || kind === 'all') && creators.length > 0 ? (
+        <>
+          {kind === 'all' ? <h3 className="synapse-workshop-sub">Users</h3> : null}
+          <div className="synapse-mkt-workshop-row">
+            {creators.map((creator) => (
+              <CreatorCard key={creator.uid} creator={creator} />
+            ))}
+          </div>
+        </>
       ) : null}
       {tab === 'saved' && cards.length > 0 ? (
           <h3 className="synapse-workshop-sub">Saved creations</h3>
@@ -280,7 +328,7 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
           <h3 className="synapse-workshop-sub">Featured</h3>
           <div className="synapse-mkt-workshop-row">
             {featured.map((card) => (
-              <WorkshopCard key={card.id} card={card} />
+              <WorkshopCard key={card.id} card={card} author={authorFor(authors, card)} />
             ))}
           </div>
         </>
@@ -288,7 +336,7 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
       {kind !== 'user' ? (
       <div className="synapse-mkt-workshop-row">
         {rest.map((card) => (
-          <WorkshopCard key={card.id} card={card} />
+          <WorkshopCard key={card.id} card={card} author={authorFor(authors, card)} />
         ))}
       </div>
       ) : null}

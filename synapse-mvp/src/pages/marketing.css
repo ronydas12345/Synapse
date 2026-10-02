@@ -388,9 +388,27 @@ body:has(.synapse-mkt),
 }
 
 .synapse-mkt-card:hover,
-.synapse-mkt-workshop-card:hover,
 .synapse-mkt-price-card:hover {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+
+.synapse-workshop-card[data-kind='profile'] {
+  border-color: #6d7cff;
+}
+.synapse-workshop-card[data-kind='theme'] {
+  border-color: #e0a045;
+}
+.synapse-workshop-card[data-kind='playlist'] {
+  border-color: #3cba86;
+}
+.synapse-workshop-card[data-kind='profile']:hover {
+  border-color: #9aa6ff;
+}
+.synapse-workshop-card[data-kind='theme']:hover {
+  border-color: #f0c27a;
+}
+.synapse-workshop-card[data-kind='playlist']:hover {
+  border-color: #6ed4a8;
 }
 
 .synapse-mkt-status {
@@ -1085,6 +1103,43 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
 .synapse-workshop-card-link {
   color: inherit;
   text-decoration: none;
+}
+
+.synapse-workshop-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.synapse-workshop-identity h3 {
+  margin: 0;
+}
+
+.synapse-workshop-handle {
+  margin: 0.1rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.synapse-deco.synapse-workshop-deco {
+  width: 3.4rem;
+  height: 3.4rem;
+  flex: none;
+}
+
+.synapse-workshop-deco .synapse-deco-ornament {
+  width: 2.7rem;
+  height: 1.35rem;
+  top: -0.72rem;
+}
+
+.synapse-workshop-deco img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 999px;
+  display: block;
 }
 
 .synapse-workshop-meta {

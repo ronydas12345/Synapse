@@ -201,7 +201,7 @@ export default function PublicProfilePage({ username }: { username: string }) {
         ) : (
           <div className="synapse-mkt-workshop-row">
             {cards.map((card) => (
-              <WorkshopCard key={card.id} card={card} featuredBadge={creator.featuredBadge} />
+              <WorkshopCard key={card.id} card={card} author={creator} featuredBadge={creator.featuredBadge} />
             ))}
           </div>
         )}

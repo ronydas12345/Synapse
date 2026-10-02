@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PathLink } from '../app/AppLink';
 import { publicProfilePath } from '../app/routes';
-import { listSavedCreators, type PublicCreator } from '../profiles/api';
+import { listSavedCreators, readPublicCreatorsByUids, type PublicCreator } from '../profiles/api';
 import { listSavedCreations } from './api';
 import type { WorkshopCard as Card } from './types';
 import WorkshopCard from './WorkshopCard';
@@ -13,6 +13,7 @@ export default function SavedCollections({
 }) {
   const [cards, setCards] = useState<Card[]>([]);
   const [creators, setCreators] = useState<PublicCreator[]>([]);
+  const [authors, setAuthors] = useState<PublicCreator[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -21,10 +22,17 @@ export default function SavedCollections({
       listSavedCreations(),
       includeCreators ? listSavedCreators() : Promise.resolve([]),
     ])
-      .then(([nextCards, nextCreators]) => {
+      .then(async ([nextCards, nextCreators]) => {
+        if (cancelled) return;
+        const byUid = new Map(nextCreators.map((creator) => [creator.uid, creator]));
+        const missing = nextCards.map((card) => card.creatorUid).filter((uid) => uid && !byUid.has(uid));
+        if (missing.length > 0) {
+          for (const creator of await readPublicCreatorsByUids(missing)) byUid.set(creator.uid, creator);
+        }
         if (cancelled) return;
         setCards(nextCards);
         setCreators(nextCreators);
+        setAuthors([...byUid.values()]);
       })
       .catch((err) => {
         if (!cancelled) {
@@ -45,7 +53,20 @@ export default function SavedCollections({
       ) : (
         <div className="synapse-mkt-workshop-row">
           {cards.map((card) => (
-            <WorkshopCard key={card.id} card={card} />
+            <WorkshopCard
+              key={card.id}
+              card={card}
+              author={
+                authors.find((creator) => creator.uid === card.creatorUid) ||
+                authors.find(
+                  (creator) =>
+                    creator.username &&
+                    card.creatorUsername &&
+                    creator.username.toLowerCase() === card.creatorUsername.toLowerCase()
+                ) ||
+                null
+              }
+            />
           ))}
         </div>
       )}

@@ -65,6 +65,15 @@ export async function readPublicCreator(
   return mapCreator(data as Record<string, unknown>);
 }
 
+export async function readPublicCreatorsByUids(uids: string[]): Promise<PublicCreator[]> {
+  const ids = [...new Set(uids.map((id) => id.trim()).filter(Boolean))].slice(0, 60);
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from('creator_public').select('*').in('uid', ids);
+  if (isMissingSchema(error)) return [];
+  throwIfError(error);
+  return (data ?? []).map((row) => mapCreator(row as Record<string, unknown>));
+}
+
 export async function readOwnCreator(uid: string): Promise<PublicCreator | null> {
   const { data, error } = await supabase
     .from('creator_public')
