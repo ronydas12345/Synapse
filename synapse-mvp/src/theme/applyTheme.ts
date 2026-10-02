@@ -1,4 +1,5 @@
 import type { SynapseTheme, ThemeEdgeType } from './types';
+import { mergeThemeCache } from './cache';
 import { contrastRatio, luminance, relativeLuminance, withAlpha } from './color';
 import { sanitizeEdgeType } from './edgeType';
 import { fontStack } from './fonts';
@@ -127,5 +128,12 @@ export function applyTheme(theme: SynapseTheme): void {
   );
   document.documentElement.dataset.edgeType = appliedEdgeType;
   document.documentElement.dataset.visualizerBars = String(appliedVisualizerBarCount);
+  mergeThemeCache({
+    vars: themeCssVars(theme),
+    colorScheme: isLightTheme(theme) ? 'light' : 'dark',
+    logoContrast: logoUsesContrastInk(theme) ? 'ink' : 'gradient',
+    edgeType: appliedEdgeType,
+    visualizerBars: String(appliedVisualizerBarCount),
+  });
   for (const listener of appliedListeners) listener();
 }

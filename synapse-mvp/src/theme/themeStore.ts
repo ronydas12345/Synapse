@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { scheduleWorkspacePersist } from '../cloud/persistGate';
 import { applyTheme } from './applyTheme';
+import { mergeThemeCache, readThemeCacheRaw } from './cache';
 import { emptyTheme, parseTheme, parseThemeJson, themeToJson } from './parseTheme';
 import { BUILTIN_THEMES, DEFAULT_THEME_ID, getBuiltinTheme } from './presets';
 import type { SynapseTheme } from './types';
@@ -42,12 +43,18 @@ interface ThemeState {
 }
 
 function persist(activeId: string, customThemes: SynapseTheme[]) {
-  void activeId;
-  void customThemes;
+  mergeThemeCache({
+    schemaVersion: 1,
+    activeId,
+    customThemes,
+    themeTags: useThemeStore.getState().themeTags,
+  });
   scheduleWorkspacePersist();
 }
 
 function load(): Pick<ThemeState, 'activeId' | 'customThemes' | 'themeTags'> {
+  const cached = readThemeCacheRaw();
+  if (cached) return parseThemeState(cached);
   return { activeId: DEFAULT_THEME_ID, customThemes: [], themeTags: {} };
 }
 
@@ -314,6 +321,12 @@ export function snapshotThemeState(): PersistedThemeState {
 
 export function replaceThemeState(raw: unknown): void {
   const next = parseThemeState(raw);
+  mergeThemeCache({
+    schemaVersion: 1,
+    activeId: next.activeId,
+    customThemes: next.customThemes,
+    themeTags: next.themeTags,
+  });
   applyTheme(resolveTheme(next.activeId, next.customThemes));
   useThemeStore.setState({
     activeId: next.activeId,

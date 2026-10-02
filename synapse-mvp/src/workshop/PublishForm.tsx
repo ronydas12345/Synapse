@@ -2,23 +2,39 @@ import { useMemo, useState } from 'react';
 import { navigateApp, workshopItemPath } from '../app/routes';
 import { SettingsToggle } from '../components/settings/Fields';
 import { usePathStore } from '../store';
+import { builtinThemePublishError, isBuiltinThemeClone } from '../theme/isPresetTheme';
 import { allThemes, useThemeStore } from '../theme/themeStore';
 import { themeToJson } from '../theme/parseTheme';
+import type { SynapseTheme } from '../theme/types';
 import { getWorkshopCreation, publishWorkshopCreation, setCreationSocial } from './api';
 import TagPicker from './TagPicker';
 import type { WorkshopKind, WorkshopVisibility } from './types';
 
-export default function PublishForm() {
+export default function PublishForm({
+  localOnly = false,
+  extraThemes = [],
+}: {
+  localOnly?: boolean;
+  extraThemes?: SynapseTheme[];
+}) {
   const pathSummaries = usePathStore((s) => s.pathSummaries);
   const activePathId = usePathStore((s) => s.activePathId);
   const setPlaylistTags = usePathStore((s) => s.setPlaylistTags);
   const customThemes = useThemeStore((s) => s.customThemes);
   const themeTags = useThemeStore((s) => s.themeTags);
   const setThemeTags = useThemeStore((s) => s.setThemeTags);
-  const themes = useMemo(() => allThemes(customThemes), [customThemes]);
+  const themes = useMemo(() => {
+    const base = allThemes(customThemes);
+    const extra = extraThemes.filter((theme) => !base.some((item) => item.id === theme.id));
+    return [...base, ...extra];
+  }, [customThemes, extraThemes]);
+  const publishableThemes = useMemo(
+    () => themes.filter((theme) => !isBuiltinThemeClone(theme)),
+    [themes]
+  );
   const [kind, setKind] = useState<WorkshopKind>('playlist');
   const [pathId, setPathId] = useState(activePathId);
-  const [themeId, setThemeId] = useState(themes[0]?.id || '');
+  const [themeId, setThemeId] = useState(publishableThemes[0]?.id || themes[0]?.id || '');
   const [title, setTitle] = useState(
     pathSummaries.find((path) => path.id === activePathId)?.name || ''
   );
@@ -28,26 +44,38 @@ export default function PublishForm() {
   const [commentsEnabled, setCommentsEnabled] = useState(true);
   const [savesEnabled, setSavesEnabled] = useState(true);
   const [error, setError] = useState('');
+  const [done, setDone] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const selectedTheme = themes.find((theme) => theme.id === themeId) || themes[0];
+  const selectedTheme = themes.find((theme) => theme.id === themeId) || publishableThemes[0] || themes[0];
   const selectedPath = pathSummaries.find((path) => path.id === pathId);
   const tags =
     kind === 'theme'
       ? themeTags[selectedTheme?.id || ''] || []
       : selectedPath?.tags || [];
+  const themeBlockReason = selectedTheme ? builtinThemePublishError(selectedTheme) : null;
+  const canPublishTheme = Boolean(selectedTheme) && !themeBlockReason;
 
   async function publish() {
     setBusy(true);
     setError('');
+    setDone('');
     try {
       let id = '';
       if (kind === 'theme') {
         if (!selectedTheme) throw new Error('Pick a theme to publish.');
+        const blocked = builtinThemePublishError(selectedTheme);
+        if (blocked) throw new Error(blocked);
         const payload = JSON.parse(themeToJson({ ...selectedTheme, builtin: false })) as Record<
           string,
           unknown
         >;
+        if (localOnly) {
+          setDone(
+            `Would publish “${title.trim() || selectedTheme.name}” as ${visibility}. Nothing was sent to the server.`
+          );
+          return;
+        }
         id = await publishWorkshopCreation({
           sourcePathId: `theme:${selectedTheme.id}`,
           title: title.trim() || selectedTheme.name,
@@ -58,6 +86,12 @@ export default function PublishForm() {
           tags,
         });
       } else {
+        if (localOnly) {
+          setDone(
+            `Would publish “${title.trim() || selectedPath?.name || 'Untitled'}” as ${visibility}. Nothing was sent to the server.`
+          );
+          return;
+        }
         const current = usePathStore.getState();
         current.setNodes(current.nodes);
         current.switchPlaylist(pathId);
@@ -90,11 +124,17 @@ export default function PublishForm() {
 
   return (
     <div className="synapse-workshop-publish">
+      {localOnly ? (
+        <p className="synapse-settings-hint">
+          Local preview: Publish stays on this page and does not write to Workshop.
+        </p>
+      ) : null}
       <p className="synapse-settings-lead">
         Publishing copies a Music Path or a theme to Workshop. Private stays
         off the catalog. Unlisted is reachable by ID or link. Public appears on
         Home, New, Featured, and Search. Add tags here or in Playlists / Themes
-        before you publish. Tags come from the curated list only.
+        before you publish. Tags come from the curated list only. Default
+        themes and renamed copies of them cannot be published.
       </p>
       <label className="synapse-settings-field">
         Type
@@ -105,7 +145,11 @@ export default function PublishForm() {
             const next = event.target.value as WorkshopKind;
             setKind(next);
             if (next === 'theme') {
-              setTitle(selectedTheme?.name || '');
+              const nextTheme =
+                themes.find((theme) => theme.id === themeId) ||
+                publishableThemes[0] ||
+                themes[0];
+              setTitle(nextTheme?.name || '');
             } else {
               setTitle(pathSummaries.find((path) => path.id === pathId)?.name || '');
             }
@@ -149,13 +193,17 @@ export default function PublishForm() {
             }}
           >
             {themes.map((theme) => (
-              <option key={theme.id} value={theme.id}>
+              <option key={theme.id} value={theme.id} disabled={isBuiltinThemeClone(theme)}>
                 {theme.name}
+                {isBuiltinThemeClone(theme) ? ' (default — cannot publish)' : ''}
               </option>
             ))}
           </select>
         </label>
       )}
+      {kind === 'theme' && themeBlockReason ? (
+        <p className="synapse-settings-error">{themeBlockReason}</p>
+      ) : null}
       <label className="synapse-settings-field">
         Title
         <input
@@ -216,10 +264,14 @@ export default function PublishForm() {
         onChange={setSavesEnabled}
       />
       {error ? <p className="synapse-settings-error">{error}</p> : null}
+      {done ? <p className="synapse-settings-hint">{done}</p> : null}
       <button
         type="button"
         className="synapse-btn synapse-btn-play"
-        disabled={busy || (kind === 'playlist' ? !pathId : !selectedTheme)}
+        disabled={
+          busy ||
+          (kind === 'playlist' ? !pathId : !canPublishTheme)
+        }
         onClick={() => void publish()}
       >
         {busy ? 'Publishing…' : 'Publish to Workshop'}

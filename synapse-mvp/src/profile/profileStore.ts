@@ -1,6 +1,6 @@
 import { extractYouTubeId } from '../playback';
 import { create } from 'zustand';
-import { isCloudPersistEnabled, scheduleWorkspacePersist } from '../cloud/persistGate';
+import { scheduleWorkspacePersist } from '../cloud/persistGate';
 import { syncProfilePublicFields } from '../profiles/api';
 import { localDayKey } from './listenStats';
 import {
@@ -287,17 +287,26 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       }),
     })),
   setVisibility: (visibility) => {
+    const previous = get().profile.visibility;
     set((state) => ({
       profile: commit(state, { ...state.profile, visibility }),
     }));
-    if (!isCloudPersistEnabled()) return;
     const next = useProfileStore.getState().profile;
     void syncProfilePublicFields({
       visibility: next.visibility,
       bio: next.bio || '',
-    }).catch((err) => {
-      console.error('Could not save profile visibility', err);
-    });
+    })
+      .then(() => {
+        set((state) => ({
+          profile: { ...state.profile, visibility: next.visibility },
+        }));
+      })
+      .catch((err) => {
+        console.error('Could not save profile visibility', err);
+        set((state) => ({
+          profile: { ...state.profile, visibility: previous },
+        }));
+      });
   },
   setAvatarDataUrl: (url) =>
     set((state) => ({

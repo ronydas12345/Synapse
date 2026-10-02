@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseTheme, parseThemeJson, themeToJson } from './parseTheme';
 import { BUILTIN_THEMES } from './presets';
 import { logoUsesContrastInk, themeCssVars } from './applyTheme';
-import { filterThemes } from './themeStore';
+import { filterThemes, parseThemeState } from './themeStore';
 
 describe('theme schema', () => {
   it('round-trips a builtin theme through JSON', () => {
@@ -92,6 +92,18 @@ describe('theme schema', () => {
     expect(themeCssVars(cyber!)['--edge-type']).toBe('triangular');
     expect(cyber?.style.visualizerBarCount).toBe(48);
     expect(themeCssVars(cyber!)['--visualizer-bars']).toBe('48');
+  });
+
+  it('reads a cached theme id and ignores FOUC var fields', () => {
+    const parsed = parseThemeState({
+      schemaVersion: 1,
+      activeId: 'ocean-blue',
+      customThemes: [],
+      themeTags: {},
+      vars: { '--bg-void': '#041821' },
+      colorScheme: 'dark',
+    });
+    expect(parsed.activeId).toBe('ocean-blue');
   });
 
   it('filters the preset list by name', () => {

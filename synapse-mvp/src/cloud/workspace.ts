@@ -34,7 +34,8 @@ import {
   useProfileStore,
 } from '../profile/profileStore';
 import { emptyProfile, type UserProfile } from '../profile/types';
-import { ACCOUNT_CACHE_KEY, firstFilled } from '../auth/identity';
+import { ACCOUNT_CACHE_KEY } from '../auth/identity';
+import { mergeWorkspaceProfile } from './workspaceProfile';
 import {
   parseProgress,
   readLegacyProgress,
@@ -42,7 +43,6 @@ import {
 } from '../tutorial/tutorialStorage';
 import { replaceTutorialProgress, useTutorialStore } from '../tutorial/tutorialStore';
 import { applyAvatarStateToProfile, submitAvatarUrl } from './avatar';
-import { syncProfilePublicFields } from '../profiles/api';
 import { SETTINGS_STORAGE_KEY } from '../settings/types';
 import { THEME_STORAGE_KEY } from '../theme/themeStore';
 import { PROFILE_ACCOUNTS_KEY, PROFILE_STORAGE_KEY } from '../profile/profileStore';
@@ -114,28 +114,21 @@ function readLegacySnapshot(uid: string): Partial<WorkspaceRow> {
   return out;
 }
 
-function applyWorkspace(uid: string, row: WorkspaceRow, identity?: UserProfile): void {
+function applyWorkspace(
+  uid: string,
+  row: WorkspaceRow,
+  identity?: UserProfile,
+  server?: { visibility?: unknown; bio?: unknown } | null
+): void {
   usePathStore.getState().replaceLibrary(parseLibrary(row.library));
   replaceSettings(isBlankJson(row.settings) ? defaultSettings() : row.settings);
   replaceThemeState(row.theme);
   const current = useProfileStore.getState().profile;
   const fromCloud = isBlankJson(row.profile) ? emptyProfile() : row.profile;
-  const cloud =
-    typeof fromCloud === 'object' && fromCloud && !Array.isArray(fromCloud)
-      ? (fromCloud as Partial<UserProfile>)
-      : {};
-  const merged = {
-    ...emptyProfile(),
-    ...cloud,
-    username: firstFilled(identity?.username, current.username, cloud.username),
-    displayName: firstFilled(
-      identity?.displayName,
-      current.displayName,
-      cloud.displayName
-    ),
-    avatarDataUrl: null,
-  };
-  useProfileStore.getState().hydrateAccount(uid, merged as UserProfile);
+  useProfileStore.getState().hydrateAccount(
+    uid,
+    mergeWorkspaceProfile(fromCloud, identity, current, server)
+  );
   replaceTutorialProgress(row.tutorial);
 }
 
@@ -154,15 +147,6 @@ async function pushWorkspace(): Promise<void> {
     onConflict: 'uid',
   });
   if (error) console.error('Could not save workspace', error.message);
-  const profile = useProfileStore.getState().profile;
-  try {
-    await syncProfilePublicFields({
-      visibility: profile.visibility,
-      bio: profile.bio || '',
-    });
-  } catch (err) {
-    console.error('Could not sync public profile', err);
-  }
 }
 
 registerWorkspaceFlush(() => pushWorkspace());
@@ -192,13 +176,24 @@ export async function hydrateUserWorkspace(): Promise<void> {
   bindFlushEvents();
 
   try {
-    const { data, error } = await supabase
-      .from('user_workspaces')
-      .select('library, settings, theme, profile, tutorial')
-      .eq('uid', user.uid)
-      .maybeSingle();
-    throwIfError(error);
+    const [workspace, serverProfile] = await Promise.all([
+      supabase
+        .from('user_workspaces')
+        .select('library, settings, theme, profile, tutorial')
+        .eq('uid', user.uid)
+        .maybeSingle(),
+      supabase
+        .from('profiles')
+        .select('visibility, bio')
+        .eq('uid', user.uid)
+        .maybeSingle(),
+    ]);
+    throwIfError(workspace.error);
+    if (serverProfile.error) {
+      console.error('Could not load profile visibility', serverProfile.error);
+    }
 
+    const data = workspace.data;
     const legacy = readLegacySnapshot(user.uid);
     const row: WorkspaceRow = {
       library: data && jsonHasLibrary(data.library) ? data.library : legacy.library ?? {},
@@ -208,7 +203,12 @@ export async function hydrateUserWorkspace(): Promise<void> {
       tutorial: data && !isBlankJson(data.tutorial) ? data.tutorial : legacy.tutorial ?? {},
     };
 
-    applyWorkspace(user.uid, row, useProfileStore.getState().profile);
+    applyWorkspace(
+      user.uid,
+      row,
+      useProfileStore.getState().profile,
+      serverProfile.error ? null : serverProfile.data
+    );
 
     await supabase.from('user_workspaces').upsert(
       {

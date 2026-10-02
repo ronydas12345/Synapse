@@ -2387,24 +2387,13 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
   padding: 1.25rem 1.75rem 2rem;
 }
 
-.synapse-settings-bar {
-  position: sticky;
-  top: 0;
-  z-index: 6;
-  margin: -1.25rem -1.75rem 1.1rem;
-  padding: 1.25rem 1.75rem 0.7rem;
-  background: color-mix(in srgb, var(--bg-panel) 94%, transparent);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
-}
-
 .synapse-settings-head {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 1rem;
   align-items: end;
-  margin-bottom: 0.85rem;
+  margin-bottom: 1.25rem;
 }
 
 .synapse-settings-title {
@@ -2456,44 +2445,41 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
 }
 
 .synapse-settings-layout {
-  display: block;
-}
-
-.synapse-settings-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.synapse-settings-tab {
-  color: var(--text-muted);
-  text-decoration: none;
-  padding: 0.32rem 0.65rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  font-size: 0.78rem;
-  font-weight: 600;
-  background: var(--bg-deep);
-}
-
-.synapse-settings-tab:hover {
-  color: var(--text);
-  border-color: var(--accent);
-}
-
-.synapse-settings-tab.is-active {
-  color: var(--text);
-  background: var(--accent-dim);
-  border-color: var(--accent);
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
 }
 
 .synapse-settings-nav {
-  display: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  position: sticky;
+  top: 0.5rem;
+}
+
+.synapse-settings-nav-item {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 0.4rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.synapse-settings-nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.synapse-settings-nav-item.is-active {
+  color: var(--text);
+  background: var(--accent-dim);
 }
 
 .synapse-settings-section {
   margin-bottom: 2rem;
-  scroll-margin-top: 8.5rem;
+  scroll-margin-top: 0.75rem;
 }
 
 .synapse-settings-section h2 {

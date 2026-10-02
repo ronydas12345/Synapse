@@ -2,6 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('synapse_theme_cache');
+          if (!raw) return;
+          var cached = JSON.parse(raw);
+          var el = document.documentElement;
+          var vars = cached && cached.vars;
+          if (vars) {
+            for (var key in vars) {
+              if (Object.prototype.hasOwnProperty.call(vars, key)) {
+                el.style.setProperty(key, vars[key]);
+              }
+            }
+          }
+          if (cached.colorScheme) el.style.colorScheme = cached.colorScheme;
+          if (cached.logoContrast) el.dataset.logoContrast = cached.logoContrast;
+          if (cached.edgeType) el.dataset.edgeType = cached.edgeType;
+          if (cached.visualizerBars) {
+            el.dataset.visualizerBars = String(cached.visualizerBars);
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Synapse — Visual Music Paths</title>

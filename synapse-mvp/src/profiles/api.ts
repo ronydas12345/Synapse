@@ -1,4 +1,8 @@
 import { supabase, isMissingSchema, isSchemaCacheError, throwIfError } from '../supabase/client';
+import {
+  localPublicPreviewCreators,
+  mergePublicCreators,
+} from './previewCatalog';
 
 export interface PublicCreator {
   uid: string;
@@ -137,11 +141,32 @@ export async function listPublicCreators(
   query = '',
   order: 'followers' | 'new' = 'followers'
 ): Promise<PublicCreator[]> {
+  const local = localPublicPreviewCreators().filter((creator) => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return true;
+    return (
+      creator.username.includes(needle) ||
+      creator.displayName.toLowerCase().includes(needle)
+    );
+  });
   const cleaned = query
     .trim()
     .replace(/[^a-zA-Z0-9_ -]/g, '')
     .replace(/\s+/g, '%')
     .slice(0, 80);
+  const rpc = await supabase.rpc('list_public_creators', {
+    p_query: query.trim().slice(0, 80),
+    p_order: order,
+  });
+  if (!rpc.error && Array.isArray(rpc.data)) {
+    return mergePublicCreators(
+      local,
+      rpc.data.map((row) => mapCreator(row as Record<string, unknown>))
+    );
+  }
+  if (rpc.error && !isMissingSchema(rpc.error) && !isSchemaCacheError(rpc.error)) {
+    throwIfError(rpc.error);
+  }
   let request = supabase
     .from('creator_public')
     .select('*')
@@ -157,9 +182,12 @@ export async function listPublicCreators(
       ? request.order('created_at', { ascending: false })
       : request.order('follower_count', { ascending: false });
   const { data, error } = await request;
-  if (isMissingSchema(error)) return [];
+  if (isMissingSchema(error)) return local;
   throwIfError(error);
-  return ((data ?? []) as Record<string, unknown>[]).map((row) => mapCreator(row));
+  return mergePublicCreators(
+    local,
+    ((data ?? []) as Record<string, unknown>[]).map((row) => mapCreator(row))
+  );
 }
 
 export async function setProfileSocial(input: {
@@ -183,10 +211,13 @@ export async function syncProfilePublicFields(input: {
     p_bio: bio,
   });
   if (!error) return;
-  if (isSchemaCacheError(error) || isMissingSchema(error)) {
+  const deniedRpc = /permission denied for function set_profile_public/i.test(
+    error.message || ''
+  );
+  if (isSchemaCacheError(error) || isMissingSchema(error) || deniedRpc) {
     const { data: session } = await supabase.auth.getUser();
     const uid = session.user?.id;
-    if (!uid) return;
+    if (!uid) throw new Error('Not signed in');
     const fallback = await supabase
       .from('profiles')
       .update({
@@ -195,7 +226,7 @@ export async function syncProfilePublicFields(input: {
       })
       .eq('uid', uid);
     if (fallback.error && /column .* does not exist/i.test(fallback.error.message)) {
-      return;
+      throwIfError(error);
     }
     throwIfError(fallback.error);
     return;

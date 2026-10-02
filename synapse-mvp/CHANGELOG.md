@@ -22,7 +22,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Workshop in the workspace top nav. Help stays available after sign-in.
 - Custom names on Sequence and other nodes, plus Bring selected/all onto page to pack named groups (travel, childhood, techno, …) onto one canvas view.
 - Inspector tabs on a selected track: Settings (global defaults and local), YouTube song info, and playlist/sequence context, with jump chips under Node Settings.
-- Sticky section tabs on the Settings page so you can jump to Themes, Playback, Account, and the rest without scrolling the whole list.
 - Open settings for a track that is parked inside a Sequence or Randomizer from the node list or inspector, without dragging it back onto the canvas.
 - Playback speed on the bottom deck.
 - Own `/u/` pages include profile settings (visibility, badges, decorations) and a link to Profile settings. The workspace profile page links back to the public profile.
@@ -38,6 +37,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Empty inspector text fields restore the previous value when you click away. Shift-snap does not arm while a text box is focused.
 - The public profile link sits under the name in the profile identity block as an underlined theme accent. Profile frames use a small corner wash instead of full-panel gradients.
 - Workshop type filter includes Users so public profiles are a catalog category beside Playlists and Themes.
+- Workshop will not publish built-in themes or renamed copies that keep the same colors. Local publish preview lives at `/u/workshop_preview`. Local profile-visibility preview lives at `/u/vis_preview`.
 
 ### Fixed
 
@@ -49,6 +49,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - If a frame or featured badge fails to save, the picker snaps back instead of looking equipped.
 - Public / unlisted / private profile visibility writes through `set_profile_public` instead of a table UPDATE that collided on `uid`. Staff helper functions are no longer inlined into RLS, which was still raising `column reference "uid" is ambiguous`.
 - Profile edit lets you feature a badge by clicking it, even if progress evaluation fails to refresh awards.
+- Workshop publish no longer fails with `column "default_likes_enabled" does not exist`.
+- Saved themes apply from a local cache before the cloud workspace loads, so pages no longer flash Standard Dark first.
+- Setting a profile to public writes `profiles` and `creator_public` immediately, so the account shows under Workshop → Users. All types also lists public profiles.
+- Choosing Public no longer snaps back to Private. `set_profile_public` had a PL/pgSQL variable named `bio` that collided with the column, same class of bug as ambiguous `uid`.
+- Profile visibility no longer resets on reload. Workspace save was writing the stale private JSON back over the profile row.
+- Workshop Users lists accounts from the profile row’s visibility, so a public profile still appears if the catalog copy lagged.
 
 ## [0.3.0] — 2026-08-30
 

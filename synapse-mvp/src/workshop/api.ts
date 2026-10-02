@@ -1,6 +1,7 @@
 import { supabase, isMissingSchema, isSchemaCacheError, throwIfError } from '../supabase/client';
 import { workshopItemPath } from '../app/routes';
 import { parseTheme } from '../theme/parseTheme';
+import { builtinThemePublishError } from '../theme/isPresetTheme';
 import type { SynapseTheme } from '../theme/types';
 import type {
   ReportReason,
@@ -202,6 +203,12 @@ export async function publishWorkshopCreation(input: {
   tags?: string[];
 }): Promise<string> {
   const kind = input.kind === 'theme' ? 'theme' : 'playlist';
+  if (kind === 'theme') {
+    const parsed = parseTheme(input.payload);
+    if (!parsed) throw new Error('Theme payload is invalid');
+    const blocked = builtinThemePublishError(parsed);
+    if (blocked) throw new Error(blocked);
+  }
   const tags = sanitizeTagIds(kind, input.tags);
   const base = {
     p_source_path_id: input.sourcePathId,

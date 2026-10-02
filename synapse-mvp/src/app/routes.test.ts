@@ -33,6 +33,10 @@ describe('app routes', () => {
     expect(isAppPath('/p/a2b3c4d5e6')).toBe(true);
     expect(isAppPath('/s/a2b3c4d5e6')).toBe(true);
     expect(isAppPath('/u/ada_lovelace')).toBe(true);
+    expect(pathToRoute('/u/workshop_preview')).toBe('publicProfile');
+    expect(isAppPath('/u/workshop_preview')).toBe(true);
+    expect(pathToRoute('/u/vis_preview')).toBe('publicProfile');
+    expect(isAppPath('/u/vis_preview')).toBe(true);
     expect(isAppPath('/u/no')).toBe(false);
     expect(isMarketingRoute('workshopItem')).toBe(true);
     expect(isMarketingRoute('publicProfile')).toBe(true);

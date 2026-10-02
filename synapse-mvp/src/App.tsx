@@ -31,6 +31,12 @@ import Home from './pages/Home/Home';
 import WorkshopPage from './pages/WorkshopPage';
 import CreationPage from './workshop/CreationPage';
 import PublicProfilePage from './profiles/PublicProfilePage';
+import {
+  isVisPreview,
+  isWorkshopPreview,
+  VisPreviewPage,
+  WorkshopPreviewPage,
+} from './profiles/previewUser';
 import ShareLookupPage from './share/ShareLookupPage';
 import PricingPage from './pages/PricingPage';
 import ChangelogPage from './pages/ChangelogPage';
@@ -59,6 +65,12 @@ function MarketingPage({ location }: { location: AppLocation }) {
     return <CreationPage id={location.workshopId} />;
   }
   if (location.route === 'publicProfile' && location.username) {
+    if (isVisPreview(location.username)) {
+      return <VisPreviewPage />;
+    }
+    if (isWorkshopPreview(location.username)) {
+      return <WorkshopPreviewPage />;
+    }
     return <PublicProfilePage username={location.username} />;
   }
   if (location.route === 'shareLookup' && location.shareRef) {

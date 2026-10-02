@@ -86,11 +86,7 @@ export default function SettingsPage() {
     if (fromHash && show(fromHash.id)) {
       setActiveId(fromHash.id);
       window.requestAnimationFrame(() => {
-        scrollWithin(
-          document.getElementById(hash),
-          '.synapse-settings',
-          '.synapse-settings-bar'
-        );
+        scrollWithin(document.getElementById(hash), '.synapse-settings');
       });
     }
   }, [q]);
@@ -125,7 +121,6 @@ export default function SettingsPage() {
 
   return (
     <div className="synapse-settings" id="workspace-main">
-      <div className="synapse-settings-bar">
       <div className="synapse-settings-head">
         <div>
           <p className="synapse-section-label">Synapse</p>
@@ -139,27 +134,26 @@ export default function SettingsPage() {
           aria-label="Search settings"
         />
       </div>
-      <nav
-        className="synapse-settings-tabs"
-        aria-label="Settings sections"
-        data-tutorial="settings-nav"
-      >
-        {sections.map((s) => (
-          <a
-            key={s.id}
-            href={`#settings-${s.id}`}
-            className={`synapse-settings-tab ${activeId === s.id ? 'is-active' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              jumpTo(s.id);
-            }}
-          >
-            {s.label}
-          </a>
-        ))}
-      </nav>
-      </div>
       <div className="synapse-settings-layout">
+        <nav
+          className="synapse-settings-nav"
+          aria-label="Settings sections"
+          data-tutorial="settings-nav"
+        >
+          {sections.map((s) => (
+            <a
+              key={s.id}
+              href={`#settings-${s.id}`}
+              className={`synapse-settings-nav-item${activeId === s.id ? ' is-active' : ''}`}
+              onClick={(e) => {
+                e.preventDefault();
+                jumpTo(s.id);
+              }}
+            >
+              {s.label}
+            </a>
+          ))}
+        </nav>
         <div className="synapse-settings-main">
           {show('themes') ? (
             <section id="settings-themes" className="synapse-settings-section" data-tutorial="settings-themes">

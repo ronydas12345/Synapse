@@ -1,5 +1,6 @@
 import { documentPrefersReducedMotion } from '../settings/motion';
 import { isWorkshopShareKey, SHARE_CODE_RE } from '../share/ids';
+import { scrollWithin } from '../ui/scrollWithin';
 
 export type AppRoute =
   | 'home'
@@ -221,22 +222,8 @@ export function appHref(path: string, hash = ''): string {
 function scrollToHash(hash: string): void {
   const el = document.getElementById(hash);
   if (!el) return;
-  const settingsPane = el.closest('.synapse-settings') as HTMLElement | null;
-  if (settingsPane) {
-    const reduced = documentPrefersReducedMotion();
-    const tabs = settingsPane.querySelector(
-      '.synapse-settings-bar'
-    ) as HTMLElement | null;
-    const offset = (tabs?.getBoundingClientRect().height ?? 0) + 8;
-    const top =
-      el.getBoundingClientRect().top -
-      settingsPane.getBoundingClientRect().top +
-      settingsPane.scrollTop -
-      offset;
-    settingsPane.scrollTo({
-      top: Math.max(0, top),
-      behavior: reduced ? 'auto' : 'smooth',
-    });
+  if (el.closest('.synapse-settings')) {
+    scrollWithin(el, '.synapse-settings');
     return;
   }
   const reduced = documentPrefersReducedMotion();
