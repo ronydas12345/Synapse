@@ -16,14 +16,41 @@ describe('mergeWorkspaceProfile', () => {
     expect(merged.username).toBe('dasrony231');
   });
 
-  it('falls back to workspace JSON when the profile row is missing', () => {
+  it('keeps workspace extras when the profile row bio is an empty string', () => {
+    const current = {
+      ...emptyProfile(),
+      location: 'Austin',
+      bio: 'typed locally',
+      favoriteGenres: ['Electronic'],
+    };
     const merged = mergeWorkspaceProfile(
-      { visibility: 'unlisted', username: 'ada' },
-      undefined,
-      emptyProfile(),
-      null
+      { location: 'Austin', bio: 'from workspace', favoriteGenres: ['Electronic'] },
+      { username: 'ada', displayName: 'Ada' },
+      current,
+      { visibility: 'public', bio: '' }
     );
-    expect(merged.visibility).toBe('unlisted');
-    expect(merged.username).toBe('ada');
+    expect(merged.location).toBe('Austin');
+    expect(merged.bio).toBe('typed locally');
+    expect(merged.favoriteGenres).toEqual(['Electronic']);
+  });
+
+  it('uses profiles extras as the source of truth', () => {
+    const merged = mergeWorkspaceProfile(
+      { location: 'old', bio: 'workspace', favoriteGenres: ['Rock'] },
+      { username: 'ada', displayName: 'Ada' },
+      emptyProfile(),
+      {
+        visibility: 'public',
+        bio: 'hello',
+        extras: {
+          location: 'Austin, TX',
+          bio: 'Building Synapse',
+          favoriteGenres: ['Electronic'],
+        },
+      }
+    );
+    expect(merged.location).toBe('Austin, TX');
+    expect(merged.bio).toBe('Building Synapse');
+    expect(merged.favoriteGenres).toEqual(['Electronic']);
   });
 });

@@ -59,6 +59,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Choosing Public no longer snaps back to Private. `set_profile_public` had a PL/pgSQL variable named `bio` that collided with the column, same class of bug as ambiguous `uid`.
 - Profile visibility no longer resets on reload. Workspace save was writing the stale private JSON back over the profile row.
 - Workshop Users lists accounts from the profile row’s visibility, so a public profile still appears if the catalog copy lagged.
+- Location, bio, genres, songs, section order, and listen stats now persist on the profile row (same path as visibility) so `/u/` still has them after reload.
 
 ## [0.3.0] — 2026-08-30
 

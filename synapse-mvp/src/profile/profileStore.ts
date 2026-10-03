@@ -1,7 +1,8 @@
 import { extractYouTubeId } from '../playback';
 import { create } from 'zustand';
 import { scheduleWorkspacePersist } from '../cloud/persistGate';
-import { syncProfilePublicFields } from '../profiles/api';
+import { profileExtrasPayload } from '../cloud/workspaceProfile';
+import { syncProfileExtras, syncProfilePublicFields } from '../profiles/api';
 import { localDayKey } from './listenStats';
 import {
   OPTIONAL_SECTIONS,
@@ -190,8 +191,35 @@ export function profileForCloud(profile: UserProfile): UserProfile {
   return sanitizeProfile({ ...profile, avatarDataUrl: null });
 }
 
-function persist(_profile: UserProfile) {
+let extrasTimer: ReturnType<typeof setTimeout> | null = null;
+
+function persist(profile: UserProfile) {
   scheduleWorkspacePersist();
+  scheduleProfileExtrasSync(profile);
+}
+
+function scheduleProfileExtrasSync(profile: UserProfile) {
+  const accountUid = useProfileStore.getState().accountUid;
+  if (!accountUid) return;
+  if (typeof window === 'undefined') {
+    void pushProfileExtras(profile);
+    return;
+  }
+  if (extrasTimer) clearTimeout(extrasTimer);
+  extrasTimer = setTimeout(() => {
+    extrasTimer = null;
+    const { accountUid: uid, profile: next } = useProfileStore.getState();
+    if (!uid) return;
+    void pushProfileExtras(next);
+  }, 400);
+}
+
+async function pushProfileExtras(profile: UserProfile) {
+  try {
+    await syncProfileExtras(profileExtrasPayload(profile));
+  } catch (err) {
+    console.error('Could not save profile details', err);
+  }
 }
 
 function readStash(): Record<string, UserProfile> {
@@ -466,5 +494,15 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     set({ accountUid: null, profile: emptyProfile() });
   },
 }));
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'hidden' || !extrasTimer) return;
+    clearTimeout(extrasTimer);
+    extrasTimer = null;
+    const { accountUid, profile } = useProfileStore.getState();
+    if (accountUid) void pushProfileExtras(profile);
+  });
+}
 
 export { localDayKey } from './listenStats';

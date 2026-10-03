@@ -33,4 +33,17 @@ describe('persistGate', () => {
     vi.advanceTimersByTime(1000);
     expect(flush).not.toHaveBeenCalled();
   });
+
+  it('flushes a persist that was scheduled while disabled', () => {
+    vi.stubGlobal('window', {});
+    vi.useFakeTimers();
+    const flush = vi.fn();
+    registerWorkspaceFlush(flush);
+    setCloudPersistEnabled(false);
+    scheduleWorkspacePersist();
+    expect(flush).not.toHaveBeenCalled();
+    setCloudPersistEnabled(true);
+    vi.advanceTimersByTime(1000);
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
 });

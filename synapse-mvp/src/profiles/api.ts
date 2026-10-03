@@ -233,3 +233,31 @@ export async function syncProfilePublicFields(input: {
   }
   throwIfError(error);
 }
+
+export async function syncProfileExtras(extras: Record<string, unknown>): Promise<void> {
+  const { error } = await supabase.rpc('set_profile_extras', {
+    p_extras: extras,
+  });
+  if (!error) return;
+  const deniedRpc = /permission denied for function set_profile_extras/i.test(
+    error.message || ''
+  );
+  if (isSchemaCacheError(error) || isMissingSchema(error) || deniedRpc) {
+    const { data: session } = await supabase.auth.getUser();
+    const uid = session.user?.id;
+    if (!uid) throw new Error('Not signed in');
+    const fallback = await supabase
+      .from('profiles')
+      .update({
+        profile_extras: extras,
+        bio: String(extras.bio || '').slice(0, 500),
+      })
+      .eq('uid', uid);
+    if (fallback.error && /column .* does not exist/i.test(fallback.error.message)) {
+      throwIfError(error);
+    }
+    throwIfError(fallback.error);
+    return;
+  }
+  throwIfError(error);
+}

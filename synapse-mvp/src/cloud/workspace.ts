@@ -118,7 +118,7 @@ function applyWorkspace(
   uid: string,
   row: WorkspaceRow,
   identity?: UserProfile,
-  server?: { visibility?: unknown; bio?: unknown } | null
+  server?: { visibility?: unknown; bio?: unknown; extras?: unknown } | null
 ): void {
   usePathStore.getState().replaceLibrary(parseLibrary(row.library));
   replaceSettings(isBlankJson(row.settings) ? defaultSettings() : row.settings);
@@ -184,13 +184,34 @@ export async function hydrateUserWorkspace(): Promise<void> {
         .maybeSingle(),
       supabase
         .from('profiles')
-        .select('visibility, bio')
+        .select('visibility, bio, profile_extras')
         .eq('uid', user.uid)
         .maybeSingle(),
     ]);
     throwIfError(workspace.error);
+    let serverFields: { visibility?: unknown; bio?: unknown; extras?: unknown } | null =
+      null;
     if (serverProfile.error) {
-      console.error('Could not load profile visibility', serverProfile.error);
+      if (/profile_extras/i.test(serverProfile.error.message || '')) {
+        const fallback = await supabase
+          .from('profiles')
+          .select('visibility, bio')
+          .eq('uid', user.uid)
+          .maybeSingle();
+        if (fallback.error) {
+          console.error('Could not load profile visibility', fallback.error);
+        } else {
+          serverFields = fallback.data;
+        }
+      } else {
+        console.error('Could not load profile visibility', serverProfile.error);
+      }
+    } else if (serverProfile.data) {
+      serverFields = {
+        visibility: serverProfile.data.visibility,
+        bio: serverProfile.data.bio,
+        extras: (serverProfile.data as { profile_extras?: unknown }).profile_extras,
+      };
     }
 
     const data = workspace.data;
@@ -207,7 +228,7 @@ export async function hydrateUserWorkspace(): Promise<void> {
       user.uid,
       row,
       useProfileStore.getState().profile,
-      serverProfile.error ? null : serverProfile.data
+      serverFields
     );
 
     await supabase.from('user_workspaces').upsert(

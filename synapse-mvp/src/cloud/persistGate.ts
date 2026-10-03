@@ -1,4 +1,5 @@
 let enabled = false;
+let pending = false;
 let timer: ReturnType<typeof setTimeout> | null = null;
 let flush: (() => void | Promise<void>) | null = null;
 
@@ -11,6 +12,11 @@ export function setCloudPersistEnabled(on: boolean): void {
   if (!on && timer) {
     clearTimeout(timer);
     timer = null;
+    pending = true;
+  }
+  if (on && pending) {
+    pending = false;
+    scheduleWorkspacePersist();
   }
 }
 
@@ -19,7 +25,11 @@ export function isCloudPersistEnabled(): boolean {
 }
 
 export function scheduleWorkspacePersist(): void {
-  if (!enabled || !flush) return;
+  if (!flush) return;
+  if (!enabled) {
+    pending = true;
+    return;
+  }
   if (typeof window === 'undefined') {
     void flush();
     return;
@@ -27,7 +37,10 @@ export function scheduleWorkspacePersist(): void {
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => {
     timer = null;
-    if (!enabled) return;
+    if (!enabled) {
+      pending = true;
+      return;
+    }
     void flush?.();
   }, 700);
 }
