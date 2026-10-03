@@ -38,6 +38,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - The public profile link sits under the name in the profile identity block as an underlined theme accent. Profile frames use a small corner wash instead of full-panel gradients.
 - Workshop type filter includes Users so public profiles are a catalog category beside Playlists and Themes.
 - Workshop will not publish built-in themes or renamed copies that keep the same colors. Local publish preview lives at `/u/workshop_preview`. Local profile-visibility preview lives at `/u/vis_preview`.
+- Login is a compact card: Email, Password, Sign in, Google, then Sign up. Placeholders stay left-aligned; the rest of the card is centered.
 
 ### Fixed
 

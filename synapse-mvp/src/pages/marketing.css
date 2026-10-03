@@ -285,6 +285,8 @@ body:has(.synapse-mkt),
 .synapse-auth-screen .synapse-auth-card {
   width: 100%;
   max-width: none;
+  margin-top: 0.85rem;
+  padding: 0.9rem 1rem 1rem;
 }
 
 .synapse-mkt-section {

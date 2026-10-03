@@ -3583,6 +3583,34 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
   max-width: 22rem;
 }
 
+.synapse-auth-panel-compact {
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: none;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.synapse-auth-panel-compact .synapse-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.synapse-auth-panel-compact .synapse-settings-input {
+  text-align: start;
+}
+
+.synapse-auth-panel-compact .synapse-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.synapse-auth-panel-compact .synapse-auth-google {
+  min-width: 0;
+}
+
 .synapse-auth-identity {
   display: flex;
   align-items: center;
