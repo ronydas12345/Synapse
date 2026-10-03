@@ -15,6 +15,7 @@ export const SITE = {
 export const CREATOR = {
   displayName: '',
   role: 'Creator of Synapse',
+  username: 'dasrony231',
   photoSrc: '/creator.jpg',
   photoAlt: 'Portrait of the Synapse developer',
   bio: 'Synapse is an independent project built around a simple idea: music should feel more like something you explore than something you simply press play on.',

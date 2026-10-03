@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Mail } from 'lucide-react';
+import { PathLink } from '../../../app/AppLink';
+import { publicProfilePath } from '../../../app/routes';
 import { CREATOR } from '../../../site/content';
 import Reveal from './Reveal';
 
@@ -65,6 +67,8 @@ function DiscordButton() {
 }
 
 export default function About() {
+  const profileHref = publicProfilePath(CREATOR.username);
+
   return (
     <section
       className="synapse-mkt-section synapse-mkt-about"
@@ -76,7 +80,13 @@ export default function About() {
         <h2 id="about-title">Music should feel more like something you explore.</h2>
         <div className="synapse-mkt-about-grid">
           <div className="synapse-mkt-avatar">
-            <img src={CREATOR.photoSrc} alt={CREATOR.photoAlt} />
+            <PathLink
+              href={profileHref}
+              className="synapse-mkt-avatar-link"
+              title={`Open @${CREATOR.username}`}
+            >
+              <img src={CREATOR.photoSrc} alt={CREATOR.photoAlt} />
+            </PathLink>
           </div>
           <div>
             <p>{CREATOR.bio}</p>
@@ -85,6 +95,12 @@ export default function About() {
             <div className="synapse-mkt-connect">
               <h3>Connect</h3>
               <div className="synapse-mkt-connect-row">
+                <PathLink
+                  href={profileHref}
+                  className="synapse-mkt-connect-btn synapse-mkt-connect-profile"
+                >
+                  View profile
+                </PathLink>
                 <a
                   className="synapse-mkt-connect-btn synapse-mkt-connect-github"
                   href={CREATOR.links.github}

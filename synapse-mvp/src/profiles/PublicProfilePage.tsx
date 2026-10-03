@@ -8,6 +8,7 @@ import DecorationFrame from '../decorations/DecorationFrame';
 import ProfileRecognition from '../profile/ProfileRecognition';
 import { useProfileStore } from '../profile/profileStore';
 import SharePanel from '../share/SharePanel';
+import { usePathStore } from '../store';
 import {
   followCreator,
   isCreatorSaved,
@@ -17,8 +18,13 @@ import {
   unfollowCreator,
   type PublicCreator,
 } from './api';
+import ProfileDetailsReadout from './ProfileDetailsReadout';
 import ProfileNavLinks from './ProfileNavLinks';
 import ProfileVisibilityField from './ProfileVisibilityField';
+import {
+  readCreatorProfileDetails,
+  type CreatorProfileDetails,
+} from './profileDetails';
 import { listCreatorWorkshop } from '../workshop/api';
 import WorkshopCard from '../workshop/WorkshopCard';
 import type { WorkshopCard as Card } from '../workshop/types';
@@ -27,10 +33,12 @@ export default function PublicProfilePage({ username }: { username: string }) {
   const user = useAuthStore((s) => s.user);
   const ownUsername = useProfileStore((s) => s.profile.username);
   const setVisibility = useProfileStore((s) => s.setVisibility);
-  const storeVisibility = useProfileStore((s) => s.profile.visibility);
+  const storeProfile = useProfileStore((s) => s.profile);
+  const pathSummaries = usePathStore((s) => s.pathSummaries);
   const [creator, setCreator] = useState<PublicCreator | null>(null);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
+  const [details, setDetails] = useState<CreatorProfileDetails | null>(null);
   const [following, setFollowing] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [error, setError] = useState('');
@@ -43,17 +51,20 @@ export default function PublicProfilePage({ username }: { username: string }) {
         const next = await readPublicCreator(username);
         if (cancelled) return;
         setCreator(next);
+        setDetails(null);
         if (!next) {
           setError('This profile is private or does not exist.');
           return;
         }
-        const [earned, workshop] = await Promise.all([
+        const [earned, workshop, extras] = await Promise.all([
           listEarnedBadges(next.uid),
           listCreatorWorkshop(next.uid),
+          readCreatorProfileDetails(username).catch(() => null),
         ]);
         if (cancelled) return;
         setBadges(earned);
         setCards(workshop);
+        setDetails(extras);
         if (user && user.uid !== next.uid) {
           const [follows, saved] = await Promise.all([
             isFollowing(next.uid, user.uid),
@@ -84,6 +95,27 @@ export default function PublicProfilePage({ username }: { username: string }) {
 
   const own = user?.uid === creator.uid;
   const sharePath = publicProfilePath(creator.username || creator.shareCode);
+  const detailsProfile = own
+    ? {
+        ...storeProfile,
+        bio: storeProfile.bio || creator.bio,
+      }
+    : details
+      ? {
+          ...details.profile,
+          bio: details.profile.bio || creator.bio,
+        }
+      : null;
+  const playlists = own
+    ? (storeProfile.visibility === 'public'
+        ? pathSummaries.filter((path) => path.visibility === 'public')
+        : pathSummaries
+      ).map((path) => ({
+        id: path.id,
+        name: path.name,
+        visibility: path.visibility,
+      }))
+    : details?.playlists ?? [];
 
   return (
     <main id="main" className="synapse-mkt-main synapse-mkt-page synapse-public-profile">
@@ -116,7 +148,9 @@ export default function PublicProfilePage({ username }: { username: string }) {
           <BadgeStrip badges={badges} featuredId={creator.featuredBadge} compact />
         </div>
       </div>
-      {creator.bio ? <p className="synapse-mkt-lead">{creator.bio}</p> : null}
+      {!detailsProfile && creator.bio ? (
+        <p className="synapse-mkt-lead">{creator.bio}</p>
+      ) : null}
       {!own ? (
       <div className="synapse-workshop-actions">
             {creator.followsEnabled ? (
@@ -184,7 +218,7 @@ export default function PublicProfilePage({ username }: { username: string }) {
         <section className="synapse-profile-section">
           <h2>Profile settings</h2>
           <ProfileVisibilityField
-            value={storeVisibility}
+            value={storeProfile.visibility}
             onChange={setVisibility}
           />
           <ProfileRecognition editing />
@@ -194,6 +228,14 @@ export default function PublicProfilePage({ username }: { username: string }) {
         <h2>Badges</h2>
         <BadgeStrip badges={badges} featuredId={creator.featuredBadge} />
       </section>
+      {detailsProfile ? (
+        <ProfileDetailsReadout
+          profile={detailsProfile}
+          playlists={playlists}
+          showSaved={own}
+          showEmpty={own}
+        />
+      ) : null}
       <section>
         <h2>Workshop</h2>
         {cards.length === 0 ? (

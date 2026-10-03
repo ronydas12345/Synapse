@@ -498,6 +498,17 @@ body:has(.synapse-mkt),
   object-fit: cover;
 }
 
+.synapse-mkt-avatar-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+}
+
+.synapse-mkt-avatar-link:hover img {
+  opacity: 0.92;
+}
+
 .synapse-mkt-about-name {
   font-family: var(--font-display);
   font-size: 1.2rem;
@@ -575,6 +586,17 @@ body:has(.synapse-mkt),
 
 .synapse-mkt-connect-email:hover {
   border-color: var(--text-muted);
+  color: var(--text);
+}
+
+.synapse-mkt-connect-profile {
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-elevated));
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+}
+
+.synapse-mkt-connect-profile:hover {
+  border-color: var(--accent);
   color: var(--text);
 }
 
@@ -1293,6 +1315,20 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
   height: 72px;
   object-fit: cover;
   border-radius: 999px;
+}
+
+.synapse-public-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.synapse-public-profile > section > h2,
+.synapse-mkt .synapse-public-profile .synapse-profile-section h2 {
+  max-width: none;
+  font-size: 1.05rem;
+  letter-spacing: 0;
+  margin: 0 0 0.65rem;
 }
 
 .synapse-share-panel {
