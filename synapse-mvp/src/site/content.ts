@@ -15,18 +15,20 @@ export const SITE = {
 export const CREATOR = {
   displayName: '',
   role: 'Creator of Synapse',
-  photoSrc: '',
-  photoAlt: 'Portrait of the Synapse creator',
-  bio: 'I built Synapse because traditional playlists felt too restrictive. I wanted music to behave more like a system—something that could react, branch, change direction, and create a different experience every time.',
-  why:
-    'Linear queues decide the next song for you, or make you decide every time. Synapse lets you design the rules once, then listen.',
+  photoSrc: '/creator.jpg',
+  photoAlt: 'Portrait of the Synapse developer',
+  bio: 'Synapse is an independent project built around a simple idea: music should feel more like something you explore than something you simply press play on.',
+  why: "I'm the developer behind Synapse, and I've been building it around experimentation, visual interfaces, personalization, and giving listeners more control over how they experience music. A lot of Synapse comes from trying to turn ideas that normally stay in my head into something people can actually use.",
   philosophy:
-    'Give listeners control without making them do all the work. Creativity in how a path is built, control over the rules, and room left for surprise.',
+    "I'm continuing to build Synapse as a long-term project, with new features, experiments, and improvements along the way.",
+  email: 'connect.with.synape@gmail.com',
+  discordUsername: 'sonic_boom_10',
   links: {
-    github: '',
+    github: 'https://github.com/ronydas12345',
     portfolio: '',
     linkedin: '',
-    contact: '',
+    discord: '',
+    contact: 'mailto:connect.with.synape@gmail.com',
   },
 };
 
