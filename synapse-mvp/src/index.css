@@ -3982,6 +3982,18 @@ button.synapse-badge {
   font-size: 0.85rem;
 }
 
+.synapse-badge-earned {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
+}
+
+.synapse-badge-strip.is-compact .synapse-badge-earned {
+  font-size: 0.68rem;
+}
+
 .synapse-badge-t1 {
   color: #d7b48a;
   border-color: color-mix(in srgb, #b45309 45%, var(--border));

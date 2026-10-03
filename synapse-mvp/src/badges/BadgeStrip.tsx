@@ -1,5 +1,5 @@
 import type { EarnedBadge } from './api';
-import { badgeClass, badgeDef } from './catalog';
+import { badgeClass, badgeDef, formatBadgeAwardedAt, isRoleBadge } from './catalog';
 
 function BadgeMark({ tier }: { tier: number }) {
   const gems = tier >= 5 ? 3 : tier >= 4 ? 2 : 1;
@@ -36,6 +36,8 @@ export default function BadgeStrip({
       {shown.filter((badge): badge is EarnedBadge => Boolean(badge)).map((badge) => {
         const selected = badge.id === featuredId;
         const className = badgeClass(badge.id, selected ? 'is-featured' : '');
+        const earnedOn =
+          isRoleBadge(badge.id) ? null : formatBadgeAwardedAt(badge.awardedAt);
         const body = (
           <>
             <span className="synapse-badge-head">
@@ -45,6 +47,9 @@ export default function BadgeStrip({
             {compact ? null : (
               <span className="synapse-badge-copy">{badge.def.description}</span>
             )}
+            {earnedOn ? (
+              <span className="synapse-badge-earned">{earnedOn}</span>
+            ) : null}
           </>
         );
         return (

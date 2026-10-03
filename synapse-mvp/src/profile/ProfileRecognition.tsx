@@ -39,6 +39,7 @@ export default function ProfileRecognition({
   const [followsEnabled, setFollowsEnabled] = useState(true);
   const [savesEnabled, setSavesEnabled] = useState(true);
   const [error, setError] = useState('');
+  const cosmeticsTouched = useRef(false);
   const onEquippedRef = useRef(onEquippedChange);
   const onRecognitionRef = useRef(onRecognition);
   onEquippedRef.current = onEquippedChange;
@@ -64,14 +65,18 @@ export default function ProfileRecognition({
         const nextFeatured = creator?.featuredBadge || '';
         setBadges(earned);
         setUnlocked(deco.length ? deco : ['default']);
-        setEquipped(nextEquipped);
-        setFeatured(nextFeatured);
-        onEquippedRef.current?.(nextEquipped);
-        onRecognitionRef.current?.({
-          equipped: nextEquipped,
-          badges: earned,
-          featured: nextFeatured,
-        });
+        if (!cosmeticsTouched.current) {
+          setEquipped(nextEquipped);
+          setFeatured(nextFeatured);
+          onEquippedRef.current?.(nextEquipped);
+          onRecognitionRef.current?.({
+            equipped: nextEquipped,
+            badges: earned,
+            featured: nextFeatured,
+          });
+        } else {
+          onRecognitionRef.current?.({ badges: earned });
+        }
         setShareCode(creator?.shareCode || '');
         setFollowsEnabled(creator?.followsEnabled !== false);
         setSavesEnabled(creator?.savesEnabled !== false);
@@ -100,6 +105,7 @@ export default function ProfileRecognition({
 
   function saveFeatured(id: string) {
     const previous = featured;
+    cosmeticsTouched.current = true;
     setFeatured(id);
     onRecognition?.({ featured: id });
     void setFeaturedBadge(id).catch((err) => {
@@ -193,6 +199,7 @@ export default function ProfileRecognition({
         onEquip={(id) => {
           if (!editing) return;
           const previous = equipped;
+          cosmeticsTouched.current = true;
           setEquipped(id);
           onEquippedChange?.(id);
           onRecognition?.({ equipped: id });

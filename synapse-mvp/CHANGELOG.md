@@ -60,6 +60,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Profile visibility no longer resets on reload. Workspace save was writing the stale private JSON back over the profile row.
 - Workshop Users lists accounts from the profile row’s visibility, so a public profile still appears if the catalog copy lagged.
 - Location, bio, genres, songs, section order, and listen stats now persist on the profile row (same path as visibility) so `/u/` still has them after reload.
+- Featured badges and decorations update the profile banner as soon as you pick them, including on your public `/u/` page.
+- Non-role badges show the date they were earned.
 
 ## [0.3.0] — 2026-08-30
 

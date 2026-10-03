@@ -94,3 +94,18 @@ export function badgeClass(id: string, extra = ''): string {
     .filter(Boolean)
     .join(' ');
 }
+
+export function isRoleBadge(id: string): boolean {
+  return badgeDef(id)?.category === 'staff';
+}
+
+export function formatBadgeAwardedAt(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const ms = Date.parse(iso);
+  if (!Number.isFinite(ms)) return null;
+  return new Date(ms).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}

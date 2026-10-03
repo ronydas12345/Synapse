@@ -221,7 +221,25 @@ export default function PublicProfilePage({ username }: { username: string }) {
             value={storeProfile.visibility}
             onChange={setVisibility}
           />
-          <ProfileRecognition editing />
+          <ProfileRecognition
+            editing
+            onEquippedChange={(id) => {
+              setCreator((current) =>
+                current ? { ...current, equippedDecoration: id } : current
+              );
+            }}
+            onRecognition={(next) => {
+              setCreator((current) => {
+                if (!current) return current;
+                return {
+                  ...current,
+                  equippedDecoration: next.equipped ?? current.equippedDecoration,
+                  featuredBadge:
+                    next.featured !== undefined ? next.featured : current.featuredBadge,
+                };
+              });
+            }}
+          />
         </section>
       ) : null}
       <section>
