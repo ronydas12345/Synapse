@@ -32,8 +32,8 @@ export function nodeDisplayName(
   type: string | undefined,
   data?: unknown
 ): string {
+  if (type === 'track') return getTrackDisplayMeta(data as never).title;
   const custom = nodeCustomName(data);
   if (custom) return custom;
-  if (type === 'track') return getTrackDisplayMeta(data as never).title;
   return nodeTypeLabel(type, data);
 }

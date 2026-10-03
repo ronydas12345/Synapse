@@ -307,11 +307,13 @@ export default function NodeInspector() {
       ) : null}
       <InspectorJumpTabs sections={inspectorJumpSections(selectedNode.type, tab, isTrack)} />
       <div className="synapse-inspector-card space-y-3 text-sm">
-        <InspectorNameField
-          nodeId={selectedNode.id}
-          type={selectedNode.type}
-          data={selectedNode.data}
-        />
+        {!isTrack ? (
+          <InspectorNameField
+            nodeId={selectedNode.id}
+            type={selectedNode.type}
+            data={selectedNode.data}
+          />
+        ) : null}
         <div>
           <label>Node Type</label>
           <p className="text-[var(--text-muted)] capitalize font-mono text-xs m-0">{selectedNode.type}</p>

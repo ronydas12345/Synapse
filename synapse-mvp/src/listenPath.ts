@@ -57,7 +57,7 @@ export function nodeListLabel(node: Node | undefined): { title: string; subtitle
     const meta = getTrackDisplayMeta(node.data);
     return {
       title: meta.title,
-      subtitle: [custom, meta.artist].filter(Boolean).join(' · '),
+      subtitle: meta.artist,
     };
   }
   if (node.type === 'transition') {

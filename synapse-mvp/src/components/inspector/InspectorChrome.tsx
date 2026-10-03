@@ -13,6 +13,7 @@ export function InspectorNameField({
   data: Record<string, unknown> | undefined;
 }) {
   const updateNodeData = usePathStore((s) => s.updateNodeData);
+  if (type === 'track') return null;
   const kind = nodeTypeLabel(type, data);
   return (
     <div className="space-y-1.5">

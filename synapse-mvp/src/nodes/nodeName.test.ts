@@ -20,4 +20,10 @@ describe('node names', () => {
     expect(nodeDisplayName('conditional', { name: 'techno' })).toBe('techno');
     expect(nodeDisplayName('start', {})).toBe('Start');
   });
+
+  it('uses song title for tracks instead of a custom node name', () => {
+    expect(
+      nodeDisplayName('track', { name: 'travel', songTitle: 'Bohemian Rhapsody' })
+    ).toBe('Bohemian Rhapsody');
+  });
 });

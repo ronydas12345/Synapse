@@ -140,7 +140,7 @@ export function bringNodesOntoPage(
   for (const node of nodes) {
     if (!visible(node)) continue;
     const name = nodeCustomName(node.data);
-    if (!name) continue;
+    if (!name || node.type === 'track') continue;
     const key = name.toLowerCase();
     const list = named.get(key);
     if (list) list.push(node.id);

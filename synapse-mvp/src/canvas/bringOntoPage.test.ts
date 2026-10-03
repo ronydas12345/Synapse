@@ -30,7 +30,7 @@ describe('bringNodesOntoPage', () => {
   it('packs named groups together and leaves unnamed nodes', () => {
     const nodes = [
       node('travel-1', 'randomizer', 900, 50, { name: 'travel' }),
-      node('travel-2', 'track', 1200, 80, { name: 'travel' }),
+      node('travel-2', 'conditional', 1200, 80, { name: 'travel' }),
       node('other', 'track', 40, 900, {}),
     ];
     const next = bringNodesOntoPage(nodes, [], 'all', []);

@@ -42,6 +42,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Signup matches that compact card (email, password, username, display name, Create account, Google, then Log in). Login and signup pages are fully center-aligned.
 - About uses the Superuser profile photo (no decorations), updated copy, and Connect buttons for GitHub, Discord, and email. The photo and a View profile button open `/u/dasrony231`.
 - Public `/u/` pages show the same optional profile details as Profile settings: location, bio, saved (own page), genres, favorite songs, playlists, and listen stats.
+- Track nodes keep Song Title as the only name field. The extra inspector Name (used for Sequence and other nodes) is gone on tracks.
 
 ### Fixed
 
