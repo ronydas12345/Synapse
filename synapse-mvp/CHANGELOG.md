@@ -39,6 +39,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Workshop type filter includes Users so public profiles are a catalog category beside Playlists and Themes.
 - Workshop will not publish built-in themes or renamed copies that keep the same colors. Local publish preview lives at `/u/workshop_preview`. Local profile-visibility preview lives at `/u/vis_preview`.
 - Login is a compact card: Email, Password, Sign in, Google, then Sign up. Placeholders stay left-aligned; the rest of the card is centered.
+- Signup matches that compact card (email, password, username, display name, Create account, Google, then Log in). Login and signup pages are fully center-aligned.
 
 ### Fixed
 

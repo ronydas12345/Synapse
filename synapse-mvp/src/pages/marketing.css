@@ -254,16 +254,20 @@ body:has(.synapse-mkt),
 
 .synapse-auth-screen-brand {
   margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
 }
 
 .synapse-auth-screen-main {
   width: 100%;
   max-width: 24rem;
+  text-align: center;
 }
 
 .synapse-auth-screen-main h1 {
   font-size: clamp(2rem, 5vw, 2.8rem);
   max-width: none;
+  text-align: center;
 }
 
 .synapse-auth-alt {

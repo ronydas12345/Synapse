@@ -229,174 +229,124 @@ export default function AuthPanel({
     acceptLegal;
   const isSignup = variant === 'signup';
 
-  if (!isSignup) {
-    return (
-      <div
-        className="synapse-auth-panel synapse-auth-panel-compact"
-        data-tutorial="auth-panel"
-      >
-        <form
-          className="synapse-auth-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void run(
-              () => signInWithEmail(email.trim(), password),
-              finishIfComplete
-            );
-          }}
-        >
-          <input
-            className="synapse-settings-input"
-            type="email"
-            autoComplete="email"
-            placeholder="Email"
-            aria-label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            className="synapse-settings-input"
-            type="password"
-            autoComplete="current-password"
-            placeholder="Password"
-            aria-label="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            minLength={6}
-            required
-          />
-          {error ? <p className="synapse-settings-error">{error}</p> : null}
-          <button
-            type="submit"
-            className="synapse-btn synapse-btn-play"
-            disabled={busy || !email.trim() || password.length < 6}
-          >
-            Sign in
-          </button>
-        </form>
-        <button
-          type="button"
-          className="synapse-btn synapse-btn-ghost synapse-auth-google"
-          disabled={busy}
-          onClick={() => run(() => signInWithGoogle())}
-        >
-          <GoogleMark />
-          Continue with Google
-        </button>
-        <p className="synapse-auth-switch-row">
-          Need an account? <AuthSwitchLink to="signup">Sign up</AuthSwitchLink>
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="synapse-auth-panel" data-tutorial="auth-panel">
+    <div
+      className="synapse-auth-panel synapse-auth-panel-compact"
+      data-tutorial="auth-panel"
+    >
+      <form
+        className="synapse-auth-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (isSignup) {
+            if (!signupIdentity) return;
+            void run(
+              () =>
+                createAccountWithEmail(email.trim(), password, signupIdentity),
+              onSignedIn
+            );
+            return;
+          }
+          void run(
+            () => signInWithEmail(email.trim(), password),
+            finishIfComplete
+          );
+        }}
+      >
+        <input
+          className="synapse-settings-input"
+          type="email"
+          autoComplete="email"
+          placeholder="Email"
+          aria-label="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          className="synapse-settings-input"
+          type="password"
+          autoComplete={isSignup ? 'new-password' : 'current-password'}
+          placeholder="Password"
+          aria-label="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          minLength={6}
+          required
+        />
+        {isSignup ? (
+          <>
+            <input
+              className="synapse-settings-input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+              aria-label="Username"
+              autoComplete="username"
+              required
+            />
+            {username && usernameError(username) ? (
+              <p className="synapse-settings-error">{usernameError(username)}</p>
+            ) : null}
+            <input
+              className="synapse-settings-input"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Display name"
+              aria-label="Display name"
+              autoComplete="name"
+              required
+            />
+            {displayName && displayNameError(displayName) ? (
+              <p className="synapse-settings-error">
+                {displayNameError(displayName)}
+              </p>
+            ) : null}
+            <label className="synapse-auth-consent">
+              <input
+                type="checkbox"
+                checked={acceptLegal}
+                onChange={(event) => setAcceptLegal(event.target.checked)}
+                required
+              />
+              <span>
+                I agree to the <AppLink to="terms">Terms</AppLink> and{' '}
+                <AppLink to="privacy">Privacy Policy</AppLink>.
+              </span>
+            </label>
+          </>
+        ) : null}
+        {error ? <p className="synapse-settings-error">{error}</p> : null}
+        <button
+          type="submit"
+          className="synapse-btn synapse-btn-play"
+          disabled={
+            busy ||
+            (isSignup ? !signupReady : !email.trim() || password.length < 6)
+          }
+        >
+          {isSignup ? 'Create account' : 'Sign in'}
+        </button>
+      </form>
       <button
         type="button"
-        className="synapse-btn synapse-btn-play synapse-auth-google"
+        className="synapse-btn synapse-btn-ghost synapse-auth-google"
         disabled={busy}
         onClick={() => run(() => signInWithGoogle())}
       >
         <GoogleMark />
         Continue with Google
       </button>
-      <p className="synapse-auth-divider">or email</p>
-      <form
-        className="synapse-auth-form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!signupIdentity) return;
-          void run(
-            () =>
-              createAccountWithEmail(email.trim(), password, signupIdentity),
-            onSignedIn
-          );
-        }}
-      >
-        <label className="synapse-settings-field">
-          Email
-          <input
-            className="synapse-settings-input"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
-        <label className="synapse-settings-field">
-          Password
-          <input
-            className="synapse-settings-input"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            minLength={6}
-            required
-          />
-        </label>
-        <label className="synapse-settings-field">
-          Username
-          <input
-            className="synapse-settings-input"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="your_name"
-            autoComplete="username"
-            required
-          />
-        </label>
-        {usernameError(username) ? (
-          <p className="synapse-settings-error">{usernameError(username)}</p>
-        ) : null}
-        <label className="synapse-settings-field">
-          Display name
-          <input
-            className="synapse-settings-input"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="How you appear"
-            autoComplete="name"
-            required
-          />
-        </label>
-        {displayNameError(displayName) ? (
-          <p className="synapse-settings-error">
-            {displayNameError(displayName)}
-          </p>
-        ) : null}
-        <label className="synapse-auth-consent">
-          <input
-            type="checkbox"
-            checked={acceptLegal}
-            onChange={(event) => setAcceptLegal(event.target.checked)}
-            required
-          />
-          <span>
-            I agree to the <AppLink to="terms">Terms</AppLink> and{' '}
-            <AppLink to="privacy">Privacy Policy</AppLink>.
-          </span>
-        </label>
-        {error ? <p className="synapse-settings-error">{error}</p> : null}
-        <button
-          type="submit"
-          className="synapse-btn synapse-btn-play"
-          disabled={busy || !signupReady}
-        >
-          Create account
-        </button>
-      </form>
       <p className="synapse-auth-switch-row">
-        By continuing with Google you agree to the{' '}
-        <AppLink to="terms">Terms</AppLink> and{' '}
-        <AppLink to="privacy">Privacy Policy</AppLink>.
-      </p>
-      <p className="synapse-auth-switch-row">
-        Already have an account?{' '}
-        <AuthSwitchLink to="login">Log in</AuthSwitchLink>
+        {isSignup ? (
+          <>
+            Already have an account? <AuthSwitchLink to="login">Log in</AuthSwitchLink>
+          </>
+        ) : (
+          <>
+            Need an account? <AuthSwitchLink to="signup">Sign up</AuthSwitchLink>
+          </>
+        )}
       </p>
     </div>
   );

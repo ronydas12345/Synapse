@@ -3596,6 +3596,7 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
 }
 
 .synapse-auth-panel-compact .synapse-settings-input {
@@ -3609,6 +3610,12 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
 
 .synapse-auth-panel-compact .synapse-auth-google {
   min-width: 0;
+}
+
+.synapse-auth-panel-compact .synapse-auth-consent {
+  align-self: stretch;
+  text-align: start;
+  justify-content: flex-start;
 }
 
 .synapse-auth-identity {
