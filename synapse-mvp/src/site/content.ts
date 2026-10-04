@@ -22,14 +22,14 @@ export const CREATOR = {
   why: "I'm the developer behind Synapse, and I've been building it around experimentation, visual interfaces, personalization, and giving listeners more control over how they experience music. A lot of Synapse comes from trying to turn ideas that normally stay in my head into something people can actually use.",
   philosophy:
     "I'm continuing to build Synapse as a long-term project, with new features, experiments, and improvements along the way.",
-  email: 'connect.with.synape@gmail.com',
-  discordUsername: 'sonic_boom_10',
+  email: 'connect.to.synapse@gmail.com',
+  discordUsername: 'connect_with_synapse',
   links: {
     github: 'https://github.com/ronydas12345',
     portfolio: '',
     linkedin: '',
     discord: '',
-    contact: 'mailto:connect.with.synape@gmail.com',
+    contact: 'mailto:connect.to.synapse@gmail.com',
   },
 };
 

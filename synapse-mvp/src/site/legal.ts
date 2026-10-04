@@ -1,7 +1,7 @@
 export const LEGAL = {
   product: 'Synapse',
   operator: 'Synapse',
-  contactEmail: 'dasrony231@gmail.com',
+  contactEmail: 'connect.to.synapse@gmail.com',
   effectiveDate: '21 September 2026',
   privacyVersion: '2026-09-21',
   termsVersion: '2026-09-21',
