@@ -1268,8 +1268,10 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
 
 .synapse-public-profile-hero {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   align-items: flex-end;
+  justify-content: space-between;
   margin-bottom: 1rem;
   overflow: visible;
   padding: 1.6rem 1.1rem 1.1rem;
@@ -1342,6 +1344,11 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
   font-size: 1.05rem;
   letter-spacing: 0;
   margin: 0 0 0.65rem;
+}
+
+.synapse-public-profile-hero .synapse-profile-hero-aside {
+  min-width: 0;
+  flex: 0 1 auto;
 }
 
 .synapse-share-panel.is-compact {

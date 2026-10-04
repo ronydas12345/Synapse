@@ -147,6 +147,18 @@ export default function PublicProfilePage({ username }: { username: string }) {
           </p>
           <BadgeStrip badges={badges} featuredId={creator.featuredBadge} compact />
         </div>
+        {(creator.visibility === 'public' ||
+          creator.visibility === 'unlisted' ||
+          own) ? (
+          <div className="synapse-profile-hero-aside">
+            <SharePanel
+              compact
+              shareCode={creator.shareCode || creator.username}
+              path={sharePath}
+              label="profile"
+            />
+          </div>
+        ) : null}
       </div>
       {!detailsProfile && creator.bio ? (
         <p className="synapse-mkt-lead">{creator.bio}</p>
@@ -205,15 +217,6 @@ export default function PublicProfilePage({ username }: { username: string }) {
       </div>
       ) : null}
       {error ? <p className="synapse-settings-error">{error}</p> : null}
-      {(creator.visibility === 'public' ||
-        creator.visibility === 'unlisted' ||
-        own) ? (
-        <SharePanel
-          shareCode={creator.shareCode || creator.username}
-          path={sharePath}
-          label="profile"
-        />
-      ) : null}
       {own ? (
         <section className="synapse-profile-section">
           <h2>Profile settings</h2>
