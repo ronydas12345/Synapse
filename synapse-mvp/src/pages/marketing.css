@@ -622,7 +622,15 @@ body:has(.synapse-mkt),
   font-size: 1.4rem;
 }
 
-.synapse-mkt-workshop-row,
+.synapse-mkt-workshop-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.9rem;
+  overflow: visible;
+  padding-bottom: 0.6rem;
+  margin: 1.25rem 0;
+}
+
 .synapse-mkt-theme-row {
   display: grid;
   grid-auto-flow: column;
@@ -634,7 +642,6 @@ body:has(.synapse-mkt),
   margin: 1.25rem 0;
 }
 
-.synapse-mkt-workshop-card,
 .synapse-mkt-theme-card {
   scroll-snap-align: start;
 }
@@ -1239,6 +1246,12 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
   align-items: center;
 }
 
+.synapse-workshop-uploaded {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
 .synapse-workshop-actions,
 .synapse-workshop-report {
   display: flex;
@@ -1255,8 +1268,10 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
 
 .synapse-public-profile-hero {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
-  align-items: flex-end;
+  align-items: stretch;
+  justify-content: space-between;
   margin-bottom: 1rem;
   overflow: visible;
   padding: 1.6rem 1.1rem 1.1rem;
@@ -1306,7 +1321,7 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
 
 .synapse-public-profile-hero[data-deco='superadmin'] {
   background:
-    radial-gradient(46% 92% at 5% 0%, color-mix(in srgb, #f97316 12%, transparent), transparent 74%),
+    radial-gradient(46% 92% at 5% 0%, color-mix(in srgb, #eab308 22%, transparent), transparent 74%),
     var(--bg-panel);
 }
 
@@ -1331,11 +1346,22 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
   margin: 0 0 0.65rem;
 }
 
-.synapse-share-panel {
-  display: grid;
-  gap: 0.5rem;
-  max-width: 36rem;
-  margin: 1rem 0;
+.synapse-share-panel.is-compact {
+  margin: 0;
+  padding: 0;
+  border: none;
+  max-width: 18rem;
+  gap: 0.28rem;
+}
+
+.synapse-share-panel.is-compact .synapse-share-row {
+  justify-content: flex-end;
+  font-size: 0.78rem;
+}
+
+.synapse-share-panel.is-compact .synapse-btn {
+  padding: 0.15rem 0.45rem;
+  font-size: 0.72rem;
 }
 
 .synapse-share-row {
@@ -1408,6 +1434,24 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
   padding: 0.85rem 1rem;
   border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
   border-radius: 12px;
+}
+
+.synapse-share-panel.is-compact {
+  margin: 0;
+  padding: 0;
+  border: none;
+  max-width: 18rem;
+  gap: 0.28rem;
+}
+
+.synapse-profile-hero-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-left: auto;
+  min-width: min(100%, 15rem);
 }
 
 .synapse-share-row {

@@ -123,30 +123,44 @@ export default function PublicProfilePage({ username }: { username: string }) {
         className="synapse-public-profile-hero"
         data-deco={creator.equippedDecoration || 'default'}
       >
-        <DecorationFrame id={creator.equippedDecoration}>
-          {creator.photoUrl ? (
-            <img src={creator.photoUrl} alt="" width={72} height={72} />
-          ) : (
-            <span aria-hidden="true">@</span>
-          )}
-        </DecorationFrame>
-        <div className="synapse-profile-hero-copy">
-          <h1 className={nameplateClass(creator.equippedDecoration)}>
-            {creator.displayName}
-          </h1>
-          <p className="synapse-profile-handle">@{creator.username}</p>
-          {own ? (
-            <ProfileNavLinks
-              here="public"
-              username={ownUsername || creator.username}
-            />
-          ) : null}
-          <p className="synapse-settings-lead">
-            {creator.followerCount} follower{creator.followerCount === 1 ? '' : 's'}
-            {creator.visibility === 'unlisted' ? ' · unlisted' : ''}
-          </p>
-          <BadgeStrip badges={badges} featuredId={creator.featuredBadge} compact />
+        <div className="synapse-profile-identity">
+          <DecorationFrame id={creator.equippedDecoration}>
+            {creator.photoUrl ? (
+              <img src={creator.photoUrl} alt="" width={72} height={72} />
+            ) : (
+              <span aria-hidden="true">@</span>
+            )}
+          </DecorationFrame>
+          <div className="synapse-profile-hero-copy">
+            <h1 className={nameplateClass(creator.equippedDecoration)}>
+              {creator.displayName}
+            </h1>
+            <p className="synapse-profile-handle">@{creator.username}</p>
+            {own ? (
+              <ProfileNavLinks
+                here="public"
+                username={ownUsername || creator.username}
+              />
+            ) : null}
+            <p className="synapse-settings-lead">
+              {creator.followerCount} follower{creator.followerCount === 1 ? '' : 's'}
+              {creator.visibility === 'unlisted' ? ' · unlisted' : ''}
+            </p>
+            <BadgeStrip badges={badges} featuredId={creator.featuredBadge} compact />
+          </div>
         </div>
+        {(creator.visibility === 'public' ||
+          creator.visibility === 'unlisted' ||
+          own) ? (
+          <div className="synapse-profile-hero-aside">
+            <SharePanel
+              compact
+              shareCode={creator.shareCode || creator.username}
+              path={sharePath}
+              label="profile"
+            />
+          </div>
+        ) : null}
       </div>
       {!detailsProfile && creator.bio ? (
         <p className="synapse-mkt-lead">{creator.bio}</p>
@@ -205,15 +219,6 @@ export default function PublicProfilePage({ username }: { username: string }) {
       </div>
       ) : null}
       {error ? <p className="synapse-settings-error">{error}</p> : null}
-      {(creator.visibility === 'public' ||
-        creator.visibility === 'unlisted' ||
-        own) ? (
-        <SharePanel
-          shareCode={creator.shareCode || creator.username}
-          path={sharePath}
-          label="profile"
-        />
-      ) : null}
       {own ? (
         <section className="synapse-profile-section">
           <h2>Profile settings</h2>

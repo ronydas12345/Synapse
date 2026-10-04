@@ -44,6 +44,8 @@ import { setWorkshopVisibility } from '../workshop/api';
 import ProfileNavLinks from '../profiles/ProfileNavLinks';
 import ProfileVisibilityField from '../profiles/ProfileVisibilityField';
 import { asPathVisibility, pathVisibilityLabel } from '../playlists/library';
+import { publicProfilePath } from '../app/routes';
+import SharePanel from '../share/SharePanel';
 import { usePathStore } from '../store';
 
 type DropEdge = 'before' | 'after';
@@ -806,6 +808,7 @@ export default function ProfilePage() {
   const [equipped, setEquipped] = useState('default');
   const [heroBadges, setHeroBadges] = useState<EarnedBadge[]>([]);
   const [featuredBadge, setFeaturedBadge] = useState('');
+  const [shareCode, setShareCode] = useState('');
   const [decoReady, setDecoReady] = useState(false);
   const [avatarError, setAvatarError] = useState('');
 
@@ -869,6 +872,13 @@ export default function ProfilePage() {
     profile.visibility === 'public' && !editing ? publicPaths : pathSummaries;
   const displayDeco = decoReady ? equipped : 'default';
   const deco = decorationDef(displayDeco);
+  const sharePath = profile.username
+    ? publicProfilePath(profile.username)
+    : shareCode
+      ? publicProfilePath(shareCode)
+      : '';
+  const showShare =
+    Boolean(shareCode && sharePath) && profile.visibility !== 'private';
 
   return (
     <div className="synapse-profile" data-tutorial="profile" id="workspace-main">
@@ -922,25 +932,35 @@ export default function ProfilePage() {
             />
           </div>
         </div>
-        <div className="synapse-profile-actions">
-          {editing ? (
-            <button
-              type="button"
-              className="synapse-btn synapse-btn-play"
-              disabled={!canSave}
-              onClick={() => canSave && setEditing(false)}
-            >
-              Done
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="synapse-btn synapse-btn-play"
-              onClick={() => setEditing(true)}
-            >
-              Edit profile
-            </button>
-          )}
+        <div className="synapse-profile-hero-aside">
+          <div className="synapse-profile-actions">
+            {editing ? (
+              <button
+                type="button"
+                className="synapse-btn synapse-btn-play"
+                disabled={!canSave}
+                onClick={() => canSave && setEditing(false)}
+              >
+                Done
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="synapse-btn synapse-btn-play"
+                onClick={() => setEditing(true)}
+              >
+                Edit profile
+              </button>
+            )}
+          </div>
+          {showShare ? (
+            <SharePanel
+              compact
+              shareCode={shareCode}
+              path={sharePath}
+              label="profile"
+            />
+          ) : null}
         </div>
       </div>
 
@@ -1013,6 +1033,7 @@ export default function ProfilePage() {
           }
           if (next.badges) setHeroBadges(next.badges);
           if (next.featured !== undefined) setFeaturedBadge(next.featured);
+          if (next.shareCode !== undefined) setShareCode(next.shareCode);
         }}
       />
       {authUser ? (

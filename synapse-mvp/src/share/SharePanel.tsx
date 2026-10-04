@@ -6,10 +6,12 @@ export default function SharePanel({
   shareCode,
   path,
   label,
+  compact = false,
 }: {
   shareCode: string;
   path: string;
   label: string;
+  compact?: boolean;
 }) {
   const [copied, setCopied] = useState<'id' | 'link' | ''>('');
   if (!shareCode && !path) return null;
@@ -22,11 +24,13 @@ export default function SharePanel({
   }
 
   return (
-    <div className="synapse-share-panel">
-      <p className="synapse-settings-hint">
-        Share this {label} with the ID or the link. Public listings also appear
-        in Workshop. Unlisted stays off the catalog.
-      </p>
+    <div className={`synapse-share-panel${compact ? ' is-compact' : ''}`}>
+      {compact ? null : (
+        <p className="synapse-settings-hint">
+          Share this {label} with the ID or the link. Public listings also appear
+          in Workshop. Unlisted stays off the catalog.
+        </p>
+      )}
       {shareCode ? (
         <p className="synapse-share-row">
           <span>
@@ -38,25 +42,27 @@ export default function SharePanel({
             className="synapse-btn synapse-btn-ghost"
             onClick={() => void copy('id', shareCode)}
           >
-            {copied === 'id' ? 'ID copied' : 'Copy ID'}
+            {copied === 'id' ? 'Copied' : 'Copy'}
           </button>
         </p>
       ) : null}
-      <p className="synapse-share-row">
-        <span>
-          Link{' '}
-          <PathLink href={path} className="synapse-share-link">
-            {path}
-          </PathLink>
-        </span>
-        <button
-          type="button"
-          className="synapse-btn synapse-btn-ghost"
-          onClick={() => void copy('link', url)}
-        >
-          {copied === 'link' ? 'Link copied' : 'Copy link'}
-        </button>
-      </p>
+      {path ? (
+        <p className="synapse-share-row">
+          <span>
+            Link{' '}
+            <PathLink href={path} className="synapse-share-link">
+              {path}
+            </PathLink>
+          </span>
+          <button
+            type="button"
+            className="synapse-btn synapse-btn-ghost"
+            onClick={() => void copy('link', url)}
+          >
+            {copied === 'link' ? 'Copied' : 'Copy'}
+          </button>
+        </p>
+      ) : null}
     </div>
   );
 }

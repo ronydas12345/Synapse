@@ -34,6 +34,30 @@ describe('mergeWorkspaceProfile', () => {
     expect(merged.favoriteGenres).toEqual(['Electronic']);
   });
 
+  it('keeps local listens when extras are stale', () => {
+    const current = {
+      ...emptyProfile(),
+      totalListens: 4,
+      listensByDay: { '2026-10-03': 4 },
+    };
+    const merged = mergeWorkspaceProfile(
+      { totalListens: 1, listensByDay: { '2026-10-01': 1 } },
+      { username: 'ada', displayName: 'Ada' },
+      current,
+      {
+        extras: {
+          totalListens: 1,
+          listensByDay: { '2026-10-01': 1 },
+        },
+      }
+    );
+    expect(merged.totalListens).toBe(5);
+    expect(merged.listensByDay).toEqual({
+      '2026-10-01': 1,
+      '2026-10-03': 4,
+    });
+  });
+
   it('uses profiles extras as the source of truth', () => {
     const merged = mergeWorkspaceProfile(
       { location: 'old', bio: 'workspace', favoriteGenres: ['Rock'] },

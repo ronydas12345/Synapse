@@ -5,6 +5,7 @@ import DecorationFrame from '../decorations/DecorationFrame';
 import type { PublicCreator } from '../profiles/api';
 import { profileIdentity } from '../profiles/identity';
 import TagChips from './TagChips';
+import { creationUploadedAt, formatUploadedAt } from './tiles';
 import type { WorkshopCard } from './types';
 
 export default function WorkshopCard({
@@ -23,6 +24,7 @@ export default function WorkshopCard({
   const badge = author?.featuredBadge || featuredBadge || '';
   const photo = author?.photoUrl || '';
   const initial = (identity.title || card.title).slice(0, 1).toUpperCase() || '?';
+  const uploaded = formatUploadedAt(creationUploadedAt(card));
   return (
     <article
       className="synapse-mkt-workshop-card synapse-workshop-card"
@@ -70,6 +72,7 @@ export default function WorkshopCard({
         {card.likeCount} likes · {card.saveCount} saves · {card.remixCount} remixes
         {card.commentCount ? ` · ${card.commentCount} comments` : ''}
       </p>
+      {uploaded ? <p className="synapse-workshop-uploaded">Uploaded {uploaded}</p> : null}
     </article>
   );
 }

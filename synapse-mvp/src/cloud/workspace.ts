@@ -20,9 +20,8 @@ import {
   replaceSettings,
   snapshotSettings,
 } from '../settings/settingsStore';
-import { defaultSettings, parseSettings } from '../settings/parse';
+import { defaultSettings } from '../settings/parse';
 import {
-  parseThemeState,
   readLegacyTheme,
   replaceThemeState,
   snapshotThemeState,
@@ -36,6 +35,7 @@ import {
 import { emptyProfile, type UserProfile } from '../profile/types';
 import { ACCOUNT_CACHE_KEY } from '../auth/identity';
 import { mergeWorkspaceProfile } from './workspaceProfile';
+import { syncOwnPlaylistListings } from '../workshop/syncListings';
 import {
   parseProgress,
   readLegacyProgress,
@@ -231,15 +231,16 @@ export async function hydrateUserWorkspace(): Promise<void> {
       useProfileStore.getState().profile,
       serverFields
     );
+    await syncOwnPlaylistListings().catch(() => {});
 
     await supabase.from('user_workspaces').upsert(
       {
         uid: user.uid,
-        library: parseLibrary(row.library),
-        settings: isBlankJson(row.settings) ? defaultSettings() : parseSettings(row.settings),
-        theme: parseThemeState(row.theme),
+        library: snapshotPathLibrary(),
+        settings: snapshotSettings(),
+        theme: snapshotThemeState(),
         profile: profileForCloud(useProfileStore.getState().profile),
-        tutorial: parseProgress(row.tutorial),
+        tutorial: useTutorialStore.getState().progress,
       },
       { onConflict: 'uid' }
     );

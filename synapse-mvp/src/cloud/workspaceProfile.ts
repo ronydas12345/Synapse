@@ -4,6 +4,7 @@ import {
   emptyProfile,
   type UserProfile,
 } from '../profile/types';
+import { mergeListenStats } from '../profile/listenStats';
 
 export type ServerProfileFields = {
   visibility?: unknown;
@@ -125,15 +126,10 @@ export function mergeWorkspaceProfile(
       String(fromCloud.createdAt || ''),
       current.createdAt
     ),
-    totalListens: useExtras
-      ? Math.max(0, Math.floor(Number(source.totalListens) || 0))
-      : Math.max(current.totalListens || 0, Math.floor(Number(fromCloud.totalListens) || 0)),
-    listensByDay: useExtras
-      ? ((source.listensByDay as Record<string, number>) || {})
-      : {
-          ...((fromCloud.listensByDay as Record<string, number>) || {}),
-          ...current.listensByDay,
-        },
+    ...mergeListenStats(current, {
+      totalListens: source.totalListens,
+      listensByDay: source.listensByDay,
+    }),
     avatarDataUrl: null,
   };
 }

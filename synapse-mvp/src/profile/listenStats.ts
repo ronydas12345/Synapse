@@ -38,6 +38,38 @@ export function listenCount(listensByDay: Record<string, number>, day: string): 
   return Math.max(0, Math.floor(Number(listensByDay[day]) || 0));
 }
 
+export function asListenDays(value: unknown): Record<string, number> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const out: Record<string, number> = {};
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) continue;
+    const n = Math.max(0, Math.floor(Number(raw) || 0));
+    if (n > 0) out[key] = n;
+  }
+  return out;
+}
+
+export function mergeListenStats(
+  current: { totalListens?: number; listensByDay?: unknown },
+  incoming: { totalListens?: number; listensByDay?: unknown }
+): { totalListens: number; listensByDay: Record<string, number> } {
+  const a = asListenDays(current.listensByDay);
+  const b = asListenDays(incoming.listensByDay);
+  const listensByDay: Record<string, number> = { ...a };
+  for (const [day, count] of Object.entries(b)) {
+    listensByDay[day] = Math.max(listenCount(listensByDay, day), count);
+  }
+  const fromDays = Object.values(listensByDay).reduce((sum, n) => sum + n, 0);
+  return {
+    listensByDay,
+    totalListens: Math.max(
+      Math.max(0, Math.floor(Number(current.totalListens) || 0)),
+      Math.max(0, Math.floor(Number(incoming.totalListens) || 0)),
+      fromDays
+    ),
+  };
+}
+
 export interface ListenStreaks {
   current: number;
   longest: number;

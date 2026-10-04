@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import type { Edge, Node } from '@xyflow/react';
-import { asPathVisibility, findPathForWorkshop } from '../playlists/library';
+import { findPathForWorkshop } from '../playlists/library';
 import { useAuthStore } from '../auth/authStore';
 import { usePathStore } from '../store';
-import { getWorkshopCreation, listOwnWorkshop } from './api';
+import { getWorkshopCreation } from './api';
 import { markWorkshopGuestSession } from './guestSession';
 import { openOwnedWorkshopPlaylist } from './ownedPath';
+import { syncOwnPlaylistListings } from './syncListings';
 
 function alreadyLoaded(id: string): boolean {
   const state = usePathStore.getState();
@@ -73,21 +74,9 @@ export function usePublishedListen(id: string | undefined): void {
 
 export function useSyncOwnWorkshopListings(): void {
   const uid = useAuthStore((s) => s.user?.uid);
+  const workspaceReady = useAuthStore((s) => s.workspaceStatus === 'ready');
   useEffect(() => {
-    if (!uid) return;
-    let cancelled = false;
-    void listOwnWorkshop()
-      .then((rows) => {
-        if (cancelled) return;
-        const sync = usePathStore.getState().syncWorkshopListing;
-        for (const row of rows) {
-          if (row.kind !== 'playlist') continue;
-          sync(row.id, asPathVisibility(row.visibility), row.sourcePathId || undefined);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [uid]);
+    if (!uid || !workspaceReady) return;
+    void syncOwnPlaylistListings().catch(() => {});
+  }, [uid, workspaceReady]);
 }

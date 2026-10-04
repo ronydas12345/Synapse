@@ -8,6 +8,7 @@ import {
   rollingWindowStart,
   shiftDayKey,
   yearBounds,
+  mergeListenStats,
 } from './listenStats';
 
 describe('listen streaks', () => {
@@ -117,5 +118,17 @@ describe('listen heatmap', () => {
   it('shifts local calendar days across month boundaries', () => {
     expect(shiftDayKey('2026-01-31', 1)).toBe('2026-02-01');
     expect(localDayKey(new Date(2026, 8, 13))).toBe('2026-09-13');
+  });
+
+  it('keeps the higher listen total when merging extras', () => {
+    const merged = mergeListenStats(
+      { totalListens: 5, listensByDay: { '2026-10-03': 2 } },
+      { totalListens: 3, listensByDay: { '2026-10-01': 3, '2026-10-03': 1 } }
+    );
+    expect(merged.totalListens).toBe(5);
+    expect(merged.listensByDay).toEqual({
+      '2026-10-01': 3,
+      '2026-10-03': 2,
+    });
   });
 });

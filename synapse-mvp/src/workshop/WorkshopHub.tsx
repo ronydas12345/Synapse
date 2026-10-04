@@ -11,6 +11,12 @@ import {
 } from './types';
 import CreatorCard from './CreatorCard';
 import TagPicker from './TagPicker';
+import {
+  creationUploadedAt,
+  mixWorkshopTiles,
+  sortByUploadedAt,
+  type WorkshopTile,
+} from './tiles';
 import WorkshopCard from './WorkshopCard';
 
 const TABS: { id: WorkshopTab; label: string }[] = [
@@ -127,8 +133,19 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
             console.error('Could not load public profiles', err);
           }
         }
-        const shownCards = preview ? rows.slice(0, 6) : rows;
-        const shownCreators = preview ? userRows.slice(0, 6) : userRows;
+        const mixedPreview = preview
+          ? mixWorkshopTiles(rows, userRows).slice(0, 6)
+          : null;
+        const shownCards = mixedPreview
+          ? mixedPreview
+              .filter((tile): tile is Extract<WorkshopTile, { type: 'creation' }> => tile.type === 'creation')
+              .map((tile) => tile.card)
+          : rows;
+        const shownCreators = mixedPreview
+          ? mixedPreview
+              .filter((tile): tile is Extract<WorkshopTile, { type: 'user' }> => tile.type === 'user')
+              .map((tile) => tile.creator)
+          : userRows;
         const shownAuthors = await authorsFor(shownCards, shownCreators);
         if (!cancelled) {
           setCards(shownCards);
@@ -150,11 +167,29 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
   }, [tab, search, preview, signedIn, kind, tagFilter]);
 
   const featured = useMemo(
-    () => (tab === 'home' ? cards.filter((card) => card.featured).slice(0, 4) : []),
+    () =>
+      tab === 'home'
+        ? sortByUploadedAt(
+            cards.filter((card) => card.featured).slice(0, 4),
+            creationUploadedAt
+          )
+        : [],
     [cards, tab]
   );
-  const rest =
-    tab === 'home' ? cards.filter((card) => !card.featured).slice(0, 12) : cards;
+  const rest = useMemo(() => {
+    const rows =
+      tab === 'home' ? cards.filter((card) => !card.featured).slice(0, 12) : cards;
+    return sortByUploadedAt(rows, creationUploadedAt);
+  }, [cards, tab]);
+  const userTiles = useMemo(
+    () => sortByUploadedAt(creators, (creator) => creator.createdAt),
+    [creators]
+  );
+  const mixed = useMemo(() => {
+    if (tab === 'saved') return mixWorkshopTiles(cards, creators);
+    if (kind === 'all') return mixWorkshopTiles(rest, creators);
+    return [];
+  }, [tab, kind, cards, rest, creators]);
 
   function chooseTab(next: WorkshopTab) {
     if (next === 'saved' && !signedIn) {
@@ -300,30 +335,29 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
             : 'No public creations yet. Publish a Music Path or theme from Settings → Workshop.'}
         </p>
       ) : null}
-      {tab === 'saved' && creators.length > 0 ? (
-        <>
-          <h3 className="synapse-workshop-sub">Saved creators</h3>
-          <div className="synapse-mkt-workshop-row">
-            {creators.map((creator) => (
-              <CreatorCard key={creator.uid} creator={creator} />
-            ))}
-          </div>
-        </>
+      {tab === 'saved' && mixed.length > 0 ? (
+        <div className="synapse-mkt-workshop-row">
+          {mixed.map((tile) =>
+            tile.type === 'user' ? (
+              <CreatorCard key={`user:${tile.creator.uid}`} creator={tile.creator} />
+            ) : (
+              <WorkshopCard
+                key={`card:${tile.card.id}`}
+                card={tile.card}
+                author={authorFor(authors, tile.card)}
+              />
+            )
+          )}
+        </div>
       ) : null}
-      {tab !== 'saved' && (kind === 'user' || kind === 'all') && creators.length > 0 ? (
-        <>
-          {kind === 'all' ? <h3 className="synapse-workshop-sub">Users</h3> : null}
-          <div className="synapse-mkt-workshop-row">
-            {creators.map((creator) => (
-              <CreatorCard key={creator.uid} creator={creator} />
-            ))}
-          </div>
-        </>
+      {tab !== 'saved' && kind === 'user' && userTiles.length > 0 ? (
+        <div className="synapse-mkt-workshop-row">
+          {userTiles.map((creator) => (
+            <CreatorCard key={creator.uid} creator={creator} />
+          ))}
+        </div>
       ) : null}
-      {tab === 'saved' && cards.length > 0 ? (
-          <h3 className="synapse-workshop-sub">Saved creations</h3>
-      ) : null}
-      {kind !== 'user' && featured.length > 0 ? (
+      {tab !== 'saved' && kind !== 'user' && featured.length > 0 ? (
         <>
           <h3 className="synapse-workshop-sub">Featured</h3>
           <div className="synapse-mkt-workshop-row">
@@ -333,12 +367,27 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
           </div>
         </>
       ) : null}
-      {kind !== 'user' ? (
-      <div className="synapse-mkt-workshop-row">
-        {rest.map((card) => (
-          <WorkshopCard key={card.id} card={card} author={authorFor(authors, card)} />
-        ))}
-      </div>
+      {tab !== 'saved' && kind === 'all' && mixed.length > 0 ? (
+        <div className="synapse-mkt-workshop-row">
+          {mixed.map((tile) =>
+            tile.type === 'user' ? (
+              <CreatorCard key={`user:${tile.creator.uid}`} creator={tile.creator} />
+            ) : (
+              <WorkshopCard
+                key={`card:${tile.card.id}`}
+                card={tile.card}
+                author={authorFor(authors, tile.card)}
+              />
+            )
+          )}
+        </div>
+      ) : null}
+      {tab !== 'saved' && kind !== 'user' && kind !== 'all' ? (
+        <div className="synapse-mkt-workshop-row">
+          {rest.map((card) => (
+            <WorkshopCard key={card.id} card={card} author={authorFor(authors, card)} />
+          ))}
+        </div>
       ) : null}
     </section>
   );

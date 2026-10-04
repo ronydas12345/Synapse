@@ -47,9 +47,6 @@ export default function BadgeStrip({
             {compact ? null : (
               <span className="synapse-badge-copy">{badge.def.description}</span>
             )}
-            {earnedOn ? (
-              <span className="synapse-badge-earned">{earnedOn}</span>
-            ) : null}
           </>
         );
         return (
@@ -73,6 +70,9 @@ export default function BadgeStrip({
                 {body}
               </div>
             )}
+            {earnedOn ? (
+              <span className="synapse-badge-earned">{earnedOn}</span>
+            ) : null}
           </li>
         );
       })}

@@ -4,11 +4,13 @@ import DecorationFrame from '../decorations/DecorationFrame';
 import { publicProfilePath } from '../app/routes';
 import type { PublicCreator } from '../profiles/api';
 import { profileIdentity } from '../profiles/identity';
+import { formatUploadedAt } from './tiles';
 
 export default function CreatorCard({ creator }: { creator: PublicCreator }) {
   const href = publicProfilePath(creator.username || creator.shareCode);
   const identity = profileIdentity(creator.displayName, creator.username);
   const initial = identity.title.slice(0, 1).toUpperCase() || '@';
+  const uploaded = formatUploadedAt(creator.createdAt);
   return (
     <article className="synapse-mkt-workshop-card synapse-workshop-card" data-kind="profile">
       <PathLink href={href} className="synapse-workshop-card-link">
@@ -34,6 +36,7 @@ export default function CreatorCard({ creator }: { creator: PublicCreator }) {
           {creator.followerCount} follower{creator.followerCount === 1 ? '' : 's'}
         </span>
       </p>
+      {uploaded ? <p className="synapse-workshop-uploaded">Uploaded {uploaded}</p> : null}
     </article>
   );
 }

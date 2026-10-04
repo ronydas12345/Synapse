@@ -115,8 +115,7 @@ function sanitizeProfile(raw: unknown): UserProfile {
         .map((pl) => ({
           id: String(pl?.id || cryptoRandomId()),
           name: String(pl?.name || '').slice(0, 60),
-          visibility:
-            pl?.visibility === 'public' ? 'public' : ('private' as ProfileVisibility),
+          visibility: asProfileVisibility(pl?.visibility),
         }))
         .filter((pl) => pl.name)
         .slice(0, 30)
@@ -163,7 +162,7 @@ function sanitizeProfile(raw: unknown): UserProfile {
       : [],
     favoriteSongs,
     playlists,
-    musicPathVisibility: p.musicPathVisibility === 'public' ? 'public' : 'private',
+    musicPathVisibility: asProfileVisibility(p.musicPathVisibility),
     sectionOrder,
     hiddenSections,
     createdAt:

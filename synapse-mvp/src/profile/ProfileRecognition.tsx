@@ -13,7 +13,6 @@ import { equipDecoration, listUnlockedDecorations } from '../decorations/api';
 import { readOwnCreator, setProfileSocial } from '../profiles/api';
 import { useAuthStore } from '../auth/authStore';
 import { useProfileStore } from '../profile/profileStore';
-import SharePanel from '../share/SharePanel';
 
 export default function ProfileRecognition({
   editing,
@@ -26,6 +25,7 @@ export default function ProfileRecognition({
     equipped?: string;
     badges?: EarnedBadge[];
     featured?: string;
+    shareCode?: string;
   }) => void;
 }) {
   const user = useAuthStore((s) => s.user);
@@ -35,7 +35,6 @@ export default function ProfileRecognition({
   const [unlocked, setUnlocked] = useState<string[]>(['default']);
   const [equipped, setEquipped] = useState('default');
   const [featured, setFeatured] = useState('');
-  const [shareCode, setShareCode] = useState('');
   const [followsEnabled, setFollowsEnabled] = useState(true);
   const [savesEnabled, setSavesEnabled] = useState(true);
   const [error, setError] = useState('');
@@ -73,11 +72,14 @@ export default function ProfileRecognition({
             equipped: nextEquipped,
             badges: earned,
             featured: nextFeatured,
+            shareCode: creator?.shareCode || '',
           });
         } else {
-          onRecognitionRef.current?.({ badges: earned });
+          onRecognitionRef.current?.({
+            badges: earned,
+            shareCode: creator?.shareCode || '',
+          });
         }
-        setShareCode(creator?.shareCode || '');
         setFollowsEnabled(creator?.followsEnabled !== false);
         setSavesEnabled(creator?.savesEnabled !== false);
       } catch (err) {
@@ -92,8 +94,6 @@ export default function ProfileRecognition({
   }, [user]);
 
   if (!user) return null;
-
-  const sharePath = username ? publicProfilePath(username) : shareCode ? publicProfilePath(shareCode) : '';
 
   function saveSocial(next: { followsEnabled: boolean; savesEnabled: boolean }) {
     setFollowsEnabled(next.followsEnabled);
@@ -132,9 +132,6 @@ export default function ProfileRecognition({
               ? ' (unlisted — share the ID or link)'
               : ' (visible after you set the profile to public or unlisted)'}
         </p>
-      ) : null}
-      {shareCode && sharePath && visibility !== 'private' ? (
-        <SharePanel shareCode={shareCode} path={sharePath} label="profile" />
       ) : null}
       {error ? <p className="synapse-settings-error">{error}</p> : null}
       {editing ? (
