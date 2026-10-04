@@ -5,6 +5,7 @@ describe('auth return path', () => {
   it('only keeps workspace destinations', () => {
     expect(isReturnPath('/edit')).toBe(true);
     expect(isReturnPath('/listen/')).toBe(true);
+    expect(isReturnPath('/listen/gaudde8vo6')).toBe(true);
     expect(isReturnPath('/settings')).toBe(true);
     expect(isReturnPath('/profile')).toBe(true);
     expect(isReturnPath('/admin')).toBe(true);

@@ -1,14 +1,51 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { navigateApp, workshopItemPath } from '../app/routes';
 import { SettingsToggle } from '../components/settings/Fields';
+import { asPathVisibility } from '../playlists/library';
 import { usePathStore } from '../store';
 import { builtinThemePublishError, isBuiltinThemeClone } from '../theme/isPresetTheme';
 import { allThemes, useThemeStore } from '../theme/themeStore';
 import { themeToJson } from '../theme/parseTheme';
 import type { SynapseTheme } from '../theme/types';
-import { getWorkshopCreation, publishWorkshopCreation, setCreationSocial } from './api';
+import {
+  getWorkshopCreation,
+  listOwnWorkshop,
+  publishWorkshopCreation,
+  setCreationSocial,
+} from './api';
 import TagPicker from './TagPicker';
-import type { WorkshopKind, WorkshopVisibility } from './types';
+import type { WorkshopCreation, WorkshopKind, WorkshopVisibility } from './types';
+
+function namesRelated(pathName: string, title: string): boolean {
+  const name = pathName.trim().toLowerCase();
+  const listed = title.trim().toLowerCase();
+  if (!name || !listed) return false;
+  return name === listed || name === `${listed} copy` || name.startsWith(`${listed} copy `);
+}
+
+function matchingOwnListing(
+  rows: WorkshopCreation[],
+  kind: WorkshopKind,
+  pathId: string,
+  themeId: string,
+  workshopId?: string,
+  pathName?: string
+): WorkshopCreation | undefined {
+  const themeSource = themeId ? `theme:${themeId}` : '';
+  const exact = rows.find((row) => {
+    if (row.kind !== kind) return false;
+    if (workshopId && (row.id === workshopId || row.shareCode === workshopId)) return true;
+    if (kind === 'playlist' && pathId && row.sourcePathId === pathId) return true;
+    if (kind === 'theme' && themeSource && row.sourcePathId === themeSource) return true;
+    return false;
+  });
+  if (exact) return exact;
+  if (kind !== 'playlist' || !pathName) return undefined;
+  const related = rows.filter(
+    (row) => row.kind === 'playlist' && namesRelated(pathName, row.title)
+  );
+  return related.length === 1 ? related[0] : undefined;
+}
 
 export default function PublishForm({
   localOnly = false,
@@ -46,6 +83,7 @@ export default function PublishForm({
   const [error, setError] = useState('');
   const [done, setDone] = useState('');
   const [busy, setBusy] = useState(false);
+  const [ownListings, setOwnListings] = useState<WorkshopCreation[]>([]);
 
   const selectedTheme = themes.find((theme) => theme.id === themeId) || publishableThemes[0] || themes[0];
   const selectedPath = pathSummaries.find((path) => path.id === pathId);
@@ -55,6 +93,52 @@ export default function PublishForm({
       : selectedPath?.tags || [];
   const themeBlockReason = selectedTheme ? builtinThemePublishError(selectedTheme) : null;
   const canPublishTheme = Boolean(selectedTheme) && !themeBlockReason;
+  const existing = matchingOwnListing(
+    ownListings,
+    kind,
+    pathId,
+    selectedTheme?.id || themeId,
+    selectedPath?.workshopId,
+    selectedPath?.name
+  );
+
+  useEffect(() => {
+    if (localOnly) return;
+    let cancelled = false;
+    void listOwnWorkshop()
+      .then((rows) => {
+        if (cancelled) return;
+        setOwnListings(rows);
+        const sync = usePathStore.getState().syncWorkshopListing;
+        for (const row of rows) {
+          if (row.kind !== 'playlist') continue;
+          sync(row.id, asPathVisibility(row.visibility), row.sourcePathId || undefined);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [localOnly]);
+
+  useEffect(() => {
+    if (existing) {
+      setTitle(existing.title);
+      setDescription(existing.description);
+      setVisibility(existing.visibility);
+      setLikesEnabled(existing.likesEnabled);
+      setCommentsEnabled(existing.commentsEnabled);
+      setSavesEnabled(existing.savesEnabled);
+      return;
+    }
+    setDescription('');
+    setVisibility('public');
+    setLikesEnabled(true);
+    setCommentsEnabled(true);
+    setSavesEnabled(true);
+    if (kind === 'theme') setTitle(selectedTheme?.name || '');
+    else setTitle(selectedPath?.name || '');
+  }, [existing?.id, kind, pathId, selectedTheme?.id, selectedPath?.name]);
 
   async function publish() {
     setBusy(true);
@@ -72,23 +156,24 @@ export default function PublishForm({
         >;
         if (localOnly) {
           setDone(
-            `Would publish “${title.trim() || selectedTheme.name}” as ${visibility}. Nothing was sent to the server.`
+            `Would ${existing ? 'update' : 'publish'} “${title.trim() || selectedTheme.name}” as ${visibility}. Nothing was sent to the server.`
           );
           return;
         }
         id = await publishWorkshopCreation({
-          sourcePathId: `theme:${selectedTheme.id}`,
+          sourcePathId: existing?.sourcePathId || `theme:${selectedTheme.id}`,
           title: title.trim() || selectedTheme.name,
           description: description.trim(),
           visibility,
           payload,
           kind: 'theme',
           tags,
+          id: existing?.id,
         });
       } else {
         if (localOnly) {
           setDone(
-            `Would publish “${title.trim() || selectedPath?.name || 'Untitled'}” as ${visibility}. Nothing was sent to the server.`
+            `Would ${existing ? 'update' : 'publish'} “${title.trim() || selectedPath?.name || 'Untitled'}” as ${visibility}. Nothing was sent to the server.`
           );
           return;
         }
@@ -101,19 +186,26 @@ export default function PublishForm({
           pathSummaries.find((path) => path.id === pathId)?.name ||
           'Untitled';
         id = await publishWorkshopCreation({
-          sourcePathId: pathId,
+          sourcePathId: existing?.sourcePathId || pathId,
           title: name,
           description: description.trim(),
           visibility,
           payload: { name, nodes: state.nodes, edges: state.edges },
           kind: 'playlist',
           tags,
+          id: existing?.id,
         });
+        state.syncWorkshopListing(id, visibility, pathId);
       }
       if (!likesEnabled || !commentsEnabled || !savesEnabled) {
         await setCreationSocial(id, likesEnabled, commentsEnabled, savesEnabled);
       }
       const created = await getWorkshopCreation(id);
+      if (created?.kind === 'playlist') {
+        usePathStore
+          .getState()
+          .syncWorkshopListing(created.id, created.visibility, pathId);
+      }
       navigateApp(workshopItemPath(created?.shareCode || id));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not publish.');
@@ -130,11 +222,13 @@ export default function PublishForm({
         </p>
       ) : null}
       <p className="synapse-settings-lead">
-        Publishing copies a Music Path or a theme to Workshop. Private stays
-        off the catalog. Unlisted is reachable by ID or link. Public appears on
-        Home, New, Featured, and Search. Add tags here or in Playlists / Themes
-        before you publish. Tags come from the curated list only. Default
-        themes and renamed copies of them cannot be published.
+        Publishing copies a Music Path or a theme to Workshop. If you already
+        listed this path, publish updates that same page instead of making a
+        copy. Private stays off the catalog. Unlisted is reachable by ID or
+        link. Public appears on Home, New, Featured, and Search. Add tags here
+        or in Playlists / Themes before you publish. Tags come from the curated
+        list only. Default themes and renamed copies of them cannot be
+        published.
       </p>
       <label className="synapse-settings-field">
         Type
@@ -175,6 +269,7 @@ export default function PublishForm({
             {pathSummaries.map((path) => (
               <option key={path.id} value={path.id}>
                 {path.name}
+                {path.workshopId ? ' · listed' : ''}
               </option>
             ))}
           </select>
@@ -203,6 +298,11 @@ export default function PublishForm({
       )}
       {kind === 'theme' && themeBlockReason ? (
         <p className="synapse-settings-error">{themeBlockReason}</p>
+      ) : null}
+      {existing ? (
+        <p className="synapse-settings-hint">
+          This already has a Workshop listing. Publish will update that page.
+        </p>
       ) : null}
       <label className="synapse-settings-field">
         Title
@@ -274,7 +374,13 @@ export default function PublishForm({
         }
         onClick={() => void publish()}
       >
-        {busy ? 'Publishing…' : 'Publish to Workshop'}
+        {busy
+          ? existing
+            ? 'Updating…'
+            : 'Publishing…'
+          : existing
+            ? 'Update Workshop listing'
+            : 'Publish to Workshop'}
       </button>
     </div>
   );

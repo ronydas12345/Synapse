@@ -10,13 +10,16 @@ import ThemeRoot from './theme/ThemeRoot';
 import PlaylistSwitcher from './components/PlaylistSwitcher';
 import { SynapseWordmark } from './pages/chrome/SynapseMark';
 import { usePathStore } from './store';
-import { AppLink, useAppLocation } from './app/AppLink';
+import { AppLink, PathLink, useAppLocation } from './app/AppLink';
 import {
   isAuthRoute,
   isMarketingRoute,
   isStaffRoute,
   isWorkspaceRoute,
+  listenPath,
+  navigateApp,
   routeToUiMode,
+  workshopItemPath,
   type AppLocation,
 } from './app/routes';
 import { useProfileStore } from './profile/profileStore';
@@ -30,6 +33,7 @@ import AuthLayout from './pages/AuthLayout';
 import Home from './pages/Home/Home';
 import WorkshopPage from './pages/WorkshopPage';
 import CreationPage from './workshop/CreationPage';
+import { usePublishedListen, useSyncOwnWorkshopListings } from './workshop/usePublishedListen';
 import PublicProfilePage from './profiles/PublicProfilePage';
 import {
   isVisPreview,
@@ -87,8 +91,20 @@ function MarketingPage({ location }: { location: AppLocation }) {
   return <Home />;
 }
 
-function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'profile' }) {
+function WorkspaceApp({
+  route,
+  workshopId,
+}: {
+  route: 'edit' | 'listen' | 'settings' | 'profile';
+  workshopId?: string;
+}) {
   const { isPlaying, setIsPlaying, playbackQueue, requestSkip, requestStop } = usePathStore();
+  const graphLocked = usePathStore((s) => s.graphLocked);
+  const listenView = usePathStore((s) => s.listenView);
+  const setListenView = usePathStore((s) => s.setListenView);
+  const workshopShareKey = usePathStore((s) => s.workshopShareKey);
+  const activePathId = usePathStore((s) => s.activePathId);
+  const pathSummaries = usePathStore((s) => s.pathSummaries);
   const avatar = useProfileStore((s) => s.profile.avatarDataUrl);
   const avatarUrl = useProfileStore((s) => s.profile.avatarUrl);
   const username = useProfileStore((s) => s.profile.username);
@@ -98,9 +114,34 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
   const settings = route === 'settings';
   const profile = route === 'profile';
   const edit = route === 'edit';
+  const readOnly = graphLocked;
+  const guestListen = listen && readOnly;
+  const showGraph = edit || (listen && (!readOnly || listenView === 'graph'));
+  const listenHref = listenPath(workshopShareKey ?? workshopId ?? activePathId);
+  const listingKey =
+    workshopShareKey ||
+    workshopId ||
+    pathSummaries.find((path) => path.id === activePathId)?.workshopId ||
+    '';
+  const workshopHref = listingKey ? workshopItemPath(listingKey) : null;
+
+  usePublishedListen(listen ? workshopId : undefined);
+
+  useEffect(() => {
+    if (!listen) return;
+    if (workshopId) return;
+    if (listenHref === '/listen') return;
+    navigateApp(listenHref, '', true);
+  }, [listen, workshopId, listenHref]);
 
   return (
-    <div className="synapse-app w-full flex flex-col text-[var(--text)]" data-tutorial="workspace">
+    <div
+      className="synapse-app w-full flex flex-col text-[var(--text)]"
+      data-tutorial="workspace"
+      data-listen={listen ? '' : undefined}
+      data-readonly={readOnly ? '' : undefined}
+      data-listen-view={listen ? (readOnly ? listenView : 'graph') : undefined}
+    >
       <a className="synapse-mkt-skip" href="#workspace-main">
         Skip to workspace
       </a>
@@ -119,9 +160,12 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
           <AppLink to="edit" className={`synapse-mode-btn ${edit ? 'is-active' : ''}`}>
             Edit
           </AppLink>
-          <AppLink to="listen" className={`synapse-mode-btn ${listen ? 'is-active' : ''}`}>
+          <PathLink
+            href={listenHref}
+            className={`synapse-mode-btn ${listen ? 'is-active' : ''}`}
+          >
             Listen
-          </AppLink>
+          </PathLink>
           <AppLink to="workshop" className="synapse-mode-btn">
             Workshop
           </AppLink>
@@ -164,7 +208,7 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
         </div>
         <CommandPaletteButton />
         <AuthControls compact />
-        {edit ? (
+        {showGraph || listen ? (
           <div className="synapse-transport" data-tutorial="header-transport">
             <button
               type="button"
@@ -196,11 +240,53 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
         )}
       </header>
 
-      {edit ? (
-        <div id="workspace-main" className="synapse-workspace">
-          <Sidebar />
-          <ReactFlowCanvas />
-          <InspectorPanel />
+      {guestListen || (edit && readOnly) ? (
+        <div className="synapse-listen-toolbar">
+          {readOnly ? (
+            <p className="synapse-workspace-readonly" role="status">
+              Published playlist — view only.{' '}
+              {workshopHref ? (
+                <>
+                  <PathLink href={workshopHref}>Workshop page</PathLink>
+                  {' · '}
+                </>
+              ) : null}
+              Remix to make your own copy.
+            </p>
+          ) : null}
+          {guestListen ? (
+            <div className="synapse-listen-view-toggle" role="group" aria-label="Listen layout">
+              <button
+                type="button"
+                className={listenView === 'graph' ? 'is-active' : ''}
+                aria-pressed={listenView === 'graph'}
+                onClick={() => setListenView('graph')}
+              >
+                Graph
+              </button>
+              <button
+                type="button"
+                className={listenView === 'list' ? 'is-active' : ''}
+                aria-pressed={listenView === 'list'}
+                onClick={() => setListenView('list')}
+              >
+                List
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {showGraph ? (
+        <div className="synapse-workspace-shell" id="workspace-main">
+          <div
+            className="synapse-workspace"
+            data-readonly={readOnly ? '' : undefined}
+          >
+            <Sidebar />
+            <ReactFlowCanvas />
+            <InspectorPanel />
+          </div>
         </div>
       ) : null}
 
@@ -216,6 +302,7 @@ function WorkspaceApp({ route }: { route: 'edit' | 'listen' | 'settings' | 'prof
 export default function App() {
   const location = useAppLocation();
   const route = location.route;
+  useSyncOwnWorkshopListings();
 
   useEffect(() => {
     usePathStore.getState().setUiMode(routeToUiMode(route));
@@ -253,7 +340,7 @@ export default function App() {
   } else if (isStaffRoute(route)) {
     page = route === 'superadmin' ? <SuperadminDashboard /> : <AdminDashboard />;
   } else if (isWorkspaceRoute(route)) {
-    page = <WorkspaceApp route={route} />;
+    page = <WorkspaceApp route={route} workshopId={location.workshopId} />;
   }
 
   return (

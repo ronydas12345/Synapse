@@ -5,16 +5,22 @@ import {
 } from './randomizerDrop';
 import { create } from 'zustand';
 import type { Node, Edge, Connection } from '@xyflow/react';
-import type { PathSummary } from './playlists/library';
+import type { PathSummary, PathVisibility } from './playlists/library';
 import {
   activatePath,
   addImportedPath,
+  asPathVisibility,
   createPath,
+  deletePath,
+  putImportedPath,
   emptyGraph,
   getPath,
   emptyLibrary,
+  linkPathWorkshop,
   renamePath,
+  replaceActiveGraph,
   saveActiveGraph,
+  type StoredMusicPath,
   setPathTags,
   setPathVisibility,
   summaries,
@@ -67,6 +73,12 @@ interface PathState {
   playbackOriginRequestId: number;
   /** Current page. Transient — URL is the source of truth. */
   uiMode: 'home' | 'studio' | 'listen' | 'settings' | 'profile';
+  /** Published Workshop preview: canvas and inspector stay view-only. */
+  graphLocked: boolean;
+  /** Listen layout. Graph is the default for published /listen/[id]. */
+  listenView: 'graph' | 'list';
+  /** Share id or uuid for the published playlist currently held. */
+  workshopShareKey: string | null;
   activePathId: string;
   pathSummaries: PathSummary[];
   setNodes: (nodes: Node[]) => void;
@@ -83,6 +95,8 @@ interface PathState {
   setCurrentPlayingNodeId: (id: string | null) => void;
   setPlaybackStartNode: (id: string | null) => void;
   setUiMode: (mode: 'home' | 'studio' | 'listen' | 'settings' | 'profile') => void;
+  setGraphLocked: (locked: boolean) => void;
+  setListenView: (view: 'graph' | 'list') => void;
   requestSkip: () => void;
   requestPrevious: () => void;
   requestStop: () => void;
@@ -93,15 +107,37 @@ interface PathState {
   normalizeSplitters: () => void;
   createPlaylist: (name?: string) => void;
   switchPlaylist: (id: string) => void;
+  deletePlaylist: (id: string) => void;
   renamePlaylist: (id: string, name: string) => void;
-  setPlaylistVisibility: (id: string, visibility: 'public' | 'private') => void;
+  setPlaylistVisibility: (id: string, visibility: PathVisibility) => void;
   setPlaylistTags: (id: string, tags: string[]) => void;
   exportPlaylistFile: (
     id: string,
     kind?: 'playlist' | 'package'
   ) => { filename: string; json: string } | null;
-  importPlaylistFile: (text: string) => { error: string | null; notices: string[] };
-  importWorkshopGraph: (name: string, nodes: Node[], edges: Edge[]) => void;
+  importPlaylistFile: (
+    text: string,
+    options?: { replaceActive?: boolean }
+  ) => { error: string | null; notices: string[] };
+  importWorkshopGraph: (
+    name: string,
+    nodes: Node[],
+    edges: Edge[],
+    locked?: boolean,
+    shareKey?: string,
+    bind?: {
+      id?: string;
+      workshopId?: string;
+      visibility?: PathVisibility;
+      keepName?: boolean;
+      tags?: string[];
+    }
+  ) => void;
+  syncWorkshopListing: (
+    workshopId: string,
+    visibility: PathVisibility,
+    sourcePathId?: string
+  ) => void;
   copySelection: () => NodeClipboard | null;
   pasteClipboard: (payload: NodeClipboard) => string[];
   bringNodesOntoPage: (scope: 'selected' | 'all') => void;
@@ -109,8 +145,33 @@ interface PathState {
 
 let library: PathLibrary = emptyLibrary();
 
+/** Survives cloud hydrate / guest workspace reset after Play or Remix. */
+let workshopHold: { path: StoredMusicPath; locked: boolean; shareKey: string | null } | null =
+  null;
+
 const activeGraph = () =>
   library.paths.find((p) => p.id === library.activeId) || library.paths[0];
+
+function releaseWorkshopHold(): void {
+  workshopHold = null;
+}
+
+function restoreWorkshopHold(next: PathLibrary): PathLibrary {
+  if (!workshopHold) return next;
+  const restored = putImportedPath(next, workshopHold.path, {
+    persist: !workshopHold.locked,
+  });
+  const stored = getPath(restored, restored.activeId);
+  if (stored) workshopHold = { ...workshopHold, path: stored };
+  return restored;
+}
+
+function fromHold() {
+  return {
+    graphLocked: workshopHold?.locked ?? false,
+    workshopShareKey: workshopHold?.shareKey ?? null,
+  };
+}
 
 const saveToStorage = (nodes: Node[], edges: Edge[]) => {
   library = saveActiveGraph(library, nodes, edges);
@@ -155,6 +216,11 @@ export const usePathStore = create<PathState>((set, get) => ({
   stopRequestId: 0,
   playbackOriginRequestId: 0,
   uiMode: 'studio',
+  graphLocked: false,
+  listenView: 'graph',
+  workshopShareKey: null,
+  setGraphLocked: (locked) => set({ graphLocked: locked }),
+  setListenView: (view) => set({ listenView: view }),
 
   setNodes: (nodes) => {
     set({ nodes });
@@ -401,23 +467,32 @@ export const usePathStore = create<PathState>((set, get) => ({
       return { nodes: laid.nodes };
     }),
   initializeFromStorage: () => {
-    library = emptyLibrary();
-    set(libraryView());
+    library = restoreWorkshopHold(emptyLibrary());
+    set({
+      ...libraryView(),
+      ...fromHold(),
+      listenView: workshopHold?.locked && usePathStore.getState().listenView === 'list' ? 'list' : 'graph',
+    });
   },
   replaceLibrary: (next) => {
-    library = next;
+    library = restoreWorkshopHold(next);
     set({
       ...libraryView(),
       ...playbackReset,
+      ...fromHold(),
     });
   },
   createPlaylist: (name) => {
     const current = usePathStore.getState();
     library = saveActiveGraph(library, current.nodes, current.edges);
+    releaseWorkshopHold();
     library = createPath(library, name);
     set({
       ...libraryView(),
       ...playbackReset,
+      graphLocked: false,
+      workshopShareKey: null,
+      listenView: 'graph',
     });
   },
   switchPlaylist: (id) => {
@@ -426,10 +501,26 @@ export const usePathStore = create<PathState>((set, get) => ({
     library = saveActiveGraph(library, current.nodes, current.edges);
     const next = activatePath(library, id);
     if (!next) return;
+    if (workshopHold && id !== workshopHold.path.id) releaseWorkshopHold();
     library = next;
     set({
       ...libraryView(),
       ...playbackReset,
+      ...fromHold(),
+    });
+  },
+  deletePlaylist: (id) => {
+    if (!library.paths.some((p) => p.id === id)) return;
+    const current = usePathStore.getState();
+    library = saveActiveGraph(library, current.nodes, current.edges);
+    const leaving = library.activeId === id;
+    if (workshopHold?.path.id === id) releaseWorkshopHold();
+    library = deletePath(library, id);
+    set({
+      ...libraryView(),
+      ...(leaving ? playbackReset : {}),
+      graphLocked: leaving ? false : current.graphLocked,
+      workshopShareKey: leaving ? null : current.workshopShareKey,
     });
   },
   renamePlaylist: (id, name) => {
@@ -438,6 +529,14 @@ export const usePathStore = create<PathState>((set, get) => ({
   },
   setPlaylistVisibility: (id, visibility) => {
     library = setPathVisibility(library, id, visibility);
+    set({ pathSummaries: summaries(library) });
+  },
+  syncWorkshopListing: (workshopId, visibility, sourcePathId) => {
+    library = linkPathWorkshop(
+      library,
+      { pathId: sourcePathId, workshopId },
+      { workshopId, visibility }
+    );
     set({ pathSummaries: summaries(library) });
   },
   setPlaylistTags: (id, tags) => {
@@ -460,24 +559,40 @@ export const usePathStore = create<PathState>((set, get) => ({
         : serializePlaylistJson(path, { themeId: theme.id, themes });
     return { filename: playlistDownloadName(path.name), json };
   },
-  importPlaylistFile: (text) => {
+  importPlaylistFile: (text, options) => {
     const parsed = parsePlaylistFile(text);
     if (!parsed.ok) return { error: parsed.error, notices: [] };
     const current = usePathStore.getState();
-    library = saveActiveGraph(library, current.nodes, current.edges);
     const assigned = new Map<string, string>();
     for (const theme of parsed.themes) {
       const originalId = theme.id;
       const nextId = useThemeStore.getState().addCustomTheme(theme);
       if (nextId) assigned.set(originalId, nextId);
     }
-    library = addImportedPath(library, {
-      ...parsed.playlist,
-      nodes: remapStyleNodeThemeIds(parsed.playlist.nodes, assigned),
-    });
+    const nodes = remapStyleNodeThemeIds(parsed.playlist.nodes, assigned);
+    const replaceActive = Boolean(options?.replaceActive);
+    if (replaceActive) {
+      library = replaceActiveGraph(library, {
+        nodes,
+        edges: parsed.playlist.edges,
+      });
+      if (workshopHold?.path.id === library.activeId) {
+        const stored = getPath(library, library.activeId);
+        if (stored) workshopHold = { ...workshopHold, path: stored, locked: false };
+      }
+    } else {
+      library = saveActiveGraph(library, current.nodes, current.edges);
+      releaseWorkshopHold();
+      library = addImportedPath(library, {
+        ...parsed.playlist,
+        nodes,
+      });
+    }
     set({
       ...libraryView(),
       ...playbackReset,
+      graphLocked: false,
+      workshopShareKey: replaceActive ? current.workshopShareKey : null,
     });
     const want = parsed.themeId ? assigned.get(parsed.themeId) || parsed.themeId : null;
     if (want) {
@@ -491,21 +606,37 @@ export const usePathStore = create<PathState>((set, get) => ({
     }
     return { error: null, notices: parsed.notices };
   },
-  importWorkshopGraph: (name, nodes, edges) => {
+  importWorkshopGraph: (name, nodes, edges, locked = false, shareKey, bind) => {
     const current = usePathStore.getState();
     library = saveActiveGraph(library, current.nodes, current.edges);
-    library = addImportedPath(library, {
-      id: '',
+    const boundId =
+      bind?.id ||
+      library.paths.find((p) => bind?.workshopId && p.workshopId === bind.workshopId)?.id ||
+      workshopHold?.path.id ||
+      '';
+    const incoming: StoredMusicPath = {
+      id: boundId,
       name,
-      visibility: 'private',
-      tags: [],
-      nodes,
-      edges,
+      visibility: asPathVisibility(bind?.visibility),
+      tags: bind?.tags ?? [],
+      nodes: [...nodes],
+      edges: [...edges],
       updatedAt: new Date().toISOString(),
+      workshopId: bind?.workshopId,
+    };
+    library = putImportedPath(library, incoming, {
+      persist: !locked,
+      keepName: Boolean(bind?.keepName || bind?.workshopId),
     });
+    const stored = getPath(library, library.activeId);
+    if (stored) workshopHold = { path: stored, locked, shareKey: shareKey ?? null };
+    const keepList = current.listenView === 'list';
     set({
       ...libraryView(),
       ...playbackReset,
+      graphLocked: locked,
+      workshopShareKey: shareKey ?? null,
+      listenView: keepList ? 'list' : 'graph',
     });
   },
   copySelection: () => {
@@ -527,6 +658,10 @@ export const usePathStore = create<PathState>((set, get) => ({
     return next.selectedIds;
   },
 }));
+
+export function useGraphReadOnly(): boolean {
+  return usePathStore((s) => s.graphLocked);
+}
 
 export function snapshotPathLibrary(): PathLibrary {
   const state = usePathStore.getState();

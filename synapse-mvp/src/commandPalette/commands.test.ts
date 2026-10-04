@@ -57,6 +57,19 @@ describe('buildCommands', () => {
     expect(guest.some((command) => command.id === 'go-login')).toBe(true);
     expect(guest.some((command) => command.id === 'go-edit')).toBe(false);
     expect(guest.some((command) => command.id === 'play')).toBe(false);
+    expect(guest.some((command) => command.id === 'delete-path')).toBe(false);
+
+    const workshopGuest = buildCommands({
+      route: 'listen',
+      signedIn: false,
+      role: 'user',
+      isPlaying: true,
+      queueLength: 0,
+      workshopWorkspace: true,
+    });
+    expect(workshopGuest.some((command) => command.id === 'go-edit')).toBe(true);
+    expect(workshopGuest.some((command) => command.id === 'go-listen')).toBe(true);
+    expect(workshopGuest.some((command) => command.id === 'go-settings')).toBe(false);
 
     const member = buildCommands({
       route: 'edit',
@@ -68,6 +81,7 @@ describe('buildCommands', () => {
     expect(member.some((command) => command.id === 'go-edit')).toBe(true);
     expect(member.some((command) => command.id === 'pause')).toBe(true);
     expect(member.some((command) => command.id === 'stop')).toBe(true);
+    expect(member.some((command) => command.id === 'delete-path')).toBe(true);
     expect(member.some((command) => command.id === 'go-login')).toBe(false);
   });
 });

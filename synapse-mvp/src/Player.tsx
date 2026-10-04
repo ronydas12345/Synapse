@@ -1,4 +1,4 @@
-import { usePathStore } from './store';
+import { usePathStore, useGraphReadOnly } from './store';
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import type { Node } from '@xyflow/react';
 import { buildPlaybackQueueResult, parseQueueKey } from './engine';
@@ -77,7 +77,9 @@ export default function Player() {
     uiMode,
     selectedPlaybackStartNodeId,
     setPlaybackStartNode,
+    listenView,
   } = usePathStore();
+  const graphReadOnly = useGraphReadOnly();
 
   const weather = useWeatherSnapshot();
   const masterVolume = useAppSettings((s) => s.playback.masterVolume);
@@ -655,7 +657,7 @@ export default function Player() {
   const seekStart = Number(currentNode?.data?.startTime) || 0;
   const seekEnd = Number(currentNode?.data?.endTime) || 0;
   const queueActive = playbackQueue.length > 0;
-  const listen = uiMode === 'listen';
+  const listListen = uiMode === 'listen' && listenView === 'list' && graphReadOnly;
 
   const previewQueue = useMemo(() => {
     if (playbackQueue.length > 0) return playbackQueue;
@@ -733,9 +735,9 @@ export default function Player() {
 
   return (
     <div
-      className={`synapse-deck ${listen ? 'is-listen' : ''} ${minimized ? 'is-minimized' : ''}`}
+      className={`synapse-deck ${listListen ? 'is-listen' : ''} ${minimized ? 'is-minimized' : ''}`}
       data-tutorial="player"
-      id={listen ? 'workspace-main' : undefined}
+      id={listListen ? 'workspace-main' : undefined}
     >
       <div
         ref={ytContainerRef}
@@ -751,7 +753,7 @@ export default function Player() {
       >
         {minimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
       </button>
-      {listen ? (
+      {listListen ? (
         <PlayingScreen
           nowPlaying={nowPlaying}
           isPlaying={isPlaying}
@@ -776,11 +778,15 @@ export default function Player() {
           speed={
             currentNode?.data?.speed != null ? Number(currentNode.data.speed) : 100
           }
-          onSpeedChange={(speed) => {
+          onSpeedChange={
+            graphReadOnly
+              ? undefined
+              : (speed) => {
             if (currentParsed?.kind === 'track' && currentNodeId) {
               updateNodeData(currentNodeId, { speed });
             }
-          }}
+          }
+          }
         />
       ) : (
         <>
@@ -828,11 +834,15 @@ export default function Player() {
               speed={
                 currentNode?.data?.speed != null ? Number(currentNode.data.speed) : 100
               }
-              onSpeedChange={(speed) => {
-                if (currentParsed?.kind === 'track' && currentNodeId) {
-                  updateNodeData(currentNodeId, { speed });
-                }
-              }}
+              onSpeedChange={
+                graphReadOnly
+                  ? undefined
+                  : (speed) => {
+                      if (currentParsed?.kind === 'track' && currentNodeId) {
+                        updateNodeData(currentNodeId, { speed });
+                      }
+                    }
+              }
             />
           </div>
           {showVisualizer ? (

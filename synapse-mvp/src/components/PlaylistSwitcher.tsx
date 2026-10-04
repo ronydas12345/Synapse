@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Plus } from 'lucide-react';
-import { usePathStore } from '../store';
+import { usePathStore, useGraphReadOnly } from '../store';
+import { pathVisibilityLabel } from '../playlists/library';
+import { PathLink } from '../app/AppLink';
+import { workshopItemPath } from '../app/routes';
 
 export function PlaylistNameField({
   id,
@@ -12,6 +15,7 @@ export function PlaylistNameField({
   className?: string;
 }) {
   const renamePlaylist = usePathStore((s) => s.renamePlaylist);
+  const readOnly = useGraphReadOnly();
   const [draft, setDraft] = useState(name);
 
   useEffect(() => {
@@ -33,9 +37,15 @@ export function PlaylistNameField({
       className={className}
       value={draft}
       maxLength={60}
+      readOnly={readOnly}
       aria-label="Playlist name"
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={commit}
+      onChange={(e) => {
+        if (readOnly) return;
+        setDraft(e.target.value);
+      }}
+      onBlur={() => {
+        if (!readOnly) commit();
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') e.currentTarget.blur();
         if (e.key === 'Escape') {
@@ -50,12 +60,17 @@ export function PlaylistNameField({
 export default function PlaylistSwitcher() {
   const activePathId = usePathStore((s) => s.activePathId);
   const pathSummaries = usePathStore((s) => s.pathSummaries);
+  const workshopShareKey = usePathStore((s) => s.workshopShareKey);
   const switchPlaylist = usePathStore((s) => s.switchPlaylist);
   const createPlaylist = usePathStore((s) => s.createPlaylist);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const active = pathSummaries.find((p) => p.id === activePathId) || pathSummaries[0];
+  const listingKey =
+    workshopShareKey ||
+    (active && active.visibility !== 'private' ? active.workshopId : undefined);
+  const workshopHref = listingKey ? workshopItemPath(listingKey) : null;
 
   useEffect(() => {
     if (!open) return;
@@ -112,7 +127,9 @@ export default function PlaylistSwitcher() {
                 >
                   <span className="synapse-playlist-option-copy">
                     <span className="synapse-playlist-option-name">{path.name}</span>
-                    <span className="synapse-playlist-option-meta">{path.visibility}</span>
+                    <span className="synapse-playlist-option-meta">
+                      {pathVisibilityLabel(path.visibility)}
+                    </span>
                   </span>
                   {selected ? <Check className="w-4 h-4" aria-hidden="true" /> : null}
                 </button>
@@ -137,6 +154,15 @@ export default function PlaylistSwitcher() {
           </div>
         ) : null}
       </div>
+      {workshopHref ? (
+        <PathLink
+          href={workshopHref}
+          className="synapse-workshop-listing-link"
+          title="Open the public Workshop page"
+        >
+          Workshop page
+        </PathLink>
+      ) : null}
     </>
   );
 }

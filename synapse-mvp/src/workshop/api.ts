@@ -40,7 +40,23 @@ function statusOf(value: unknown): WorkshopStatus {
 }
 
 function payloadOf(raw: unknown): WorkshopPayload {
-  const value = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  let value: Record<string, unknown> = {};
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw) as unknown;
+    } catch {
+      raw = {};
+    }
+  }
+  if (raw && typeof raw === 'object') {
+    value = raw as Record<string, unknown>;
+    if (!Array.isArray(value.nodes) && value.graph && typeof value.graph === 'object') {
+      value = value.graph as Record<string, unknown>;
+    }
+    if (!Array.isArray(value.nodes) && value.playlist && typeof value.playlist === 'object') {
+      value = value.playlist as Record<string, unknown>;
+    }
+  }
   return {
     name: typeof value.name === 'string' ? value.name : undefined,
     nodes: Array.isArray(value.nodes) ? value.nodes : [],
@@ -142,9 +158,12 @@ export async function listWorkshop(
       .or(
         `title.ilike.%${cleaned}%,description.ilike.%${cleaned}%,creator_username.ilike.%${cleaned}%,creator_display_name.ilike.%${cleaned}%`
       )
+      .order('updated_at', { ascending: false })
       .order('published_at', { ascending: false });
   } else {
-    request = request.order('published_at', { ascending: false });
+    request = request
+      .order('updated_at', { ascending: false })
+      .order('published_at', { ascending: false });
   }
 
   const { data, error } = await request;
@@ -160,6 +179,7 @@ export async function listCreatorWorkshop(uid: string): Promise<WorkshopCard[]> 
     .eq('creator_uid', uid)
     .eq('visibility', 'public')
     .eq('status', 'active')
+    .order('updated_at', { ascending: false })
     .order('published_at', { ascending: false })
     .limit(60);
   if (isMissingSchema(error)) return [];
@@ -201,6 +221,7 @@ export async function publishWorkshopCreation(input: {
   remixOf?: string | null;
   kind?: WorkshopKind;
   tags?: string[];
+  id?: string | null;
 }): Promise<string> {
   const kind = input.kind === 'theme' ? 'theme' : 'playlist';
   if (kind === 'theme') {
@@ -210,6 +231,7 @@ export async function publishWorkshopCreation(input: {
     if (blocked) throw new Error(blocked);
   }
   const tags = sanitizeTagIds(kind, input.tags);
+  const listingId = input.id?.trim() || '';
   const base = {
     p_source_path_id: input.sourcePathId,
     p_title: input.title,
@@ -218,11 +240,20 @@ export async function publishWorkshopCreation(input: {
     p_payload: input.payload,
     p_remix_of: input.remixOf ?? null,
   };
-  let { data, error } = await supabase.rpc('publish_workshop_creation', {
+  const withKind = {
     ...base,
     p_kind: kind,
     p_tags: tags,
+  };
+  let { data, error } = await supabase.rpc('publish_workshop_creation', {
+    ...withKind,
+    ...(listingId ? { p_id: listingId } : {}),
   });
+  if (isSchemaCacheError(error) && listingId) {
+    const retry = await supabase.rpc('publish_workshop_creation', withKind);
+    data = retry.data;
+    error = retry.error;
+  }
   if (isSchemaCacheError(error)) {
     const retry = await supabase.rpc('publish_workshop_creation', base);
     data = retry.data;
@@ -251,13 +282,17 @@ export async function setWorkshopVisibility(
 }
 
 export async function toggleWorkshopLike(id: string): Promise<boolean> {
-  const { data, error } = await supabase.rpc('toggle_workshop_like', { p_id: id });
+  const { data, error } = await supabase.rpc('toggle_workshop_like', {
+    p_id: String(id),
+  });
   throwIfError(error);
   return data === true;
 }
 
 export async function toggleWorkshopSave(id: string): Promise<boolean> {
-  const { data, error } = await supabase.rpc('toggle_workshop_save', { p_id: id });
+  const { data, error } = await supabase.rpc('toggle_workshop_save', {
+    p_id: String(id),
+  });
   throwIfError(error);
   return data === true;
 }

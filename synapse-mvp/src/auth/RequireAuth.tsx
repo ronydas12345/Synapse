@@ -1,4 +1,4 @@
-import { APP_PATHS, isAuthRoute, isProtectedRoute, navigateApp } from '../app/routes';
+import { APP_PATHS, isAuthRoute, isListenHref, isProtectedRoute, navigateApp } from '../app/routes';
 import { rememberReturnPath } from './returnPath';
 import { goToAppAfterAuth } from './goToAppAfterAuth';
 import {
@@ -6,31 +6,42 @@ import {
   shouldDeferIncompleteRedirect,
 } from './authRedirect';
 import { useAuthAccess } from './useAuthAccess';
-import { useAppRoute } from '../app/AppLink';
+import { useAppLocation } from '../app/AppLink';
 import AuthGate from './AuthGate';
 import SuspendedPage from '../pages/SuspendedPage';
 import { useEffect, type ReactNode } from 'react';
 import { useAuthStore } from './authStore';
 import { canOpenAdmin, canOpenSuperadmin } from '../admin/permissions';
+import { hasWorkshopGuestSession } from '../workshop/guestSession';
+import { usePathStore } from '../store';
 
 export default function RequireAuth({ children }: { children: ReactNode }) {
-  const route = useAppRoute();
+  const location = useAppLocation();
+  const route = location.route;
   const { status, user, complete, workspaceStatus } = useAuthAccess();
   const role = useAuthStore((s) => s.role);
   const roleStatus = useAuthStore((s) => s.roleStatus);
   const accountStatus = useAuthStore((s) => s.accountStatus);
+  const graphLocked = usePathStore((s) => s.graphLocked);
+  const workshopPreview =
+    (route === 'listen' || route === 'edit') &&
+    (hasWorkshopGuestSession() ||
+      graphLocked ||
+      (route === 'listen' && Boolean(location.workshopId)));
 
   useEffect(() => {
     if (status !== 'ready') return;
     if (!user) {
-      if (isProtectedRoute(route)) {
-        rememberReturnPath(APP_PATHS[route]);
+      if (isProtectedRoute(route) && !workshopPreview) {
+        const here = window.location.pathname.replace(/\/+$/, '') || '/';
+        rememberReturnPath(isListenHref(here) ? here : APP_PATHS[route]);
         navigateApp(APP_PATHS.login, '', true);
       }
       return;
     }
     if (shouldDeferIncompleteRedirect(workspaceStatus)) return;
     if (!complete) {
+      if (workshopPreview) return;
       const next = incompleteUserRedirect(route);
       if (next) navigateApp(next, '', true);
       return;
@@ -59,10 +70,12 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
     role,
     roleStatus,
     accountStatus,
+    workshopPreview,
   ]);
 
   if (
     isProtectedRoute(route) &&
+    !workshopPreview &&
     (status !== 'ready' || !user || !complete || workspaceStatus !== 'ready')
   ) {
     return <AuthGate />;

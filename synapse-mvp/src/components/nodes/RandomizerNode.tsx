@@ -1,6 +1,6 @@
 import { Handle, Position } from '@xyflow/react';
 import { Dice5, ChevronDown, ChevronUp, Trash2, ListOrdered } from 'lucide-react';
-import { usePathStore } from '../../store';
+import { usePathStore, useGraphReadOnly } from '../../store';
 import { useState, memo } from 'react';
 import { addTrackToRandomizerList, moveSequenceItemBetweenRandomizers, parseSequenceItemPayload, reorderRandomizerTracks, restoreTrackFromRandomizer, SEQUENCE_ITEM_MIME, syncParkedTracks } from '../../randomizerDrop';
 import { getTrackDisplayMeta } from '../../trackMetadata';
@@ -32,6 +32,7 @@ interface RandomizerNodeProps {
 
 function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
   const { updateNodeData, nodes, edges, setNodes, setEdges, currentPlayingNodeId, inspectNestedTrack, inspectorNodeId } = usePathStore();
+  const readOnly = useGraphReadOnly();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -46,6 +47,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
   const showWeights = mode === 'randomizer';
 
   const toggleCollapse = () => {
+    if (readOnly) return;
     updateNodeData(id, { isCollapsed: !isCollapsed });
   };
 
@@ -60,6 +62,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
   };
 
   const handleTrackDragStart = (e: React.DragEvent, index: number) => {
+    if (readOnly) return;
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', String(index));
@@ -108,12 +111,14 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
   };
 
   const handleNodeDragOver = (e: React.DragEvent) => {
+    if (readOnly) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
     setIsDragOver(true);
   };
 
   const handleNodeDrop = (e: React.DragEvent) => {
+    if (readOnly) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
@@ -199,9 +204,11 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
             className="nodrag nopan nowheel synapse-node-mode-select"
             value={mode === 'randomizer' ? 'randomizer' : 'sequence'}
             title="Playback mode"
+            disabled={readOnly}
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => {
               e.stopPropagation();
+              if (readOnly) return;
               updateNodeData(id, randomizerModePatch(data, e.target.value));
             }}
           >
@@ -220,6 +227,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
                 <label className="synapse-node-row-title">Play Count:</label>
                 <button
                   type="button"
+                  disabled={readOnly}
                   onClick={() => updateNodeData(id, { isForever: !isForever })}
                   className={`synapse-node-chip ${isForever ? 'is-on' : ''}`}
                 >
@@ -232,6 +240,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
                   min="1"
                   max="1000"
                   value={playCount}
+                  disabled={readOnly}
                   onChange={(e) =>
                     updateNodeData(id, {
                       playCount: Math.max(1, parseInt(e.target.value) || 1),
@@ -251,15 +260,17 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
                   return (
                     <div
                       key={`${trackId}-${index}`}
-                      draggable
-                      onDragStart={(e) => handleTrackDragStart(e, index)}
-                      onDragOver={(e) => handleTrackDragOver(e, index)}
-                      onDrop={(e) => handleTrackDrop(e, index)}
+                      draggable={!readOnly}
+                      onDragStart={readOnly ? undefined : (e) => handleTrackDragStart(e, index)}
+                      onDragOver={readOnly ? undefined : (e) => handleTrackDragOver(e, index)}
+                      onDrop={readOnly ? undefined : (e) => handleTrackDrop(e, index)}
                       onDragEnd={() => {
                         setDraggedIndex(null);
                         setDraggedOverIndex(null);
                       }}
-                      className={`nodrag nopan synapse-node-row is-seq is-item cursor-move ${
+                      className={`nodrag nopan synapse-node-row is-seq is-item ${
+                        readOnly ? '' : 'cursor-move '
+                      }${
                         draggedOverIndex === index ? 'is-drag' : ''
                       } ${inspectorNodeId === trackId ? 'is-inspecting' : ''}`}
                     >
@@ -282,6 +293,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
                               type="number"
                               min="1"
                               value={weight}
+                              disabled={readOnly}
                               onChange={(e) =>
                                 handleWeightChange(index, parseInt(e.target.value) || 1)
                               }
@@ -294,6 +306,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
                       </div>
                       <button
                         type="button"
+                        disabled={readOnly}
                         onClick={() => removeTrack(index)}
                         className="nodrag nopan p-1 text-[var(--danger)] hover:bg-[var(--danger)] hover:text-[var(--bg-void)] rounded transition self-start"
                       >

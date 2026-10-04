@@ -4,6 +4,7 @@ import { useAppRoute } from '../app/AppLink';
 import { useAuthStore } from '../auth/authStore';
 import { usePathStore } from '../store';
 import { useThemeStore } from '../theme/themeStore';
+import { hasWorkshopGuestSession } from '../workshop/guestSession';
 import {
   buildCommands,
   COMMAND_GROUPS,
@@ -42,6 +43,8 @@ export default function CommandPalette() {
   const role = useAuthStore((s) => s.role);
   const isPlaying = usePathStore((s) => s.isPlaying);
   const queueLength = usePathStore((s) => s.playbackQueue.length);
+  const graphLocked = usePathStore((s) => s.graphLocked);
+  const workshopWorkspace = graphLocked || hasWorkshopGuestSession();
   const pathSummaries = usePathStore((s) => s.pathSummaries);
   const activePathId = usePathStore((s) => s.activePathId);
   const activeThemeId = useThemeStore((s) => s.activeId);
@@ -62,6 +65,7 @@ export default function CommandPalette() {
         role,
         isPlaying,
         queueLength,
+        workshopWorkspace,
       }),
     [
       route,
@@ -69,6 +73,7 @@ export default function CommandPalette() {
       role,
       isPlaying,
       queueLength,
+      workshopWorkspace,
       pathSummaries,
       activePathId,
       activeThemeId,

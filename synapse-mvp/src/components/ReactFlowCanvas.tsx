@@ -2,7 +2,7 @@ import React from 'react';
 import { Map as MapIcon, Minimize2 } from 'lucide-react';
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider, useReactFlow, applyNodeChanges } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { usePathStore } from '../store';
+import { usePathStore, useGraphReadOnly } from '../store';
 import TrackNode from './nodes/TrackNode';
 import ConditionalNode from './nodes/ConditionalNode';
 import StartNode from './nodes/StartNode';
@@ -334,6 +334,7 @@ function ReactFlowContent() {
   const gridSize = useAppSettings((s) => s.canvas.gridSize);
   const fitViewOnSwitch = useAppSettings((s) => s.canvas.fitViewOnPlaylistSwitch);
   const activePathId = usePathStore((s) => s.activePathId);
+  const readOnly = useGraphReadOnly();
   const skipFitRef = useRef(true);
 
   const [nodes, setNodes] = useNodesState(storeNodes as Node[]);
@@ -349,6 +350,14 @@ function ReactFlowContent() {
   // Custom handler that applies recursive movement to linked comments
   const handleNodesChange = useCallback(
     (changes: any) => {
+      if (readOnly) {
+        const allowed = (changes as { type?: string }[]).filter(
+          (change) => change.type === 'select' || change.type === 'dimensions'
+        );
+        if (!allowed.length) return;
+        setNodes((currentNodes) => applyNodeChanges(allowed as NodeChange<Node>[], currentNodes));
+        return;
+      }
       setNodes((currentNodes) => {
         const snapped = applySnapToDragChanges(changes, currentNodes, {
           shift: getAlignOverlay().shift,
@@ -455,26 +464,33 @@ function ReactFlowContent() {
         }
       });
     },
-    [setNodes, getViewport]
+    [setNodes, getViewport, readOnly]
   );
   const lastSyncedNodesRef = useRef<Node[]>(storeNodes);
   const lastSyncedEdgesRef = useRef<Edge[]>(storeEdges);
 
-  // Initialize from store on mount only
+  // Keep the canvas in sync when the active playlist is replaced
+  // (workshop Play/Remix, cloud hydrate, playlist switch).
+  const graphSig = `${activePathId}:${storeNodes.map((n) => n.id).join(',')}`;
   useEffect(() => {
-    if (isInitializedRef.current) return;
-    const validNodes = storeNodes.filter((n: any) => validNodeTypes.has(n.type));
-    const normalized = normalizeWorkspaceGraph(validNodes as Node[], storeEdges as Edge[]);
+    const { nodes: nextNodes, edges: nextEdges, graphLocked } =
+      usePathStore.getState();
+    const validNodes = nextNodes.filter((n: any) => validNodeTypes.has(n.type));
+    const normalized = normalizeWorkspaceGraph(validNodes as Node[], nextEdges as Edge[]);
     setNodes(normalized.nodes);
     setEdges(normalized.edges as Edge[]);
     lastSyncedNodesRef.current = normalized.nodes;
     lastSyncedEdgesRef.current = normalized.edges as Edge[];
-    if (normalized.nodes !== storeNodes || normalized.edges !== storeEdges) {
+    isInitializedRef.current = true;
+    const readOnlyNow = graphLocked;
+    if (
+      !readOnlyNow &&
+      (normalized.nodes !== nextNodes || normalized.edges !== nextEdges)
+    ) {
       setStoreNodes(normalized.nodes);
       setStoreEdges(normalized.edges as Edge[]);
     }
-    isInitializedRef.current = true;
-  }, []);
+  }, [graphSig, setNodes, setEdges, setStoreNodes, setStoreEdges]);
 
   useEffect(() => {
     if (skipFitRef.current) {
@@ -761,6 +777,9 @@ function ReactFlowContent() {
     };
 
     const onDragOverCapture = (event: DragEvent) => {
+      if (usePathStore.getState().graphLocked) {
+        return;
+      }
       if (isPlaybackMarkerDrag(event.dataTransfer)) {
         event.preventDefault();
         if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
@@ -774,6 +793,9 @@ function ReactFlowContent() {
     };
 
     const onDropCapture = (event: DragEvent) => {
+      if (usePathStore.getState().graphLocked) {
+        return;
+      }
       if (isPlaybackMarkerDrag(event.dataTransfer) || dataTransferIsPlaybackMarker(event.dataTransfer)) {
         event.preventDefault();
         event.stopPropagation();
@@ -985,9 +1007,15 @@ function ReactFlowContent() {
         event.preventDefault();
         void copySelectionToClipboard();
       } else if (key === 'v') {
+        if (usePathStore.getState().graphLocked) {
+          return;
+        }
         event.preventDefault();
         void pasteFromClipboard();
       } else if (key === 'd') {
+        if (usePathStore.getState().graphLocked) {
+          return;
+        }
         event.preventDefault();
         const payload = usePathStore.getState().copySelection();
         if (payload) usePathStore.getState().pasteClipboard(payload);
@@ -1016,9 +1044,19 @@ function ReactFlowContent() {
         edges={themedEdges}
         edgeTypes={edgeTypes}
         onNodesChange={handleNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={handleConnect}
-        onNodeDragStop={(_event, _node, draggedNodes) => {
+        onEdgesChange={
+          readOnly
+            ? (changes) => {
+                const allowed = changes.filter((change) => change.type === 'select');
+                if (allowed.length) onEdgesChange(allowed);
+              }
+            : onEdgesChange
+        }
+        onConnect={readOnly ? undefined : handleConnect}
+        onNodeDragStop={
+          readOnly
+            ? undefined
+            : (_event, _node, draggedNodes) => {
           setAlignOverlay({ dragging: false, guides: [] });
           const positions = new Map(
             draggedNodes.map((n) => [n.id, n.position] as const)
@@ -1060,17 +1098,17 @@ function ReactFlowContent() {
           if (ids.length === prev.length && ids.every((id) => prev.includes(id))) return;
           store.setSelection(ids);
         }}
-        onEdgeClick={onEdgeClick}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
-        nodesDraggable={true}
-        nodesConnectable={true}
+        onEdgeClick={readOnly ? undefined : onEdgeClick}
+        onDragOver={readOnly ? undefined : onDragOver}
+        onDrop={readOnly ? undefined : onDrop}
+        nodesDraggable={!readOnly}
+        nodesConnectable={!readOnly}
         elementsSelectable={true}
         selectNodesOnDrag={false}
-        selectionOnDrag={true}
+        selectionOnDrag={!readOnly}
         panOnDrag={[1, 2]}
         multiSelectionKeyCode="Shift"
-        selectionKeyCode="Shift"
+        selectionKeyCode={readOnly ? null : 'Shift'}
         snapToGrid={snapToGrid}
         snapGrid={[gridSize, gridSize]}
         fitView
@@ -1078,7 +1116,7 @@ function ReactFlowContent() {
           type: rfEdgeType,
           style: { stroke: 'var(--edge-color)', strokeWidth: 2 },
         }}
-        deleteKeyCode={['Backspace', 'Delete']}
+        deleteKeyCode={readOnly ? [] : ['Backspace', 'Delete']}
         colorMode="dark"
       >
         <Background color="var(--grid-line)" gap={gridSize} size={1} />
@@ -1091,9 +1129,11 @@ function ReactFlowContent() {
 
       <div className="synapse-canvas-actions">
         <ThemeToggleButton />
-        <button type="button" onClick={handleRemoveAll} className="synapse-canvas-action" data-tutorial="remove-all">
-          Remove All
-        </button>
+        {readOnly ? null : (
+          <button type="button" onClick={handleRemoveAll} className="synapse-canvas-action" data-tutorial="remove-all">
+            Remove All
+          </button>
+        )}
       </div>
 
       <MemoizedCustomMinimap />

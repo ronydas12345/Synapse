@@ -6,6 +6,10 @@ import PlaylistTransfer, { downloadTextFile } from './PlaylistTransfer';
 import { PlaylistNameField } from './PlaylistSwitcher';
 import { SettingsRange, SettingsSelect, SettingsToggle } from './settings/Fields';
 import { usePathStore } from '../store';
+import {
+  asPathVisibility,
+  type PathSummary,
+} from '../playlists/library';
 import { allThemes, filterThemes, useThemeStore } from '../theme/themeStore';
 import AuthPanel from '../auth/AuthPanel';
 import { useAuthStore } from '../auth/authStore';
@@ -16,6 +20,7 @@ import { useAppSettings } from '../settings/settingsStore';
 import SupportForm from '../admin/SupportForm';
 import PublishForm from '../workshop/PublishForm';
 import TagPicker from '../workshop/TagPicker';
+import { setWorkshopVisibility } from '../workshop/api';
 import { GRID_SIZE_OPTIONS } from '../settings/types';
 import {
   clearMetadataCache,
@@ -34,7 +39,7 @@ import { scrollWithin } from '../ui/scrollWithin';
 const SECTIONS = [
   { id: 'themes', label: 'Themes', keywords: 'theme appearance color font preset dark light arrow bezier edge rectangular triangular visualizer bar tags workshop' },
   { id: 'appearance', label: 'Appearance', keywords: 'motion reduce animation theme light dark' },
-  { id: 'playlists', label: 'Playlists', keywords: 'rename library path name export visibility public private tags workshop' },
+  { id: 'playlists', label: 'Playlists', keywords: 'rename library path name export visibility public private tags workshop delete remove' },
   { id: 'general', label: 'General', keywords: 'language english startup edit listen confirm delete' },
   { id: 'canvas', label: 'Canvas / Workspace', keywords: 'grid zoom minimap snap fit view' },
   { id: 'connections', label: 'Connections / Arrows', keywords: 'arrow edge bezier rectangular straight triangular' },
@@ -50,6 +55,83 @@ const SECTIONS = [
   { id: 'support', label: 'Support', keywords: 'faq changelog privacy terms help ticket' },
 ] as const;
 
+const DELETE_PHRASE = 'DELETE';
+
+function PlaylistDeletePanel({
+  path,
+  onlyPlaylist,
+  onCancel,
+  onDelete,
+}: {
+  path: PathSummary;
+  onlyPlaylist: boolean;
+  onCancel: () => void;
+  onDelete: (id: string) => void;
+}) {
+  const [nameInput, setNameInput] = useState('');
+  const [phraseInput, setPhraseInput] = useState('');
+  const nameOk = nameInput.trim() === path.name;
+  const phraseOk = phraseInput.trim() === DELETE_PHRASE;
+  const ready = nameOk && phraseOk;
+
+  return (
+    <div className="synapse-settings-danger synapse-settings-playlist-delete">
+      <p className="synapse-settings-lead">
+        Permanently remove <strong>{path.name}</strong> from this account. This
+        cannot be undone from Settings. Export a copy first if you might want
+        it later.
+        {onlyPlaylist
+          ? ' This is your only playlist, so a blank one will replace it.'
+          : ''}
+      </p>
+      <label className="synapse-settings-field">
+        <span>Type the playlist name</span>
+        <input
+          className="synapse-settings-input"
+          value={nameInput}
+          onChange={(e) => setNameInput(e.target.value)}
+          placeholder={path.name}
+          autoComplete="off"
+          spellCheck={false}
+          autoFocus
+          aria-label={`Type ${path.name} to confirm deletion`}
+        />
+      </label>
+      <label className="synapse-settings-field">
+        <span>
+          Type <code>{DELETE_PHRASE}</code>
+        </span>
+        <input
+          className="synapse-settings-input"
+          value={phraseInput}
+          onChange={(e) => setPhraseInput(e.target.value)}
+          placeholder={DELETE_PHRASE}
+          autoComplete="off"
+          spellCheck={false}
+          aria-label={`Type ${DELETE_PHRASE} to confirm playlist deletion`}
+        />
+      </label>
+      <div className="synapse-settings-playlist-actions">
+        <button type="button" className="synapse-btn synapse-btn-ghost" onClick={onCancel}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="synapse-btn synapse-btn-danger"
+          disabled={!ready}
+          onClick={() => {
+            if (!ready) return;
+            onDelete(path.id);
+            onCancel();
+          }}
+        >
+          Delete playlist
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const [query, setQuery] = useState('');
   const customThemes = useThemeStore((s) => s.customThemes);
@@ -59,6 +141,7 @@ export default function SettingsPage() {
   const exportPlaylistFile = usePathStore((s) => s.exportPlaylistFile);
   const setPlaylistVisibility = usePathStore((s) => s.setPlaylistVisibility);
   const setPlaylistTags = usePathStore((s) => s.setPlaylistTags);
+  const deletePlaylist = usePathStore((s) => s.deletePlaylist);
   const q = query.trim().toLowerCase();
   const themeQueryHits = filterThemes(allThemes(customThemes), q);
   const sections = useMemo(
@@ -79,6 +162,7 @@ export default function SettingsPage() {
   const [activeId, setActiveId] = useState<(typeof SECTIONS)[number]['id']>(
     sections[0]?.id ?? 'themes'
   );
+  const [deletingPlaylistId, setDeletingPlaylistId] = useState<string | null>(null);
 
   useEffect(() => {
     const hash = window.location.hash.replace(/^#/, '');
@@ -172,55 +256,85 @@ export default function SettingsPage() {
               <p className="synapse-settings-lead">
                 Rename playlists stored on this account. Add Workshop tags on
                 the current playlist here, then publish from the Workshop
-                section. Public/private on a playlist is a local label.
+                section. Visibility here follows the Workshop listing when
+                this playlist is published. Delete is in this section on
+                purpose: type the playlist name and{' '}
+                <code>DELETE</code> to confirm.
               </p>
               <ul className="synapse-settings-playlist-list">
                 {pathSummaries.map((path) => {
                   const current = path.id === activePathId;
                   return (
-                    <li key={path.id} className="synapse-settings-playlist-row">
-                      <PlaylistNameField
-                        id={path.id}
-                        name={path.name}
-                        className="synapse-settings-input"
-                      />
-                      <select
-                        className="synapse-settings-input synapse-settings-playlist-vis"
-                        value={path.visibility}
-                        aria-label={`${path.name} visibility`}
-                        onChange={(e) =>
-                          setPlaylistVisibility(
-                            path.id,
-                            e.target.value === 'public' ? 'public' : 'private'
-                          )
-                        }
-                      >
-                        <option value="private">Private</option>
-                        <option value="public">Public (library label)</option>
-                      </select>
-                      <div className="synapse-settings-playlist-actions">
-                        {current ? (
-                          <span className="synapse-settings-hint">Current</span>
-                        ) : (
+                    <li key={path.id} className="synapse-settings-playlist-block">
+                      <div className="synapse-settings-playlist-row">
+                        <PlaylistNameField
+                          id={path.id}
+                          name={path.name}
+                          className="synapse-settings-input"
+                        />
+                        <select
+                          className="synapse-settings-input synapse-settings-playlist-vis"
+                          value={path.visibility}
+                          aria-label={`${path.name} visibility`}
+                          onChange={(e) => {
+                            const next = asPathVisibility(e.target.value);
+                            setPlaylistVisibility(path.id, next);
+                            if (path.workshopId) {
+                              void setWorkshopVisibility(path.workshopId, next).catch(() => {});
+                            }
+                          }}
+                        >
+                          <option value="private">Private</option>
+                          <option value="unlisted">Unlisted</option>
+                          <option value="public">Public</option>
+                        </select>
+                        <div className="synapse-settings-playlist-actions">
+                          {current ? (
+                            <span className="synapse-settings-hint">Current</span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="synapse-btn synapse-btn-ghost"
+                              onClick={() => switchPlaylist(path.id)}
+                            >
+                              Switch
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="synapse-btn synapse-btn-ghost"
-                            onClick={() => switchPlaylist(path.id)}
+                            onClick={() => {
+                              const file = exportPlaylistFile(path.id, 'playlist');
+                              if (file) downloadTextFile(file.filename, file.json);
+                            }}
                           >
-                            Switch
+                            Export
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          className="synapse-btn synapse-btn-ghost"
-                          onClick={() => {
-                            const file = exportPlaylistFile(path.id, 'playlist');
-                            if (file) downloadTextFile(file.filename, file.json);
-                          }}
-                        >
-                          Export
-                        </button>
+                          <button
+                            type="button"
+                            className="synapse-btn synapse-btn-ghost"
+                            aria-expanded={deletingPlaylistId === path.id}
+                            onClick={() =>
+                              setDeletingPlaylistId((current) =>
+                                current === path.id ? null : path.id
+                              )
+                            }
+                          >
+                            Delete…
+                          </button>
+                        </div>
                       </div>
+                      {deletingPlaylistId === path.id ? (
+                        <PlaylistDeletePanel
+                          path={path}
+                          onlyPlaylist={pathSummaries.length === 1}
+                          onCancel={() => setDeletingPlaylistId(null)}
+                          onDelete={(id) => {
+                            deletePlaylist(id);
+                            setDeletingPlaylistId(null);
+                          }}
+                        />
+                      ) : null}
                     </li>
                   );
                 })}

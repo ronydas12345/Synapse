@@ -5,8 +5,11 @@ import {
   isAuthRoute,
   isMarketingRoute,
   isProtectedRoute,
+  listenPath,
+  parseAppLocation,
   pathToRoute,
   routeToUiMode,
+  workshopItemPath,
 } from './routes';
 
 describe('app routes', () => {
@@ -14,11 +17,30 @@ describe('app routes', () => {
     expect(pathToRoute('/')).toBe('home');
     expect(pathToRoute('/edit')).toBe('edit');
     expect(pathToRoute('/listen/')).toBe('listen');
+    expect(pathToRoute('/listen/gaudde8vo6')).toBe('listen');
+    expect(isAppPath('/listen/gaudde8vo6')).toBe(true);
+    expect(pathToRoute('/listen/ed8fb417-3068-4b5d-82f5-637b281d3659')).toBe(
+      'listen'
+    );
     expect(pathToRoute('/settings')).toBe('settings');
     expect(pathToRoute('/profile')).toBe('profile');
     expect(pathToRoute('/workshop')).toBe('workshop');
     expect(pathToRoute('/workshop/11111111-1111-4111-8111-111111111111')).toBe(
       'workshopItem'
+    );
+    expect(pathToRoute('/playlist/gaudde8vo6')).toBe('workshopItem');
+    expect(pathToRoute('/p/gaudde8vo6')).toBe('workshopItem');
+    expect(isAppPath('/playlist/gaudde8vo6')).toBe(true);
+    expect(isAppPath('/p/gaudde8vo6')).toBe(true);
+    expect(workshopItemPath('gaudde8vo6')).toBe('/playlist/gaudde8vo6');
+    expect(listenPath('gaudde8vo6')).toBe('/listen/gaudde8vo6');
+    expect(listenPath()).toBe('/listen');
+    expect(parseAppLocation('/listen/gaudde8vo6')).toEqual({
+      route: 'listen',
+      workshopId: 'gaudde8vo6',
+    });
+    expect(workshopItemPath('11111111-1111-4111-8111-111111111111')).toBe(
+      '/playlist/11111111-1111-4111-8111-111111111111'
     );
     expect(pathToRoute('/p/a2b3c4d5e6')).toBe('workshopItem');
     expect(pathToRoute('/s/a2b3c4d5e6')).toBe('shareLookup');

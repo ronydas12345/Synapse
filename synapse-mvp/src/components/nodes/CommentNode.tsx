@@ -1,10 +1,11 @@
-import { usePathStore } from '../../store';
+import { usePathStore, useGraphReadOnly } from '../../store';
 import { Link2 } from 'lucide-react';
 import { nodeCustomName } from '../../nodes/nodeName';
 import { RevertibleTextarea } from '../fields/RevertibleField';
 
 export default function CommentNode({ data = {}, id }: any) {
   const { updateNodeData, nodes, commentLinkingId, setCommentLinkingId } = usePathStore();
+  const readOnly = useGraphReadOnly();
   
   const linkedNodeId = data?.linkedNodeId || null;
   const linkedNode = linkedNodeId ? nodes.find((n) => n.id === linkedNodeId) : null;
@@ -22,6 +23,7 @@ export default function CommentNode({ data = {}, id }: any) {
             {nodeCustomName(data) || 'Comment'}
           </strong>
         </div>
+        {readOnly ? null : (
         <button
           onClick={() => setCommentLinkingId(isLinking ? null : id)}
           className={`p-1 rounded-md transition-colors ${
@@ -33,6 +35,7 @@ export default function CommentNode({ data = {}, id }: any) {
         >
           <Link2 className="w-4 h-4" />
         </button>
+        )}
       </div>
 
       {/* Linked Node Info */}
@@ -41,12 +44,14 @@ export default function CommentNode({ data = {}, id }: any) {
           <p>
             Linked to: <span className="text-[var(--text)]">{linkedNode.type}</span>
           </p>
+          {readOnly ? null : (
           <button
             onClick={() => updateNodeData(id, { linkedNodeId: null })}
             className="text-xs text-[var(--danger)] hover:underline mt-1"
           >
             Unlink
           </button>
+          )}
         </div>
       )}
 
@@ -66,8 +71,13 @@ export default function CommentNode({ data = {}, id }: any) {
         <RevertibleTextarea
           allowEmpty
           value={data?.text || ''}
-          onCommit={(text) => updateNodeData(id, { text })}
+          onCommit={(text) => {
+            if (readOnly) return;
+            updateNodeData(id, { text });
+          }}
           placeholder="Add a note..."
+          readOnly={readOnly}
+          disabled={readOnly}
           className="nodrag nopan nowheel synapse-node-note"
         />
       </div>

@@ -895,7 +895,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'ie-import',
         'Importing playlists',
-        'Import JSON on this page. Names become a copy if they already exist. Node types are allowlisted; paths cannot traverse the filesystem.',
+        'Import JSON on this page. Import as new playlist adds a copy if the name exists. Replace current playlist clears this workspace and loads the file into it. Node types are allowlisted; paths cannot traverse the filesystem.',
         { type: 'highlight', route: 'settings', hash: 'settings-import', target: 'import-playlist' }
       ),
       s(

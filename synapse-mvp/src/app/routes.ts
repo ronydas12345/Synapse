@@ -1,5 +1,5 @@
 import { documentPrefersReducedMotion } from '../settings/motion';
-import { isWorkshopShareKey, SHARE_CODE_RE } from '../share/ids';
+import { isWorkshopItemSegment, SHARE_CODE_RE } from '../share/ids';
 import { scrollWithin } from '../ui/scrollWithin';
 
 export type AppRoute =
@@ -55,9 +55,20 @@ export type AppPath =
   | '/superadmin';
 
 export function workshopItemPath(id: string): string {
-  const value = id.trim().toLowerCase();
-  if (SHARE_CODE_RE.test(value)) return `/p/${value}`;
-  return `/workshop/${value}`;
+  return `/playlist/${id.trim().toLowerCase()}`;
+}
+
+export function listenPath(id?: string): string {
+  const key = id?.trim().toLowerCase();
+  if (!key) return '/listen';
+  return `/listen/${key}`;
+}
+
+export function isListenHref(path: string): boolean {
+  const p = path.replace(/\/+$/, '') || '/';
+  if (p === '/listen') return true;
+  const hit = p.match(/^\/listen\/([^/]+)$/);
+  return Boolean(hit && isWorkshopItemSegment(hit[1]));
 }
 
 export function publicProfilePath(username: string): string {
@@ -137,18 +148,20 @@ export function isProtectedRoute(
   return isWorkspaceRoute(route) || isStaffRoute(route);
 }
 
+function workshopIdFromPath(pathname: string): string | null {
+  const p = pathname.replace(/\/+$/, '') || '/';
+  const hit = p.match(/^\/(?:playlist|p|workshop)\/([^/]+)$/);
+  if (!hit) return null;
+  const key = hit[1];
+  if (!isWorkshopItemSegment(key)) return null;
+  return key.toLowerCase();
+}
+
 export function parseAppLocation(pathname: string): AppLocation {
   const p = pathname.replace(/\/+$/, '') || '/';
-  const shortPlaylist = p.match(/^\/p\/([^/]+)$/);
-  if (
-    shortPlaylist &&
-    isWorkshopShareKey(shortPlaylist[1])
-  ) {
-    return { route: 'workshopItem', workshopId: shortPlaylist[1].toLowerCase() };
-  }
-  const item = p.match(/^\/workshop\/([^/]+)$/);
-  if (item && isWorkshopShareKey(item[1])) {
-    return { route: 'workshopItem', workshopId: item[1].toLowerCase() };
+  const workshopId = workshopIdFromPath(p);
+  if (workshopId) {
+    return { route: 'workshopItem', workshopId };
   }
   const profile = p.match(/^\/u\/([^/]+)$/);
   if (profile && (PUBLIC_USERNAME_RE.test(profile[1]) || SHARE_CODE_RE.test(profile[1]))) {
@@ -157,7 +170,7 @@ export function parseAppLocation(pathname: string): AppLocation {
   const lookup = p.match(/^\/s\/([^/]+)$/);
   if (
     lookup &&
-    (isWorkshopShareKey(lookup[1]) || PUBLIC_USERNAME_RE.test(lookup[1]))
+    (isWorkshopItemSegment(lookup[1]) || PUBLIC_USERNAME_RE.test(lookup[1]))
   ) {
     return { route: 'shareLookup', shareRef: lookup[1].toLowerCase() };
   }
@@ -173,6 +186,10 @@ export function parseAppLocation(pathname: string): AppLocation {
   if (p === '/signup') return { route: 'signup' };
   if (p === '/edit') return { route: 'edit' };
   if (p === '/listen') return { route: 'listen' };
+  const listenHit = p.match(/^\/listen\/([^/]+)$/);
+  if (listenHit && isWorkshopItemSegment(listenHit[1])) {
+    return { route: 'listen', workshopId: listenHit[1].toLowerCase() };
+  }
   if (p === '/settings') return { route: 'settings' };
   if (p === '/profile') return { route: 'profile' };
   if (p === '/admin') return { route: 'admin' };
@@ -197,19 +214,15 @@ export function routeToUiMode(
 export function isAppPath(pathname: string): boolean {
   const p = pathname.replace(/\/+$/, '') || '/';
   if (PATH_SET.has(p)) return true;
-  if (/^\/p\/[^/]+$/.test(p) && isWorkshopShareKey(p.slice('/p/'.length))) {
-    return true;
-  }
-  if (/^\/workshop\/[^/]+$/.test(p) && isWorkshopShareKey(p.slice('/workshop/'.length))) {
-    return true;
-  }
+  if (isListenHref(p)) return true;
+  if (workshopIdFromPath(p)) return true;
   if (/^\/u\/[^/]+$/.test(p)) {
     const handle = p.slice('/u/'.length);
     if (PUBLIC_USERNAME_RE.test(handle) || SHARE_CODE_RE.test(handle)) return true;
   }
   if (/^\/s\/[^/]+$/.test(p)) {
     const ref = p.slice('/s/'.length);
-    if (isWorkshopShareKey(ref) || PUBLIC_USERNAME_RE.test(ref)) return true;
+    if (isWorkshopItemSegment(ref) || PUBLIC_USERNAME_RE.test(ref)) return true;
   }
   return false;
 }

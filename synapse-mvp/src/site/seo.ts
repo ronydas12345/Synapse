@@ -16,8 +16,8 @@ const PAGE_META: Partial<Record<AppRoute, { title: string; description: string }
     description: 'Discover, play, and remix Music Paths published to the Synapse Workshop.',
   },
   workshopItem: {
-    title: 'Workshop creation — Synapse',
-    description: 'A Music Path published to the Synapse Workshop.',
+    title: 'Playlist — Synapse',
+    description: 'Play or remix a Music Path published to the Synapse Workshop.',
   },
   publicProfile: {
     title: 'Creator — Synapse',

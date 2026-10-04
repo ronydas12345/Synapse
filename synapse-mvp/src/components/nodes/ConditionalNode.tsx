@@ -1,6 +1,6 @@
 import { Handle, Position } from '@xyflow/react';
 import { CalendarDays, CloudSun, Clock, GitBranch, ChevronDown, ChevronUp } from 'lucide-react';
-import { usePathStore } from '../../store';
+import { usePathStore, useGraphReadOnly } from '../../store';
 import { useState, memo } from 'react';
 import { CONDITIONAL_MODE_OPTIONS, conditionalModePatch } from '../../nodeMode';
 import { formatDatePath, formatWeatherPath } from '../../conditional/format';
@@ -21,6 +21,7 @@ const spinnerHideStyles = `
 
 function ConditionalNode({ data = {}, id }: { data?: Record<string, unknown>; id: string }) {
   const { updateNodeData, currentPlayingNodeId } = usePathStore();
+  const readOnly = useGraphReadOnly();
   const [isCollapsed, setIsCollapsed] = useState(Boolean(data?.isCollapsed));
   const isPlaying = currentPlayingNodeId === id;
 
@@ -41,7 +42,7 @@ function ConditionalNode({ data = {}, id }: { data?: Record<string, unknown>; id
   const toggleCollapse = () => {
     const next = !isCollapsed;
     setIsCollapsed(next);
-    updateNodeData(id, { isCollapsed: next });
+    if (!readOnly) updateNodeData(id, { isCollapsed: next });
   };
 
   const handleWeightChange = (index: number, newWeight: number) => {
@@ -84,9 +85,11 @@ function ConditionalNode({ data = {}, id }: { data?: Record<string, unknown>; id
             className="nodrag nopan nowheel synapse-node-mode-select"
             value={CONDITIONAL_MODE_OPTIONS.some((opt) => opt.value === mode) ? mode : 'random'}
             title="Conditional type"
+            disabled={readOnly}
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => {
               e.stopPropagation();
+              if (readOnly) return;
               updateNodeData(id, conditionalModePatch(data, e.target.value));
             }}
           >
@@ -118,6 +121,7 @@ function ConditionalNode({ data = {}, id }: { data?: Record<string, unknown>; id
                           type="number"
                           min="1"
                           value={weight}
+                          disabled={readOnly}
                           onChange={(e) => handleWeightChange(i, parseInt(e.target.value) || 1)}
                           className="hide-spinners synapse-node-field w-8"
                         />

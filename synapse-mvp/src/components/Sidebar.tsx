@@ -1,6 +1,6 @@
 import { Music, GitBranch, Plus, Play, Square, Dice5, MessageSquare, ArrowRight, Palette } from 'lucide-react';
 import { useCallback, type ReactNode } from 'react';
-import { usePathStore } from '../store';
+import { usePathStore, useGraphReadOnly } from '../store';
 import {
   addCanvasNode,
   canvasNodeDragPayload,
@@ -35,6 +35,7 @@ export default function Sidebar() {
   const nodes = usePathStore((s) => s.nodes);
   const selectedNodeIds = usePathStore((s) => s.selectedNodeIds);
   const normalizeSplitters = usePathStore((s) => s.normalizeSplitters);
+  const readOnly = useGraphReadOnly();
 
   const handleAddNode = useCallback((type: CanvasNodeType) => {
     const error = addCanvasNode(type);
@@ -65,10 +66,11 @@ export default function Sidebar() {
         {CANVAS_NODE_TYPES.map((nodeType) => (
           <div key={nodeType.type}>
             <div
-              draggable
-              onDragStart={(e) => onDragStart(e, nodeType.type)}
-              onClick={() => handleAddNode(nodeType.type)}
-              className="synapse-rack-item group"
+              draggable={!readOnly}
+              onDragStart={readOnly ? undefined : (e) => onDragStart(e, nodeType.type)}
+              onClick={readOnly ? undefined : () => handleAddNode(nodeType.type)}
+              className={`synapse-rack-item group${readOnly ? ' is-readonly' : ''}`}
+              aria-disabled={readOnly}
               data-tutorial={`rack-${nodeType.type}`}
             >
               <div className="synapse-rack-icon">{NODE_ICONS[nodeType.type]}</div>
@@ -77,10 +79,12 @@ export default function Sidebar() {
                   {NODE_LABELS[nodeType.type]}
                 </p>
                 <p className="text-[0.65rem] text-[var(--text-faint)] m-0 mt-0.5 font-mono tracking-wide">
-                  Drag or click
+                  {readOnly ? 'View only' : 'Drag or click'}
                 </p>
               </div>
-              <Plus className="w-4 h-4 text-[var(--text-faint)] group-hover:text-[var(--accent)] transition-colors" />
+              {readOnly ? null : (
+                <Plus className="w-4 h-4 text-[var(--text-faint)] group-hover:text-[var(--accent)] transition-colors" />
+              )}
             </div>
           </div>
         ))}
@@ -90,7 +94,7 @@ export default function Sidebar() {
         <BringOntoPageButtons selected={selectedNodeIds.length > 0} />
       </div>
 
-      {nodes.some((n) => n.type === 'conditional') && (
+      {readOnly ? null : nodes.some((n) => n.type === 'conditional') ? (
         <div className="mt-1">
           <button
             onClick={normalizeSplitters}
@@ -100,13 +104,15 @@ export default function Sidebar() {
             Normalize Conditionals
           </button>
         </div>
-      )}
+      ) : null}
 
       <div className="flex-1" />
       <div className="mt-2 pt-3 border-t border-[var(--border)]">
         <p className="synapse-section-label">Guide</p>
         <p className="text-xs text-[var(--text-muted)] mb-3 m-0 leading-relaxed">
-          Tip: Click nodes on canvas to edit. Click edges to delete. Ctrl/Cmd+K opens commands.
+          {readOnly
+            ? 'This path is view only. Click a node to inspect it. Remix to edit your own copy.'
+            : 'Tip: Click nodes on canvas to edit. Click edges to delete. Ctrl/Cmd+K opens commands.'}
         </p>
         <div className="synapse-inspector-card text-xs text-[var(--text-muted)]">
           <p className="font-semibold mb-2 text-[var(--text)] m-0" style={{ fontFamily: 'var(--font-display)' }}>

@@ -4,7 +4,7 @@
  * Workshop buried off the workspace nav, Pause vs Stop, and settings
  * sections that were only reachable by scrolling.
  */
-import { APP_PATHS, navigateApp, pathToRoute, type AppRoute } from '../app/routes';
+import { APP_PATHS, listenPath, navigateApp, pathToRoute, workshopItemPath, type AppRoute } from '../app/routes';
 import { signOut } from '../auth/client';
 import type { AuthRole } from '../auth/session';
 import { addCanvasNode, CANVAS_NODE_TYPES } from '../canvas/addNode';
@@ -30,6 +30,7 @@ export interface CommandContext {
   role: AuthRole;
   isPlaying: boolean;
   queueLength: number;
+  workshopWorkspace?: boolean;
 }
 
 export interface PaletteCommand {
@@ -45,7 +46,7 @@ export interface PaletteCommand {
 const SETTINGS: { id: string; label: string; keywords: string }[] = [
   { id: 'themes', label: 'Themes', keywords: 'appearance color font preset' },
   { id: 'appearance', label: 'Appearance', keywords: 'motion reduce animation' },
-  { id: 'playlists', label: 'Playlists', keywords: 'library rename tags' },
+  { id: 'playlists', label: 'Playlists', keywords: 'library rename tags delete remove' },
   { id: 'general', label: 'General', keywords: 'language startup confirm' },
   { id: 'canvas', label: 'Canvas / Workspace', keywords: 'grid snap minimap zoom' },
   { id: 'connections', label: 'Connections / Arrows', keywords: 'edge bezier' },
@@ -89,7 +90,7 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       group: 'Go',
       label: 'Go to Edit',
       keywords: 'canvas studio editor workspace path',
-      when: (c) => c.signedIn,
+      when: (c) => c.signedIn || Boolean(c.workshopWorkspace),
       run: () => go(APP_PATHS.edit),
     },
     {
@@ -97,8 +98,11 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       group: 'Go',
       label: 'Go to Listen',
       keywords: 'player now playing',
-      when: (c) => c.signedIn,
-      run: () => go(APP_PATHS.listen),
+      when: (c) => c.signedIn || Boolean(c.workshopWorkspace),
+      run: () => {
+        const s = usePathStore.getState();
+        go(listenPath(s.workshopShareKey ?? s.activePathId));
+      },
     },
     {
       id: 'go-workshop',
@@ -106,6 +110,23 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       label: 'Go to Workshop',
       keywords: 'catalog community public remix',
       run: () => go(APP_PATHS.workshop),
+    },
+    {
+      id: 'go-workshop-listing',
+      group: 'Go',
+      label: 'Open this Workshop page',
+      keywords: 'public listing playlist page share published',
+      when: () => {
+        const s = usePathStore.getState();
+        const summary = s.pathSummaries.find((path) => path.id === s.activePathId);
+        return Boolean(s.workshopShareKey || summary?.workshopId);
+      },
+      run: () => {
+        const s = usePathStore.getState();
+        const summary = s.pathSummaries.find((path) => path.id === s.activePathId);
+        const key = s.workshopShareKey || summary?.workshopId;
+        if (key) go(workshopItemPath(key));
+      },
     },
     {
       id: 'go-settings',
@@ -219,6 +240,14 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
         usePathStore.getState().createPlaylist('Untitled');
         go(APP_PATHS.edit);
       },
+    },
+    {
+      id: 'delete-path',
+      group: 'Path',
+      label: 'Delete playlist…',
+      keywords: 'remove library erase',
+      when: (c) => c.signedIn,
+      run: () => go(APP_PATHS.settings, 'settings-playlists'),
     },
     {
       id: 'fit-view',

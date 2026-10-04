@@ -135,6 +135,7 @@ function applyWorkspace(
 async function pushWorkspace(): Promise<void> {
   const user = useAuthStore.getState().user;
   if (!user) return;
+  if (usePathStore.getState().graphLocked) return;
   const payload = {
     uid: user.uid,
     library: snapshotPathLibrary(),

@@ -40,8 +40,10 @@ import DecorationFrame from '../decorations/DecorationFrame';
 import BadgeStrip from '../badges/BadgeStrip';
 import type { EarnedBadge } from '../badges/api';
 import SavedCollections from '../workshop/SavedCollections';
+import { setWorkshopVisibility } from '../workshop/api';
 import ProfileNavLinks from '../profiles/ProfileNavLinks';
 import ProfileVisibilityField from '../profiles/ProfileVisibilityField';
+import { asPathVisibility, pathVisibilityLabel } from '../playlists/library';
 import { usePathStore } from '../store';
 
 type DropEdge = 'before' | 'after';
@@ -1217,21 +1219,26 @@ export default function ProfilePage() {
                     <li key={pl.id}>
                       <span>
                         <strong>{pl.name}</strong>
-                        <span className="synapse-profile-muted"> · {pl.visibility}</span>
+                        <span className="synapse-profile-muted">
+                          {' '}
+                          · {pathVisibilityLabel(pl.visibility)}
+                        </span>
                       </span>
                       {editing ? (
                         <select
                           className="synapse-settings-input"
                           value={pl.visibility}
-                          onChange={(e) =>
-                            setPlaylistVisibility(
-                              pl.id,
-                              e.target.value === 'public' ? 'public' : 'private'
-                            )
-                          }
+                          onChange={(e) => {
+                            const next = asPathVisibility(e.target.value);
+                            setPlaylistVisibility(pl.id, next);
+                            if (pl.workshopId) {
+                              void setWorkshopVisibility(pl.workshopId, next).catch(() => {});
+                            }
+                          }}
                           aria-label={`${pl.name} visibility`}
                         >
                           <option value="private">Private</option>
+                          <option value="unlisted">Unlisted</option>
                           <option value="public">Public</option>
                         </select>
                       ) : null}

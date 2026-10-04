@@ -1,6 +1,6 @@
 import { Trash2, ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { usePathStore } from '../store';
+import { usePathStore, useGraphReadOnly } from '../store';
 import { useAppSettings } from '../settings/settingsStore';
 import { RevertibleNumberInput, RevertibleTextInput, RevertibleTextarea } from './fields/RevertibleField';
 import {
@@ -242,6 +242,7 @@ export default function NodeInspector() {
   } = usePathStore();
   const customThemes = useThemeStore((s) => s.customThemes);
   const nodeDefaults = useAppSettings((s) => s.nodes);
+  const readOnly = useGraphReadOnly();
   const viewingId = inspectorNodeId || selectedNodeId;
   const selectedNode = nodes.find((n) => n.id === viewingId) as any;
   const [tab, setTab] = useState<InspectorMainTab>('settings');
@@ -275,13 +276,15 @@ export default function NodeInspector() {
             Node Settings
           </h3>
         </div>
-        <button
-          onClick={handleDeleteNode}
-          className="synapse-btn-danger-ghost"
-          title="Delete node"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {readOnly ? null : (
+          <button
+            onClick={handleDeleteNode}
+            className="synapse-btn-danger-ghost"
+            title="Delete node"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
       </div>
       {nestedIn.length > 0 ? (
         <div className="synapse-inspector-nested">
@@ -306,6 +309,7 @@ export default function NodeInspector() {
         <InspectorMainTabs value={tab} onChange={setTab} />
       ) : null}
       <InspectorJumpTabs sections={inspectorJumpSections(selectedNode.type, tab, isTrack)} />
+      <fieldset disabled={readOnly} className="synapse-inspector-lock">
       <div className="synapse-inspector-card space-y-3 text-sm">
         {!isTrack ? (
           <InspectorNameField
@@ -1103,6 +1107,7 @@ export default function NodeInspector() {
           </>
         )}
       </div>
+      </fieldset>
       <button
         onClick={() => selectNode(null)}
         className="w-full mt-3 synapse-btn synapse-btn-ghost"

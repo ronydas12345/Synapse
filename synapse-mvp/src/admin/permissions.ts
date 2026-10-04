@@ -40,12 +40,12 @@ export function dashboardPathForRole(role: AuthRole): AppPath {
   return '/edit';
 }
 
-export function canOpenPath(path: AppPath, role: AuthRole): boolean {
+export function canOpenPath(path: string, role: AuthRole): boolean {
   if (path === '/admin') return canOpenAdmin(role);
   if (path === '/superadmin') return canOpenSuperadmin(role);
+  if (path === '/listen' || path.startsWith('/listen/')) return true;
   return (
     path === '/edit' ||
-    path === '/listen' ||
     path === '/settings' ||
     path === '/profile'
   );

@@ -1,4 +1,4 @@
-import type { AppPath } from '../app/routes';
+import { type AppPath, isListenHref } from '../app/routes';
 
 const KEY = 'synapse_auth_next';
 const ALLOWED = new Set<AppPath>([
@@ -10,9 +10,10 @@ const ALLOWED = new Set<AppPath>([
   '/superadmin',
 ]);
 
-export function isReturnPath(path: string): path is AppPath {
+export function isReturnPath(path: string): boolean {
   const p = path.replace(/\/+$/, '') || '/';
-  return ALLOWED.has(p as AppPath);
+  if (ALLOWED.has(p as AppPath)) return true;
+  return isListenHref(p);
 }
 
 export function rememberReturnPath(path: string): void {
@@ -24,11 +25,11 @@ export function rememberReturnPath(path: string): void {
   }
 }
 
-export function consumeReturnPath(): AppPath | null {
+export function consumeReturnPath(): string | null {
   try {
     const raw = sessionStorage.getItem(KEY);
     sessionStorage.removeItem(KEY);
-    if (raw && isReturnPath(raw)) return raw.replace(/\/+$/, '') as AppPath;
+    if (raw && isReturnPath(raw)) return raw.replace(/\/+$/, '') || '/';
   } catch {
     /* private mode */
   }

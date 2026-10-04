@@ -3,6 +3,7 @@ import type { Node, Edge } from '@xyflow/react';
 import { PathLink } from '../app/AppLink';
 import {
   APP_PATHS,
+  listenPath,
   navigateApp,
   publicProfilePath,
   workshopItemPath,
@@ -11,6 +12,7 @@ import { useAuthStore } from '../auth/authStore';
 import SharePanel from '../share/SharePanel';
 import { usePathStore } from '../store';
 import { useThemeStore } from '../theme/themeStore';
+import { markWorkshopGuestSession } from './guestSession';
 import {
   addWorkshopComment,
   deleteWorkshopComment,
@@ -29,6 +31,7 @@ import {
 } from './api';
 import TagChips from './TagChips';
 import TagPicker from './TagPicker';
+import { openOwnedWorkshopPlaylist } from './ownedPath';
 import type { ReportReason, WorkshopCreation, WorkshopVisibility } from './types';
 
 export default function CreationPage({ id }: { id: string }) {
@@ -54,7 +57,7 @@ export default function CreationPage({ id }: { id: string }) {
     const [likedIds, savedIds, thread] = await Promise.all([
       user ? likedCreationIds([next.id]) : Promise.resolve(new Set<string>()),
       user ? savedCreationIds([next.id]) : Promise.resolve(new Set<string>()),
-      listWorkshopComments(next.id),
+      listWorkshopComments(next.id).catch(() => [] as WorkshopComment[]),
     ]);
     setLiked(likedIds.has(next.id));
     setSaved(savedIds.has(next.id));
@@ -86,24 +89,66 @@ export default function CreationPage({ id }: { id: string }) {
   }
 
   async function openRemix(listen: boolean) {
-    const creationId = item?.id;
-    if (!creationId) return;
-    await run('remix', async () => {
-      const remix = await remixWorkshopCreation(creationId);
-      if (remix.kind === 'theme') {
-        if (!remix.theme) throw new Error('This theme could not be imported.');
-        const id = useThemeStore.getState().addCustomTheme(remix.theme);
-        if (id) useThemeStore.getState().setActiveId(id);
+    if (!item) return;
+    if (!own) markWorkshopGuestSession();
+    setBusy(listen ? 'play' : 'remix');
+    try {
+      if (item.kind === 'theme') {
+        let theme = item.theme;
+        if (user) {
+          try {
+            const remix = await remixWorkshopCreation(item.id);
+            theme = remix.theme ?? theme;
+          } catch {
+            /* still apply the published theme locally */
+          }
+        }
+        if (!theme) throw new Error('This theme could not be imported.');
+        const themeId = useThemeStore.getState().addCustomTheme(theme);
+        if (themeId) useThemeStore.getState().setActiveId(themeId);
         navigateApp(APP_PATHS.settings, 'settings-themes');
         return;
       }
-      usePathStore.getState().importWorkshopGraph(
-        `Remix of ${remix.title}`,
-        remix.payload.nodes as Node[],
-        remix.payload.edges as Edge[]
-      );
-      navigateApp(listen ? APP_PATHS.listen : APP_PATHS.edit);
-    });
+      if (own) {
+        openOwnedWorkshopPlaylist(item, listen ? shareKey : undefined);
+        navigateApp(listen ? listenPath(shareKey) : APP_PATHS.edit);
+        if (listen) usePathStore.getState().setIsPlaying(true);
+        return;
+      }
+      let title = listen ? item.title : `Remix of ${item.title}`;
+      let nodes = item.payload.nodes as Node[];
+      let edges = item.payload.edges as Edge[];
+      if (user && !listen) {
+        try {
+          const remix = await remixWorkshopCreation(item.id);
+          title = `Remix of ${remix.title}`;
+          nodes = remix.payload.nodes as Node[];
+          edges = remix.payload.edges as Edge[];
+        } catch {
+          /* still remix from the published payload */
+        }
+      }
+      if (!nodes.length) {
+        throw new Error('This playlist has no nodes to open.');
+      }
+      usePathStore
+        .getState()
+        .importWorkshopGraph(
+          title,
+          nodes,
+          edges,
+          listen && !own,
+          listen ? shareKey : undefined
+        );
+      navigateApp(listen ? listenPath(shareKey) : APP_PATHS.edit);
+      if (listen) {
+        usePathStore.getState().setIsPlaying(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'That action failed.');
+    } finally {
+      setBusy('');
+    }
   }
 
   async function useTheme() {
@@ -126,11 +171,15 @@ export default function CreationPage({ id }: { id: string }) {
   return (
     <main id="main" className="synapse-mkt-main synapse-mkt-page synapse-workshop-creation">
       <p className="synapse-mkt-kicker">
+        <PathLink href={APP_PATHS.workshop}>Workshop</PathLink>
+        {' · '}
         {item.featured
           ? 'Featured creation'
           : item.kind === 'theme'
             ? 'Workshop theme'
-            : 'Workshop playlist'}
+            : own
+              ? 'Your playlist'
+              : 'Public playlist'}
       </p>
       <h1>{item.title}</h1>
       <p className="synapse-mkt-lead">
@@ -158,6 +207,7 @@ export default function CreationPage({ id }: { id: string }) {
         {item.saveCount} saves · {item.remixCount} remixes
         {item.commentsEnabled ? ` · ${item.commentCount} comments` : ' · comments off'}
         {item.visibility !== 'public' ? ` · ${item.visibility}` : ''}
+        {item.kind === 'playlist' ? ` · ${item.payload.nodes.length} nodes` : ''}
       </p>
       {error ? <p className="synapse-settings-error">{error}</p> : null}
       <div className="synapse-workshop-actions">
@@ -218,7 +268,7 @@ export default function CreationPage({ id }: { id: string }) {
           disabled={Boolean(busy)}
           onClick={() => void openRemix(false)}
         >
-          {item.kind === 'theme' ? 'Remix theme' : 'Remix'}
+          {item.kind === 'theme' ? 'Remix theme' : own ? 'Edit' : 'Remix'}
         </button>
       </div>
       {(item.visibility === 'public' || item.visibility === 'unlisted' || own) && item.shareCode ? (
@@ -239,6 +289,11 @@ export default function CreationPage({ id }: { id: string }) {
                 const next = event.target.value as WorkshopVisibility;
                 void run('visibility', async () => {
                   await setWorkshopVisibility(item.id, next);
+                  if (item.kind === 'playlist') {
+                    usePathStore
+                      .getState()
+                      .syncWorkshopListing(item.id, next, item.sourcePathId);
+                  }
                   await reload();
                 });
               }}
