@@ -1268,10 +1268,8 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
 
 .synapse-public-profile-hero {
   display: flex;
-  flex-wrap: wrap;
   gap: 1rem;
-  align-items: stretch;
-  justify-content: space-between;
+  align-items: flex-end;
   margin-bottom: 1rem;
   overflow: visible;
   padding: 1.6rem 1.1rem 1.1rem;
@@ -1434,24 +1432,6 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
   padding: 0.85rem 1rem;
   border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
   border-radius: 12px;
-}
-
-.synapse-share-panel.is-compact {
-  margin: 0;
-  padding: 0;
-  border: none;
-  max-width: 18rem;
-  gap: 0.28rem;
-}
-
-.synapse-profile-hero-aside {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: flex-end;
-  gap: 0.65rem;
-  margin-left: auto;
-  min-width: min(100%, 15rem);
 }
 
 .synapse-share-row {

@@ -42,7 +42,7 @@ export default function SharePanel({
             className="synapse-btn synapse-btn-ghost"
             onClick={() => void copy('id', shareCode)}
           >
-            {copied === 'id' ? 'Copied' : 'Copy'}
+            {copied === 'id' ? (compact ? 'Copied' : 'ID copied') : compact ? 'Copy' : 'Copy ID'}
           </button>
         </p>
       ) : null}
@@ -59,7 +59,7 @@ export default function SharePanel({
             className="synapse-btn synapse-btn-ghost"
             onClick={() => void copy('link', url)}
           >
-            {copied === 'link' ? 'Copied' : 'Copy'}
+            {copied === 'link' ? (compact ? 'Copied' : 'Link copied') : compact ? 'Copy' : 'Copy link'}
           </button>
         </p>
       ) : null}
