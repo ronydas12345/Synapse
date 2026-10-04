@@ -20,6 +20,8 @@ interface PlayingScreenProps {
   onTogglePlay: () => void;
   onPrevious: () => void;
   onNext: () => void;
+  loopTrack: boolean;
+  onToggleLoop: () => void;
   onSeekBy: (delta: number) => void;
   onSeekTo: (seconds: number) => void;
   onJump: (nodeId: string) => void;
@@ -120,6 +122,8 @@ export default function PlayingScreen({
   onTogglePlay,
   onPrevious,
   onNext,
+  loopTrack,
+  onToggleLoop,
   onSeekBy,
   onSeekTo,
   onJump,
@@ -182,6 +186,8 @@ export default function PlayingScreen({
           onTogglePlay={onTogglePlay}
           onPrevious={onPrevious}
           onNext={onNext}
+          loopTrack={loopTrack}
+          onToggleLoop={onToggleLoop}
           onSeekBy={onSeekBy}
           onSeekTo={onSeekTo}
           speed={speed}

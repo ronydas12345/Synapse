@@ -1413,6 +1413,12 @@ body {
   cursor: not-allowed;
 }
 
+.synapse-ctrl.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(62, 207, 191, 0.12);
+}
+
 .synapse-ctrl-play {
   min-width: 2.55rem;
   height: 2.55rem;

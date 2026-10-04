@@ -112,6 +112,11 @@ export default function Player() {
   /** Last queue key we started loading (not merely resumed). */
   const activeItemKeyRef = useRef<string | null>(null);
   const advanceRef = useRef<() => void>(() => {});
+  const replayRef = useRef<() => boolean>(() => false);
+  const skipLoopRef = useRef(false);
+  const [loopTrack, setLoopTrack] = useState(false);
+  const loopTrackRef = useRef(false);
+  loopTrackRef.current = loopTrack;
 
   const clearSilenceTimer = () => {
     if (silenceTimerRef.current != null) {
@@ -163,6 +168,26 @@ export default function Player() {
   }, []);
 
   advanceRef.current = advance;
+  replayRef.current = () => {
+    if (!loopTrackRef.current) return false;
+    const state = usePathStore.getState();
+    const key = state.playbackQueue[state.currentTrackIndex];
+    const parsed = key ? parseQueueKey(key) : null;
+    if (!parsed || parsed.kind !== 'track') return false;
+    const node = state.nodes.find((item) => item.id === parsed.nodeId);
+    const media = nodeToPlayable(node, parsed.nodeId);
+    if (!media || !adapterRef.current) return false;
+    clearSilenceTimer();
+    advancingRef.current = false;
+    activeItemKeyRef.current = key;
+    const title = getTrackDisplayMeta(node?.data).title || media.videoId;
+    setStatusMessage(`Looping: ${title}`);
+    adapterRef.current.play(media).catch(() => {
+      setStatusMessage('Playback failed — skipping');
+      advanceRef.current();
+    });
+    return true;
+  };
 
   // Skip button: stop current media first (kills stale YouTube ENDED), then advance once
   useEffect(() => {
@@ -255,10 +280,19 @@ export default function Player() {
   useEffect(() => {
     const adapter = new YouTubeIframeAdapter();
     adapterRef.current = adapter;
-    adapter.setOnEnded(() => advanceRef.current());
-    adapter.setOnError((message) =>
-      setStatusMessage(`${message} — skipping`)
-    );
+    adapter.setOnEnded(() => {
+      if (skipLoopRef.current) {
+        skipLoopRef.current = false;
+        advanceRef.current();
+        return;
+      }
+      if (replayRef.current()) return;
+      advanceRef.current();
+    });
+    adapter.setOnError((message) => {
+      skipLoopRef.current = true;
+      setStatusMessage(`${message} — skipping`);
+    });
 
     let cancelled = false;
     const el = ytContainerRef.current;
@@ -772,6 +806,8 @@ export default function Player() {
           onTogglePlay={() => setIsPlaying(!isPlaying)}
           onPrevious={() => requestPrevious()}
           onNext={() => requestSkip()}
+          loopTrack={loopTrack}
+          onToggleLoop={() => setLoopTrack((on) => !on)}
           onSeekBy={handleSeekBy}
           onSeekTo={handleSeekTo}
           onJump={(id) => setPlaybackStartNode(id)}
@@ -829,6 +865,8 @@ export default function Player() {
               onTogglePlay={() => setIsPlaying(!isPlaying)}
               onPrevious={() => requestPrevious()}
               onNext={() => requestSkip()}
+              loopTrack={loopTrack}
+              onToggleLoop={() => setLoopTrack((on) => !on)}
               onSeekBy={handleSeekBy}
               onSeekTo={handleSeekTo}
               speed={

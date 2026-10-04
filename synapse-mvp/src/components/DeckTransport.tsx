@@ -1,4 +1,4 @@
-import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { Play, Pause, Repeat1, SkipBack, SkipForward } from 'lucide-react';
 import { formatClock } from '../playback';
 
 const SEEK_STEPS = [-10, -5, 5, 10] as const;
@@ -11,6 +11,8 @@ interface DeckTransportProps {
   onTogglePlay: () => void;
   onPrevious: () => void;
   onNext: () => void;
+  loopTrack?: boolean;
+  onToggleLoop?: () => void;
   onSeekBy: (delta: number) => void;
   onSeekTo: (seconds: number) => void;
   showPlayButton?: boolean;
@@ -26,6 +28,8 @@ export default function DeckTransport({
   onTogglePlay,
   onPrevious,
   onNext,
+  loopTrack = false,
+  onToggleLoop,
   onSeekBy,
   onSeekTo,
   showPlayButton = true,
@@ -94,6 +98,18 @@ export default function DeckTransport({
         >
           <SkipForward className="w-4 h-4" />
         </button>
+        {onToggleLoop ? (
+          <button
+            type="button"
+            className={`synapse-ctrl ${loopTrack ? 'is-active' : ''}`}
+            title={loopTrack ? 'Stop looping this song' : 'Loop this song'}
+            aria-label={loopTrack ? 'Stop looping this song' : 'Loop this song'}
+            aria-pressed={loopTrack}
+            onClick={onToggleLoop}
+          >
+            <Repeat1 className="w-4 h-4" />
+          </button>
+        ) : null}
       </div>
       <div className="synapse-transport-progress">
         <span className="synapse-clock">{formatClock(currentTime)}</span>
