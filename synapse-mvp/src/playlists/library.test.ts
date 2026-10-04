@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseLibrary, nextUntitledName, uniquePathName, deletePath, putImportedPath, emptyLibrary, linkPathWorkshop, findPathForWorkshop, replaceActiveGraph } from './library';
+import { parseLibrary, nextUntitledName, uniquePathName, deletePath, putImportedPath, emptyLibrary, linkPathWorkshop, findPathForWorkshop, replaceActiveGraph, preferStoredLibrary } from './library';
 
 describe('playlist library', () => {
   it('names new playlists without colliding', () => {
@@ -33,6 +33,22 @@ describe('playlist library', () => {
     expect(parsed.activeId).toBe('p1');
     expect(parsed.paths[0].name).toBe('Focus');
     expect(parsed.paths[0].tags).toEqual([]);
+  });
+
+  it('keeps the account playlist list when the browser still has an older copy', () => {
+    const account = {
+      schemaVersion: 1,
+      activeId: 'db',
+      paths: [{ id: 'db', name: 'From account', nodes: [], edges: [] }],
+    };
+    const local = {
+      schemaVersion: 1,
+      activeId: 'local',
+      paths: [{ id: 'local', name: 'From this browser', nodes: [], edges: [] }],
+    };
+    expect(preferStoredLibrary(account, local)).toBe(account);
+    expect(preferStoredLibrary({}, local)).toBe(local);
+    expect(preferStoredLibrary(undefined, null)).toEqual({});
   });
 
   it('keeps curated playlist tags on a stored path', () => {

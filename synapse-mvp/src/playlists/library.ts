@@ -147,6 +147,20 @@ export function libraryHasUserContent(lib: PathLibrary): boolean {
   return lib.paths.some((path) => path.nodes.length > 1 || path.edges.length > 0);
 }
 
+/** True when a workspace row already has playlist records, even if each graph is only a Start node. */
+export function hasStoredLibrary(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const paths = (value as { paths?: unknown }).paths;
+  return Array.isArray(paths) && paths.length > 0;
+}
+
+/** The account library wins. A browser copy is only used when the account has no playlists yet. */
+export function preferStoredLibrary(stored: unknown, legacy: unknown): unknown {
+  if (hasStoredLibrary(stored)) return stored;
+  if (legacy != null) return legacy;
+  return {};
+}
+
 export function readLegacyLibrary(): PathLibrary | null {
   try {
     const raw = localStorage.getItem(LIBRARY_KEY);

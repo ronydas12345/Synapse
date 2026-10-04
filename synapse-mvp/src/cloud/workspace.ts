@@ -8,8 +8,8 @@ import {
 import {
   emptyLibrary,
   parseLibrary,
+  preferStoredLibrary,
   readLegacyLibrary,
-  libraryHasUserContent,
   LIBRARY_KEY,
   LEGACY_GRAPH_KEY,
   type PathLibrary,
@@ -60,11 +60,6 @@ function isBlankJson(value: unknown): boolean {
   if (value == null) return true;
   if (typeof value !== 'object') return false;
   return Object.keys(value as object).length === 0;
-}
-
-function jsonHasLibrary(value: unknown): boolean {
-  if (isBlankJson(value)) return false;
-  return libraryHasUserContent(parseLibrary(value));
 }
 
 const LEGACY_PRODUCT_KEYS = [
@@ -218,7 +213,7 @@ export async function hydrateUserWorkspace(): Promise<void> {
     const data = workspace.data;
     const legacy = readLegacySnapshot(user.uid);
     const row: WorkspaceRow = {
-      library: data && jsonHasLibrary(data.library) ? data.library : legacy.library ?? {},
+      library: preferStoredLibrary(data?.library, legacy.library),
       settings: data && !isBlankJson(data.settings) ? data.settings : legacy.settings ?? {},
       theme: data && !isBlankJson(data.theme) ? data.theme : legacy.theme ?? {},
       profile: data && !isBlankJson(data.profile) ? data.profile : legacy.profile ?? {},
