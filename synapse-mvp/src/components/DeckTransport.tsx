@@ -1,4 +1,4 @@
-import { Play, Pause, Repeat1, SkipBack, SkipForward } from 'lucide-react';
+import { Play, Pause, Repeat, SkipBack, SkipForward } from 'lucide-react';
 import { formatClock } from '../playback';
 
 const SEEK_STEPS = [-10, -5, 5, 10] as const;
@@ -101,13 +101,13 @@ export default function DeckTransport({
         {onToggleLoop ? (
           <button
             type="button"
-            className={`synapse-ctrl ${loopTrack ? 'is-active' : ''}`}
+            className={`synapse-ctrl synapse-ctrl-loop ${loopTrack ? 'is-on' : ''}`}
             title={loopTrack ? 'Stop looping this song' : 'Loop this song'}
             aria-label={loopTrack ? 'Stop looping this song' : 'Loop this song'}
             aria-pressed={loopTrack}
             onClick={onToggleLoop}
           >
-            <Repeat1 className="w-4 h-4" />
+            <Repeat className="w-4 h-4" />
           </button>
         ) : null}
       </div>
