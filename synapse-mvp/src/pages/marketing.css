@@ -861,6 +861,54 @@ body:has(.synapse-mkt),
   font-size: clamp(2rem, 4vw, 3rem);
 }
 
+.synapse-mkt-prose h3 {
+  font-size: 1.02rem;
+  margin: 1.15rem 0 0.4rem;
+}
+
+.synapse-legal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.15rem;
+  margin: 0.85rem 0 1.5rem;
+  font-size: 0.92rem;
+}
+
+.synapse-legal-nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.synapse-legal-nav a:hover,
+.synapse-legal-nav a:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.synapse-legal-nav a[aria-current='page'] {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+  pointer-events: none;
+}
+
+.synapse-legal-nav a:not(:last-child)::after {
+  content: '|';
+  margin: 0 0.55rem;
+  color: var(--border-strong);
+  font-weight: 400;
+  text-decoration: none;
+}
+
+.synapse-legal-disclaimer {
+  margin-top: 2.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
 .synapse-mkt-legal-block {
   margin: 1.5rem 0;
 }

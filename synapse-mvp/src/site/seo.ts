@@ -40,16 +40,16 @@ const PAGE_META: Partial<Record<AppRoute, { title: string; description: string }
     description: 'Common questions about Music Paths, YouTube playback, and account data.',
   },
   privacy: {
-    title: 'Privacy — Synapse',
-    description: 'How Synapse collects, uses, stores, and deletes personal data worldwide.',
+    title: 'Synapse Privacy Policy',
+    description: 'How Synapse may collect, use, disclose, and retain information when you use the service.',
   },
   terms: {
-    title: 'Terms — Synapse',
-    description: 'Terms of use for the Synapse app and Music Paths.',
+    title: 'Synapse Terms of Service',
+    description: 'Terms that govern access to and use of the Synapse app and Music Paths.',
   },
   cookies: {
-    title: 'Cookies — Synapse',
-    description: 'Cookies, local storage, and third-party YouTube cookies in Synapse.',
+    title: 'Synapse Cookie Policy',
+    description: 'Cookies and similar technologies used by Synapse and by third-party playback or sign-in providers.',
   },
   login: {
     title: 'Log in — Synapse',

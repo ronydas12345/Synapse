@@ -136,6 +136,6 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Where is personal data processed?',
-    a: 'Account data and Music Paths are in Supabase (AWS us-west-2, United States). The static app is hosted on Vercel. Details are on the Privacy Policy page.',
+    a: 'Account data and Music Paths are stored with your Synapse account and related infrastructure providers. Details are on the Privacy Policy page.',
   },
 ] as const;

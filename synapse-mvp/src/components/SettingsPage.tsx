@@ -759,8 +759,8 @@ function PrivacySection() {
       <h2>Privacy / Data</h2>
       <p className="synapse-settings-lead">
         Paths, themes, settings, and profile extras save to your signed-in
-        Supabase account. A cookie-notice choice and an optional song-credits
-        cache can remain in this browser. Hosting is AWS US West. Read the{' '}
+        account. A cookie-notice choice and an optional song-credits cache can
+        remain in this browser. Read the{' '}
         <AppLink to="privacy">Privacy Policy</AppLink>.
       </p>
       <ul className="synapse-settings-key-list">

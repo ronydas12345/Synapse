@@ -310,8 +310,9 @@ export default function AuthPanel({
                 required
               />
               <span>
-                I agree to the <AppLink to="terms">Terms</AppLink> and{' '}
-                <AppLink to="privacy">Privacy Policy</AppLink>.
+                By creating an account, you agree to the{' '}
+                <AppLink to="terms">Terms of Service</AppLink> and acknowledge
+                the <AppLink to="privacy">Privacy Policy</AppLink>.
               </span>
             </label>
           </>

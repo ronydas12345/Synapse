@@ -122,7 +122,7 @@ export default function SiteFooter() {
               <AppLink to="terms">Terms</AppLink>
             </li>
             <li>
-              <AppLink to="cookies">Cookie settings</AppLink>
+              <AppLink to="cookies">Cookies</AppLink>
             </li>
           </ul>
         </div>
