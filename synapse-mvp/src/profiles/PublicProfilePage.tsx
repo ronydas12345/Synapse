@@ -123,29 +123,41 @@ export default function PublicProfilePage({ username }: { username: string }) {
         className="synapse-public-profile-hero"
         data-deco={creator.equippedDecoration || 'default'}
       >
-        <DecorationFrame id={creator.equippedDecoration}>
-          {creator.photoUrl ? (
-            <img src={creator.photoUrl} alt="" width={72} height={72} />
-          ) : (
-            <span aria-hidden="true">@</span>
-          )}
-        </DecorationFrame>
-        <div className="synapse-profile-hero-copy">
-          <h1 className={nameplateClass(creator.equippedDecoration)}>
-            {creator.displayName}
-          </h1>
-          <p className="synapse-profile-handle">@{creator.username}</p>
-          {own ? (
-            <ProfileNavLinks
-              here="public"
-              username={ownUsername || creator.username}
-            />
-          ) : null}
-          <p className="synapse-settings-lead">
-            {creator.followerCount} follower{creator.followerCount === 1 ? '' : 's'}
-            {creator.visibility === 'unlisted' ? ' · unlisted' : ''}
-          </p>
-          <BadgeStrip badges={badges} featuredId={creator.featuredBadge} compact />
+        <div className="synapse-public-profile-identity">
+          <DecorationFrame
+            id={creator.equippedDecoration}
+            className="synapse-public-profile-deco"
+          >
+            {creator.photoUrl ? (
+              <img src={creator.photoUrl} alt="" width={56} height={56} />
+            ) : (
+              <span aria-hidden="true">@</span>
+            )}
+          </DecorationFrame>
+          <div className="synapse-profile-hero-copy">
+            <div className="synapse-public-profile-name-row">
+              <h1 className={nameplateClass(creator.equippedDecoration)}>
+                {creator.displayName}
+              </h1>
+              <BadgeStrip
+                badges={badges}
+                featuredId={creator.featuredBadge}
+                compact
+              />
+            </div>
+            <p className="synapse-profile-handle">@{creator.username}</p>
+            {own ? (
+              <ProfileNavLinks
+                here="public"
+                username={ownUsername || creator.username}
+              />
+            ) : null}
+            <p className="synapse-settings-lead">
+              {creator.followerCount} follower
+              {creator.followerCount === 1 ? '' : 's'}
+              {creator.visibility === 'unlisted' ? ' · unlisted' : ''}
+            </p>
+          </div>
         </div>
         {(creator.visibility === 'public' ||
           creator.visibility === 'unlisted' ||

@@ -31,6 +31,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- Public Workshop profile banners are shorter: photo top-left, badges beside the name.
 - Privacy, Terms, and Cookie policies are rewritten as jurisdiction-neutral documents with shared layout, versioning, and copy that matches the current product.
 - Sign-out still clears the on-screen account. Cloud playlists stay on the signed-in user and reload on the next login.
 - The first-run tutorial waits about 50 seconds on the home page so people who already know where to go can click through. Scrolling to the bottom also opens it once. The tour starts with create-account or log in, then continues on Edit. Help (?) still opens it immediately for signed-out visitors. Signed-in accounts do not get the home-page prompt.

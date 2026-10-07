@@ -1317,15 +1317,74 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
 .synapse-public-profile-hero {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  align-items: flex-end;
+  gap: 0.55rem 1rem;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 1rem;
   overflow: visible;
-  padding: 1.6rem 1.1rem 1.1rem;
+  padding: 0.95rem 0.75rem 0.6rem 0.7rem;
   border-radius: var(--radius-md, 14px);
   border: 1px solid var(--border);
   background: var(--bg-panel);
+}
+
+.synapse-public-profile-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.synapse-deco.synapse-public-profile-deco {
+  width: 3.55rem;
+  height: 3.55rem;
+  flex: none;
+  margin: 0;
+}
+
+.synapse-public-profile-deco .synapse-deco-ornament {
+  width: 2.8rem;
+  height: 1.4rem;
+  top: -0.72rem;
+}
+
+.synapse-public-profile-name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.55rem;
+  min-width: 0;
+}
+
+.synapse-public-profile-name-row h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1.15;
+}
+
+.synapse-public-profile-hero .synapse-profile-hero-copy {
+  gap: 0.08rem;
+}
+
+.synapse-public-profile-hero .synapse-profile-handle {
+  margin: 0;
+}
+
+.synapse-public-profile-hero .synapse-settings-lead {
+  margin: 0.1rem 0 0;
+}
+
+.synapse-public-profile-hero .synapse-badge-strip {
+  margin: 0;
+}
+
+.synapse-public-profile-hero .synapse-badge-strip.is-compact {
+  gap: 0.3rem 0.4rem;
+}
+
+.synapse-public-profile-hero .synapse-badge-strip.is-compact > li {
+  max-width: none;
 }
 
 .synapse-profile-nav {
@@ -1374,8 +1433,8 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
 }
 
 .synapse-public-profile-hero img {
-  width: 72px;
-  height: 72px;
+  width: 56px;
+  height: 56px;
   object-fit: cover;
   border-radius: 999px;
 }
@@ -1397,6 +1456,9 @@ html.synapse-reduce-motion .synapse-mkt-reveal {
 .synapse-public-profile-hero .synapse-profile-hero-aside {
   min-width: 0;
   flex: 0 1 auto;
+  margin-left: auto;
+  align-self: flex-start;
+  justify-content: flex-start;
 }
 
 .synapse-share-panel.is-compact {
