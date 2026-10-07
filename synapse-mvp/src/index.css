@@ -3343,6 +3343,17 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
   align-items: center;
 }
 
+.synapse-profile-list a {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.synapse-profile-list a:hover {
+  color: color-mix(in srgb, var(--accent) 62%, var(--text));
+}
+
 .synapse-profile-muted {
   color: var(--text-muted);
   font-size: 0.85rem;

@@ -52,11 +52,18 @@ export function mapCreatorProfileDetails(raw: unknown): CreatorProfileDetails {
   const playlists = Array.isArray(row.playlists)
     ? row.playlists
         .map((path) => {
-          const item = path as { id?: unknown; name?: unknown; visibility?: unknown };
+          const item = path as {
+            id?: unknown;
+            name?: unknown;
+            visibility?: unknown;
+            workshopId?: unknown;
+          };
+          const workshopId = String(item?.workshopId || '').trim();
           return {
             id: String(item?.id || ''),
             name: String(item?.name || '').slice(0, 60),
             visibility: item?.visibility === 'public' ? ('public' as const) : ('private' as const),
+            ...(workshopId ? { workshopId } : {}),
           };
         })
         .filter((path) => path.name)

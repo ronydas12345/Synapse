@@ -29,6 +29,7 @@ export interface ProfilePlaylist {
   id: string;
   name: string;
   visibility: ProfileVisibility;
+  workshopId?: string;
 }
 
 export interface UserProfile {

@@ -1,3 +1,5 @@
+import { PathLink } from '../app/AppLink';
+import { workshopItemPath } from '../app/routes';
 import ListenActivityHeatmap, { ListenStatsNumbers } from '../profile/ListenActivityHeatmap';
 import { osmEmbedUrl } from '../profile/geocode';
 import {
@@ -8,6 +10,26 @@ import {
   type UserProfile,
 } from '../profile/types';
 import SavedCollections from '../workshop/SavedCollections';
+import type { WorkshopCard } from '../workshop/types';
+
+function publicPlaylistHref(
+  path: ProfilePlaylist,
+  listings: Pick<WorkshopCard, 'id' | 'shareCode' | 'title' | 'kind'>[]
+): string | null {
+  if (path.visibility !== 'public') return null;
+  const playlists = listings.filter((card) => card.kind === 'playlist');
+  const named = playlists.filter((card) => card.title === path.name);
+  const hit =
+    playlists.find(
+      (card) =>
+        card.id === path.workshopId ||
+        card.shareCode === path.workshopId ||
+        card.id === path.id ||
+        card.shareCode === path.id
+    ) || (named.length === 1 ? named[0] : undefined);
+  const key = hit?.shareCode || hit?.id || path.workshopId;
+  return key ? workshopItemPath(key) : null;
+}
 
 function visibleSections(profile: UserProfile): OptionalSectionId[] {
   return (profile.sectionOrder.length ? profile.sectionOrder : [...OPTIONAL_SECTIONS]).filter(
@@ -54,11 +76,13 @@ function LocationReadout({ profile }: { profile: UserProfile }) {
 export default function ProfileDetailsReadout({
   profile,
   playlists,
+  listings = [],
   showSaved = false,
   showEmpty = false,
 }: {
   profile: UserProfile;
   playlists: ProfilePlaylist[];
+  listings?: Pick<WorkshopCard, 'id' | 'shareCode' | 'title' | 'kind'>[];
   showSaved?: boolean;
   showEmpty?: boolean;
 }) {
@@ -158,14 +182,21 @@ export default function ProfileDetailsReadout({
                 <p className="synapse-settings-lead">No playlists yet.</p>
               ) : (
                 <ul className="synapse-profile-list">
-                  {playlists.map((path) => (
-                    <li key={path.id || path.name}>
-                      <span>
-                        <strong>{path.name}</strong>
-                        <span className="synapse-profile-muted"> · {path.visibility}</span>
-                      </span>
-                    </li>
-                  ))}
+                  {playlists.map((path) => {
+                    const href = publicPlaylistHref(path, listings);
+                    return (
+                      <li key={path.id || path.name}>
+                        <span>
+                          {href ? (
+                            <PathLink href={href}>{path.name}</PathLink>
+                          ) : (
+                            <strong>{path.name}</strong>
+                          )}
+                          <span className="synapse-profile-muted"> · {path.visibility}</span>
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </section>

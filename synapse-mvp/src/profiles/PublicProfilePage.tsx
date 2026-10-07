@@ -114,6 +114,7 @@ export default function PublicProfilePage({ username }: { username: string }) {
         id: path.id,
         name: path.name,
         visibility: path.visibility,
+        ...(path.workshopId ? { workshopId: path.workshopId } : {}),
       }))
     : details?.playlists ?? [];
 
@@ -265,6 +266,7 @@ export default function PublicProfilePage({ username }: { username: string }) {
         <ProfileDetailsReadout
           profile={detailsProfile}
           playlists={playlists}
+          listings={cards}
           showSaved={own}
           showEmpty={own}
         />
