@@ -34,6 +34,7 @@ import {
   padPathList,
 } from '../conditional/defaults';
 import { allThemes, useThemeStore } from '../theme/themeStore';
+import PortalInspector from './inspector/PortalInspector';
 import {
   parseStyleNodeData,
   MAX_STYLE_DELAY_MS,
@@ -222,6 +223,11 @@ function inspectorJumpSections(
     return [
       { id: 'inspector-trans-type', label: 'Type' },
       { id: 'inspector-trans-details', label: 'Details' },
+    ];
+  }
+  if (type === 'portal') {
+    return [
+      { id: 'inspector-portal', label: 'Portal' },
     ];
   }
   return [];
@@ -1075,6 +1081,11 @@ export default function NodeInspector() {
               );
             })()}
           </>
+        )}
+        {selectedNode.type === 'portal' && (
+          <div id="inspector-portal">
+            <PortalInspector nodeId={selectedNode.id} data={selectedNode.data} />
+          </div>
         )}
         {selectedNode.type === 'comment' && (
           <>

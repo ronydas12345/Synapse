@@ -37,6 +37,7 @@
   --node-comment: #8b93a7;
   --node-start: #7dcea0;
   --node-end: #f07178;
+  --node-portal: #c497ff;
   --edge-color: #8b93a7;
   --player-bg: #0a0c12;
   --input-bg: #0c0e14;
@@ -1590,6 +1591,8 @@ body {
 .synapse-node.is-transition { border-color: var(--node-transition); }
 .synapse-node.is-style { border-color: var(--node-style); }
 .synapse-node.is-comment { border-color: var(--node-comment); }
+.synapse-node.is-portal { border-color: var(--node-portal); }
+.synapse-node.is-portal-invalid { border-color: var(--danger); }
 .synapse-node.is-playing { border-color: var(--accent-warm); }
 
 .synapse-node-header {
@@ -1633,6 +1636,12 @@ body {
   height: 10px !important;
   border: 2px solid var(--bg-void) !important;
   background: var(--accent) !important;
+}
+
+.synapse-handle.is-disabled {
+  opacity: 0.22 !important;
+  pointer-events: none !important;
+  background: var(--text-faint) !important;
 }
 
 .synapse-minimap-wrap {

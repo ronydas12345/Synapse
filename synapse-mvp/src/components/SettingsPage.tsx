@@ -10,6 +10,9 @@ import {
   asPathVisibility,
   type PathSummary,
 } from '../playlists/library';
+import { parsePlaylistPortalPolicy } from '../portals/parse';
+import { normalizePortalId } from '../portals/ids';
+import type { PlaylistPortalPolicyMode } from '../portals/types';
 import { allThemes, filterThemes, useThemeStore } from '../theme/themeStore';
 import AuthPanel from '../auth/AuthPanel';
 import { useAuthStore } from '../auth/authStore';
@@ -39,7 +42,7 @@ import { scrollWithin } from '../ui/scrollWithin';
 const SECTIONS = [
   { id: 'themes', label: 'Themes', keywords: 'theme appearance color font preset dark light arrow bezier edge rectangular triangular visualizer bar tags workshop' },
   { id: 'appearance', label: 'Appearance', keywords: 'motion reduce animation theme light dark' },
-  { id: 'playlists', label: 'Playlists', keywords: 'rename library path name export visibility public private tags workshop delete remove' },
+  { id: 'playlists', label: 'Playlists', keywords: 'rename library path name export visibility public private tags workshop delete remove portal allowlist' },
   { id: 'general', label: 'General', keywords: 'language english startup edit listen confirm delete' },
   { id: 'canvas', label: 'Canvas / Workspace', keywords: 'grid zoom minimap snap fit view' },
   { id: 'connections', label: 'Connections / Arrows', keywords: 'arrow edge bezier rectangular straight triangular' },
@@ -56,6 +59,83 @@ const SECTIONS = [
 ] as const;
 
 const DELETE_PHRASE = 'DELETE';
+
+function PlaylistPortalPolicyEditor({
+  path,
+  onChange,
+}: {
+  path: PathSummary;
+  onChange: (policy: ReturnType<typeof parsePlaylistPortalPolicy>) => void;
+}) {
+  const policy = parsePlaylistPortalPolicy(path.portalPolicy, path.visibility);
+  const listMode = policy.mode === 'allowlist' || policy.mode === 'blacklist';
+  const ids = policy.mode === 'blacklist' ? policy.blockedPortalIds : policy.allowedPortalIds;
+  return (
+    <div className="synapse-settings-playlist-portals">
+      <label className="synapse-settings-hint">
+        <input
+          type="checkbox"
+          checked={policy.enabled}
+          onChange={(e) =>
+            onChange({
+              ...policy,
+              enabled: e.target.checked,
+              mode: e.target.checked
+                ? policy.mode === 'disabled'
+                  ? 'allow_all'
+                  : policy.mode
+                : 'disabled',
+            })
+          }
+        />{' '}
+        Allow portals to enter this playlist
+      </label>
+      {policy.enabled ? (
+        <>
+          <select
+            className="synapse-settings-input"
+            aria-label={`${path.name} portal access mode`}
+            value={policy.mode}
+            onChange={(e) =>
+              onChange({
+                ...policy,
+                enabled: true,
+                mode: e.target.value as PlaylistPortalPolicyMode,
+              })
+            }
+          >
+            <option value="allow_all">Anyone with a valid portal</option>
+            <option value="allowlist">Only selected Portal IDs</option>
+            <option value="blacklist">All except selected Portal IDs</option>
+          </select>
+          {listMode ? (
+            <textarea
+              className="synapse-settings-input"
+              rows={3}
+              placeholder="One Portal ID per line"
+              value={ids.join('\n')}
+              onChange={(e) => {
+                const next = e.target.value
+                  .split(/[\s,]+/)
+                  .map((id) => normalizePortalId(id))
+                  .filter(Boolean);
+                onChange({
+                  ...policy,
+                  allowedPortalIds: policy.mode === 'allowlist' ? next : policy.allowedPortalIds,
+                  blockedPortalIds: policy.mode === 'blacklist' ? next : policy.blockedPortalIds,
+                });
+              }}
+            />
+          ) : null}
+        </>
+      ) : (
+        <p className="synapse-settings-hint">
+          Other playlists cannot jump here. You can still follow your own portals.
+        </p>
+      )}
+    </div>
+  );
+}
 
 function PlaylistDeletePanel({
   path,
@@ -140,6 +220,7 @@ export default function SettingsPage() {
   const switchPlaylist = usePathStore((s) => s.switchPlaylist);
   const exportPlaylistFile = usePathStore((s) => s.exportPlaylistFile);
   const setPlaylistVisibility = usePathStore((s) => s.setPlaylistVisibility);
+  const setPlaylistPortalPolicy = usePathStore((s) => s.setPlaylistPortalPolicy);
   const setPlaylistTags = usePathStore((s) => s.setPlaylistTags);
   const deletePlaylist = usePathStore((s) => s.deletePlaylist);
   const q = query.trim().toLowerCase();
@@ -254,12 +335,8 @@ export default function SettingsPage() {
             <section id="settings-playlists" className="synapse-settings-section" data-tutorial="settings-playlists">
               <h2>Playlists</h2>
               <p className="synapse-settings-lead">
-                Rename playlists stored on this account. Add Workshop tags on
-                the current playlist here, then publish from the Workshop
-                section. Visibility here follows the Workshop listing when
-                this playlist is published. Delete is in this section on
-                purpose: type the playlist name and{' '}
-                <code>DELETE</code> to confirm.
+                Rename playlists, set visibility, portal entry, and Workshop tags.
+                Delete requires the playlist name and <code>DELETE</code>.
               </p>
               <ul className="synapse-settings-playlist-list">
                 {pathSummaries.map((path) => {
@@ -324,6 +401,10 @@ export default function SettingsPage() {
                           </button>
                         </div>
                       </div>
+                      <PlaylistPortalPolicyEditor
+                        path={path}
+                        onChange={(policy) => setPlaylistPortalPolicy(path.id, policy)}
+                      />
                       {deletingPlaylistId === path.id ? (
                         <PlaylistDeletePanel
                           path={path}
@@ -392,8 +473,7 @@ export default function SettingsPage() {
             <section id="settings-pro" className="synapse-settings-section" data-tutorial="settings-pro">
               <h2>Pro</h2>
               <p className="synapse-settings-lead">
-                Pro is not for sale and there is no billing or collaborative
-                editing in this release. Plan copy lives on the pricing page.
+                Not for sale in this release.
               </p>
               <AppLink to="pricing" className="synapse-btn synapse-btn-ghost">
                 View pricing
@@ -591,8 +671,7 @@ function PlaybackSection() {
     <section id="settings-playback" className="synapse-settings-section" data-tutorial="settings-playback">
       <h2>Playback</h2>
       <p className="synapse-settings-lead">
-        Skip and previous already live on the deck. Crossfade is not available
-        through the YouTube iframe, so it is not offered here.
+        Crossfade is not available through the YouTube iframe.
       </p>
       <SettingsRange
         label="Master volume"
@@ -694,12 +773,10 @@ function AccountSection() {
     <section id="settings-account" className="synapse-settings-section" data-tutorial="settings-account">
       <h2>Account</h2>
       <p className="synapse-settings-lead">
-        Sign in with Google or email. Username and display name are required
-        when you create an account. Picture and music sections live on your{' '}
+        Picture and music sections live on your{' '}
         <AppLink to="profile">profile</AppLink>
-        {username ? ` (@${username})` : ''}. Music Paths, themes, and settings
-        save to this account. Sign-out hides them on this browser; they reload
-        on the next login.
+        {username ? ` (@${username})` : ''}. Sign-out hides this account on the
+        browser; it reloads on the next login.
       </p>
       <AuthPanel variant="account" />
       <SettingsSelect
@@ -758,9 +835,8 @@ function PrivacySection() {
     <section id="settings-privacy" className="synapse-settings-section" data-tutorial="settings-privacy">
       <h2>Privacy / Data</h2>
       <p className="synapse-settings-lead">
-        Paths, themes, settings, and profile extras save to your signed-in
-        account. A cookie-notice choice and an optional song-credits cache can
-        remain in this browser. Read the{' '}
+        Account data saves here. A cookie-notice choice and song-credits cache
+        can stay in this browser. Read the{' '}
         <AppLink to="privacy">Privacy Policy</AppLink>.
       </p>
       <ul className="synapse-settings-key-list">

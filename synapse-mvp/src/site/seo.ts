@@ -13,15 +13,15 @@ const PAGE_META: Partial<Record<AppRoute, { title: string; description: string }
   home: { title: SITE.title, description: SITE.description },
   workshop: {
     title: 'Workshop — Synapse',
-    description: 'Discover, play, and remix Music Paths published to the Synapse Workshop.',
+    description: 'Public Music Paths, themes, and profiles.',
   },
   workshopItem: {
     title: 'Playlist — Synapse',
-    description: 'Play or remix a Music Path published to the Synapse Workshop.',
+    description: 'A published Music Path or theme.',
   },
   publicProfile: {
     title: 'Creator — Synapse',
-    description: 'A Synapse creator profile, badges, and public Workshop creations.',
+    description: 'A Synapse creator profile.',
   },
   shareLookup: {
     title: 'Shared ID — Synapse',
@@ -37,7 +37,7 @@ const PAGE_META: Partial<Record<AppRoute, { title: string; description: string }
   },
   faq: {
     title: 'FAQ — Synapse',
-    description: 'Common questions about Music Paths, YouTube playback, and account data.',
+    description: 'Common questions about Music Paths, portals, YouTube playback, and account data.',
   },
   privacy: {
     title: 'Synapse Privacy Policy',

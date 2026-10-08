@@ -482,4 +482,29 @@ describe('buildPlaybackQueue', () => {
       'track:t1',
     ]);
   });
+
+  it('queues an exit portal instead of walking past it', () => {
+    const g = graph(
+      [
+        start(),
+        track('t1'),
+        makeNode('gate', 'portal', { portalId: 'P-EXIT12AB' }),
+        track('after'),
+      ],
+      [makeEdge('start', 't1'), makeEdge('t1', 'gate')]
+    );
+    expect(buildPlaybackQueueKeys(g)).toEqual(['track:t1', 'portal:gate']);
+  });
+
+  it('walks out of an entry portal when that is the origin', () => {
+    const g = graph(
+      [
+        start(),
+        makeNode('gate', 'portal', { portalId: 'P-ENTRY1AB' }),
+        track('t1'),
+      ],
+      [makeEdge('start', 't1'), makeEdge('gate', 't1')]
+    );
+    expect(buildPlaybackQueueKeys(g, { startNodeId: 'gate' })).toEqual(['track:t1']);
+  });
 });

@@ -23,6 +23,7 @@ export function nodeTypeLabel(
   if (type === 'style') return 'Style';
   if (type === 'comment') return 'Comment';
   if (type === 'start') return 'Start';
+  if (type === 'portal') return 'Portal';
   if (type === 'end') return 'End';
   return type ? type[0].toUpperCase() + type.slice(1) : 'Node';
 }

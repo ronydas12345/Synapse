@@ -5,7 +5,8 @@ import {
 } from './randomizerDrop';
 import { create } from 'zustand';
 import type { Node, Edge, Connection } from '@xyflow/react';
-import type { PathSummary, PathVisibility } from './playlists/library';
+import type { PlaylistPortalPolicy } from './portals/types';
+import type { PathSummary, PathVisibility, StoredMusicPath } from './playlists/library';
 import {
   activatePath,
   addImportedPath,
@@ -20,7 +21,7 @@ import {
   renamePath,
   replaceActiveGraph,
   saveActiveGraph,
-  type StoredMusicPath,
+  setPathPortalPolicy,
   setPathTags,
   setPathVisibility,
   summaries,
@@ -41,6 +42,9 @@ import {
   collectCopySet,
   type NodeClipboard,
 } from './canvas/clipboard';
+import { portalConnectError, portalConnectionHandles } from './portals/connect';
+import { collectPortalIds } from './portals/ids';
+import { ensurePortalNodeData } from './portals/remap';
 import { normalizeStackedConditionals } from './conditional/normalize';
 import { bringNodesOntoPage as layoutOntoPage } from './canvas/bringOntoPage';
 import { FIT_NODES_EVENT } from './canvas/fitEvents';
@@ -110,7 +114,15 @@ interface PathState {
   deletePlaylist: (id: string) => void;
   renamePlaylist: (id: string, name: string) => void;
   setPlaylistVisibility: (id: string, visibility: PathVisibility) => void;
+  setPlaylistPortalPolicy: (id: string, policy: PlaylistPortalPolicy) => void;
   setPlaylistTags: (id: string, tags: string[]) => void;
+  peekPath: (id: string) => StoredMusicPath | undefined;
+  peekLibraryPaths: () => StoredMusicPath[];
+  replaceGraphKeepPlayback: (
+    nodes: Node[],
+    edges: Edge[],
+    meta?: { pathId?: string; shareKey?: string | null; locked?: boolean }
+  ) => void;
   exportPlaylistFile: (
     id: string,
     kind?: 'playlist' | 'package'
@@ -240,6 +252,11 @@ export const usePathStore = create<PathState>((set, get) => ({
         return state;
       }
 
+      if (portalConnectError(connection, state.nodes, state.edges)) {
+        return state;
+      }
+      const portalHandles = portalConnectionHandles(sourceNode?.type, targetNode?.type);
+
       // Prevent multiple outgoing edges from non-splitter/randomizer nodes
       const isSourceBranching =
         sourceNode?.type === 'splitter' || sourceNode?.type === 'conditional' || sourceNode?.type === 'randomizer';
@@ -281,6 +298,7 @@ export const usePathStore = create<PathState>((set, get) => ({
         ...state.edges,
         {
           ...connection,
+          ...portalHandles,
           id: `${connection.source}-${connection.target}-${Date.now()}`,
           markerEnd: { type: 'arrowclosed' as const },
         } as Edge,
@@ -531,6 +549,33 @@ export const usePathStore = create<PathState>((set, get) => ({
     library = setPathVisibility(library, id, visibility);
     set({ pathSummaries: summaries(library) });
   },
+  setPlaylistPortalPolicy: (id, policy) => {
+    library = setPathPortalPolicy(library, id, policy);
+    set({ pathSummaries: summaries(library) });
+  },
+  peekPath: (id) => getPath(library, id),
+  peekLibraryPaths: () => library.paths.map((path) => ({ ...path })),
+  replaceGraphKeepPlayback: (nodes, edges, meta) => {
+    const current = usePathStore.getState();
+    library = saveActiveGraph(library, current.nodes, current.edges);
+    if (meta?.pathId && getPath(library, meta.pathId)) {
+      const next = activatePath(library, meta.pathId);
+      if (next) library = next;
+      library = saveActiveGraph(library, nodes, edges);
+      set({
+        ...libraryView(),
+        ...(meta?.shareKey !== undefined ? { workshopShareKey: meta.shareKey } : {}),
+        ...(meta?.locked !== undefined ? { graphLocked: meta.locked } : {}),
+      });
+      return;
+    }
+    set({
+      nodes,
+      edges,
+      ...(meta?.shareKey !== undefined ? { workshopShareKey: meta.shareKey } : {}),
+      ...(meta?.locked !== undefined ? { graphLocked: meta.locked } : {}),
+    });
+  },
   syncWorkshopListing: (workshopId, visibility, sourcePathId) => {
     library = linkPathWorkshop(
       library,
@@ -645,7 +690,14 @@ export const usePathStore = create<PathState>((set, get) => ({
   },
   pasteClipboard: (clipboard) => {
     const state = get();
-    const next = applyPaste(state.nodes, state.edges, clipboard);
+    const pasted = applyPaste(state.nodes, state.edges, clipboard);
+    const next = {
+      ...pasted,
+      nodes: ensurePortalNodeData(pasted.nodes, {
+        reissue: true,
+        used: collectPortalIds(state.nodes),
+      }),
+    };
     saveToStorage(next.nodes, next.edges);
     set({
       nodes: next.nodes,

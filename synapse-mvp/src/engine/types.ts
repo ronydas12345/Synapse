@@ -1,12 +1,12 @@
 import type { Node, Edge } from '@xyflow/react';
 import type { WeatherState } from '../conditional/types';
 
-export type QueueItemKind = 'track' | 'transition' | 'style';
+export type QueueItemKind = 'track' | 'transition' | 'style' | 'portal';
 
 export interface QueueItem {
   kind: QueueItemKind;
   nodeId: string;
-  /** Serialized form used by the store / UI: `track:id` | `transition:id` | `style:id` */
+  /** Serialized form used by the store / UI: `track:id` | `transition:id` | `style:id` | `portal:id` */
   key: string;
 }
 
@@ -55,7 +55,10 @@ export function parseQueueKey(key: string): QueueItem | null {
   const kind = key.slice(0, idx) as QueueItemKind;
   const nodeId = key.slice(idx + 1);
   if (
-    (kind !== 'track' && kind !== 'transition' && kind !== 'style') ||
+    (kind !== 'track' &&
+      kind !== 'transition' &&
+      kind !== 'style' &&
+      kind !== 'portal') ||
     !nodeId
   ) {
     return null;

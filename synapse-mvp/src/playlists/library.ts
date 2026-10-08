@@ -1,5 +1,11 @@
 import type { Edge, Node } from '@xyflow/react';
 import { scheduleWorkspacePersist } from '../cloud/persistGate';
+import {
+  defaultPlaylistPortalPolicy,
+  parsePlaylistPortalPolicy,
+  type PlaylistPortalPolicy,
+} from '../portals/parse';
+import { ensurePortalNodeData } from '../portals/remap';
 import { normalizeWorkspaceGraph } from '../randomizerDrop';
 import { sanitizeTagIds } from '../workshop/tags';
 
@@ -18,6 +24,7 @@ export interface StoredMusicPath {
   updatedAt: string;
   /** Workshop listing this local path publishes to, if any. */
   workshopId?: string;
+  portalPolicy?: PlaylistPortalPolicy;
 }
 
 export interface PathLibrary {
@@ -32,6 +39,7 @@ export interface PathSummary {
   visibility: PathVisibility;
   tags: string[];
   workshopId?: string;
+  portalPolicy?: PlaylistPortalPolicy;
 }
 
 export function asPathVisibility(value: unknown): PathVisibility {
@@ -102,6 +110,7 @@ export function nextUntitledName(existing: string[]): string {
 }
 
 function normalizePath(raw: Partial<StoredMusicPath> | undefined, fallbackName: string): StoredMusicPath {
+  const visibility = asPathVisibility(raw?.visibility);
   const graph = normalizeWorkspaceGraph<Node, Edge>(
     raw?.nodes?.length ? raw.nodes : emptyGraph().nodes,
     raw?.edges || []
@@ -109,10 +118,11 @@ function normalizePath(raw: Partial<StoredMusicPath> | undefined, fallbackName: 
   return {
     id: typeof raw?.id === 'string' && raw.id ? raw.id : makePathId(),
     name: String(raw?.name || fallbackName).slice(0, 60) || fallbackName,
-    visibility: asPathVisibility(raw?.visibility),
+    visibility,
     tags: sanitizeTagIds('playlist', raw?.tags),
-    nodes: graph.nodes,
+    nodes: ensurePortalNodeData(graph.nodes),
     edges: graph.edges,
+    portalPolicy: parsePlaylistPortalPolicy(raw?.portalPolicy, visibility),
     updatedAt:
       typeof raw?.updatedAt === 'string' && Number.isFinite(Date.parse(raw.updatedAt))
         ? raw.updatedAt
@@ -200,6 +210,7 @@ export function summaries(lib: PathLibrary): PathSummary[] {
     visibility: p.visibility,
     tags: p.tags,
     workshopId: p.workshopId,
+    portalPolicy: p.portalPolicy ?? defaultPlaylistPortalPolicy(p.visibility),
   }));
 }
 
@@ -213,7 +224,12 @@ export function saveActiveGraph(
     ...lib,
     paths: lib.paths.map((p) =>
       p.id === lib.activeId
-        ? { ...p, nodes: graph.nodes, edges: graph.edges, updatedAt: new Date().toISOString() }
+        ? {
+            ...p,
+            nodes: ensurePortalNodeData(graph.nodes),
+            edges: graph.edges,
+            updatedAt: new Date().toISOString(),
+          }
         : p
     ),
   };
@@ -283,6 +299,23 @@ export function setPathVisibility(
   const next: PathLibrary = {
     ...lib,
     paths: lib.paths.map((p) => (p.id === id ? { ...p, visibility } : p)),
+  };
+  persistLibrary(next);
+  return next;
+}
+
+export function setPathPortalPolicy(
+  lib: PathLibrary,
+  id: string,
+  portalPolicy: PlaylistPortalPolicy
+): PathLibrary {
+  const next: PathLibrary = {
+    ...lib,
+    paths: lib.paths.map((p) =>
+      p.id === id
+        ? { ...p, portalPolicy: parsePlaylistPortalPolicy(portalPolicy, p.visibility) }
+        : p
+    ),
   };
   persistLibrary(next);
   return next;

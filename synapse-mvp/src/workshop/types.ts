@@ -16,6 +16,7 @@ export interface WorkshopPayload {
   name?: string;
   nodes: unknown[];
   edges: unknown[];
+  portalPolicy?: unknown;
 }
 
 export interface WorkshopCard {

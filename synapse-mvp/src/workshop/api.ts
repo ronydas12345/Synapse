@@ -61,6 +61,7 @@ function payloadOf(raw: unknown): WorkshopPayload {
     name: typeof value.name === 'string' ? value.name : undefined,
     nodes: Array.isArray(value.nodes) ? value.nodes : [],
     edges: Array.isArray(value.edges) ? value.edges : [],
+    ...(value.portalPolicy !== undefined ? { portalPolicy: value.portalPolicy } : {}),
   };
 }
 

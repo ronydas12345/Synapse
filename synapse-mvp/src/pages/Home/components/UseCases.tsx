@@ -2,24 +2,24 @@ import Reveal from './Reveal';
 
 const CASES = [
   {
-    title: 'Personal listening',
-    body: 'Dynamic systems for everyday music. Morning → calmer tracks. Weekend → unwind. Rainy days → a different mix. Time, weather, and day/date conditionals are live.',
+    title: 'Everyday listening',
+    body: 'Morning vs evening, weekends, rain. Time, weather, and day/date branches are live.',
   },
   {
-    title: 'Mood-based listening',
-    body: 'Branch between moods or genres with weighted random, so the mix can lean without locking you in.',
+    title: 'Moods and genres',
+    body: 'Weighted random so the mix can lean without locking one lane.',
   },
   {
-    title: 'Background music',
-    body: 'Build paths meant to stay out of the way: study, game, work, relax, sleep — a pool that keeps going under your rules.',
+    title: 'Background',
+    body: 'A pool that keeps going for study, work, or sleep.',
   },
   {
-    title: 'Dynamic playlists',
-    body: 'Stop lining up every next song. Design the system once and let Synapse choose within it.',
+    title: 'Workshop',
+    body: 'Public paths from other people. Publish, like, remix, follow.',
   },
   {
-    title: 'Community creations',
-    body: 'Workshop hosts public Music Paths from other people. Publish, like, remix, and follow from the live catalog.',
+    title: 'Linked playlists',
+    body: 'A Portal leaves one path and continues on another, at the start or at an entry portal.',
   },
 ] as const;
 
@@ -27,8 +27,7 @@ export default function UseCases() {
   return (
     <section className="synapse-mkt-section" id="solutions" aria-labelledby="solutions-title">
       <Reveal>
-        <p className="synapse-mkt-kicker">Solutions</p>
-        <h2 id="solutions-title">The same graph, different kinds of listening.</h2>
+        <h2 id="solutions-title">Uses</h2>
         <div className="synapse-mkt-cards synapse-mkt-cards-3">
           {CASES.map((c) => (
             <article key={c.title} className="synapse-mkt-card">

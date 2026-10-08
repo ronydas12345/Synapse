@@ -2,6 +2,10 @@ import { usePathStore, useGraphReadOnly } from './store';
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import type { Node } from '@xyflow/react';
 import { buildPlaybackQueueResult, parseQueueKey } from './engine';
+import { hopFromPortalNode } from './portals/hopPlayback';
+import { parsePortalNodeData } from './portals/parse';
+import { nextHopContext, type PortalHopContext } from './portals/resolve';
+import { VIEWER_PORTAL_ERROR } from './portals/types';
 import {
   YouTubeIframeAdapter,
   extractYouTubeId,
@@ -113,6 +117,7 @@ export default function Player() {
   const activeItemKeyRef = useRef<string | null>(null);
   const advanceRef = useRef<() => void>(() => {});
   const replayRef = useRef<() => boolean>(() => false);
+  const portalHopsRef = useRef<PortalHopContext>({ visited: [], hops: 0 });
   const skipLoopRef = useRef(false);
   const [loopTrack, setLoopTrack] = useState(false);
   const loopTrackRef = useRef(false);
@@ -153,6 +158,7 @@ export default function Player() {
       state.setCurrentTrackIndex(index + 1);
     } else {
       sessionActiveRef.current = false;
+      portalHopsRef.current = { visited: [], hops: 0 };
       state.setIsPlaying(false);
       state.setCurrentTrackIndex(0);
       state.setCurrentPlayingNodeId(null);
@@ -358,6 +364,7 @@ export default function Player() {
         return;
       }
       sessionActiveRef.current = true;
+      portalHopsRef.current = { visited: [], hops: 0 };
       activeItemKeyRef.current = null;
       applyStyleCuesAtNode(nodes, edges, startNodeId);
       setCurrentTrackIndex(0);
@@ -576,6 +583,59 @@ export default function Player() {
       return () => clearSilenceTimer();
     }
 
+    if (kind === 'portal') {
+      adapterRef.current?.stop();
+      setStatusMessage('Following portal…');
+      let cancelled = false;
+      void (async () => {
+        const result = await hopFromPortalNode(node, portalHopsRef.current, !graphReadOnly);
+        if (cancelled) return;
+        if (!result.ok) {
+          sessionActiveRef.current = false;
+          portalHopsRef.current = { visited: [], hops: 0 };
+          setStatusMessage(result.message || VIEWER_PORTAL_ERROR);
+          usePathStore.getState().setIsPlaying(false);
+          usePathStore.getState().setPlaybackQueue([]);
+          usePathStore.getState().setCurrentPlayingNodeId(null);
+          return;
+        }
+        const sourceId = parsePortalNodeData(node.data, '').portalId;
+        portalHopsRef.current = nextHopContext(
+          portalHopsRef.current,
+          usePathStore.getState().activePathId,
+          sourceId
+        );
+        usePathStore.getState().replaceGraphKeepPlayback(result.graph.nodes, result.graph.edges, {
+          pathId: result.playlistId,
+          shareKey: result.workshopShareKey ?? null,
+          locked: graphReadOnly && result.playlistId !== usePathStore.getState().activePathId,
+        });
+        const weatherState = await resolvePlaybackWeather(result.graph.nodes);
+        if (cancelled) return;
+        const next = buildPlaybackQueueResult(result.graph, {
+          startNodeId: result.landingNodeId,
+          weatherState,
+          now: new Date(),
+        });
+        const keys = next.items.map((item) => item.key);
+        activeItemKeyRef.current = null;
+        usePathStore.getState().setCurrentTrackIndex(0);
+        usePathStore.getState().setPlaybackQueue(keys);
+        setStatusMessage(
+          keys.length === 0
+            ? `Portal reached ${result.playlistName}, then the path ended.`
+            : `Portal → ${result.playlistName}`
+        );
+        if (keys.length === 0) {
+          sessionActiveRef.current = false;
+          usePathStore.getState().setIsPlaying(false);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const media = nodeToPlayable(node, nodeId);
     if (!media) {
       setStatusMessage('Track missing video ID — skipping');
@@ -612,6 +672,7 @@ export default function Player() {
     playerReady,
     advance,
     setCurrentPlayingNodeId,
+    graphReadOnly,
   ]);
 
   useEffect(() => {

@@ -190,7 +190,12 @@ export default function PublishForm({
           title: name,
           description: description.trim(),
           visibility,
-          payload: { name, nodes: state.nodes, edges: state.edges },
+          payload: {
+            name,
+            nodes: state.nodes,
+            edges: state.edges,
+            portalPolicy: state.pathSummaries.find((path) => path.id === pathId)?.portalPolicy,
+          },
           kind: 'playlist',
           tags,
           id: existing?.id,

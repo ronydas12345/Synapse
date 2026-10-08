@@ -7,6 +7,7 @@ export const PLAYBACK_START_NODE_TYPES = [
   'randomizer',
   'transition',
   'style',
+  'portal',
   'end',
 ] as const;
 

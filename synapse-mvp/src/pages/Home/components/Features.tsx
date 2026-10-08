@@ -3,37 +3,42 @@ import Reveal from './Reveal';
 const FEATURES = [
   {
     title: 'Visual Music Paths',
-    body: 'Build playback systems on a canvas instead of managing a long, brittle playlist.',
+    body: 'A canvas of nodes instead of a fixed playlist.',
     status: 'Available',
   },
   {
     title: 'Conditional playback',
-    body: 'Branch with weighted random, time of day, local weather, or day/date rules. Each path can list one or more matching states.',
+    body: 'Branch on weighted random, time of day, weather, or day and date.',
     status: 'Available',
   },
   {
     title: 'Randomization',
-    body: 'Sequence, weighted random, and play-count limits. Controlled pools instead of a shuffled bag.',
+    body: 'Sequence, weighted random, and play-count limits.',
     status: 'Available',
   },
   {
     title: 'Transitions',
-    body: 'Insert silence, a custom audio clip, or a YouTube clip between tracks.',
+    body: 'Silence, a custom audio clip, or a YouTube clip between tracks.',
+    status: 'Available',
+  },
+  {
+    title: 'Portals',
+    body: 'Jump to another playlist. Wire in to leave, or out to receive — never both.',
     status: 'Available',
   },
   {
     title: 'Styles & themes',
-    body: 'Preset and custom themes in Settings, plus Style nodes that change the look as a path plays.',
+    body: 'Presets, custom themes, and Style nodes that change as a path plays.',
     status: 'Available',
   },
   {
     title: 'Overlays',
-    body: 'Images, GIFs, and animated effects on the canvas. Planned — not in this release.',
+    body: 'Images, GIFs, and animated effects. Planned — not in this release.',
     status: 'Planned',
   },
   {
     title: 'Workshop',
-    body: 'Discover and share Music Paths and themes. Publish from Settings with curated tags, browse /workshop, follow creators, and share public or unlisted items by ID or link.',
+    body: 'Publish Music Paths and themes. Browse, follow, and share by ID or link.',
     status: 'Available',
   },
 ] as const;
@@ -42,8 +47,7 @@ export default function Features() {
   return (
     <section className="synapse-mkt-section" id="features" aria-labelledby="features-title">
       <Reveal>
-        <p className="synapse-mkt-kicker">Features</p>
-        <h2 id="features-title">Everything you need to build your perfect listening system.</h2>
+        <h2 id="features-title">Features</h2>
         <div className="synapse-mkt-cards">
           {FEATURES.map((f) => (
             <article key={f.title} className="synapse-mkt-card">

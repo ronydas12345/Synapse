@@ -205,7 +205,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'b-connect',
         'Connecting nodes',
-        'Non-branching nodes allow one outgoing edge. Conditionals can fan out from numbered handles. Tracks, End, Randomizer, Transition, and Style can take multiple inputs.',
+        'Non-branching nodes allow one outgoing edge. Conditionals can fan out from numbered handles. Tracks, End, Randomizer, Transition, and Style can take multiple inputs. A Portal takes one side only: in to leave this playlist, or out to receive from another.',
         { type: 'highlight', route: 'edit', target: 'canvas' }
       ),
       s(
@@ -515,6 +515,52 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
         'Connecting transitions',
         'Wire Transition like any other path node: incoming from the previous song, outgoing to the next. It is part of the playback queue.',
         { type: 'highlight', route: 'edit', target: 'canvas' }
+      ),
+    ],
+  },
+  {
+    id: 'portals',
+    title: 'Portal Nodes',
+    summary: 'Jump to another playlist. One side only: leave, or receive.',
+    keywords:
+      'portal exit entry hop playlist jump doorway teleporter allowlist unlisted destination',
+    group: 'building',
+    steps: [
+      s(
+        'po-add',
+        'Add a Portal',
+        'A Portal is a doorway between Music Paths. It is not a track. Drop one from the rack, then wire exactly one side.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'rack-portal',
+          expectedAction: { type: 'node-created', nodeType: 'portal' },
+          praise: 'Portal added. Wire one side only.',
+        }
+      ),
+      s(
+        'po-xor',
+        'Leave or receive, never both',
+        'Connect into the portal to leave this playlist for another. Connect out of it to receive playback from another playlist. Once one side is plugged, the other handle is disabled. Disconnect to switch roles.',
+        { type: 'highlight', route: 'edit', target: 'node-portal' }
+      ),
+      s(
+        'po-dest',
+        'Exit destination',
+        'An exit portal needs a destination: the beginning of a playlist, or a specific entry portal (by Portal ID). The ID is copyable and never edited by hand.',
+        { type: 'highlight', route: 'edit', target: 'inspector' }
+      ),
+      s(
+        'po-entry',
+        'Entry portals',
+        'An entry portal is a landing pad. Other exits can target its Portal ID. Playback continues along its outgoing path in this playlist.',
+        { type: 'highlight', route: 'edit', target: 'canvas' }
+      ),
+      s(
+        'po-access',
+        'Who may enter',
+        'You control inbound jumps. Unlisted playlists keep portals off until you enable them. Allow or block specific Portal IDs under Settings → Playlists. Private destinations stay yours only.',
+        { type: 'info', route: 'settings', target: 'settings-playlists' }
       ),
     ],
   },
@@ -1028,8 +1074,8 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       ),
       s(
         'pr-ads',
-        'Ad-free experience',
-        'There are no ads in this client. An ad-free Pro line is for a later hosted version.',
+        'No ads',
+        'There are no ads in this client. A Pro no-ads line is for a later hosted version.',
         { type: 'info', route: 'pricing', target: 'pricing' }
       ),
       s(
@@ -1054,6 +1100,7 @@ export const TUTORIAL_GROUPS: TutorialGroup[] = [
       'conditionals',
       'randomizer',
       'transitions',
+      'portals',
       'comments',
     ],
   },
@@ -1072,7 +1119,7 @@ export const FULL_TUTORIAL_SECTIONS = TUTORIAL_GROUPS.flatMap((g) =>
 );
 
 export const CONTEXT_SECTIONS: Partial<Record<AppRoute, string[]>> = {
-  edit: [SIMPLE_TUTORIAL_ID, 'building', 'align-guides', 'track-nodes', 'conditionals', 'play-mode', 'styles-themes'],
+  edit: [SIMPLE_TUTORIAL_ID, 'building', 'align-guides', 'track-nodes', 'conditionals', 'portals', 'play-mode', 'styles-themes'],
   listen: ['play-mode', 'getting-started', 'conditionals'],
   settings: ['styles-themes', 'import-export', 'account-settings'],
   profile: ['account-settings'],

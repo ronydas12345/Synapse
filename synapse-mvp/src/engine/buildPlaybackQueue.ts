@@ -9,6 +9,7 @@ import type {
 import { toQueueKey } from './types';
 import { isPlaybackStartNodeType } from './startNode';
 import { selectConditionalPathIndex } from './selectConditionalPath';
+import { portalOutgoingEdges, portalRole } from '../portals/role';
 
 export const DEFAULT_MAX_QUEUE_ITEMS = 500;
 export const DEFAULT_MAX_TRAVERSE_STEPS = 2000;
@@ -183,6 +184,25 @@ function walkGraph(
         nodeId,
         key: toQueueKey('style', nodeId),
       });
+    } else if (node.type === 'portal') {
+      const role = portalRole(nodeId, edges);
+      if (role === 'entry') {
+        const outgoing = portalOutgoingEdges(nodeId, edges);
+        for (const edge of outgoing) {
+          if (haltReason !== 'ok') return;
+          if (edge.target) traverse(edge.target);
+        }
+        return;
+      }
+      if (role === 'exit') {
+        if (!canPush()) return;
+        queue.push({
+          kind: 'portal',
+          nodeId,
+          key: toQueueKey('portal', nodeId),
+        });
+      }
+      return;
     }
 
     if (!isBranchingType(node.type)) {

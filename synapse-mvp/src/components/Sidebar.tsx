@@ -1,4 +1,4 @@
-import { Music, GitBranch, Plus, Play, Square, Dice5, MessageSquare, ArrowRight, Palette } from 'lucide-react';
+import { Music, GitBranch, Plus, Play, Square, Dice5, MessageSquare, ArrowRight, Palette, DoorOpen } from 'lucide-react';
 import { useCallback, type ReactNode } from 'react';
 import { usePathStore, useGraphReadOnly } from '../store';
 import {
@@ -17,6 +17,7 @@ const NODE_ICONS: Record<CanvasNodeType, ReactNode> = {
   transition: <ArrowRight className="w-4 h-4" />,
   style: <Palette className="w-4 h-4" />,
   comment: <MessageSquare className="w-4 h-4" />,
+  portal: <DoorOpen className="w-4 h-4" />,
   end: <Square className="w-4 h-4" />,
 };
 
@@ -28,6 +29,7 @@ const NODE_LABELS: Record<CanvasNodeType, string> = {
   transition: 'Transition',
   style: 'Style',
   comment: 'Comment',
+  portal: 'Portal',
   end: 'End Node',
 };
 
@@ -123,7 +125,8 @@ export default function Sidebar() {
             <li className="flex gap-2"><span className="text-[var(--accent)]">02</span> Add Track nodes</li>
             <li className="flex gap-2"><span className="text-[var(--accent)]">03</span> Use Conditionals to branch</li>
             <li className="flex gap-2"><span className="text-[var(--accent)]">04</span> Randomizer for pools</li>
-            <li className="flex gap-2"><span className="text-[var(--accent)]">05</span> Click edges to delete</li>
+            <li className="flex gap-2"><span className="text-[var(--accent)]">05</span> Portal to other playlists</li>
+            <li className="flex gap-2"><span className="text-[var(--accent)]">06</span> Click edges to delete</li>
           </ul>
         </div>
       </div>

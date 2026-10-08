@@ -11,6 +11,7 @@ import RandomizerNode from './nodes/RandomizerNode';
 import TransitionNode from './nodes/TransitionNode';
 import StyleNode from './nodes/StyleNode';
 import CommentNode from './nodes/CommentNode';
+import PortalNode from './nodes/PortalNode';
 import CommentConnections from './CommentConnections';
 import PlaybackMarker from './PlaybackMarker';
 import StartDirectionArrow from './StartDirectionArrow';
@@ -47,6 +48,7 @@ import {
   parseNodeClipboard,
   type NodeClipboard,
 } from '../canvas/clipboard';
+import { portalConnectError } from '../portals/connect';
 
 const nodeTypes = {
   track: TrackNode,
@@ -58,6 +60,7 @@ const nodeTypes = {
   transition: TransitionNode,
   style: StyleNode,
   comment: CommentNode,
+  portal: PortalNode,
 };
 
 const edgeTypes = {
@@ -152,6 +155,7 @@ function CustomMinimap() {
     transition: { width: 256, height: 100 },
     style: { width: 256, height: 100 },
     comment: { width: 256, height: 120 },
+    portal: { width: 176, height: 140 },
   };
 
   const visibleNodes = nodes.filter((n) => !n.hidden);
@@ -204,6 +208,7 @@ function CustomMinimap() {
     transition: 'var(--node-transition)',
     style: 'var(--node-style)',
     comment: 'var(--node-comment)',
+    portal: 'var(--node-portal)',
   };
 
   // Calculate the visible area in world coordinates
@@ -877,6 +882,12 @@ function ReactFlowContent() {
         return;
       }
 
+      const portalError = portalConnectError(connection, nodes, edges);
+      if (portalError) {
+        window.alert(portalError);
+        return;
+      }
+
       // Prevent multiple outgoing edges from non-branching nodes
       const isSourceBranching =
         sourceNode.type === 'splitter' ||
@@ -1053,6 +1064,11 @@ function ReactFlowContent() {
             : onEdgesChange
         }
         onConnect={readOnly ? undefined : handleConnect}
+        isValidConnection={
+          readOnly
+            ? () => false
+            : (connection) => !portalConnectError(connection, nodes, edges)
+        }
         onNodeDragStop={
           readOnly
             ? undefined

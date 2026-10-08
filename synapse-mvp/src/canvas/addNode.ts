@@ -1,4 +1,6 @@
 import type { Node } from '@xyflow/react';
+import { collectPortalIds, generatePortalId } from '../portals/ids';
+import { defaultPortalAccessPolicy, portalDataRecord } from '../portals/parse';
 import { defaultStyleNodeData } from '../styleNode/parse';
 import { defaultTrackNodeData } from '../settings/nodeDefaults';
 import { usePathStore } from '../store';
@@ -11,6 +13,7 @@ export const CANVAS_NODE_TYPES = [
   { type: 'transition', label: 'Transition' },
   { type: 'style', label: 'Style' },
   { type: 'comment', label: 'Comment' },
+  { type: 'portal', label: 'Portal' },
   { type: 'end', label: 'End' },
 ] as const;
 
@@ -43,6 +46,15 @@ function defaultData(type: CanvasNodeType): Record<string, unknown> {
   }
   if (type === 'style') return { ...defaultStyleNodeData(), name: '' };
   if (type === 'comment') return { name: '', text: '', linkedNodeId: null };
+  if (type === 'portal') {
+    const used = collectPortalIds(usePathStore.getState().nodes);
+    return portalDataRecord({
+      name: '',
+      portalId: generatePortalId(used),
+      destination: null,
+      accessPolicy: defaultPortalAccessPolicy(),
+    });
+  }
   return { label: 'End', name: '' };
 }
 

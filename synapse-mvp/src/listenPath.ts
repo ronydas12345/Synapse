@@ -88,6 +88,10 @@ export function nodeListLabel(node: Node | undefined): { title: string; subtitle
   }
   if (node.type === 'start') return { title: custom || 'Start', subtitle: '' };
   if (node.type === 'end') return { title: custom || 'End', subtitle: '' };
+  if (node.type === 'portal') {
+    const portalId = String((node.data as { portalId?: unknown })?.portalId || '');
+    return { title: custom || 'Portal', subtitle: portalId };
+  }
   return { title: custom || String(node.data?.label || node.type || node.id), subtitle: '' };
 }
 

@@ -6,22 +6,22 @@ const STEPS: { scene: PathScene; title: string; body: string }[] = [
   {
     scene: 'step1',
     title: 'Start with a song',
-    body: 'Drag a Track node onto the canvas and paste a YouTube URL or video ID.',
+    body: 'Drop a Track node and paste a YouTube URL or video ID.',
   },
   {
     scene: 'step2',
-    title: 'Build the path',
-    body: 'Connect songs and logic together. Example: Start → Track → Conditional → Randomizer → Track.',
+    title: 'Connect the path',
+    body: 'Example: Start → Track → Conditional → Randomizer → Track.',
   },
   {
     scene: 'step3',
-    title: 'Add personality',
-    body: 'Add transitions, Style nodes, and the rules you care about. Overlays are planned.',
+    title: 'Add rules',
+    body: 'Transitions, Style nodes, Portals to other playlists, and the conditions you want. Overlays are planned.',
   },
   {
     scene: 'step4',
-    title: 'Press Play',
-    body: 'Synapse follows the path and dynamically determines what plays next.',
+    title: 'Press play',
+    body: 'Synapse follows the path.',
   },
 ];
 
@@ -36,8 +36,7 @@ export default function HowItWorks() {
       aria-labelledby="how-title"
     >
       <Reveal>
-        <p className="synapse-mkt-kicker">How it works</p>
-        <h2 id="how-title">Four steps from a blank canvas to a living mix.</h2>
+        <h2 id="how-title">How it works</h2>
         <div className="synapse-mkt-how-grid">
           <div className="synapse-mkt-how-steps" role="tablist" aria-label="How Synapse works">
             {STEPS.map((s, i) => (

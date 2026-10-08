@@ -3,6 +3,8 @@ import { parseStyleNodeData } from '../styleNode/parse';
 import { parseTheme, themeToJson } from '../theme/parseTheme';
 import { THEME_TYPE, type SynapseTheme } from '../theme/types';
 import { normalizeWorkspaceGraph } from '../randomizerDrop';
+import { parsePlaylistPortalPolicy } from '../portals/parse';
+import { ensurePortalNodeData } from '../portals/remap';
 import { makePathId, type StoredMusicPath } from './library';
 import { sanitizeTagIds } from '../workshop/tags';
 
@@ -22,6 +24,7 @@ const ALLOWED_NODE_TYPES = new Set([
   'transition',
   'style',
   'comment',
+  'portal',
   'end',
 ]);
 
@@ -50,6 +53,7 @@ export interface PlaylistFile {
   edges: Edge[];
   settings: Record<string, unknown>;
   themeId: string | null;
+  portalPolicy?: StoredMusicPath['portalPolicy'];
 }
 
 export interface PlaylistPackageFile {
@@ -283,13 +287,16 @@ function parsePlaylistObject(raw: Record<string, unknown>, notices: string[]): S
 
   const graph = sanitizeGraph(raw.nodes, raw.edges, notices);
   const id = sanitizeId(raw.id, makePathId());
+  const visibility =
+    raw.visibility === 'public' ? 'public' : raw.visibility === 'unlisted' ? 'unlisted' : 'private';
   return {
     id: id || makePathId(),
     name: sanitizePlaylistName(raw.name),
-    visibility: raw.visibility === 'public' ? 'public' : 'private',
+    visibility,
     tags: sanitizeTagIds('playlist', raw.tags),
-    nodes: graph.nodes,
+    nodes: ensurePortalNodeData(graph.nodes, { reissue: true }),
     edges: graph.edges,
+    portalPolicy: parsePlaylistPortalPolicy(raw.portalPolicy, visibility),
     updatedAt:
       typeof raw.updatedAt === 'string' && Number.isFinite(Date.parse(raw.updatedAt))
         ? raw.updatedAt
@@ -489,6 +496,7 @@ export function serializePlaylist(
     updatedAt: path.updatedAt,
     nodes: exportableNodes(path.nodes),
     edges: exportableEdges(path.edges),
+    ...(path.portalPolicy ? { portalPolicy: path.portalPolicy } : {}),
     settings: options?.settings && typeof options.settings === 'object' ? options.settings : {},
     themeId: options?.themeId || null,
   };
