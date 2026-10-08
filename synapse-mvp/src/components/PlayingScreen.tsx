@@ -3,6 +3,8 @@ import { GitBranch, Play, Pause } from 'lucide-react';
 import DeckTransport from './DeckTransport';
 import AudioVisualizer from './AudioVisualizer';
 import type { ListenRow } from '../listenPath';
+import type { PortalTrailStop } from '../portals/trail';
+import PortalTrailNav from './PortalTrail';
 import { useAppSettings } from '../settings/settingsStore';
 import { documentPrefersReducedMotion } from '../settings/motion';
 
@@ -15,6 +17,8 @@ interface PlayingScreenProps {
   statusMessage: string;
   queueLabel: string;
   pathHeading: string;
+  portalTrail?: PortalTrailStop[];
+  onPortalTrailSelect?: (index: number) => void;
   rows: ListenRow[];
   vizAudio: HTMLAudioElement | null;
   onTogglePlay: () => void;
@@ -117,6 +121,8 @@ export default function PlayingScreen({
   statusMessage,
   queueLabel,
   pathHeading,
+  portalTrail,
+  onPortalTrailSelect,
   rows,
   vizAudio,
   onTogglePlay,
@@ -160,6 +166,9 @@ export default function PlayingScreen({
                 {nowPlaying.album || 'No album'}
               </p>
             </>
+          ) : null}
+          {portalTrail && onPortalTrailSelect ? (
+            <PortalTrailNav trail={portalTrail} onSelect={onPortalTrailSelect} />
           ) : null}
           {queueLabel ? <p className="synapse-deck-queue">{queueLabel}</p> : null}
           {statusMessage ? (
@@ -244,8 +253,7 @@ export default function PlayingScreen({
           </section>
         ) : (
           <p className="synapse-listen-empty">
-            Connect tracks from Start in Studio, then Play. The full playlist
-            appears here, with a marker on the song that is playing.
+            Connect tracks from Start, then press Play.
           </p>
         )}
       </div>

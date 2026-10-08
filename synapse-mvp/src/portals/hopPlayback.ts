@@ -40,10 +40,14 @@ export async function hopFromPortalNode(
 ): Promise<PortalResolveResult> {
   const store = usePathStore.getState();
   const paths = store.peekLibraryPaths();
-  const current = paths.find((path) => path.id === store.activePathId);
+  const here = store.playbackGraphOverride
+    ? store.portalTrail[store.portalTrail.length - 1]
+    : undefined;
+  const currentId = here?.playlistId || store.activePathId;
+  const current = paths.find((path) => path.id === currentId);
   const source: PortalCatalogPlaylist = {
-    id: store.activePathId,
-    name: current?.name || 'Playlist',
+    id: currentId,
+    name: current?.name || here?.playlistName || 'Playlist',
     visibility: current?.visibility || 'private',
     workshopId: current?.workshopId || store.workshopShareKey || undefined,
     nodes: store.nodes,

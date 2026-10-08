@@ -547,7 +547,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'po-dest',
         'Exit destination',
-        'An exit portal needs a destination: the beginning of a playlist, or a specific entry portal (by Portal ID). The ID is copyable and never edited by hand.',
+        'An exit portal needs a destination: the beginning of a playlist (blue), or a specific entry portal on another playlist (purple, by Portal ID). The ID is copyable and never edited by hand. After a hop, the player shows a trail like [playlist, portal id] — click a previous stop to go back.',
         { type: 'highlight', route: 'edit', target: 'inspector' }
       ),
       s(

@@ -183,8 +183,8 @@ export default function PortalInspector({
                 });
               }}
             >
-              <option value="playlist_start">Playlist beginning</option>
-              <option value="portal">Specific portal</option>
+              <option value="playlist_start">Playlist beginning (blue)</option>
+              <option value="portal">Specific portal (purple)</option>
             </select>
           </div>
           {dest?.mode === 'portal' ? (

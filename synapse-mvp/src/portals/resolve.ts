@@ -30,10 +30,12 @@ export interface PortalHopContext {
 export interface PortalResolveOk {
   ok: true;
   landingNodeId: string;
+  landingPortalId: string;
   graph: { nodes: Node[]; edges: Edge[] };
   playlistId: string;
   playlistName: string;
   workshopShareKey?: string;
+  owner: boolean;
 }
 
 export interface PortalResolveDeny {
@@ -44,7 +46,7 @@ export interface PortalResolveDeny {
 
 export type PortalResolveResult = PortalResolveOk | PortalResolveDeny;
 
-function routeKey(playlistId: string, portalId: string): string {
+export function routeKey(playlistId: string, portalId: string): string {
   return `${playlistId}:${normalizePortalId(portalId)}`;
 }
 
@@ -177,10 +179,12 @@ export function resolvePortalHop(args: {
     return {
       ok: true,
       landingNodeId: start,
+      landingPortalId: '',
       graph: { nodes: target.nodes, edges: target.edges },
       playlistId: target.id,
       playlistName: target.name,
       workshopShareKey: target.workshopId,
+      owner: target.owner,
     };
   }
 
@@ -206,10 +210,12 @@ export function resolvePortalHop(args: {
   return {
     ok: true,
     landingNodeId: landingPortal!.id,
+    landingPortalId: dest.portalId,
     graph: { nodes: target.nodes, edges: target.edges },
     playlistId: target.id,
     playlistName: target.name,
     workshopShareKey: target.workshopId,
+    owner: target.owner,
   };
 }
 

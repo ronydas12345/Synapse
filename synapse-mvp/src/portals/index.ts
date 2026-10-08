@@ -27,12 +27,28 @@ export {
   destinationPlaylistId,
   nextHopContext,
   resolvePortalHop,
+  routeKey,
 } from './resolve';
 export type {
   PortalCatalogPlaylist,
   PortalHopContext,
   PortalResolveResult,
 } from './resolve';
+export {
+  appendPortalHop,
+  formatPortalTrailStop,
+  hopContextFromTrail,
+  PLAYLIST_START_PORTAL_LABEL,
+  snapshotPortalTrailStop,
+} from './trail';
+export type { PortalTrailStop } from './trail';
+export {
+  portalColorKind,
+  portalColorVar,
+  PORTAL_HOP_COLOR,
+  PORTAL_START_COLOR,
+} from './tint';
+export type { PortalColorKind } from './tint';
 export {
   editorPortalStatus,
   validatePortalGraph,

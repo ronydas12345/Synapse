@@ -49,6 +49,9 @@ import {
   type NodeClipboard,
 } from '../canvas/clipboard';
 import { portalConnectError } from '../portals/connect';
+import { parsePortalNodeData } from '../portals/parse';
+import { portalRole } from '../portals/role';
+import { portalColorKind, portalColorVar } from '../portals/tint';
 
 const nodeTypes = {
   track: TrackNode,
@@ -73,7 +76,7 @@ let memoryClipboard: NodeClipboard | null = null;
 
 // Custom minimap component that syncs with camera
 function CustomMinimap() {
-  const { getNodes, getViewport } = useReactFlow();
+  const { getNodes, getEdges, getViewport } = useReactFlow();
   const [containerDims, setContainerDims] = React.useState({ width: 1200, height: 800 });
   const [viewportState, setViewportState] = React.useState({ x: 0, y: 0, zoom: 1 });
   const showMinimap = useAppSettings((s) => s.canvas.showMinimap);
@@ -208,7 +211,6 @@ function CustomMinimap() {
     transition: 'var(--node-transition)',
     style: 'var(--node-style)',
     comment: 'var(--node-comment)',
-    portal: 'var(--node-portal)',
   };
 
   // Calculate the visible area in world coordinates
@@ -283,7 +285,15 @@ function CustomMinimap() {
           let y = (world.y - minY) * scale + padding;
           let w = Math.max(2, nw * scale);
           let h = Math.max(2, nh * scale);
-          const color = typeColors[node.type ?? ''] || '#64748b';
+          const color =
+            node.type === 'portal'
+              ? portalColorVar(
+                  portalColorKind(
+                    parsePortalNodeData(node.data, '').destination,
+                    portalRole(node.id, getEdges())
+                  )
+                )
+              : typeColors[node.type ?? ''] || '#64748b';
           
           // Ensure all values are valid finite numbers
           if (!isFinite(x)) x = padding;

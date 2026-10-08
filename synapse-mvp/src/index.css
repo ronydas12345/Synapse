@@ -37,7 +37,9 @@
   --node-comment: #8b93a7;
   --node-start: #7dcea0;
   --node-end: #f07178;
-  --node-portal: #c497ff;
+  --node-portal-start: #1a7fd1;
+  --node-portal-hop: #9d4ee8;
+  --node-portal: var(--node-portal-hop);
   --edge-color: #8b93a7;
   --player-bg: #0a0c12;
   --input-bg: #0c0e14;
@@ -1221,6 +1223,58 @@ body {
   border: 1px solid rgba(232, 164, 92, 0.35);
 }
 
+.synapse-portal-trail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.35rem;
+  margin-top: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--text-faint);
+}
+
+.synapse-portal-trail-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.synapse-portal-trail-sep {
+  color: var(--text-faint);
+  opacity: 0.7;
+}
+
+.synapse-portal-trail-link,
+.synapse-portal-trail-here {
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.synapse-portal-trail-link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.synapse-portal-trail-link:hover {
+  color: var(--text);
+}
+
+.synapse-portal-trail-here {
+  color: var(--text-muted);
+}
+
 .synapse-deck-status {
   font-family: var(--font-mono);
   font-size: 0.75rem;
@@ -1295,6 +1349,7 @@ body {
 .synapse-deck.is-minimized .synapse-deck-album,
 .synapse-deck.is-minimized .synapse-deck-status,
 .synapse-deck.is-minimized .synapse-deck-queue,
+.synapse-deck.is-minimized .synapse-portal-trail,
 .synapse-deck.is-minimized .synapse-visualizer,
 .synapse-deck.is-minimized .synapse-listen-paths,
 .synapse-deck.is-minimized .synapse-listen-play,
@@ -1591,8 +1646,14 @@ body {
 .synapse-node.is-transition { border-color: var(--node-transition); }
 .synapse-node.is-style { border-color: var(--node-style); }
 .synapse-node.is-comment { border-color: var(--node-comment); }
-.synapse-node.is-portal { border-color: var(--node-portal); }
+.synapse-node.is-portal { border-color: var(--portal-tint, var(--node-portal)); }
+.synapse-node.is-portal-start { --portal-tint: var(--node-portal-start); }
+.synapse-node.is-portal-hop { --portal-tint: var(--node-portal-hop); }
 .synapse-node.is-portal-invalid { border-color: var(--danger); }
+.synapse-portal-mark {
+  background: color-mix(in srgb, var(--portal-tint, var(--node-portal)) 16%, transparent);
+  color: var(--portal-tint, var(--node-portal));
+}
 .synapse-node.is-playing { border-color: var(--accent-warm); }
 
 .synapse-node-header {

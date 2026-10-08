@@ -4,6 +4,7 @@ import { usePathStore } from '../../store';
 import { nodeDisplayName } from '../../nodes/nodeName';
 import { parsePortalNodeData } from '../../portals/parse';
 import { portalHandleEnabled, portalRole, portalRoleLabel } from '../../portals/role';
+import { portalColorKind } from '../../portals/tint';
 import { PORTAL_IN_HANDLE, PORTAL_OUT_HANDLE } from '../../portals/types';
 
 export default function PortalNode({
@@ -25,16 +26,17 @@ export default function PortalNode({
       : parsed.destination?.playlistId
         ? 'Playlist start'
         : 'No destination';
+  const tint = portalColorKind(parsed.destination, role);
 
   return (
     <div
-      className={`synapse-node w-44 flex flex-col items-center gap-1.5 p-3 is-portal${
+      className={`synapse-node w-44 flex flex-col items-center gap-1.5 p-3 is-portal is-portal-${tint}${
         playingId === id ? ' is-playing' : ''
       }${role === 'invalid' ? ' is-portal-invalid' : ''}`}
       data-tutorial="node-portal"
     >
-      <div className="w-9 h-9 rounded-lg grid place-items-center bg-[rgba(196,151,255,0.14)]">
-        <DoorOpen className="w-4 h-4 text-[var(--node-portal)]" />
+      <div className="synapse-portal-mark w-9 h-9 rounded-lg grid place-items-center">
+        <DoorOpen className="w-4 h-4" />
       </div>
       <strong
         className="text-sm tracking-tight truncate max-w-full px-1"

@@ -8,7 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- Portal nodes jump between playlists. Wire into a portal to leave, or out of it to receive — never both. Exits target a playlist start or an entry Portal ID. Unlisted playlists keep inbound portals off until you allow them.
+- Portal nodes jump between playlists. Wire into a portal to leave, or out of it to receive — never both. Exits target a playlist start or an entry Portal ID. Unlisted playlists keep inbound portals off until you allow them. After a hop, a small `[playlist, portal id]` trail lets you jump back.
+
 - Supabase Auth with Google OAuth and email/password. Log in at `/login` or create an account at `/signup`. Edit, Listen, Settings, Profile, `/admin`, and `/superadmin` require sign-in. Username and display name are required.
 - Staff roles: verified owner email is Superadmin; other admins are stored in Postgres `roles` and can only be written by Superadmin. Separate Admin (`/admin`) and Superadmin (`/superadmin`) dashboards. Each role can open only its own dashboard, even when tools overlap. Row-level security enforces the permission boundary.
 - Minimize control on the bottom deck. The YouTube surface stays mounted so playback continues on Edit, Listen, Settings, and Profile.
@@ -30,7 +31,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Profile decorations now show the handoff ornaments: silver/gold rings, creator laurel, admin star, and the Superuser crown. Staff frames also tint the display name.
 - Badges pick up color, gems, and sheen as their tier goes up (bronze through Superadmin).
 
+### Fixed
+
+- Following a portal no longer freezes playback. The hop used to cancel itself when the destination graph loaded, so the player stayed stuck on the portal.
+
 ### Changed
+
+- Portal nodes use unused colors: blue (`#1a7fd1`) when they go to a playlist beginning, purple (`#9d4ee8`) when they land on another playlist's portal.
 
 - Public Workshop profile banners are shorter: photo top-left, mid-size badges beside a near-full-size display name. Public playlists in the Playlists section link to their Workshop pages.
 - Privacy, Terms, and Cookie policies are rewritten as jurisdiction-neutral documents with shared layout, versioning, and copy that matches the current product.

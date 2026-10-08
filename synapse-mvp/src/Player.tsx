@@ -5,7 +5,13 @@ import { buildPlaybackQueueResult, parseQueueKey } from './engine';
 import { hopFromPortalNode } from './portals/hopPlayback';
 import { parsePortalNodeData } from './portals/parse';
 import { nextHopContext, type PortalHopContext } from './portals/resolve';
+import {
+  appendPortalHop,
+  hopContextFromTrail,
+  snapshotPortalTrailStop,
+} from './portals/trail';
 import { VIEWER_PORTAL_ERROR } from './portals/types';
+import PortalTrailNav from './components/PortalTrail';
 import {
   YouTubeIframeAdapter,
   extractYouTubeId,
@@ -82,6 +88,9 @@ export default function Player() {
     selectedPlaybackStartNodeId,
     setPlaybackStartNode,
     listenView,
+    portalTrail,
+    restorePortalTrail,
+    portalTrailRestoreId,
   } = usePathStore();
   const graphReadOnly = useGraphReadOnly();
 
@@ -118,6 +127,8 @@ export default function Player() {
   const advanceRef = useRef<() => void>(() => {});
   const replayRef = useRef<() => boolean>(() => false);
   const portalHopsRef = useRef<PortalHopContext>({ visited: [], hops: 0 });
+  const hopGenRef = useRef(0);
+  const portalHopInFlightRef = useRef<string | null>(null);
   const skipLoopRef = useRef(false);
   const [loopTrack, setLoopTrack] = useState(false);
   const loopTrackRef = useRef(false);
@@ -158,7 +169,10 @@ export default function Player() {
       state.setCurrentTrackIndex(index + 1);
     } else {
       sessionActiveRef.current = false;
+      hopGenRef.current += 1;
+      portalHopInFlightRef.current = null;
       portalHopsRef.current = { visited: [], hops: 0 };
+      state.clearPortalTrail();
       state.setIsPlaying(false);
       state.setCurrentTrackIndex(0);
       state.setCurrentPlayingNodeId(null);
@@ -204,6 +218,8 @@ export default function Player() {
     adapterRef.current?.stop();
     activeItemKeyRef.current = null;
     advancingRef.current = false;
+    hopGenRef.current += 1;
+    portalHopInFlightRef.current = null;
 
     const state = usePathStore.getState();
     if (state.playbackQueue.length === 0) return;
@@ -255,6 +271,8 @@ export default function Player() {
     adapterRef.current?.stop();
     activeItemKeyRef.current = null;
     advancingRef.current = false;
+    hopGenRef.current += 1;
+    portalHopInFlightRef.current = null;
     if (!state.isPlaying) state.setIsPlaying(true);
     const newIndex = state.currentTrackIndex - 1;
     state.setCurrentTrackIndex(newIndex);
@@ -270,6 +288,10 @@ export default function Player() {
     sessionActiveRef.current = false;
     advancingRef.current = false;
     activeItemKeyRef.current = null;
+    hopGenRef.current += 1;
+    portalHopInFlightRef.current = null;
+    portalHopsRef.current = { visited: [], hops: 0 };
+    usePathStore.getState().clearPortalTrail();
     clearSilenceTimer();
     stopLocalAudio();
     adapterRef.current?.stop();
@@ -281,6 +303,20 @@ export default function Player() {
     state.setCurrentPlayingNodeId(null);
     setStatusMessage('Stopped');
   }, [stopRequestId]);
+
+  useEffect(() => {
+    if (portalTrailRestoreId === 0) return;
+    hopGenRef.current += 1;
+    portalHopInFlightRef.current = null;
+    activeItemKeyRef.current = null;
+    advancingRef.current = false;
+    const state = usePathStore.getState();
+    portalHopsRef.current = hopContextFromTrail(state.portalTrail);
+    const here = state.portalTrail[state.portalTrail.length - 1];
+    setStatusMessage(
+      here ? `Back to ${here.playlistName}` : 'Back to previous playlist'
+    );
+  }, [portalTrailRestoreId]);
 
   // Mount YouTube once (do not recreate when callbacks change)
   useEffect(() => {
@@ -364,8 +400,9 @@ export default function Player() {
         return;
       }
       sessionActiveRef.current = true;
-      portalHopsRef.current = { visited: [], hops: 0 };
+      portalHopsRef.current = hopContextFromTrail(usePathStore.getState().portalTrail);
       activeItemKeyRef.current = null;
+      portalHopInFlightRef.current = null;
       applyStyleCuesAtNode(nodes, edges, startNodeId);
       setCurrentTrackIndex(0);
       setPlaybackQueue(keys);
@@ -471,14 +508,15 @@ export default function Player() {
     const key = playbackQueue[currentTrackIndex];
     if (!key) return;
 
-    // Same item after Pause → Resume
+    // Same item after Pause → Resume (tracks only). Portals must not no-op here.
     if (activeItemKeyRef.current === key) {
       const parsedSame = parseQueueKey(key);
       if (parsedSame?.kind === 'track') {
         adapterRef.current?.resume();
         setStatusMessage((prev) => prev || 'Resumed');
       }
-      return;
+      if (parsedSame?.kind !== 'portal') return;
+      if (portalHopInFlightRef.current === key) return;
     }
 
     const parsed = parseQueueKey(key);
@@ -585,42 +623,84 @@ export default function Player() {
 
     if (kind === 'portal') {
       adapterRef.current?.stop();
+      if (portalHopInFlightRef.current === key) return;
+      portalHopInFlightRef.current = key;
+      const hopGen = hopGenRef.current;
       setStatusMessage('Following portal…');
-      let cancelled = false;
       void (async () => {
         const result = await hopFromPortalNode(node, portalHopsRef.current, !graphReadOnly);
-        if (cancelled) return;
+        if (hopGenRef.current !== hopGen || portalHopInFlightRef.current !== key) return;
         if (!result.ok) {
+          portalHopInFlightRef.current = null;
           sessionActiveRef.current = false;
           portalHopsRef.current = { visited: [], hops: 0 };
           setStatusMessage(result.message || VIEWER_PORTAL_ERROR);
-          usePathStore.getState().setIsPlaying(false);
-          usePathStore.getState().setPlaybackQueue([]);
-          usePathStore.getState().setCurrentPlayingNodeId(null);
+          const failed = usePathStore.getState();
+          failed.clearPortalTrail();
+          failed.setIsPlaying(false);
+          failed.setPlaybackQueue([]);
+          failed.setCurrentPlayingNodeId(null);
           return;
         }
-        const sourceId = parsePortalNodeData(node.data, '').portalId;
-        portalHopsRef.current = nextHopContext(
-          portalHopsRef.current,
-          usePathStore.getState().activePathId,
-          sourceId
-        );
-        usePathStore.getState().replaceGraphKeepPlayback(result.graph.nodes, result.graph.edges, {
-          pathId: result.playlistId,
-          shareKey: result.workshopShareKey ?? null,
-          locked: graphReadOnly && result.playlistId !== usePathStore.getState().activePathId,
-        });
         const weatherState = await resolvePlaybackWeather(result.graph.nodes);
-        if (cancelled) return;
+        if (hopGenRef.current !== hopGen || portalHopInFlightRef.current !== key) return;
         const next = buildPlaybackQueueResult(result.graph, {
           startNodeId: result.landingNodeId,
           weatherState,
           now: new Date(),
         });
+        const live = usePathStore.getState();
+        if (!live.isPlaying || hopGenRef.current !== hopGen) {
+          portalHopInFlightRef.current = null;
+          return;
+        }
+        const sourceId = parsePortalNodeData(node.data, '').portalId;
+        const fromName =
+          live.portalTrail[live.portalTrail.length - 1]?.playlistName ||
+          live.pathSummaries.find((path) => path.id === live.activePathId)?.name ||
+          'Playlist';
+        const fromId = live.playbackGraphOverride
+          ? live.portalTrail[live.portalTrail.length - 1]?.playlistId || live.activePathId
+          : live.activePathId;
+        const startId = live.nodes.find((item) => item.type === 'start')?.id || 'start';
+        const trail = appendPortalHop(
+          live.portalTrail,
+          snapshotPortalTrailStop({
+            playlistId: fromId,
+            playlistName: fromName,
+            portalId: sourceId,
+            landingNodeId: startId,
+            workshopShareKey: live.workshopShareKey,
+            locked: graphReadOnly,
+            memoryOnly: live.playbackGraphOverride,
+            nodes: live.nodes,
+            edges: live.edges,
+          }),
+          snapshotPortalTrailStop({
+            playlistId: result.playlistId,
+            playlistName: result.playlistName,
+            portalId: result.landingPortalId,
+            landingNodeId: result.landingNodeId,
+            workshopShareKey: result.workshopShareKey ?? null,
+            locked: graphReadOnly || !result.owner,
+            memoryOnly: !live.peekPath(result.playlistId),
+            nodes: result.graph.nodes,
+            edges: result.graph.edges,
+          })
+        );
+        portalHopsRef.current = nextHopContext(portalHopsRef.current, result.playlistId, sourceId);
         const keys = next.items.map((item) => item.key);
         activeItemKeyRef.current = null;
-        usePathStore.getState().setCurrentTrackIndex(0);
-        usePathStore.getState().setPlaybackQueue(keys);
+        live.applyPortalHop({
+          nodes: result.graph.nodes,
+          edges: result.graph.edges,
+          pathId: result.playlistId,
+          shareKey: result.workshopShareKey ?? null,
+          locked: graphReadOnly || !result.owner,
+          queue: keys,
+          trail,
+        });
+        portalHopInFlightRef.current = null;
         setStatusMessage(
           keys.length === 0
             ? `Portal reached ${result.playlistName}, then the path ended.`
@@ -631,9 +711,7 @@ export default function Player() {
           usePathStore.getState().setIsPlaying(false);
         }
       })();
-      return () => {
-        cancelled = true;
-      };
+      return;
     }
 
     const media = nodeToPlayable(node, nodeId);
@@ -743,6 +821,12 @@ export default function Player() {
       ? {
           title: 'Transition',
           artist: String(currentNode?.data?.type || 'silence'),
+          album: '',
+        }
+      : currentParsed?.kind === 'portal'
+      ? {
+          title: 'Portal',
+          artist: parsePortalNodeData(currentNode?.data, '').portalId,
           album: '',
         }
       : currentNode
@@ -862,6 +946,8 @@ export default function Player() {
               : ''
           }
           pathHeading="Playlist"
+          portalTrail={portalTrail}
+          onPortalTrailSelect={restorePortalTrail}
           rows={listenRows}
           vizAudio={vizAudio}
           onTogglePlay={() => setIsPlaying(!isPlaying)}
@@ -908,6 +994,7 @@ export default function Player() {
               ) : nowPlaying?.artist ? (
                 <p className="synapse-deck-sub">{nowPlaying.artist}</p>
               ) : null}
+              <PortalTrailNav trail={portalTrail} onSelect={restorePortalTrail} />
               <p className="synapse-deck-status">
                 {statusMessage ||
                   (playerReady ? 'YouTube player ready' : 'Loading YouTube player…')}

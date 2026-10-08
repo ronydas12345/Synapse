@@ -6,6 +6,7 @@ import {
 import { create } from 'zustand';
 import type { Node, Edge, Connection } from '@xyflow/react';
 import type { PlaylistPortalPolicy } from './portals/types';
+import type { PortalTrailStop } from './portals/trail';
 import type { PathSummary, PathVisibility, StoredMusicPath } from './playlists/library';
 import {
   activatePath,
@@ -61,7 +62,16 @@ interface PathState {
   isPlaying: boolean;
   currentTrackIndex: number;
   currentPlayingNodeId: string | null;
-  playbackQueue: string[]; // Queue keys: `track:{nodeId}` | `transition:{nodeId}`
+  playbackQueue: string[]; // Queue keys: `track:{nodeId}` | `transition:{nodeId}` | `portal:{nodeId}`
+  /** Playlist hops taken this session. Transient — not persisted. */
+  portalTrail: PortalTrailStop[];
+  /**
+   * True when the canvas is a hop destination that is not the active library path.
+   * Graph edits must not write that destination onto the source playlist.
+   */
+  playbackGraphOverride: boolean;
+  /** Incremented when the listener jumps back along the portal trail. */
+  portalTrailRestoreId: number;
   /**
    * Chosen playback origin from the marker. Transient — not persisted.
    * Null means walk from the graph Start node.
@@ -123,6 +133,17 @@ interface PathState {
     edges: Edge[],
     meta?: { pathId?: string; shareKey?: string | null; locked?: boolean }
   ) => void;
+  applyPortalHop: (args: {
+    nodes: Node[];
+    edges: Edge[];
+    pathId: string;
+    shareKey?: string | null;
+    locked?: boolean;
+    queue: string[];
+    trail: PortalTrailStop[];
+  }) => void;
+  restorePortalTrail: (index: number) => void;
+  clearPortalTrail: () => void;
   exportPlaylistFile: (
     id: string,
     kind?: 'playlist' | 'package'
@@ -186,6 +207,7 @@ function fromHold() {
 }
 
 const saveToStorage = (nodes: Node[], edges: Edge[]) => {
+  if (usePathStore.getState().playbackGraphOverride) return;
   library = saveActiveGraph(library, nodes, edges);
 };
 
@@ -210,6 +232,8 @@ const playbackReset = {
   selectedNodeIds: [] as string[],
   inspectorNodeId: null as string | null,
   commentLinkingId: null as string | null,
+  portalTrail: [] as PortalTrailStop[],
+  playbackGraphOverride: false,
 };
 
 export const usePathStore = create<PathState>((set, get) => ({
@@ -222,6 +246,9 @@ export const usePathStore = create<PathState>((set, get) => ({
   currentTrackIndex: 0,
   currentPlayingNodeId: null,
   playbackQueue: [],
+  portalTrail: [],
+  playbackGraphOverride: false,
+  portalTrailRestoreId: 0,
   selectedPlaybackStartNodeId: null,
   skipRequestId: 0,
   previousRequestId: 0,
@@ -502,7 +529,9 @@ export const usePathStore = create<PathState>((set, get) => ({
   },
   createPlaylist: (name) => {
     const current = usePathStore.getState();
-    library = saveActiveGraph(library, current.nodes, current.edges);
+    if (!current.playbackGraphOverride) {
+      library = saveActiveGraph(library, current.nodes, current.edges);
+    }
     releaseWorkshopHold();
     library = createPath(library, name);
     set({
@@ -516,7 +545,9 @@ export const usePathStore = create<PathState>((set, get) => ({
   switchPlaylist: (id) => {
     if (id === library.activeId) return;
     const current = usePathStore.getState();
-    library = saveActiveGraph(library, current.nodes, current.edges);
+    if (!current.playbackGraphOverride) {
+      library = saveActiveGraph(library, current.nodes, current.edges);
+    }
     const next = activatePath(library, id);
     if (!next) return;
     if (workshopHold && id !== workshopHold.path.id) releaseWorkshopHold();
@@ -530,7 +561,9 @@ export const usePathStore = create<PathState>((set, get) => ({
   deletePlaylist: (id) => {
     if (!library.paths.some((p) => p.id === id)) return;
     const current = usePathStore.getState();
-    library = saveActiveGraph(library, current.nodes, current.edges);
+    if (!current.playbackGraphOverride) {
+      library = saveActiveGraph(library, current.nodes, current.edges);
+    }
     const leaving = library.activeId === id;
     if (workshopHold?.path.id === id) releaseWorkshopHold();
     library = deletePath(library, id);
@@ -557,13 +590,16 @@ export const usePathStore = create<PathState>((set, get) => ({
   peekLibraryPaths: () => library.paths.map((path) => ({ ...path })),
   replaceGraphKeepPlayback: (nodes, edges, meta) => {
     const current = usePathStore.getState();
-    library = saveActiveGraph(library, current.nodes, current.edges);
+    if (!current.playbackGraphOverride) {
+      library = saveActiveGraph(library, current.nodes, current.edges);
+    }
     if (meta?.pathId && getPath(library, meta.pathId)) {
       const next = activatePath(library, meta.pathId);
       if (next) library = next;
       library = saveActiveGraph(library, nodes, edges);
       set({
         ...libraryView(),
+        playbackGraphOverride: false,
         ...(meta?.shareKey !== undefined ? { workshopShareKey: meta.shareKey } : {}),
         ...(meta?.locked !== undefined ? { graphLocked: meta.locked } : {}),
       });
@@ -572,10 +608,86 @@ export const usePathStore = create<PathState>((set, get) => ({
     set({
       nodes,
       edges,
+      playbackGraphOverride: true,
       ...(meta?.shareKey !== undefined ? { workshopShareKey: meta.shareKey } : {}),
       ...(meta?.locked !== undefined ? { graphLocked: meta.locked } : {}),
     });
   },
+  applyPortalHop: ({ nodes, edges, pathId, shareKey, locked, queue, trail }) => {
+    const current = usePathStore.getState();
+    if (!current.playbackGraphOverride) {
+      library = saveActiveGraph(library, current.nodes, current.edges);
+    }
+    const first = queue[0] || '';
+    const colon = first.indexOf(':');
+    const playingId = colon > 0 ? first.slice(colon + 1) : null;
+    const hopPlayback = {
+      playbackQueue: queue,
+      currentTrackIndex: 0,
+      currentPlayingNodeId: playingId,
+      portalTrail: trail,
+      selectedPlaybackStartNodeId: null as string | null,
+      ...(shareKey !== undefined ? { workshopShareKey: shareKey } : {}),
+      ...(locked !== undefined ? { graphLocked: locked } : {}),
+    };
+    if (pathId && getPath(library, pathId)) {
+      const next = activatePath(library, pathId);
+      if (next) library = next;
+      library = saveActiveGraph(library, nodes, edges);
+      set({
+        ...libraryView(),
+        playbackGraphOverride: false,
+        ...hopPlayback,
+      });
+      return;
+    }
+    set({
+      nodes,
+      edges,
+      playbackGraphOverride: true,
+      ...hopPlayback,
+    });
+  },
+  restorePortalTrail: (index) => {
+    const current = usePathStore.getState();
+    if (index < 0 || index >= current.portalTrail.length - 1) return;
+    const stop = current.portalTrail[index];
+    const trail = current.portalTrail.slice(0, index + 1);
+    if (!current.playbackGraphOverride && current.activePathId !== stop.playlistId) {
+      library = saveActiveGraph(library, current.nodes, current.edges);
+    }
+    const inLibrary = Boolean(
+      stop.playlistId && getPath(library, stop.playlistId) && !stop.memoryOnly
+    );
+    const restored = {
+      portalTrail: trail,
+      portalTrailRestoreId: current.portalTrailRestoreId + 1,
+      playbackQueue: [] as string[],
+      currentTrackIndex: 0,
+      currentPlayingNodeId: null as string | null,
+      selectedPlaybackStartNodeId: stop.landingNodeId,
+      workshopShareKey: stop.workshopShareKey,
+      graphLocked: stop.locked,
+    };
+    if (inLibrary) {
+      const next = activatePath(library, stop.playlistId);
+      if (next) library = next;
+      library = saveActiveGraph(library, stop.nodes, stop.edges);
+      set({
+        ...libraryView(),
+        playbackGraphOverride: false,
+        ...restored,
+      });
+      return;
+    }
+    set({
+      nodes: stop.nodes,
+      edges: stop.edges,
+      playbackGraphOverride: stop.memoryOnly,
+      ...restored,
+    });
+  },
+  clearPortalTrail: () => set({ portalTrail: [] }),
   syncWorkshopListing: (workshopId, visibility, sourcePathId) => {
     library = linkPathWorkshop(
       library,
@@ -590,7 +702,9 @@ export const usePathStore = create<PathState>((set, get) => ({
   },
   exportPlaylistFile: (id, kind = 'playlist') => {
     const current = usePathStore.getState();
-    library = saveActiveGraph(library, current.nodes, current.edges);
+    if (!current.playbackGraphOverride) {
+      library = saveActiveGraph(library, current.nodes, current.edges);
+    }
     const path = getPath(library, id);
     if (!path) return null;
     const themeState = useThemeStore.getState();
@@ -626,7 +740,9 @@ export const usePathStore = create<PathState>((set, get) => ({
         if (stored) workshopHold = { ...workshopHold, path: stored, locked: false };
       }
     } else {
-      library = saveActiveGraph(library, current.nodes, current.edges);
+      if (!current.playbackGraphOverride) {
+        library = saveActiveGraph(library, current.nodes, current.edges);
+      }
       releaseWorkshopHold();
       library = addImportedPath(library, {
         ...parsed.playlist,
@@ -653,7 +769,9 @@ export const usePathStore = create<PathState>((set, get) => ({
   },
   importWorkshopGraph: (name, nodes, edges, locked = false, shareKey, bind) => {
     const current = usePathStore.getState();
-    library = saveActiveGraph(library, current.nodes, current.edges);
+    if (!current.playbackGraphOverride) {
+      library = saveActiveGraph(library, current.nodes, current.edges);
+    }
     const boundId =
       bind?.id ||
       library.paths.find((p) => bind?.workshopId && p.workshopId === bind.workshopId)?.id ||
@@ -717,6 +835,8 @@ export function useGraphReadOnly(): boolean {
 
 export function snapshotPathLibrary(): PathLibrary {
   const state = usePathStore.getState();
-  library = saveActiveGraph(library, state.nodes, state.edges);
+  if (!state.playbackGraphOverride) {
+    library = saveActiveGraph(library, state.nodes, state.edges);
+  }
   return library;
 }

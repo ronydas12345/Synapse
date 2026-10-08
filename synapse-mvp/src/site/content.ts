@@ -94,7 +94,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'What is a Portal?',
-    a: 'A doorway between playlists. Wire into it to leave this playlist, or out of it to receive from another. Never both. An exit needs a destination (playlist start or an entry Portal ID). Unlisted playlists block inbound portals until you allow them in Settings.',
+    a: 'A doorway between playlists. Wire into it to leave this playlist, or out of it to receive from another. Never both. An exit needs a destination (playlist start or an entry Portal ID). Beginning hops are blue; hops to another playlist\'s portal are purple. After a hop, the player shows a [playlist, portal id] trail you can click to go back. Unlisted playlists block inbound portals until you allow them in Settings.',
   },
   {
     q: 'Do I need an account?',

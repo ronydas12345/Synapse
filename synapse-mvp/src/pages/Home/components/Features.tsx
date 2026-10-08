@@ -23,7 +23,7 @@ const FEATURES = [
   },
   {
     title: 'Portals',
-    body: 'Jump to another playlist. Wire in to leave, or out to receive — never both.',
+    body: 'Jump to another playlist. Wire in to leave, or out to receive — never both. Blue goes to a playlist beginning; purple lands on another playlist\'s portal.',
     status: 'Available',
   },
   {
