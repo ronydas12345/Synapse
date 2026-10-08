@@ -935,7 +935,8 @@ function ReactFlowContent() {
         targetNode.type === 'end' ||
         targetNode.type === 'randomizer' ||
         targetNode.type === 'transition' ||
-        targetNode.type === 'style';
+        targetNode.type === 'style' ||
+        targetNode.type === 'portal';
 
       if (!allowsMultipleInputs) {
         const existingIncoming = edges.filter(

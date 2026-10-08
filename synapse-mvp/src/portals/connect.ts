@@ -1,6 +1,6 @@
 import type { Edge, Node } from '@xyflow/react';
 import { portalHandleEnabled, portalIncomingEdges, portalOutgoingEdges, portalRole } from './role';
-import { PORTAL_IN_HANDLE, PORTAL_OUT_HANDLE } from './types';
+import { MAX_PORTAL_INPUTS, PORTAL_IN_HANDLE, PORTAL_OUT_HANDLE } from './types';
 
 function playEdges(edges: Edge[]): Edge[] {
   return edges.filter((edge) => !String(edge.id || '').startsWith('dashed-'));
@@ -30,8 +30,8 @@ export function portalConnectError(
     if (!portalHandleEnabled(role, PORTAL_IN_HANDLE)) {
       return 'This portal is already an entry from another playlist. Disconnect the exit path first.';
     }
-    if (portalIncomingEdges(targetNode.id, live).length > 0) {
-      return 'This portal already has an incoming path. Portals take one connection, as an exit or an entry — not both.';
+    if (portalIncomingEdges(targetNode.id, live).length >= MAX_PORTAL_INPUTS) {
+      return 'This portal already has two incoming paths.';
     }
   }
 

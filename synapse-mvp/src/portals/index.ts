@@ -55,6 +55,7 @@ export {
 } from './validate';
 export {
   MAX_PORTAL_HOPS,
+  MAX_PORTAL_INPUTS,
   PORTAL_IN_HANDLE,
   PORTAL_OUT_HANDLE,
   VIEWER_PORTAL_ERROR,

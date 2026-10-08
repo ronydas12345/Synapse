@@ -304,13 +304,15 @@ export const usePathStore = create<PathState>((set, get) => ({
         }
       }
 
-      // Allow multiple incoming edges only to track, end, randomizer, and transition nodes
-      const allowsMultipleInputs = 
-        targetNode?.type === 'track' || 
-        targetNode?.type === 'end' || 
+      // Most nodes take one input. Track/end/randomizer/transition/style merge freely.
+      // Portals are capped at two incoming paths in portalConnectError.
+      const allowsMultipleInputs =
+        targetNode?.type === 'track' ||
+        targetNode?.type === 'end' ||
         targetNode?.type === 'randomizer' ||
         targetNode?.type === 'transition' ||
-        targetNode?.type === 'style';
+        targetNode?.type === 'style' ||
+        targetNode?.type === 'portal';
       
       if (!allowsMultipleInputs) {
         const existingIncoming = state.edges.filter(

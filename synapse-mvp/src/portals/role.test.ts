@@ -22,6 +22,28 @@ describe('portal role XOR', () => {
     expect(portalHandleEnabled('unset', PORTAL_OUT_HANDLE)).toBe(true);
   });
 
+  it('lets an exit portal take a second incoming path, not a third', () => {
+    const portal = makeNode('p', 'portal', { portalId: 'P-AAA11BBB' });
+    const t1 = makeNode('t1', 'track');
+    const t2 = makeNode('t2', 'track');
+    const t3 = makeNode('t3', 'track');
+    const nodes = [portal, t1, t2, t3];
+    expect(
+      portalConnectError(
+        { source: 't2', target: 'p', targetHandle: PORTAL_IN_HANDLE },
+        nodes,
+        [makeEdge('t1', 'p')]
+      )
+    ).toBeNull();
+    expect(
+      portalConnectError(
+        { source: 't3', target: 'p', targetHandle: PORTAL_IN_HANDLE },
+        nodes,
+        [makeEdge('t1', 'p'), makeEdge('t2', 'p')]
+      )
+    ).toMatch(/two incoming/i);
+  });
+
   it('rejects connecting the other side after one is plugged', () => {
     const portal = makeNode('p', 'portal', { portalId: 'P-AAA11BBB' });
     const track = makeNode('t1', 'track');

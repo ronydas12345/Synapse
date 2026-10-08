@@ -2,6 +2,7 @@ import type { Edge, Node } from '@xyflow/react';
 import { collectPortalIds, isPortalId, normalizePortalId } from './ids';
 import { parsePortalNodeData } from './parse';
 import { portalIncomingEdges, portalOutgoingEdges, portalRole } from './role';
+import { MAX_PORTAL_INPUTS } from './types';
 
 export interface PortalIssue {
   nodeId: string;
@@ -43,11 +44,11 @@ export function validatePortalGraph(nodes: Node[], edges: Edge[]): PortalIssue[]
           'A portal can leave this playlist or receive from another playlist, never both. Disconnect one side.',
       });
     }
-    if (inCount > 1) {
+    if (inCount > MAX_PORTAL_INPUTS) {
       issues.push({
         nodeId: node.id,
         code: 'many_in',
-        message: 'A portal can have only one incoming path.',
+        message: 'A portal can merge at most two incoming paths.',
       });
     }
     if (outCount > 1) {

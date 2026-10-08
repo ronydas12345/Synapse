@@ -205,7 +205,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'b-connect',
         'Connecting nodes',
-        'Non-branching nodes allow one outgoing edge. Conditionals can fan out from numbered handles. Tracks, End, Randomizer, Transition, and Style can take multiple inputs. A Portal takes one side only: in to leave this playlist, or out to receive from another.',
+        'Non-branching nodes allow one outgoing edge. Conditionals can fan out from numbered handles. Tracks, End, Randomizer, Transition, and Style can take multiple inputs. A Portal is the other exception: an exit can merge two incoming paths. Still one side only — in to leave, or out to receive, never both.',
         { type: 'highlight', route: 'edit', target: 'canvas' }
       ),
       s(
@@ -541,7 +541,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'po-xor',
         'Leave or receive, never both',
-        'Connect into the portal to leave this playlist for another. Connect out of it to receive playback from another playlist. Once one side is plugged, the other handle is disabled. Disconnect to switch roles.',
+        'Connect into the portal to leave this playlist for another. An exit can take two incoming paths. Connect out of it to receive playback from another playlist. Once one side is plugged, the other handle is disabled. Disconnect to switch roles.',
         { type: 'highlight', route: 'edit', target: 'node-portal' }
       ),
       s(

@@ -1,6 +1,8 @@
 export const PORTAL_IN_HANDLE = 'in';
 export const PORTAL_OUT_HANDLE = 'out';
 export const MAX_PORTAL_HOPS = 32;
+/** Exit portals may merge this many incoming paths. Other node types keep the single-input rule. */
+export const MAX_PORTAL_INPUTS = 2;
 
 export type PortalRole = 'unset' | 'exit' | 'entry' | 'invalid';
 

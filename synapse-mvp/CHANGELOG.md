@@ -38,6 +38,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Changed
 
 - Portal nodes use unused colors: blue (`#1a7fd1`) when they go to a playlist beginning, purple (`#9d4ee8`) when they land on another playlist's portal.
+- Exit portals can merge two incoming paths.
 
 - Public Workshop profile banners are shorter: photo top-left, mid-size badges beside a near-full-size display name. Public playlists in the Playlists section link to their Workshop pages.
 - Privacy, Terms, and Cookie policies are rewritten as jurisdiction-neutral documents with shared layout, versioning, and copy that matches the current product.
