@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Bookmark } from 'lucide-react';
 import { APP_PATHS, navigateApp, publicProfilePath } from '../app/routes';
 import { useAuthStore } from '../auth/authStore';
 import BadgeStrip from '../badges/BadgeStrip';
@@ -208,8 +209,11 @@ export default function PublicProfilePage({ username }: { username: string }) {
             {creator.savesEnabled ? (
               <button
                 type="button"
-                className="synapse-btn synapse-btn-ghost"
+                className={`synapse-btn synapse-btn-ghost synapse-btn-icon${bookmarked ? ' is-on' : ''}`}
                 disabled={Boolean(busy)}
+                title={bookmarked ? 'Saved' : 'Bookmark creator'}
+                aria-label={bookmarked ? 'Remove creator bookmark' : 'Bookmark creator'}
+                aria-pressed={bookmarked}
                 onClick={() => {
                   if (!user) {
                     navigateApp(APP_PATHS.login);
@@ -224,7 +228,7 @@ export default function PublicProfilePage({ username }: { username: string }) {
                     .finally(() => setBusy(''));
                 }}
               >
-                {bookmarked ? 'Saved' : 'Save creator'}
+                <Bookmark fill={bookmarked ? 'currentColor' : 'none'} />
               </button>
             ) : null}
       </div>

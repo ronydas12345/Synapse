@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { Pause, Play } from 'lucide-react';
 import ReactFlowCanvas from './components/ReactFlowCanvas';
 import Sidebar from './components/Sidebar';
 import InspectorPanel from './components/InspectorPanel';
@@ -213,10 +214,12 @@ function WorkspaceApp({
             <button
               type="button"
               onClick={() => setIsPlaying(!isPlaying)}
-              className={`synapse-btn ${isPlaying ? 'synapse-btn-ghost' : 'synapse-btn-play'}`}
+              className={`synapse-btn synapse-btn-icon ${isPlaying ? 'synapse-btn-ghost' : 'synapse-btn-play'}`}
               data-tutorial="header-play"
+              title={isPlaying ? 'Pause' : 'Play'}
+              aria-label={isPlaying ? 'Pause' : 'Play'}
             >
-              {isPlaying ? 'Pause' : 'Play'}
+              {isPlaying ? <Pause /> : <Play />}
             </button>
             <button
               type="button"

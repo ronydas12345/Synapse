@@ -517,6 +517,22 @@ body {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+.synapse-btn-icon {
+  min-width: 2.35rem;
+  width: 2.35rem;
+  padding: 0;
+}
+
+.synapse-btn-icon svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.synapse-btn-icon.is-on {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+}
+
 @media (max-width: 640px) {
   .synapse-topbar {
     padding: 0.75rem 1rem;

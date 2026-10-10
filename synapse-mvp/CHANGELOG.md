@@ -31,6 +31,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- Workshop Play, Like, Edit, and Bookmark actions (and the header Play control) are icon buttons with labels in the tooltip and for assistive tech.
 - Public Workshop profile banners are shorter: photo top-left, mid-size badges beside a near-full-size display name. Public playlists in the Playlists section link to their Workshop pages.
 - Privacy, Terms, and Cookie policies are rewritten as jurisdiction-neutral documents with shared layout, versioning, and copy that matches the current product.
 - Sign-out still clears the on-screen account. Cloud playlists stay on the signed-in user and reload on the next login.

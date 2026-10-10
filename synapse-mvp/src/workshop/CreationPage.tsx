@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Node, Edge } from '@xyflow/react';
+import { Bookmark, GitFork, Heart, Pencil, Play } from 'lucide-react';
 import { PathLink } from '../app/AppLink';
 import {
   APP_PATHS,
@@ -223,18 +224,23 @@ export default function CreationPage({ id }: { id: string }) {
         ) : (
           <button
             type="button"
-            className="synapse-btn synapse-btn-play"
+            className="synapse-btn synapse-btn-play synapse-btn-icon"
             disabled={Boolean(busy)}
+            title="Play"
+            aria-label="Play"
             onClick={() => void openRemix(true)}
           >
-            Play
+            <Play />
           </button>
         )}
         {item.likesEnabled || own ? (
           <button
             type="button"
-            className="synapse-btn synapse-btn-ghost"
+            className={`synapse-btn synapse-btn-ghost synapse-btn-icon${liked ? ' is-on' : ''}`}
             disabled={Boolean(busy) || (!item.likesEnabled && !own)}
+            title={liked ? 'Liked' : 'Like'}
+            aria-label={liked ? 'Unlike' : 'Like'}
+            aria-pressed={liked}
             onClick={() =>
               void run('like', async () => {
                 const on = await toggleWorkshopLike(item.id);
@@ -243,14 +249,17 @@ export default function CreationPage({ id }: { id: string }) {
               })
             }
           >
-            {liked ? 'Liked' : 'Like'}
+            <Heart fill={liked ? 'currentColor' : 'none'} />
           </button>
         ) : null}
         {item.savesEnabled || own ? (
           <button
             type="button"
-            className="synapse-btn synapse-btn-ghost"
+            className={`synapse-btn synapse-btn-ghost synapse-btn-icon${saved ? ' is-on' : ''}`}
             disabled={Boolean(busy) || (!item.savesEnabled && !own)}
+            title={saved ? 'Saved' : 'Bookmark'}
+            aria-label={saved ? 'Remove bookmark' : 'Bookmark'}
+            aria-pressed={saved}
             onClick={() =>
               void run('save', async () => {
                 const on = await toggleWorkshopSave(item.id);
@@ -259,16 +268,18 @@ export default function CreationPage({ id }: { id: string }) {
               })
             }
           >
-            {saved ? 'Saved' : 'Save'}
+            <Bookmark fill={saved ? 'currentColor' : 'none'} />
           </button>
         ) : null}
         <button
           type="button"
-          className="synapse-btn synapse-btn-ghost"
+          className="synapse-btn synapse-btn-ghost synapse-btn-icon"
           disabled={Boolean(busy)}
+          title={item.kind === 'theme' ? 'Remix theme' : own ? 'Edit' : 'Remix'}
+          aria-label={item.kind === 'theme' ? 'Remix theme' : own ? 'Edit' : 'Remix'}
           onClick={() => void openRemix(false)}
         >
-          {item.kind === 'theme' ? 'Remix theme' : own ? 'Edit' : 'Remix'}
+          {item.kind === 'theme' || !own ? <GitFork /> : <Pencil />}
         </button>
       </div>
       {(item.visibility === 'public' || item.visibility === 'unlisted' || own) && item.shareCode ? (
