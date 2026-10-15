@@ -6,66 +6,55 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-10-13
+
+Accounts, Workshop, public profiles, and editor polish since 0.3.0.
+
 ### Added
 
+- Programming reference at `/docs`: graph model, node types, playback engine, `.synapse` files, and public URLs. Footer Documentation points here instead of the FAQ.
 - Supabase Auth with Google OAuth and email/password. Log in at `/login` or create an account at `/signup`. Edit, Listen, Settings, Profile, `/admin`, and `/superadmin` require sign-in. Username and display name are required.
 - Staff roles: verified owner email is Superadmin; other admins are stored in Postgres `roles` and can only be written by Superadmin. Separate Admin (`/admin`) and Superadmin (`/superadmin`) dashboards. Each role can open only its own dashboard, even when tools overlap. Row-level security enforces the permission boundary.
-- Minimize control on the bottom deck. The YouTube surface stays mounted so playback continues on Edit, Listen, Settings, and Profile.
-- Canvas multi-select (Shift-click or box-select) with copy, paste, and duplicate (Ctrl/Cmd+C, V, D).
 - Paths, themes, settings, profile extras, and tutorial progress save per user in Supabase (`user_workspaces`) instead of localStorage.
 - Workshop catalog: Home / New / Featured / Search / Saved, creation pages, publish (private / unlisted / public), like, save, comments, share IDs, remix, follows, and public or unlisted creator profiles at `/u/{username}` or `/p/{id}` / `/u/{id}`.
-- Curated Workshop tags for playlists and themes (separate vocabularies, searchable picker, max eight, no custom tags). Choose tags in Settings → Playlists, Settings → Themes, or the publish form before you post. Search and staff moderation can use them. Themes can be published to Workshop and applied from a creation page.
+- Curated Workshop tags for playlists and themes (separate vocabularies, searchable picker, max eight, no custom tags). Themes can be published to Workshop and applied from a creation page.
 - Short share IDs on public and unlisted users and Workshop playlists. Paste the ID, `/p/{id}`, `/u/{id}`, or `/s/{id}`. Creators can disable likes, comments, saves, and followers.
+- Guest Listen for a published path at `/listen/{id}` (graph locked).
 - Server-awarded badges (first creation, 10/25/100 uploads, one month, one year, admin, superadmin, 10/100 followers) and cosmetic decorations. Clients cannot insert badge rows.
+- Profile header shows the equipped frame, crown/ornament, nameplate, and compact badges. Decorations include silver/gold rings, creator laurel, admin star, and the Superuser crown. Badges pick up color, gems, and sheen as their tier goes up.
 - Global command palette (`Ctrl/Cmd+K`) for navigation, playback, playlists, nodes, settings sections, themes, and help.
-- Stop in the Edit header and command palette, distinct from Pause (Pause keeps the queue).
-- Workshop in the workspace top nav. Help stays available after sign-in.
-- Custom names on Sequence and other nodes, plus Bring selected/all onto page to pack named groups (travel, childhood, techno, …) onto one canvas view.
-- Inspector tabs on a selected track: Settings (global defaults and local), YouTube song info, and playlist/sequence context, with jump chips under Node Settings.
-- Open settings for a track that is parked inside a Sequence or Randomizer from the node list or inspector, without dragging it back onto the canvas.
+- Stop in the Edit header and command palette, distinct from Pause (Pause keeps the queue). Loop on the bottom deck repeats the current song without rebuilding the path.
+- Minimize control on the bottom deck. The YouTube surface stays mounted so playback continues on Edit, Listen, Settings, and Profile.
+- Canvas multi-select (Shift-click or box-select) with copy, paste, and duplicate (`Ctrl/Cmd+C`, `V`, `D`).
+- Custom names on Sequence and other nodes, plus Bring selected/all onto page. Inspector tabs on a selected track (Settings, YouTube info, playlist/sequence context). Open settings for a track parked inside a Sequence or Randomizer without dragging it back onto the canvas.
 - Playback speed on the bottom deck.
-- Own `/u/` pages include profile settings (visibility, badges, decorations) and a link to Profile settings. The workspace profile page links back to the public profile.
-- Profile header shows the equipped frame, crown/ornament, nameplate, and compact badges on a decoration banner instead of only listing them further down the page.
-- Profile decorations now show the handoff ornaments: silver/gold rings, creator laurel, admin star, and the Superuser crown. Staff frames also tint the display name.
-- Badges pick up color, gems, and sheen as their tier goes up (bronze through Superadmin).
+- Own `/u/` pages include profile settings (visibility, badges, decorations) and a link to Profile settings.
 
 ### Changed
 
 - Workshop Play, Like, Edit, and Bookmark actions (and the header Play control) are icon buttons with labels in the tooltip and for assistive tech.
-- Public Workshop profile banners are shorter: photo top-left, mid-size badges beside a near-full-size display name. Public playlists in the Playlists section link to their Workshop pages.
-- Privacy, Terms, and Cookie policies are rewritten as jurisdiction-neutral documents with shared layout, versioning, and copy that matches the current product.
-- Sign-out still clears the on-screen account. Cloud playlists stay on the signed-in user and reload on the next login.
-- The first-run tutorial waits about 50 seconds on the home page so people who already know where to go can click through. Scrolling to the bottom also opens it once. The tour starts with create-account or log in, then continues on Edit. Help (?) still opens it immediately for signed-out visitors. Signed-in accounts do not get the home-page prompt.
+- Public Workshop profile banners are shorter: photo top-left, mid-size badges beside a near-full-size display name, compact share ID in the banner. Public playlists in the Playlists section link to their Workshop pages.
+- Privacy, Terms, and Cookie policies are rewritten as jurisdiction-neutral documents with shared layout, versioning, and copy that matches the current product. Public Discord and email point at Connect Synapse.
+- Sign-out still clears the on-screen account. Cloud playlists stay on the signed-in user and reload on the next login. The playlist switcher loads from the account, not a leftover browser copy.
+- The first-run tutorial waits about 50 seconds on the home page so people who already know where to go can click through. Scrolling to the bottom also opens it once. Signed-in accounts do not get the home-page prompt.
 - Playlist name and switcher sit with Commands on the right of the workspace header, not beside the Synapse wordmark.
 - Empty inspector text fields restore the previous value when you click away. Shift-snap does not arm while a text box is focused.
-- The public profile link sits under the name in the profile identity block as an underlined theme accent. Profile frames use a small corner wash instead of full-panel gradients.
-- Workshop type filter includes Users so public profiles are a catalog category beside Playlists and Themes.
-- Workshop will not publish built-in themes or renamed copies that keep the same colors. Local publish preview lives at `/u/workshop_preview`. Local profile-visibility preview lives at `/u/vis_preview`.
-- Login is a compact card: Email, Password, Sign in, Google, then Sign up. Placeholders stay left-aligned; the rest of the card is centered.
-- Signup matches that compact card (email, password, username, display name, Create account, Google, then Log in). Login and signup pages are fully center-aligned.
-- About uses the Superuser profile photo (no decorations), updated copy, and Connect buttons for GitHub, Discord, and email. The photo and a View profile button open `/u/dasrony231`.
+- Workshop type filter includes Users. Catalog tiles mix by upload time. Import can replace into the current playlist. Workshop will not publish built-in themes or renamed copies that keep the same colors.
+- Login and signup are compact centered cards. About uses the Superuser profile photo and Connect buttons for GitHub, Discord, and email.
 - Public `/u/` pages show the same optional profile details as Profile settings: location, bio, saved (own page), genres, favorite songs, playlists, and listen stats.
 - Track nodes keep Song Title as the only name field. The extra inspector Name (used for Sequence and other nodes) is gone on tracks.
 
 ### Fixed
 
 - Reload keeps the Supabase session. Names load from the profile row before the app decides anyone is signed out.
-- Workshop listing and badge pages no longer fail when the API schema cache is still catching up. Publish, badges, and public profiles read the live Workshop tables.
-- Home marketing header no longer lets the Synapse wordmark overlap Home or Pricing overlap the theme picker. The bar uses the full window width, and the inline nav collapses sooner on Home where the theme control is extra.
-- Equipping a profile frame (or featured badge) no longer fails with `column reference "uid" is ambiguous`.
-- Profile banners stay on the default panel until the saved frame loads, so a staff ring does not flash and then snap back.
-- If a frame or featured badge fails to save, the picker snaps back instead of looking equipped.
-- Public / unlisted / private profile visibility writes through `set_profile_public` instead of a table UPDATE that collided on `uid`. Staff helper functions are no longer inlined into RLS, which was still raising `column reference "uid" is ambiguous`.
-- Profile edit lets you feature a badge by clicking it, even if progress evaluation fails to refresh awards.
-- Workshop publish no longer fails with `column "default_likes_enabled" does not exist`.
+- Playlist library, profile visibility, location/bio/details, and listen stats persist on the account row instead of snapping back after reload.
+- Equipping a frame or featured badge no longer fails on ambiguous `uid`. Failed saves snap the picker back. Banners wait for the saved frame so a staff ring does not flash.
+- Workshop listing, publish, badges, and public profiles read the live tables (including when the API schema cache is still catching up). Publish no longer fails on a missing `default_likes_enabled` column.
+- Setting a profile to Public writes immediately so the account shows under Workshop → Users, and no longer snaps back to Private (`bio` variable collision).
 - Saved themes apply from a local cache before the cloud workspace loads, so pages no longer flash Standard Dark first.
-- Setting a profile to public writes `profiles` and `creator_public` immediately, so the account shows under Workshop → Users. All types also lists public profiles.
-- Choosing Public no longer snaps back to Private. `set_profile_public` had a PL/pgSQL variable named `bio` that collided with the column, same class of bug as ambiguous `uid`.
-- Profile visibility no longer resets on reload. Workspace save was writing the stale private JSON back over the profile row.
-- Workshop Users lists accounts from the profile row’s visibility, so a public profile still appears if the catalog copy lagged.
-- Location, bio, genres, songs, section order, and listen stats now persist on the profile row (same path as visibility) so `/u/` still has them after reload.
-- Featured badges and decorations update the profile banner as soon as you pick them, including on your public `/u/` page.
-- Non-role badges show the date they were earned.
+- Featured badges and decorations update the profile banner as soon as you pick them. Non-role badges show the date they were earned.
+- Home marketing header no longer lets the Synapse wordmark overlap Home or Pricing overlap the theme picker.
+- Song loop is a separate deck control and shows when it is on.
 
 ## [0.3.0] — 2026-08-30
 

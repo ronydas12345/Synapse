@@ -63,6 +63,9 @@ describe('app routes', () => {
     expect(isMarketingRoute('workshopItem')).toBe(true);
     expect(isMarketingRoute('publicProfile')).toBe(true);
     expect(isMarketingRoute('shareLookup')).toBe(true);
+    expect(pathToRoute('/docs')).toBe('docs');
+    expect(isAppPath('/docs')).toBe(true);
+    expect(isMarketingRoute('docs')).toBe(true);
     expect(pathToRoute('/pricing')).toBe('pricing');
     expect(pathToRoute('/login')).toBe('login');
     expect(pathToRoute('/signin')).toBe('login');

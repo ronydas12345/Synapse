@@ -52,7 +52,7 @@ const SECTIONS = [
   { id: 'account', label: 'Account', keywords: 'profile login visibility username google oauth signin account email' },
   { id: 'privacy', label: 'Privacy / Data', keywords: 'localstorage cache clear erase metadata weather' },
   { id: 'pro', label: 'Pro', keywords: 'billing premium' },
-  { id: 'support', label: 'Support', keywords: 'faq changelog privacy terms help ticket' },
+  { id: 'support', label: 'Support', keywords: 'faq changelog docs documentation privacy terms help ticket' },
 ] as const;
 
 const DELETE_PHRASE = 'DELETE';
@@ -404,10 +404,13 @@ export default function SettingsPage() {
             <section id="settings-support" className="synapse-settings-section" data-tutorial="settings-support">
               <h2>Support</h2>
               <p className="synapse-settings-lead">
-                File a ticket for staff. FAQ and legal pages stay public.
+                File a ticket for staff. Docs, FAQ, and legal pages stay public.
               </p>
               <SupportForm />
               <div className="synapse-theme-actions">
+                <AppLink to="docs" className="synapse-btn synapse-btn-ghost">
+                  Docs
+                </AppLink>
                 <AppLink to="faq" className="synapse-btn synapse-btn-ghost">
                   FAQ
                 </AppLink>

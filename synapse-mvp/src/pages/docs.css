@@ -1,0 +1,234 @@
+.synapse-docs {
+  max-width: 72rem;
+}
+
+.synapse-docs-hero h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin: 0 0 0.5rem;
+}
+
+.synapse-docs-hero .synapse-mkt-lead {
+  max-width: 42rem;
+}
+
+.synapse-docs-layout {
+  display: grid;
+  gap: 1.75rem 2.25rem;
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 860px) {
+  .synapse-docs-layout {
+    grid-template-columns: 13.5rem minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.synapse-docs-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+@media (min-width: 860px) {
+  .synapse-docs-toc {
+    position: sticky;
+    top: 5.25rem;
+    display: grid;
+    gap: 0.45rem;
+    padding-top: 0.2rem;
+  }
+}
+
+.synapse-docs-toc a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.synapse-docs-toc a:hover,
+.synapse-docs-toc a:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.synapse-docs-body {
+  min-width: 0;
+  max-width: 52rem;
+}
+
+.synapse-docs-body h2 {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 2rem 0 0.7rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border);
+  scroll-margin-top: 5.5rem;
+}
+
+.synapse-docs-body h2:first-child {
+  margin-top: 0;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.synapse-docs-body h3 {
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 1.35rem 0 0.45rem;
+  scroll-margin-top: 5.5rem;
+}
+
+.synapse-docs-body h4 {
+  font-size: 0.95rem;
+  margin: 1rem 0 0.35rem;
+  scroll-margin-top: 5.5rem;
+}
+
+.synapse-docs-body p,
+.synapse-docs-body li {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.synapse-docs-body p {
+  margin: 0.45rem 0 0.85rem;
+}
+
+.synapse-docs-body ul,
+.synapse-docs-body ol {
+  margin: 0.35rem 0 1rem;
+  padding-left: 1.25rem;
+}
+
+.synapse-docs-body li {
+  margin: 0.3rem 0;
+}
+
+.synapse-docs-body li::marker {
+  color: var(--accent);
+}
+
+.synapse-docs-body strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.synapse-docs-body a {
+  color: var(--accent);
+}
+
+.synapse-docs-body code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  color: var(--text);
+  background: var(--bg-elevated);
+  padding: 0.08em 0.35em;
+  border-radius: 4px;
+}
+
+.synapse-docs-body pre {
+  margin: 0.6rem 0 1.15rem;
+  padding: 0.85rem 1rem;
+  overflow: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.synapse-docs-body pre code {
+  display: block;
+  padding: 0;
+  background: none;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre;
+}
+
+.synapse-md-table-wrap {
+  overflow-x: auto;
+  margin: 0.5rem 0 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.synapse-docs-body table,
+.synapse-mkt-legal-block table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.synapse-docs-body th,
+.synapse-docs-body td,
+.synapse-mkt-legal-block th,
+.synapse-mkt-legal-block td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.45rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.synapse-docs-body th,
+.synapse-mkt-legal-block th {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+}
+
+.synapse-docs-body tr:last-child td,
+.synapse-mkt-legal-block tr:last-child td {
+  border-bottom: 0;
+}
+
+.synapse-docs-body hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 1.75rem 0;
+}
+
+.synapse-help-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.15rem;
+  margin: 0.85rem 0 0;
+  font-size: 0.92rem;
+}
+
+.synapse-help-nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.synapse-help-nav a:hover,
+.synapse-help-nav a:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.synapse-help-nav a[aria-current='page'] {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+  pointer-events: none;
+}
+
+.synapse-help-nav a:not(:last-child)::after {
+  content: '|';
+  margin: 0 0.55rem;
+  color: var(--border-strong);
+  font-weight: 400;
+  text-decoration: none;
+}

@@ -161,6 +161,13 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       run: () => go(APP_PATHS.signup),
     },
     {
+      id: 'go-docs',
+      group: 'Go',
+      label: 'Go to Documentation',
+      keywords: 'docs reference api nodes engine format',
+      run: () => go(APP_PATHS.docs),
+    },
+    {
       id: 'go-faq',
       group: 'Go',
       label: 'Go to FAQ',

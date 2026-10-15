@@ -55,6 +55,7 @@ describe('buildCommands', () => {
       queueLength: 0,
     });
     expect(guest.some((command) => command.id === 'go-login')).toBe(true);
+    expect(guest.some((command) => command.id === 'go-docs')).toBe(true);
     expect(guest.some((command) => command.id === 'go-edit')).toBe(false);
     expect(guest.some((command) => command.id === 'play')).toBe(false);
     expect(guest.some((command) => command.id === 'delete-path')).toBe(false);

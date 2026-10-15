@@ -45,6 +45,7 @@ import {
 import ShareLookupPage from './share/ShareLookupPage';
 import PricingPage from './pages/PricingPage';
 import ChangelogPage from './pages/ChangelogPage';
+import DocsPage from './pages/DocsPage';
 import FaqPage from './pages/FaqPage';
 import PrivacyPage, { CookiesPage, TermsPage } from './pages/LegalPages';
 import LoginPage from './pages/LoginPage';
@@ -85,6 +86,7 @@ function MarketingPage({ location }: { location: AppLocation }) {
   if (route === 'workshop') return <WorkshopPage />;
   if (route === 'pricing') return <PricingPage />;
   if (route === 'changelog') return <ChangelogPage />;
+  if (route === 'docs') return <DocsPage />;
   if (route === 'faq') return <FaqPage />;
   if (route === 'privacy') return <PrivacyPage />;
   if (route === 'terms') return <TermsPage />;

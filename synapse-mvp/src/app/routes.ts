@@ -10,6 +10,7 @@ export type AppRoute =
   | 'shareLookup'
   | 'pricing'
   | 'changelog'
+  | 'docs'
   | 'faq'
   | 'privacy'
   | 'terms'
@@ -40,6 +41,7 @@ export type AppPath =
   | '/workshop'
   | '/pricing'
   | '/changelog'
+  | '/docs'
   | '/faq'
   | '/privacy'
   | '/terms'
@@ -89,6 +91,7 @@ export const APP_PATHS: Record<StaticAppRoute, AppPath> = {
   workshop: '/workshop',
   pricing: '/pricing',
   changelog: '/changelog',
+  docs: '/docs',
   faq: '/faq',
   privacy: '/privacy',
   terms: '/terms',
@@ -113,6 +116,7 @@ const MARKETING: ReadonlySet<AppRoute> = new Set([
   'shareLookup',
   'pricing',
   'changelog',
+  'docs',
   'faq',
   'privacy',
   'terms',
@@ -178,6 +182,7 @@ export function parseAppLocation(pathname: string): AppLocation {
   if (p === '/workshop') return { route: 'workshop' };
   if (p === '/pricing') return { route: 'pricing' };
   if (p === '/changelog') return { route: 'changelog' };
+  if (p === '/docs') return { route: 'docs' };
   if (p === '/faq') return { route: 'faq' };
   if (p === '/privacy') return { route: 'privacy' };
   if (p === '/terms') return { route: 'terms' };

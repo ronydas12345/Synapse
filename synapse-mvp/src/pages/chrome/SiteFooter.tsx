@@ -52,7 +52,7 @@ export default function SiteFooter() {
           <p className="synapse-mkt-foot-label">Resources</p>
           <ul>
             <li>
-              <AppLink to="faq">Documentation</AppLink>
+              <AppLink to="docs">Documentation</AppLink>
             </li>
             <li>
               <AppLink to="home" hash="how-it-works">

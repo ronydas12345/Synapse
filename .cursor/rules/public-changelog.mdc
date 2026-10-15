@@ -1,0 +1,14 @@
+---
+description: Record public product changes in CHANGELOG.md and keep /docs accurate
+alwaysApply: true
+---
+
+# Public changelog and docs
+
+When you ship a **user-visible** change (UI, playback, Workshop, profiles, auth, legal, routes, docs), add a Keep a Changelog bullet under `synapse-mvp/CHANGELOG.md` → `## [Unreleased]` (`Added` / `Changed` / `Fixed` / `Removed`). Write for people using the app, not for git history.
+
+Do this even if the user did not mention the changelog. Skip secrets, staff-only internals, local-only previews (`vis_preview`, `workshop_preview`), and work that is not on the branch being released.
+
+If the change affects node types, the playback engine, `.synapse` files, share IDs, or public URLs, update `synapse-mvp/DOCS.md` in the same change.
+
+To cut a release: move Unreleased notes into `## [x.y.z] — YYYY-MM-DD` and bump `synapse-mvp/package.json`.

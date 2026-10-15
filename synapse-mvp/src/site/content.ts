@@ -91,6 +91,10 @@ export const WORKSHOP_EXAMPLES = [
 
 export const FAQ_ITEMS = [
   {
+    q: 'Where is the documentation?',
+    a: 'The programming reference is at `/docs`: graph model, node types, playback engine, `.synapse` files, and public URLs. This FAQ is short answers. Product history is `/changelog`.',
+  },
+  {
     q: 'What is a Music Path?',
     a: 'A Music Path is a graph of nodes—tracks, conditionals, randomizers, transitions—that decides what plays next. It is not a fixed list of songs.',
   },

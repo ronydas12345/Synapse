@@ -35,6 +35,10 @@ const PAGE_META: Partial<Record<AppRoute, { title: string; description: string }
     title: 'Changelog — Synapse',
     description: 'What changed in the Synapse app.',
   },
+  docs: {
+    title: 'Documentation — Synapse',
+    description: 'Reference for Music Paths, node types, the playback engine, .synapse files, and public URLs.',
+  },
   faq: {
     title: 'FAQ — Synapse',
     description: 'Common questions about Music Paths, YouTube playback, and account data.',

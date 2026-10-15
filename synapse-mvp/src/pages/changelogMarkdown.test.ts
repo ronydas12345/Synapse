@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { parseChangelogBlocks, splitChangelogVersions } from './changelogMarkdown';
+import {
+  docsToc,
+  headingId,
+  parseChangelogBlocks,
+  parseMarkdownBlocks,
+  splitChangelogVersions,
+} from './changelogMarkdown';
 
 describe('changelog markdown', () => {
   it('splits versions and parses headings, lists, and paragraphs', () => {
@@ -30,6 +36,39 @@ Intro line.
         kind: 'ul',
         items: ['A link [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)'],
       },
+    ]);
+  });
+});
+
+describe('docs markdown', () => {
+  it('parses fenced code, tables, ordered lists, and heading ids', () => {
+    const md = `## Graph model
+
+Intro.
+
+\`\`\`ts
+type Graph = { nodes: Node[] }
+\`\`\`
+
+| type | role |
+| --- | --- |
+| \`track\` | YouTube |
+
+1. First
+2. Second
+`;
+    expect(headingId('Graph model')).toBe('graph-model');
+    expect(docsToc(md)).toEqual([{ id: 'graph-model', label: 'Graph model' }]);
+    expect(parseMarkdownBlocks(md)).toEqual([
+      { kind: 'h2', text: 'Graph model' },
+      { kind: 'p', text: 'Intro.' },
+      { kind: 'code', lang: 'ts', text: 'type Graph = { nodes: Node[] }' },
+      {
+        kind: 'table',
+        headers: ['type', 'role'],
+        rows: [['`track`', 'YouTube']],
+      },
+      { kind: 'ol', items: ['First', 'Second'] },
     ]);
   });
 });

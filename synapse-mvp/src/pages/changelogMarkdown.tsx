@@ -11,6 +11,14 @@ function safeHref(href: string): string | null {
   return null;
 }
 
+export function headingId(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[`*]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export function renderInline(text: string, keyPrefix = 'i'): ReactNode[] {
   const parts = text.split(INLINE).filter((p) => p !== '');
   return parts.map((part, i) => {
@@ -40,16 +48,37 @@ export function renderInline(text: string, keyPrefix = 'i'): ReactNode[] {
   });
 }
 
-type Block =
-  | { kind: 'h3'; text: string }
+export type MarkdownBlock =
+  | { kind: 'h2' | 'h3' | 'h4'; text: string }
   | { kind: 'p'; text: string }
-  | { kind: 'ul'; items: string[] };
+  | { kind: 'ul'; items: string[] }
+  | { kind: 'ol'; items: string[] }
+  | { kind: 'code'; lang: string; text: string }
+  | { kind: 'table'; headers: string[]; rows: string[][] }
+  | { kind: 'hr' };
 
-export function parseChangelogBlocks(md: string): Block[] {
+type Block = MarkdownBlock;
+
+function splitCells(line: string): string[] {
+  return line
+    .trim()
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((cell) => cell.trim());
+}
+
+function isSepRow(cells: string[]): boolean {
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+export function parseMarkdownBlocks(md: string): Block[] {
   const lines = md.replace(/\r\n/g, '\n').split('\n');
   const out: Block[] = [];
   let para: string[] = [];
-  let list: string[] = [];
+  let list: { ordered: boolean; items: string[] } | null = null;
+  let fence: { lang: string; lines: string[] } | null = null;
+  let table: string[] | null = null;
 
   const flushPara = () => {
     const text = para.join(' ').trim();
@@ -57,31 +86,91 @@ export function parseChangelogBlocks(md: string): Block[] {
     if (text) out.push({ kind: 'p', text });
   };
   const flushList = () => {
-    if (list.length) {
-      out.push({ kind: 'ul', items: list });
-      list = [];
+    if (list?.items.length) {
+      out.push({ kind: list.ordered ? 'ol' : 'ul', items: list.items });
     }
+    list = null;
+  };
+  const flushTable = () => {
+    if (!table?.length) {
+      table = null;
+      return;
+    }
+    const rows = table.map(splitCells);
+    table = null;
+    if (!rows.length) return;
+    const headers = rows[0];
+    const body = rows.slice(1).filter((row) => !isSepRow(row));
+    out.push({ kind: 'table', headers, rows: body });
   };
 
   for (const raw of lines) {
-    const line = raw.trimEnd();
-    const trimmed = line.trim();
+    if (fence) {
+      if (raw.trimStart().startsWith('```')) {
+        out.push({ kind: 'code', lang: fence.lang, text: fence.lines.join('\n') });
+        fence = null;
+      } else {
+        fence.lines.push(raw);
+      }
+      continue;
+    }
+
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('```')) {
+      flushPara();
+      flushList();
+      flushTable();
+      fence = { lang: trimmed.slice(3).trim(), lines: [] };
+      continue;
+    }
     if (!trimmed) {
       flushPara();
       flushList();
+      flushTable();
       continue;
     }
-    const heading = trimmed.match(/^#{3,6}\s+(.+)$/);
+    if (trimmed === '---' || trimmed === '***' || trimmed === '___') {
+      flushPara();
+      flushList();
+      flushTable();
+      out.push({ kind: 'hr' });
+      continue;
+    }
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+      flushPara();
+      flushList();
+      (table ??= []).push(trimmed);
+      continue;
+    }
+    flushTable();
+
+    const heading = trimmed.match(/^(#{2,6})\s+(.+)$/);
     if (heading) {
       flushPara();
       flushList();
-      out.push({ kind: 'h3', text: heading[1].trim() });
+      const level = Math.min(4, heading[1].length) as 2 | 3 | 4;
+      const kind = level === 2 ? 'h2' : level === 3 ? 'h3' : 'h4';
+      out.push({ kind, text: heading[2].trim() });
       continue;
     }
-    const item = trimmed.match(/^[-*]\s+(.+)$/);
-    if (item) {
+    const ol = trimmed.match(/^\d+\.\s+(.+)$/);
+    if (ol) {
       flushPara();
-      list.push(item[1]);
+      if (!list || !list.ordered) {
+        flushList();
+        list = { ordered: true, items: [] };
+      }
+      list.items.push(ol[1]);
+      continue;
+    }
+    const ul = trimmed.match(/^[-*]\s+(.+)$/);
+    if (ul) {
+      flushPara();
+      if (!list || list.ordered) {
+        flushList();
+        list = { ordered: false, items: [] };
+      }
+      list.items.push(ul[1]);
       continue;
     }
     flushList();
@@ -89,27 +178,81 @@ export function parseChangelogBlocks(md: string): Block[] {
   }
   flushPara();
   flushList();
+  flushTable();
+  if (fence) {
+    out.push({ kind: 'code', lang: fence.lang, text: fence.lines.join('\n') });
+  }
   return out;
 }
 
-export function renderChangelogBody(md: string): ReactNode {
-  const blocks = parseChangelogBlocks(md);
+/** @deprecated alias — changelog and docs share the same parser */
+export const parseChangelogBlocks = parseMarkdownBlocks;
+
+export function renderMarkdownBody(md: string): ReactNode {
+  const blocks = parseMarkdownBlocks(md);
   return blocks.map((block, i) => {
-    if (block.kind === 'h3') {
-      return <h3 key={`h-${i}`}>{renderInline(block.text, `h${i}`)}</h3>;
-    }
-    if (block.kind === 'ul') {
+    if (block.kind === 'h2' || block.kind === 'h3' || block.kind === 'h4') {
+      const Tag = block.kind;
+      const id = headingId(block.text);
       return (
-        <ul key={`u-${i}`}>
-          {block.items.map((item, j) => (
-            <li key={`u-${i}-${j}`}>{renderInline(item, `u${i}-${j}`)}</li>
-          ))}
-        </ul>
+        <Tag key={`h-${i}`} id={id}>
+          {renderInline(block.text, `h${i}`)}
+        </Tag>
       );
+    }
+    if (block.kind === 'ul' || block.kind === 'ol') {
+      const Tag = block.kind;
+      return (
+        <Tag key={`l-${i}`}>
+          {block.items.map((item, j) => (
+            <li key={`l-${i}-${j}`}>{renderInline(item, `l${i}-${j}`)}</li>
+          ))}
+        </Tag>
+      );
+    }
+    if (block.kind === 'code') {
+      return (
+        <pre key={`c-${i}`}>
+          <code className={block.lang ? `language-${block.lang}` : undefined}>
+            {block.text}
+          </code>
+        </pre>
+      );
+    }
+    if (block.kind === 'table') {
+      return (
+        <div key={`t-${i}`} className="synapse-md-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                {block.headers.map((header, j) => (
+                  <th key={`t-${i}-h-${j}`}>{renderInline(header, `th${i}-${j}`)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {block.rows.map((row, r) => (
+                <tr key={`t-${i}-r-${r}`}>
+                  {row.map((cell, c) => (
+                    <td key={`t-${i}-r-${r}-c-${c}`}>
+                      {renderInline(cell, `td${i}-${r}-${c}`)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    if (block.kind === 'hr') {
+      return <hr key={`hr-${i}`} />;
     }
     return <p key={`p-${i}`}>{renderInline(block.text, `p${i}`)}</p>;
   });
 }
+
+export const renderChangelogBody = renderMarkdownBody;
 
 export function splitChangelogVersions(raw: string): { title: string; body: string }[] {
   return raw
@@ -120,4 +263,10 @@ export function splitChangelogVersions(raw: string): { title: string; body: stri
       const [titleLine, ...rest] = block.trim().split('\n');
       return { title: titleLine.trim(), body: rest.join('\n').trim() };
     });
+}
+
+export function docsToc(md: string): { id: string; label: string }[] {
+  return parseMarkdownBlocks(md)
+    .filter((block): block is Extract<Block, { kind: 'h2' }> => block.kind === 'h2')
+    .map((block) => ({ id: headingId(block.text), label: block.text }));
 }

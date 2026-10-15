@@ -50,6 +50,7 @@ export function AppLink({
   className,
   title,
   onNavigate,
+  'aria-current': ariaCurrent,
 }: {
   to: StaticAppRoute;
   hash?: string;
@@ -57,6 +58,7 @@ export function AppLink({
   className?: string;
   title?: string;
   onNavigate?: () => void;
+  'aria-current'?: 'page';
 }) {
   const href = appHref(APP_PATHS[to], hash);
   return (
@@ -64,6 +66,7 @@ export function AppLink({
       href={href}
       className={className}
       title={title}
+      aria-current={ariaCurrent}
       onClick={(event) => {
         if (!clickNavigates(event)) return;
         event.preventDefault();
