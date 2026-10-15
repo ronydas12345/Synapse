@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-10-14
+
+### Fixed
+
+- Production TypeScript build for the `/docs` reference (heading blocks in the markdown parser).
+
 ## [0.4.0] — 2026-10-13
 
 Accounts, Workshop, public profiles, and editor polish since 0.3.0.

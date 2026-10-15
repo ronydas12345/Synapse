@@ -49,7 +49,9 @@ export function renderInline(text: string, keyPrefix = 'i'): ReactNode[] {
 }
 
 export type MarkdownBlock =
-  | { kind: 'h2' | 'h3' | 'h4'; text: string }
+  | { kind: 'h2'; text: string }
+  | { kind: 'h3'; text: string }
+  | { kind: 'h4'; text: string }
   | { kind: 'p'; text: string }
   | { kind: 'ul'; items: string[] }
   | { kind: 'ol'; items: string[] }
@@ -148,9 +150,11 @@ export function parseMarkdownBlocks(md: string): Block[] {
     if (heading) {
       flushPara();
       flushList();
-      const level = Math.min(4, heading[1].length) as 2 | 3 | 4;
-      const kind = level === 2 ? 'h2' : level === 3 ? 'h3' : 'h4';
-      out.push({ kind, text: heading[2].trim() });
+      const text = heading[2].trim();
+      const hashes = heading[1].length;
+      if (hashes === 2) out.push({ kind: 'h2', text });
+      else if (hashes === 3) out.push({ kind: 'h3', text });
+      else out.push({ kind: 'h4', text });
       continue;
     }
     const ol = trimmed.match(/^\d+\.\s+(.+)$/);
@@ -266,7 +270,9 @@ export function splitChangelogVersions(raw: string): { title: string; body: stri
 }
 
 export function docsToc(md: string): { id: string; label: string }[] {
-  return parseMarkdownBlocks(md)
-    .filter((block): block is Extract<Block, { kind: 'h2' }> => block.kind === 'h2')
-    .map((block) => ({ id: headingId(block.text), label: block.text }));
+  return parseMarkdownBlocks(md).flatMap((block) =>
+    block.kind === 'h2'
+      ? [{ id: headingId(block.text), label: block.text }]
+      : []
+  );
 }
