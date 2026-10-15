@@ -27,8 +27,7 @@ export default function UseCases() {
   return (
     <section className="synapse-mkt-section" id="solutions" aria-labelledby="solutions-title">
       <Reveal>
-        <p className="synapse-mkt-kicker">Solutions</p>
-        <h2 id="solutions-title">The same graph, different kinds of listening.</h2>
+        <h2 id="solutions-title">Uses</h2>
         <div className="synapse-mkt-cards synapse-mkt-cards-3">
           {CASES.map((c) => (
             <article key={c.title} className="synapse-mkt-card">

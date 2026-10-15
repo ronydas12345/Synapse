@@ -183,10 +183,9 @@ export default function CreationPage({ id }: { id: string }) {
               : 'Public playlist'}
       </p>
       <h1>{item.title}</h1>
-      <p className="synapse-mkt-lead">
-        {item.description ||
-          (item.kind === 'theme' ? 'A published theme.' : 'A published Music Path.')}
-      </p>
+      {item.description ? (
+        <p className="synapse-mkt-lead">{item.description}</p>
+      ) : null}
       <p className="synapse-workshop-meta">
         {item.creatorUsername ? (
           <PathLink href={publicProfilePath(item.creatorUsername)}>

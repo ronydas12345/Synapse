@@ -56,11 +56,8 @@ export default function SiteFooter() {
             </li>
             <li>
               <AppLink to="home" hash="how-it-works">
-                Getting Started
+                How it works
               </AppLink>
-            </li>
-            <li>
-              <AppLink to="workshop">Community</AppLink>
             </li>
             <li>
               <AppLink to="faq">FAQ</AppLink>

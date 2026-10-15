@@ -12,11 +12,10 @@ export default function ThemeShowcase() {
   return (
     <section className="synapse-mkt-section" id="themes" aria-labelledby="themes-title">
       <Reveal>
-        <p className="synapse-mkt-kicker">Themes</p>
-        <h2 id="themes-title">The path stays. The world around it changes.</h2>
+        <h2 id="themes-title">Themes</h2>
         <p className="synapse-mkt-lead">
-          Pick a preset (or a custom theme you already saved). The homepage and
-          the editor share the same choice. Import and export stay in Settings.
+          Homepage and editor share the same theme. Import and export are in
+          Settings.
         </p>
         <HomeThemePicker />
         <div className="synapse-mkt-theme-row">

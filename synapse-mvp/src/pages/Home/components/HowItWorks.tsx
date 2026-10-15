@@ -21,7 +21,7 @@ const STEPS: { scene: PathScene; title: string; body: string }[] = [
   {
     scene: 'step4',
     title: 'Press Play',
-    body: 'Synapse follows the path and dynamically determines what plays next.',
+    body: 'Press play. The path picks the next song.',
   },
 ];
 
@@ -36,8 +36,7 @@ export default function HowItWorks() {
       aria-labelledby="how-title"
     >
       <Reveal>
-        <p className="synapse-mkt-kicker">How it works</p>
-        <h2 id="how-title">Four steps from a blank canvas to a living mix.</h2>
+        <h2 id="how-title">How it works</h2>
         <div className="synapse-mkt-how-grid">
           <div className="synapse-mkt-how-steps" role="tablist" aria-label="How Synapse works">
             {STEPS.map((s, i) => (

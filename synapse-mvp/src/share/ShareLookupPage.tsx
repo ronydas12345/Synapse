@@ -25,7 +25,6 @@ export default function ShareLookupPage({ shareRef }: { shareRef: string }) {
 
   return (
     <main id="main" className="synapse-mkt-main synapse-mkt-page">
-      <p className="synapse-mkt-kicker">Share</p>
       <h1>Opening {shareRef}</h1>
       <p className="synapse-settings-lead">{error || 'Looking up that ID…'}</p>
     </main>

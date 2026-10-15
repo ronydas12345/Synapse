@@ -8,7 +8,6 @@ export default function ChangelogPage() {
   return (
     <main id="main" className="synapse-mkt-main synapse-mkt-page synapse-mkt-prose">
       <h1>Changelog</h1>
-      <p className="synapse-mkt-lead">Notes from the Synapse app. Newest first.</p>
       <HelpNav here="changelog" />
       {versions.map((version) => (
         <article key={version.title} className="synapse-mkt-legal-block">

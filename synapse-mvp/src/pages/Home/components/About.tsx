@@ -76,8 +76,7 @@ export default function About() {
       aria-labelledby="about-title"
     >
       <Reveal>
-        <p className="synapse-mkt-kicker">About</p>
-        <h2 id="about-title">Music should feel more like something you explore.</h2>
+        <h2 id="about-title">About</h2>
         <div className="synapse-mkt-about-grid">
           <div className="synapse-mkt-avatar">
             <PathLink
@@ -90,8 +89,7 @@ export default function About() {
           </div>
           <div>
             <p>{CREATOR.bio}</p>
-            <p>{CREATOR.why}</p>
-            <p>{CREATOR.philosophy}</p>
+            {CREATOR.why ? <p>{CREATOR.why}</p> : null}
             <div className="synapse-mkt-connect">
               <h3>Connect</h3>
               <div className="synapse-mkt-connect-row">

@@ -207,12 +207,10 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
       aria-labelledby="workshop-title"
       data-tutorial="workshop"
     >
-      <p className="synapse-mkt-kicker">Workshop</p>
-      <h2 id="workshop-title">Build it. Share it. Discover something new.</h2>
+      <h2 id="workshop-title">Workshop</h2>
       <p className="synapse-mkt-lead">
-        Public Music Paths, themes, and users live here. Filter by type or tags,
-        then like, save, comment, remix, and follow. Unlisted items share with an
-        ID or a link. Private drafts stay on your account until you publish.
+        Public playlists, themes, and profiles. Unlisted items open with an ID
+        or a link.
       </p>
       {preview ? null : (
         <div className="synapse-workshop-tabs" role="tablist" aria-label="Workshop views">
@@ -269,7 +267,7 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
       {tab === 'search' && !preview ? (
         <div className="synapse-workshop-filters">
           <label className="synapse-settings-field">
-            Search titles, descriptions, usernames, and tags
+            Search
             <input
               className="synapse-settings-input"
               value={query}
@@ -304,8 +302,8 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
           ) : (
             <p className="synapse-settings-lead">
               {kind === 'user'
-                ? 'Users lists public profiles by name and username.'
-                : 'Choose Playlists or Themes to filter by that catalog’s tags.'}
+                ? 'Public profiles by name and username.'
+                : 'Pick Playlists or Themes to filter by tags.'}
             </p>
           )}
         </div>

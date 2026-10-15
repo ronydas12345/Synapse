@@ -42,8 +42,7 @@ export default function Features() {
   return (
     <section className="synapse-mkt-section" id="features" aria-labelledby="features-title">
       <Reveal>
-        <p className="synapse-mkt-kicker">Features</p>
-        <h2 id="features-title">Everything you need to build your perfect listening system.</h2>
+        <h2 id="features-title">Features</h2>
         <div className="synapse-mkt-cards">
           {FEATURES.map((f) => (
             <article key={f.title} className="synapse-mkt-card">

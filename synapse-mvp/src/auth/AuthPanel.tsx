@@ -98,10 +98,7 @@ export default function AuthPanel({
   if (variant === 'account' && !user) {
     return (
       <div className="synapse-auth-panel" data-tutorial="auth-panel">
-        <p className="synapse-settings-lead">
-          Log in to use your workspace. Username and display name are required
-          when you create an account.
-        </p>
+        <p className="synapse-settings-lead">Log in to use the workspace.</p>
         <div className="synapse-theme-actions">
           <AppLink to="login" className="synapse-btn synapse-btn-play">
             Log in

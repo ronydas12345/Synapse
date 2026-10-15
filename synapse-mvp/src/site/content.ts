@@ -4,10 +4,10 @@ export const SITE = {
   name: 'Synapse',
   title: 'Synapse — Visual Music Paths',
   description:
-    'Build dynamic music paths with visual nodes, conditional playback, randomization, transitions, and themes.',
+    'Music paths for YouTube: nodes, conditions, randomizers, transitions, and themes.',
   ogTitle: 'Synapse — Visual Music Paths',
   ogDescription:
-    'Build dynamic music paths with visual nodes, conditional playback, randomization, transitions, and themes.',
+    'Music paths for YouTube: nodes, conditions, randomizers, transitions, and themes.',
   ogImage: '/og.svg',
   canonicalOrigin: '',
 };

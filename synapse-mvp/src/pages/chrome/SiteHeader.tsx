@@ -14,7 +14,7 @@ import OpenWorkspaceLink from '../../components/OpenWorkspaceLink';
 const NAV = [
   { to: 'home' as const, label: 'Home' },
   { to: 'home' as const, hash: 'features', label: 'Features' },
-  { to: 'home' as const, hash: 'solutions', label: 'Solutions' },
+  { to: 'home' as const, hash: 'solutions', label: 'Uses' },
   { to: 'home' as const, hash: 'about', label: 'About' },
   { to: 'workshop' as const, label: 'Workshop' },
   { to: 'pricing' as const, label: 'Pricing' },
