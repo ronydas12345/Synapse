@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Public profile header leaves more space between the display name and the compact badges beside it.
+
+### Fixed
+
+- Compact profile badges stay level when some have an earned date and others do not.
+
 ## [0.4.2] — 2026-10-15
 
 ### Changed
