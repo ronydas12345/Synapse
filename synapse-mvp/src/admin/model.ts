@@ -59,6 +59,9 @@ export interface SupportTicket {
   assignedAdminUid: string;
   createdAt: Date | null;
   updatedAt: Date | null;
+  lastStaffReplyAt: Date | null;
+  staffReplySeenAt: Date | null;
+  unreadStaffReply: boolean;
 }
 
 export interface TicketMessage {

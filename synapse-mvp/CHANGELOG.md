@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Settings shows a red notice when an admin or superadmin replies to one of your support tickets. It clears after you open that ticket.
+
 ### Changed
 
 - Public profile header leaves more space between the display name and the compact badges beside it.

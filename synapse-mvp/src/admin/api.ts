@@ -4,6 +4,7 @@ import { avatarPathFromPublicUrl } from '../cloud/avatar';
 import { useAuthStore } from '../auth/authStore';
 import { identityFromFields } from '../auth/identity';
 import { asDate } from './dates';
+import { isUnreadStaffReply } from './ticketNotice';
 import {
   httpsPhoto,
   type AccountStatus,
@@ -62,6 +63,8 @@ type TicketRow = {
   assigned_admin_uid: string | null;
   created_at: string | null;
   updated_at: string | null;
+  last_staff_reply_at?: string | null;
+  staff_reply_seen_at?: string | null;
 };
 
 function platformUser(data: ProfileRow): PlatformUser | null {
@@ -339,6 +342,12 @@ function ticketFrom(row: TicketRow): SupportTicket | null {
     assignedAdminUid: str(row.assigned_admin_uid),
     createdAt: asDate(row.created_at),
     updatedAt: asDate(row.updated_at),
+    lastStaffReplyAt: asDate(row.last_staff_reply_at),
+    staffReplySeenAt: asDate(row.staff_reply_seen_at),
+    unreadStaffReply: isUnreadStaffReply(
+      asDate(row.last_staff_reply_at),
+      asDate(row.staff_reply_seen_at)
+    ),
   };
 }
 

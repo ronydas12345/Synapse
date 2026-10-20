@@ -20,6 +20,7 @@ import {
 import { hydrateUserWorkspace, resetUserWorkspace } from '../cloud/workspace';
 import { recordConsents } from '../admin/privacy';
 import { evaluateOwnProgress } from '../badges/api';
+import { stopTicketNotice, watchTicketNotice } from '../admin/ticketNoticeStore';
 
 function restoreIdentity(user: SessionUser): AccountIdentity | null {
   return firstCompleteIdentity(
@@ -68,11 +69,13 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       if (!user) {
         useProfileStore.getState().clearAccount();
         setStaffState(false, 'active');
+        stopTicketNotice();
         void resetUserWorkspace();
         return;
       }
 
       adoptIdentity(user.uid, restoreIdentity(user) || currentIdentity());
+      watchTicketNotice(user.uid);
 
       stopRole = subscribeStaffAdmin(user.uid, (activeAdmin) => {
         setStaffState(activeAdmin, useAuthStore.getState().accountStatus);
@@ -113,6 +116,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       stopAuth();
       stopRole?.();
       stopStatus?.();
+      stopTicketNotice();
     };
   }, [setFromUser, setStaffState]);
 

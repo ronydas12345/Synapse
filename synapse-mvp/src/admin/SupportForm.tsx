@@ -3,9 +3,13 @@ import { createTicket, listOwnTickets, listTicketMessages, replyToTicket } from 
 import { formatWhen } from './dates';
 import type { SupportTicket, TicketMessage, TicketPriority } from './model';
 import { useAuthStore } from '../auth/authStore';
+import NavNotice from './NavNotice';
+import { useTicketNoticeStore } from './ticketNoticeStore';
 
 export default function SupportForm() {
   const uid = useAuthStore((s) => s.user?.uid);
+  const markSeen = useTicketNoticeStore((s) => s.markSeen);
+  const unreadIds = useTicketNoticeStore((s) => s.unreadIds);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [priority, setPriority] = useState<TicketPriority>('normal');
@@ -102,10 +106,17 @@ export default function SupportForm() {
           <li key={ticket.id}>
             <button
               type="button"
-              className="synapse-auth-switch"
-              onClick={() => setOpenId(ticket.id === openId ? null : ticket.id)}
+              className={`synapse-auth-switch${ticket.unreadStaffReply || unreadIds.includes(ticket.id) ? ' has-notice' : ''}`}
+              onClick={() => {
+                const next = ticket.id === openId ? null : ticket.id;
+                setOpenId(next);
+                if (next) void markSeen(next).then(() => void reload());
+              }}
             >
               {ticket.subject} · {ticket.status}
+              {ticket.unreadStaffReply || unreadIds.includes(ticket.id) ? (
+                <NavNotice />
+              ) : null}
             </button>
             <p className="synapse-settings-hint">{formatWhen(ticket.createdAt)}</p>
             {openId === ticket.id ? (

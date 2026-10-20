@@ -26,6 +26,8 @@ import {
 import { useProfileStore } from './profile/profileStore';
 import AuthControls from './auth/AuthControls';
 import { useAuthStore } from './auth/authStore';
+import NavNotice from './admin/NavNotice';
+import { useTicketNoticeStore } from './admin/ticketNoticeStore';
 import RequireAuth from './auth/RequireAuth';
 import { useAppSettings } from './settings/settingsStore';
 import { applyPageMeta } from './site/seo';
@@ -112,6 +114,7 @@ function WorkspaceApp({
   const avatarUrl = useProfileStore((s) => s.profile.avatarUrl);
   const username = useProfileStore((s) => s.profile.username);
   const role = useAuthStore((s) => s.role);
+  const hasTicketNotice = useTicketNoticeStore((s) => s.unreadIds.length > 0);
   const photo = avatar || avatarUrl;
   const listen = route === 'listen';
   const settings = route === 'settings';
@@ -174,9 +177,12 @@ function WorkspaceApp({
           </AppLink>
           <AppLink
             to="settings"
-            className={`synapse-mode-btn ${settings ? 'is-active' : ''}`}
+            hash={hasTicketNotice ? 'settings-support' : undefined}
+            className={`synapse-mode-btn${settings ? ' is-active' : ''}${hasTicketNotice ? ' has-notice' : ''}`}
+            title={hasTicketNotice ? 'Settings · new support reply' : undefined}
           >
             Settings
+            {hasTicketNotice ? <NavNotice /> : null}
           </AppLink>
           <AppLink
             to="profile"

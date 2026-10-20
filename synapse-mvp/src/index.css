@@ -375,6 +375,7 @@ body {
   border: 1px solid var(--border);
   background: var(--bg-elevated);
   flex-shrink: 0;
+  overflow: visible;
 }
 
 .synapse-mode-btn {
@@ -400,6 +401,38 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  position: relative;
+}
+
+.synapse-nav-notice {
+  position: absolute;
+  top: -0.12rem;
+  left: 50%;
+  width: 0.48rem;
+  height: 0.48rem;
+  margin-left: -0.24rem;
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 0 2px var(--bg-elevated);
+  pointer-events: none;
+}
+
+.synapse-settings-nav-item,
+.synapse-auth-switch.has-notice {
+  position: relative;
+}
+
+.synapse-settings-nav-item.has-notice,
+.synapse-auth-switch.has-notice {
+  padding-right: 1.15rem;
+}
+
+.synapse-settings-nav-item .synapse-nav-notice,
+.synapse-auth-switch .synapse-nav-notice {
+  top: 0.28rem;
+  right: 0.35rem;
+  left: auto;
+  margin-left: 0;
 }
 
 .synapse-mode-avatar {

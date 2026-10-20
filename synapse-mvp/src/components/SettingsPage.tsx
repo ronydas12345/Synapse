@@ -18,6 +18,8 @@ import { deleteOwnAccount, exportMyAccount } from '../admin/privacy';
 import { useProfileStore } from '../profile/profileStore';
 import { useAppSettings } from '../settings/settingsStore';
 import SupportForm from '../admin/SupportForm';
+import NavNotice from '../admin/NavNotice';
+import { useTicketNoticeStore } from '../admin/ticketNoticeStore';
 import PublishForm from '../workshop/PublishForm';
 import TagPicker from '../workshop/TagPicker';
 import { setWorkshopVisibility } from '../workshop/api';
@@ -134,6 +136,7 @@ function PlaylistDeletePanel({
 
 export default function SettingsPage() {
   const [query, setQuery] = useState('');
+  const hasTicketNotice = useTicketNoticeStore((s) => s.unreadIds.length > 0);
   const customThemes = useThemeStore((s) => s.customThemes);
   const pathSummaries = usePathStore((s) => s.pathSummaries);
   const activePathId = usePathStore((s) => s.activePathId);
@@ -228,13 +231,14 @@ export default function SettingsPage() {
             <a
               key={s.id}
               href={`#settings-${s.id}`}
-              className={`synapse-settings-nav-item${activeId === s.id ? ' is-active' : ''}`}
+              className={`synapse-settings-nav-item${activeId === s.id ? ' is-active' : ''}${s.id === 'support' && hasTicketNotice ? ' has-notice' : ''}`}
               onClick={(e) => {
                 e.preventDefault();
                 jumpTo(s.id);
               }}
             >
               {s.label}
+              {s.id === 'support' && hasTicketNotice ? <NavNotice /> : null}
             </a>
           ))}
         </nav>
