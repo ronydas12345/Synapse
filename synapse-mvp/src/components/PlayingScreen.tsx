@@ -182,6 +182,7 @@ export default function PlayingScreen({
           disabled={!queueActive && !isPlaying}
           currentTime={currentTime}
           duration={duration}
+          hideMix
           showPlayButton={false}
           onTogglePlay={onTogglePlay}
           onPrevious={onPrevious}

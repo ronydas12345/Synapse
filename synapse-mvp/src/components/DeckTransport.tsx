@@ -1,23 +1,90 @@
 import { Play, Pause, Repeat, SkipBack, SkipForward } from 'lucide-react';
 import { formatClock } from '../playback';
+import { useAppSettings } from '../settings/settingsStore';
 
 const SEEK_STEPS = [-10, -5, 5, 10] as const;
 
-interface DeckTransportProps {
-  isPlaying: boolean;
+interface DeckMixProps {
   disabled: boolean;
   currentTime: number;
   duration: number;
+  onSeekTo: (seconds: number) => void;
+  speed?: number;
+  onSpeedChange?: (speed: number) => void;
+}
+
+interface DeckTransportProps extends DeckMixProps {
+  isPlaying: boolean;
   onTogglePlay: () => void;
   onPrevious: () => void;
   onNext: () => void;
   loopTrack?: boolean;
   onToggleLoop?: () => void;
   onSeekBy: (delta: number) => void;
-  onSeekTo: (seconds: number) => void;
   showPlayButton?: boolean;
-  speed?: number;
-  onSpeedChange?: (speed: number) => void;
+  hideMix?: boolean;
+}
+
+export function DeckMix({
+  disabled,
+  currentTime,
+  duration,
+  onSeekTo,
+  speed,
+  onSpeedChange,
+}: DeckMixProps) {
+  const max = duration > 0 ? duration : 0;
+  const masterVolume = useAppSettings((s) => s.playback.masterVolume);
+  const updatePlayback = useAppSettings((s) => s.updatePlayback);
+  const speedValue = speed ?? 100;
+
+  return (
+    <div className="synapse-transport-mix">
+      <div className="synapse-transport-progress">
+        <span className="synapse-clock">{formatClock(currentTime)}</span>
+        <input
+          type="range"
+          min={0}
+          max={max || 1}
+          step={0.25}
+          value={Math.min(currentTime, max || 0)}
+          disabled={disabled || max <= 0}
+          aria-label="Seek"
+          onChange={(e) => onSeekTo(Number(e.target.value))}
+        />
+        <span className="synapse-clock">{formatClock(duration)}</span>
+      </div>
+      <div className="synapse-transport-sliders">
+        <label className="synapse-transport-slider is-speed">
+          <span>Speed</span>
+          <input
+            type="range"
+            min={25}
+            max={200}
+            step={5}
+            value={speedValue}
+            disabled={disabled || !onSpeedChange}
+            aria-label="Playback speed"
+            onChange={(e) => onSpeedChange?.(Number(e.target.value))}
+          />
+          <span className="synapse-clock">{speedValue}%</span>
+        </label>
+        <label className="synapse-transport-slider is-volume">
+          <span>Volume</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={masterVolume}
+            aria-label="Master volume"
+            onChange={(e) => updatePlayback({ masterVolume: Number(e.target.value) })}
+          />
+          <span className="synapse-clock">{masterVolume}%</span>
+        </label>
+      </div>
+    </div>
+  );
 }
 
 export default function DeckTransport({
@@ -35,9 +102,8 @@ export default function DeckTransport({
   showPlayButton = true,
   speed,
   onSpeedChange,
+  hideMix = false,
 }: DeckTransportProps) {
-  const max = duration > 0 ? duration : 0;
-
   return (
     <div className="synapse-transport-deck" data-tutorial="deck-transport">
       <div className="synapse-transport-row">
@@ -111,36 +177,16 @@ export default function DeckTransport({
           </button>
         ) : null}
       </div>
-      <div className="synapse-transport-progress">
-        <span className="synapse-clock">{formatClock(currentTime)}</span>
-        <input
-          type="range"
-          min={0}
-          max={max || 1}
-          step={0.25}
-          value={Math.min(currentTime, max || 0)}
-          disabled={disabled || max <= 0}
-          aria-label="Seek"
-          onChange={(e) => onSeekTo(Number(e.target.value))}
+      {hideMix ? null : (
+        <DeckMix
+          disabled={disabled}
+          currentTime={currentTime}
+          duration={duration}
+          onSeekTo={onSeekTo}
+          speed={speed}
+          onSpeedChange={onSpeedChange}
         />
-        <span className="synapse-clock">{formatClock(duration)}</span>
-      </div>
-      {onSpeedChange ? (
-        <label className="synapse-transport-speed">
-          <span>Speed</span>
-          <input
-            type="range"
-            min={25}
-            max={200}
-            step={5}
-            value={speed ?? 100}
-            disabled={disabled}
-            aria-label="Playback speed"
-            onChange={(e) => onSpeedChange(Number(e.target.value))}
-          />
-          <span className="synapse-clock">{speed ?? 100}%</span>
-        </label>
-      ) : null}
+      )}
     </div>
   );
 }

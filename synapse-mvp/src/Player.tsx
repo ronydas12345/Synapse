@@ -10,7 +10,7 @@ import {
 } from './playback';
 import { getTrackDisplayMeta } from './trackMetadata';
 import { clampTrackTimes } from './playback/trackTimes';
-import DeckTransport from './components/DeckTransport';
+import DeckTransport, { DeckMix } from './components/DeckTransport';
 import AudioVisualizer from './components/AudioVisualizer';
 import PlayingScreen from './components/PlayingScreen';
 import { buildListenRows } from './listenPath';
@@ -773,11 +773,31 @@ export default function Player() {
       data-tutorial="player"
       id={listListen ? 'workspace-main' : undefined}
     >
-      <div
-        ref={ytContainerRef}
-        className="synapse-deck-screen"
-        aria-label="YouTube player"
-      />
+      <div className="synapse-deck-stage">
+        <div
+          ref={ytContainerRef}
+          className="synapse-deck-screen"
+          aria-label="YouTube player"
+        />
+        <DeckMix
+          disabled={!queueActive && !isPlaying}
+          currentTime={currentTime}
+          duration={duration}
+          onSeekTo={handleSeekTo}
+          speed={
+            currentNode?.data?.speed != null ? Number(currentNode.data.speed) : 100
+          }
+          onSpeedChange={
+            graphReadOnly
+              ? undefined
+              : (speed) => {
+                  if (currentParsed?.kind === 'track' && currentNodeId) {
+                    updateNodeData(currentNodeId, { speed });
+                  }
+                }
+          }
+        />
+      </div>
       <button
         type="button"
         className="synapse-deck-min-btn"
@@ -862,6 +882,7 @@ export default function Player() {
               disabled={!queueActive}
               currentTime={currentTime}
               duration={duration}
+              hideMix
               onTogglePlay={() => setIsPlaying(!isPlaying)}
               onPrevious={() => requestPrevious()}
               onNext={() => requestSkip()}
