@@ -18,6 +18,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - Compact profile badges stay level when some have an earned date and others do not.
+- Posting a Workshop comment no longer fails with a database error.
 
 ## [0.4.2] — 2026-10-15
 
