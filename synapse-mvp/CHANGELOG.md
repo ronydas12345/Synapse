@@ -14,6 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - The player deck keeps the original seek bar and puts half-width speed and volume sliders under it.
 - Public profile header leaves more space between the display name and the compact badges beside it.
+- Workshop comments show the author's photo, display name, and colored badges in their own card.
 
 ### Fixed
 

@@ -1,8 +1,11 @@
 import { supabase, isMissingSchema, isSchemaCacheError, throwIfError } from '../supabase/client';
 import { workshopItemPath } from '../app/routes';
+import type { EarnedBadge } from '../badges/api';
+import { BADGE_CATALOG, badgeDef } from '../badges/catalog';
 import { parseTheme } from '../theme/parseTheme';
 import { builtinThemePublishError } from '../theme/isPresetTheme';
 import type { SynapseTheme } from '../theme/types';
+import { readPublicCreatorsByUids } from '../profiles/api';
 import type {
   ReportReason,
   WorkshopCard,
@@ -443,8 +446,102 @@ export interface WorkshopComment {
   id: string;
   uid: string;
   username: string;
+  displayName: string;
+  photoUrl: string;
+  featuredBadge: string;
+  equippedDecoration: string;
+  badges: EarnedBadge[];
   body: string;
   createdAt: string | null;
+}
+
+function mapCommentBadges(raw: unknown): EarnedBadge[] {
+  if (!Array.isArray(raw)) return [];
+  const order = new Map(BADGE_CATALOG.map((badge, index) => [badge.id, index]));
+  return raw
+    .map((row) => {
+      if (!row || typeof row !== 'object') return null;
+      const item = row as Record<string, unknown>;
+      const id = str(item.id ?? item.badge_id);
+      const def = badgeDef(id);
+      if (!def) return null;
+      const awarded =
+        typeof item.awardedAt === 'string'
+          ? item.awardedAt
+          : typeof item.awarded_at === 'string'
+            ? item.awarded_at
+            : null;
+      return { id, awardedAt: awarded, def };
+    })
+    .filter((badge): badge is EarnedBadge => Boolean(badge))
+    .sort((a, b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99));
+}
+
+function mapComment(row: Record<string, unknown>): WorkshopComment {
+  return {
+    id: str(row.id),
+    uid: str(row.uid),
+    username: str(row.username),
+    displayName: str(row.displayName ?? row.display_name),
+    photoUrl: str(row.photoUrl ?? row.photo_url),
+    featuredBadge: str(row.featuredBadge ?? row.featured_badge),
+    equippedDecoration:
+      str(row.equippedDecoration ?? row.equipped_decoration) || 'default',
+    badges: mapCommentBadges(row.badges),
+    body: str(row.body),
+    createdAt:
+      typeof row.createdAt === 'string'
+        ? row.createdAt
+        : typeof row.created_at === 'string'
+          ? row.created_at
+          : null,
+  };
+}
+
+async function hydrateCommentAuthors(
+  comments: WorkshopComment[]
+): Promise<WorkshopComment[]> {
+  const uids = [...new Set(comments.map((comment) => comment.uid).filter(Boolean))];
+  if (uids.length === 0) return comments;
+  const badgeQuery = supabase
+    .from('user_badges')
+    .select('uid, badge_id, awarded_at')
+    .in('uid', uids);
+  const [authors, badgeResult] = await Promise.all([
+    readPublicCreatorsByUids(uids).catch(() => []),
+    badgeQuery,
+  ]);
+  const authorsByUid = new Map(authors.map((author) => [author.uid, author]));
+  const badgesByUid = new Map<string, EarnedBadge[]>();
+  if (!isMissingSchema(badgeResult.error) && !badgeResult.error) {
+    for (const row of badgeResult.data ?? []) {
+      const uid = str((row as { uid?: string }).uid);
+      const mapped = mapCommentBadges([row]);
+      if (!uid || mapped.length === 0) continue;
+      const list = badgesByUid.get(uid) ?? [];
+      list.push(...mapped);
+      badgesByUid.set(uid, list);
+    }
+  }
+  return comments.map((comment) => {
+    const author = authorsByUid.get(comment.uid);
+    const badges = comment.badges.length
+      ? comment.badges
+      : badgesByUid.get(comment.uid) ?? [];
+    if (!author && badges.length === comment.badges.length) return comment;
+    return {
+      ...comment,
+      username: comment.username || author?.username || '',
+      displayName: comment.displayName || author?.displayName || '',
+      photoUrl: comment.photoUrl || author?.photoUrl || '',
+      featuredBadge: comment.featuredBadge || author?.featuredBadge || '',
+      equippedDecoration:
+        comment.equippedDecoration !== 'default'
+          ? comment.equippedDecoration
+          : author?.equippedDecoration || comment.equippedDecoration,
+      badges,
+    };
+  });
 }
 
 export async function listWorkshopComments(id: string): Promise<WorkshopComment[]> {
@@ -452,16 +549,9 @@ export async function listWorkshopComments(id: string): Promise<WorkshopComment[
   if (isMissingSchema(error)) return [];
   throwIfError(error);
   if (!Array.isArray(data)) return [];
-  return data.map((row) => {
-    const item = row as Record<string, unknown>;
-    return {
-      id: str(item.id),
-      uid: str(item.uid),
-      username: str(item.username),
-      body: str(item.body),
-      createdAt: typeof item.createdAt === 'string' ? item.createdAt : null,
-    };
-  });
+  return hydrateCommentAuthors(
+    data.map((row) => mapComment(row as Record<string, unknown>))
+  );
 }
 
 export async function addWorkshopComment(id: string, body: string): Promise<void> {

@@ -30,6 +30,7 @@ import {
   toggleWorkshopSave,
   type WorkshopComment,
 } from './api';
+import CommentCard from './CommentCard';
 import TagChips from './TagChips';
 import TagPicker from './TagPicker';
 import { openOwnedWorkshopPlaylist } from './ownedPath';
@@ -458,39 +459,18 @@ export default function CreationPage({ id }: { id: string }) {
           ) : (
             <ul className="synapse-workshop-comment-list">
               {comments.map((comment) => (
-                <li key={comment.id} className="synapse-workshop-comment">
-                  <p>
-                    {comment.username ? (
-                      <PathLink href={publicProfilePath(comment.username)}>
-                        @{comment.username}
-                      </PathLink>
-                    ) : (
-                      'Someone'
-                    )}
-                    {comment.createdAt ? (
-                      <span className="synapse-profile-muted">
-                        {' '}
-                        · {new Date(comment.createdAt).toLocaleString()}
-                      </span>
-                    ) : null}
-                  </p>
-                  <p>{comment.body}</p>
-                  {user && (user.uid === comment.uid || own) ? (
-                    <button
-                      type="button"
-                      className="synapse-btn synapse-btn-ghost"
-                      disabled={Boolean(busy)}
-                      onClick={() =>
-                        void run('delete-comment', async () => {
-                          await deleteWorkshopComment(comment.id);
-                          await reload();
-                        })
-                      }
-                    >
-                      Delete
-                    </button>
-                  ) : null}
-                </li>
+                <CommentCard
+                  key={comment.id}
+                  comment={comment}
+                  canDelete={Boolean(user && (user.uid === comment.uid || own))}
+                  busy={Boolean(busy)}
+                  onDelete={() =>
+                    void run('delete-comment', async () => {
+                      await deleteWorkshopComment(comment.id);
+                      await reload();
+                    })
+                  }
+                />
               ))}
             </ul>
           )}
