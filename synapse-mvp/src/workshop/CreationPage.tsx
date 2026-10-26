@@ -20,6 +20,7 @@ import {
   getWorkshopCreation,
   likedCreationIds,
   listWorkshopComments,
+  subscribeWorkshopComments,
   reportWorkshopCreation,
   remixWorkshopCreation,
   savedCreationIds,
@@ -66,11 +67,38 @@ export default function CreationPage({ id }: { id: string }) {
     setComments(thread);
   }
 
+  async function refreshComments(creationId: string) {
+    const thread = await listWorkshopComments(creationId);
+    setComments(thread);
+    setItem((current) =>
+      current && current.id === creationId
+        ? { ...current, commentCount: thread.length }
+        : current
+    );
+  }
+
   useEffect(() => {
     void reload().catch((err) => {
       setError(err instanceof Error ? err.message : 'Could not load this creation.');
     });
   }, [id, user]);
+
+  useEffect(() => {
+    const creationId = item?.id;
+    if (!creationId) return undefined;
+    const pull = () => {
+      void refreshComments(creationId).catch(() => {});
+    };
+    const stop = subscribeWorkshopComments(creationId, pull);
+    const onFocus = () => {
+      pull();
+    };
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      stop();
+    };
+  }, [item?.id]);
 
   const own = Boolean(user && item && user.uid === item.creatorUid);
   const shareKey = item?.shareCode || item?.id || id;
@@ -432,7 +460,7 @@ export default function CreationPage({ id }: { id: string }) {
                 void run('comment', async () => {
                   await addWorkshopComment(item.id, commentBody);
                   setCommentBody('');
-                  await reload();
+                  await refreshComments(item.id);
                 });
               }}
             >
@@ -467,7 +495,7 @@ export default function CreationPage({ id }: { id: string }) {
                   onDelete={() =>
                     void run('delete-comment', async () => {
                       await deleteWorkshopComment(comment.id);
-                      await reload();
+                      await refreshComments(item.id);
                     })
                   }
                 />

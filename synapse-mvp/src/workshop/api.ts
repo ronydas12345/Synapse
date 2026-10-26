@@ -554,12 +554,37 @@ export async function listWorkshopComments(id: string): Promise<WorkshopComment[
   );
 }
 
-export async function addWorkshopComment(id: string, body: string): Promise<void> {
-  const { error } = await supabase.rpc('add_workshop_comment', {
+export function subscribeWorkshopComments(
+  creationId: string,
+  onChange: () => void
+): () => void {
+  const channel = supabase
+    .channel(`workshop-comments:${creationId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'workshop_comments',
+        filter: `creation_id=eq.${creationId}`,
+      },
+      () => {
+        onChange();
+      }
+    )
+    .subscribe();
+  return () => {
+    void supabase.removeChannel(channel);
+  };
+}
+
+export async function addWorkshopComment(id: string, body: string): Promise<string> {
+  const { data, error } = await supabase.rpc('add_workshop_comment', {
     p_id: id,
     p_body: body,
   });
   throwIfError(error);
+  return str(data);
 }
 
 export async function deleteWorkshopComment(id: string): Promise<void> {
