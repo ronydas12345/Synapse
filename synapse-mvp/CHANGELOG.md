@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.4.3] — 2026-10-28
+
 ### Added
 
 - Settings shows a red notice when an admin or superadmin replies to one of your support tickets. It clears after you open that ticket.

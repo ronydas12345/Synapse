@@ -1,4 +1,4 @@
-export const RELEASE_ID = '0.4.2';
+export const RELEASE_ID = '0.4.3';
 
 export const WHATS_NEW_KEY = `synapse_whats_new_${RELEASE_ID}`;
 

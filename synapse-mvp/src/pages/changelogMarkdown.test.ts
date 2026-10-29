@@ -38,6 +38,25 @@ Intro line.
       },
     ]);
   });
+
+  it('keeps an empty Unreleased section so later versions stay dated', () => {
+    const raw = `# Changelog
+
+## [Unreleased]
+
+## [1.0.0] — 2026-01-01
+
+### Added
+
+- Something
+`;
+    const versions = splitChangelogVersions(raw);
+    expect(versions.map((v) => v.title)).toEqual(['[Unreleased]', '[1.0.0] — 2026-01-01']);
+    expect(versions[0].body).toBe('');
+    expect(versions.filter((v) => v.body.trim()).map((v) => v.title)).toEqual([
+      '[1.0.0] — 2026-01-01',
+    ]);
+  });
 });
 
 describe('docs markdown', () => {

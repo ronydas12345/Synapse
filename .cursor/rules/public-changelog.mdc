@@ -9,6 +9,8 @@ When you ship a **user-visible** change (UI, playback, Workshop, profiles, auth,
 
 Do this even if the user did not mention the changelog. Skip secrets, staff-only internals, local-only previews (`vis_preview`, `workshop_preview`), and work that is not on the branch being released.
 
+**Commit and push:** Before any commit or `git push` of user-visible work, `synapse-mvp/CHANGELOG.md` must already contain that work under `[Unreleased]` (or the dated version you are cutting) and must be included in the same commit. Do not push user-visible app changes without a changelog update. If the user says "commit and push" and the changelog is missing or stale, update it first, then commit it with the rest.
+
 If the change affects node types, the playback engine, `.synapse` files, share IDs, or public URLs, update `synapse-mvp/DOCS.md` in the same change.
 
-To cut a release: move Unreleased notes into `## [x.y.z] — YYYY-MM-DD` and bump `synapse-mvp/package.json`.
+To cut a release: move Unreleased notes into `## [x.y.z] — YYYY-MM-DD` and bump `synapse-mvp/package.json`. Keep an empty `## [Unreleased]` section at the top for the next changes.

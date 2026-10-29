@@ -15,7 +15,13 @@ export default function WhatsNew() {
   const signedIn = Boolean(useAuthStore((s) => s.user));
   const tutorialView = useTutorialStore((s) => s.view);
   const [open, setOpen] = useState(false);
-  const latest = useMemo(() => splitChangelogVersions(changelogRaw)[0], []);
+  const latest = useMemo(() => {
+    const versions = splitChangelogVersions(changelogRaw);
+    return (
+      versions.find((version) => version.body.split('\n').some((line) => line.startsWith('- '))) ??
+      versions[0]
+    );
+  }, []);
 
   useEffect(() => {
     if (!signedIn) return;
