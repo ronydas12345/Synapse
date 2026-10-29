@@ -1,7 +1,9 @@
 import { Handle, Position } from '@xyflow/react';
 import { Music } from 'lucide-react';
-import { usePathStore } from '../../store';
+import { usePathStore, useGraphReadOnly } from '../../store';
 import { getTrackDisplayMeta } from '../../trackMetadata';
+import { useNodePlaybackClass } from '../../playback/nodeHighlight';
+import { isPlaybackStartNodeType } from '../../engine/startNode';
 
 function CreditLine({
   value,
@@ -20,15 +22,17 @@ function CreditLine({
 }
 
 export default function TrackNode({ data = {}, id }: any) {
-  const { currentPlayingNodeId } = usePathStore();
-  const isPlaying = currentPlayingNodeId === id;
+  const playbackClass = useNodePlaybackClass(id);
+  const selected = usePathStore((s) => s.selectedNodeId === id);
+  const readOnly = useGraphReadOnly();
+  const setPlaybackStartNode = usePathStore((s) => s.setPlaybackStartNode);
+  const setIsPlaying = usePathStore((s) => s.setIsPlaying);
   const meta = getTrackDisplayMeta(data);
+  const canPlayFromHere = isPlaybackStartNodeType('track');
 
   return (
     <div
-      className={`synapse-node w-72 relative is-track ${
-        isPlaying ? 'is-playing' : ''
-      }`}
+      className={`synapse-node w-72 relative is-track ${playbackClass}`}
       data-tutorial="node-track"
     >
       <div className="synapse-node-header">
@@ -37,9 +41,9 @@ export default function TrackNode({ data = {}, id }: any) {
             <div className="w-7 h-7 rounded-md grid place-items-center bg-[var(--accent-warm-dim)]">
               <Music className="w-3.5 h-3.5 text-[var(--accent-warm)]" />
             </div>
-            {isPlaying && (
+            {playbackClass === 'is-playing' ? (
               <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[var(--accent-warm)]" />
-            )}
+            ) : null}
           </div>
           <div className="flex-1 min-w-0">
             <strong
@@ -48,8 +52,10 @@ export default function TrackNode({ data = {}, id }: any) {
             >
               {meta.title}
             </strong>
-            {isPlaying ? (
+            {playbackClass === 'is-playing' ? (
               <span className="synapse-now-playing-pill">Now playing</span>
+            ) : playbackClass === 'is-next' ? (
+              <span className="synapse-now-playing-pill is-next">Next</span>
             ) : null}
           </div>
         </div>
@@ -72,6 +78,19 @@ export default function TrackNode({ data = {}, id }: any) {
         <p className="text-[0.65rem] text-[var(--text-faint)] m-0 font-mono">
           Play ×{data?.playCount || 1}
         </p>
+        {selected && canPlayFromHere && !readOnly ? (
+          <button
+            type="button"
+            className="synapse-play-from-here"
+            onClick={(event) => {
+              event.stopPropagation();
+              setPlaybackStartNode(id);
+              setIsPlaying(true);
+            }}
+          >
+            Play from here
+          </button>
+        ) : null}
       </div>
 
       <Handle type="target" position={Position.Left} className="synapse-handle" aria-label="Connect into Track" />

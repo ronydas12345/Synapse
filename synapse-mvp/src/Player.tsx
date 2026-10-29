@@ -32,6 +32,7 @@ import { getAppSettings, useAppSettings } from './settings/settingsStore';
 import { scaleVolume } from './settings/parse';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { DECK_MINIMIZED_KEY } from './site/legal';
+import { recordPlayedPath } from './playlists/activity';
 
 function nodeToPlayable(node: Node | undefined, nodeId: string): PlayableMedia | null {
   if (!node) return null;
@@ -81,6 +82,13 @@ export default function Player() {
   } = usePathStore();
   const graphReadOnly = useGraphReadOnly();
 
+  const retryPlayback = () => {
+    setRetryable(false);
+    activeItemKeyRef.current = null;
+    setRetryToken((n) => n + 1);
+    setIsPlaying(true);
+  };
+
   const weather = useWeatherSnapshot();
   const masterVolume = useAppSettings((s) => s.playback.masterVolume);
   const showVisualizer = useAppSettings((s) => s.visualizer.visible);
@@ -90,6 +98,8 @@ export default function Player() {
   }, [nodes]);
 
   const [statusMessage, setStatusMessage] = useState<string>('');
+  const [retryable, setRetryable] = useState(false);
+  const [retryToken, setRetryToken] = useState(0);
   const [playerReady, setPlayerReady] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -304,8 +314,11 @@ export default function Player() {
         })
         .catch((err) => {
           if (!cancelled) {
+            setRetryable(true);
             setStatusMessage(
-              err instanceof Error ? err.message : 'YouTube player failed to load'
+              err instanceof Error
+                ? `${err.message}. Retry, or check that YouTube embeds are allowed.`
+                : 'YouTube player failed to load. Retry.'
             );
           }
         });
@@ -350,6 +363,7 @@ export default function Player() {
       const keys = result.items.map((item) => item.key);
       if (keys.length === 0) {
         setIsPlaying(false);
+        setRetryable(true);
         setStatusMessage(
           result.haltReason === 'no_start'
             ? 'Nothing to play — add a Start node'
@@ -503,6 +517,7 @@ export default function Player() {
 
     if (kind === 'track') {
       useProfileStore.getState().recordListen();
+      recordPlayedPath(usePathStore.getState().activePathId);
     }
 
     if (kind === 'transition') {
@@ -591,13 +606,16 @@ export default function Player() {
     }
 
     const title = getTrackDisplayMeta(node?.data).title || media.videoId;
+    setRetryable(false);
     setStatusMessage(`Playing: ${title}`);
 
     let cancelled = false;
     adapterRef.current.play(media).catch(() => {
       if (!cancelled) {
-        setStatusMessage('Playback failed — skipping');
-        window.setTimeout(() => advance(), 400);
+        setRetryable(true);
+        setStatusMessage(
+          'Playback failed. Retry this track, or Skip to continue the path.'
+        );
       }
     });
 
@@ -612,6 +630,7 @@ export default function Player() {
     playerReady,
     advance,
     setCurrentPlayingNodeId,
+    retryToken,
   ]);
 
   useEffect(() => {
@@ -795,6 +814,7 @@ export default function Player() {
           currentTime={currentTime}
           duration={duration}
           statusMessage={statusMessage}
+          onRetry={retryable ? retryPlayback : undefined}
           queueLabel={
             queueActive
               ? `Queue ${currentTrackIndex + 1} / ${playbackQueue.length}`
@@ -851,6 +871,15 @@ export default function Player() {
                 {statusMessage ||
                   (playerReady ? 'YouTube player ready' : 'Loading YouTube player…')}
               </p>
+              {retryable ? (
+                <button
+                  type="button"
+                  className="synapse-btn synapse-btn-ghost"
+                  onClick={retryPlayback}
+                >
+                  Retry
+                </button>
+              ) : null}
               {queueActive ? (
                 <div className="synapse-deck-queue">
                   Queue {currentTrackIndex + 1} / {playbackQueue.length}

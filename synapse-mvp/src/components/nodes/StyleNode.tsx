@@ -1,19 +1,19 @@
 import { Handle, Position } from '@xyflow/react';
 import { Palette } from 'lucide-react';
-import { usePathStore } from '../../store';
 import { allThemes, useThemeStore } from '../../theme/themeStore';
 import { parseStyleNodeData, styleThemeDisplayName, formatStyleNodeTiming } from '../../styleNode/parse';
 import { nodeCustomName } from '../../nodes/nodeName';
+import { useNodePlaybackClass } from '../../playback/nodeHighlight';
 
 export default function StyleNode({ data = {}, id }: { data?: unknown; id: string }) {
-  const { currentPlayingNodeId } = usePathStore();
   const customThemes = useThemeStore((s) => s.customThemes);
-  const isPlaying = currentPlayingNodeId === id;
+  const playbackClass = useNodePlaybackClass(id);
+  const isPlaying = playbackClass === 'is-playing';
   const parsed = parseStyleNodeData(data);
   const themeName = styleThemeDisplayName(parsed.themeId, allThemes(customThemes));
 
   return (
-    <div className={`synapse-node w-64 overflow-hidden is-style ${isPlaying ? 'is-playing' : ''}`} data-tutorial="node-style">
+    <div className={`synapse-node w-64 overflow-hidden is-style ${playbackClass}`} data-tutorial="node-style">
       <div className="synapse-node-header">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="relative">

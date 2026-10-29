@@ -6,6 +6,13 @@ import {
   flushWorkspaceNow,
 } from './persistGate';
 import {
+  clearPathDraft,
+  draftIsNewer,
+  readPathDraft,
+  registerDraftWriter,
+  setPendingRecovery,
+} from '../canvas/drafts';
+import {
   emptyLibrary,
   parseLibrary,
   preferStoredLibrary,
@@ -142,10 +149,32 @@ async function pushWorkspace(): Promise<void> {
   const { error } = await supabase.from('user_workspaces').upsert(payload, {
     onConflict: 'uid',
   });
-  if (error) console.error('Could not save workspace', error.message);
+  if (error) {
+    console.error('Could not save workspace', error.message);
+    throw error;
+  }
 }
 
 registerWorkspaceFlush(() => pushWorkspace());
+
+registerDraftWriter(() => {
+  const user = useAuthStore.getState().user;
+  if (!user) return null;
+  const state = usePathStore.getState();
+  if (state.graphLocked) return null;
+  const lib = snapshotPathLibrary();
+  const path = lib.paths.find((item) => item.id === lib.activeId);
+  if (!path) return null;
+  return {
+    version: 1,
+    uid: user.uid,
+    pathId: path.id,
+    pathName: path.name,
+    updatedAt: path.updatedAt,
+    nodes: path.nodes,
+    edges: path.edges,
+  };
+});
 
 function bindFlushEvents(): void {
   if (typeof window === 'undefined' || bindFlushEvents.bound) return;
@@ -226,6 +255,22 @@ export async function hydrateUserWorkspace(): Promise<void> {
       useProfileStore.getState().profile,
       serverFields
     );
+
+    const draft = readPathDraft();
+    if (draft && draft.uid === user.uid) {
+      const lib = snapshotPathLibrary();
+      const saved = lib.paths.find((path) => path.id === draft.pathId);
+      if (draftIsNewer(draft.updatedAt, saved?.updatedAt)) {
+        setPendingRecovery(draft);
+      } else {
+        clearPathDraft();
+        setPendingRecovery(null);
+      }
+    } else if (draft && draft.uid !== user.uid) {
+      clearPathDraft();
+      setPendingRecovery(null);
+    }
+
     await syncOwnPlaylistListings().catch(() => {});
 
     await supabase.from('user_workspaces').upsert(

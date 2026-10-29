@@ -23,6 +23,12 @@ export function actionsMatch(
       return event.type === 'route' && expected.route === event.route;
     case 'settings-section':
       return event.type === 'settings-section' && expected.id === event.id;
+    case 'node-count':
+      return (
+        event.type === 'node-count' &&
+        expected.nodeType === event.nodeType &&
+        event.min >= expected.min
+      );
     default:
       return true;
   }

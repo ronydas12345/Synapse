@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Plus } from 'lucide-react';
 import { usePathStore, useGraphReadOnly } from '../store';
 import { pathVisibilityLabel } from '../playlists/library';
+import { recentPlayedIds } from '../playlists/activity';
 import { PathLink } from '../app/AppLink';
 import { workshopItemPath } from '../app/routes';
 
@@ -67,6 +68,10 @@ export default function PlaylistSwitcher() {
   const rootRef = useRef<HTMLDivElement>(null);
 
   const active = pathSummaries.find((p) => p.id === activePathId) || pathSummaries[0];
+  const playedIds = recentPlayedIds(new Set(pathSummaries.map((path) => path.id)));
+  const edited = [...pathSummaries].sort((a, b) =>
+    (b.updatedAt || '').localeCompare(a.updatedAt || '')
+  );
   const listingKey =
     workshopShareKey ||
     (active && active.visibility !== 'private' ? active.workshopId : undefined);
@@ -111,7 +116,35 @@ export default function PlaylistSwitcher() {
         </button>
         {open ? (
           <div className="synapse-playlist-menu" role="listbox" aria-label="Playlists">
-            {pathSummaries.map((path) => {
+            {playedIds.length > 0 ? (
+              <p className="synapse-playlist-group">Recently played</p>
+            ) : null}
+            {playedIds.map((id) => {
+              const path = pathSummaries.find((item) => item.id === id);
+              if (!path) return null;
+              const selected = path.id === activePathId;
+              return (
+                <button
+                  key={`played-${path.id}`}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  className={`synapse-playlist-option ${selected ? 'is-active' : ''}`}
+                  onClick={() => {
+                    switchPlaylist(path.id);
+                    setOpen(false);
+                  }}
+                >
+                  <span className="synapse-playlist-option-copy">
+                    <span className="synapse-playlist-option-name">{path.name}</span>
+                    <span className="synapse-playlist-option-meta">Played</span>
+                  </span>
+                  {selected ? <Check className="w-4 h-4" aria-hidden="true" /> : null}
+                </button>
+              );
+            })}
+            <p className="synapse-playlist-group">Recently edited</p>
+            {edited.map((path) => {
               const selected = path.id === activePathId;
               return (
                 <button

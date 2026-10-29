@@ -45,6 +45,16 @@ import { normalizeStackedConditionals } from './conditional/normalize';
 import { bringNodesOntoPage as layoutOntoPage } from './canvas/bringOntoPage';
 import { FIT_NODES_EVENT } from './canvas/fitEvents';
 import { resolveInspectorNodeId, sequencesContaining } from './nodes/pathContext';
+import {
+  canRedo,
+  canUndo,
+  recordEdit,
+  redo as redoHistory,
+  resetHistory,
+  undo as undoHistory,
+} from './canvas/history';
+import { schedulePathDraft } from './canvas/drafts';
+import type { PathDraft } from './canvas/drafts';
 
 interface PathState {
   nodes: Node[];
@@ -141,6 +151,9 @@ interface PathState {
   copySelection: () => NodeClipboard | null;
   pasteClipboard: (payload: NodeClipboard) => string[];
   bringNodesOntoPage: (scope: 'selected' | 'all') => void;
+  undo: () => void;
+  redo: () => void;
+  restoreDraft: (draft: PathDraft) => void;
 }
 
 let library: PathLibrary = emptyLibrary();
@@ -175,7 +188,13 @@ function fromHold() {
 
 const saveToStorage = (nodes: Node[], edges: Edge[]) => {
   library = saveActiveGraph(library, nodes, edges);
+  schedulePathDraft();
 };
+
+function recordGraph(nodes: Node[], edges: Edge[], coalesceKey?: string): void {
+  if (usePathStore.getState().graphLocked) return;
+  recordEdit(nodes, edges, coalesceKey ? { coalesceKey } : undefined);
+}
 
 const libraryView = () => {
   const graph = activeGraph();
@@ -223,12 +242,14 @@ export const usePathStore = create<PathState>((set, get) => ({
   setListenView: (view) => set({ listenView: view }),
 
   setNodes: (nodes) => {
+    recordGraph(nodes, get().edges);
     set({ nodes });
-    saveToStorage(nodes, usePathStore.getState().edges);
+    saveToStorage(nodes, get().edges);
   },
   setEdges: (edges) => {
+    recordGraph(get().nodes, edges);
     set({ edges });
-    saveToStorage(usePathStore.getState().nodes, edges);
+    saveToStorage(get().nodes, edges);
   },
   onConnect: (connection) =>
     set((state) => {
@@ -299,6 +320,7 @@ export const usePathStore = create<PathState>((set, get) => ({
         newEdges = parked.edges;
       }
 
+      recordGraph(newNodes, newEdges);
       saveToStorage(newNodes, newEdges);
       return { nodes: newNodes, edges: newEdges };
     }),
@@ -349,6 +371,7 @@ export const usePathStore = create<PathState>((set, get) => ({
         }
         return node;
       });
+      recordGraph(updatedNodes, state.edges, `node:${id}`);
       saveToStorage(updatedNodes, state.edges);
       return { nodes: updatedNodes };
     }),
@@ -395,6 +418,7 @@ export const usePathStore = create<PathState>((set, get) => ({
       }
     }
     const parked = syncParkedTracks(newNodes, newEdges);
+    recordGraph(parked.nodes, parked.edges);
     saveToStorage(parked.nodes, parked.edges);
     return { nodes: parked.nodes, edges: parked.edges };
   }),
@@ -418,6 +442,7 @@ export const usePathStore = create<PathState>((set, get) => ({
       remainingEdges,
       deleted ? [deleted] : []
     );
+    recordGraph(reconciled.nodes, reconciled.edges);
     saveToStorage(reconciled.nodes, reconciled.edges);
     const remainingIds = state.selectedNodeIds.filter((id) => id !== nodeId);
     const inspectorId =
@@ -446,6 +471,7 @@ export const usePathStore = create<PathState>((set, get) => ({
     set((state) => {
       const next = normalizeStackedConditionals(state.nodes, state.edges);
       if (next.nodes === state.nodes) return state;
+      recordGraph(next.nodes, next.edges);
       saveToStorage(next.nodes, next.edges);
       return { nodes: next.nodes, edges: next.edges };
     }),
@@ -458,6 +484,7 @@ export const usePathStore = create<PathState>((set, get) => ({
         state.selectedNodeIds
       );
       if (!laid) return state;
+      recordGraph(laid.nodes, state.edges);
       saveToStorage(laid.nodes, state.edges);
       window.setTimeout(() => {
         window.dispatchEvent(
@@ -468,16 +495,20 @@ export const usePathStore = create<PathState>((set, get) => ({
     }),
   initializeFromStorage: () => {
     library = restoreWorkshopHold(emptyLibrary());
+    const view = libraryView();
+    resetHistory(view.nodes, view.edges);
     set({
-      ...libraryView(),
+      ...view,
       ...fromHold(),
       listenView: workshopHold?.locked && usePathStore.getState().listenView === 'list' ? 'list' : 'graph',
     });
   },
   replaceLibrary: (next) => {
     library = restoreWorkshopHold(next);
+    const view = libraryView();
+    resetHistory(view.nodes, view.edges);
     set({
-      ...libraryView(),
+      ...view,
       ...playbackReset,
       ...fromHold(),
     });
@@ -487,8 +518,10 @@ export const usePathStore = create<PathState>((set, get) => ({
     library = saveActiveGraph(library, current.nodes, current.edges);
     releaseWorkshopHold();
     library = createPath(library, name);
+    const view = libraryView();
+    resetHistory(view.nodes, view.edges);
     set({
-      ...libraryView(),
+      ...view,
       ...playbackReset,
       graphLocked: false,
       workshopShareKey: null,
@@ -503,8 +536,10 @@ export const usePathStore = create<PathState>((set, get) => ({
     if (!next) return;
     if (workshopHold && id !== workshopHold.path.id) releaseWorkshopHold();
     library = next;
+    const view = libraryView();
+    resetHistory(view.nodes, view.edges);
     set({
-      ...libraryView(),
+      ...view,
       ...playbackReset,
       ...fromHold(),
     });
@@ -516,8 +551,10 @@ export const usePathStore = create<PathState>((set, get) => ({
     const leaving = library.activeId === id;
     if (workshopHold?.path.id === id) releaseWorkshopHold();
     library = deletePath(library, id);
+    const view = libraryView();
+    if (leaving) resetHistory(view.nodes, view.edges);
     set({
-      ...libraryView(),
+      ...view,
       ...(leaving ? playbackReset : {}),
       graphLocked: leaving ? false : current.graphLocked,
       workshopShareKey: leaving ? null : current.workshopShareKey,
@@ -588,8 +625,10 @@ export const usePathStore = create<PathState>((set, get) => ({
         nodes,
       });
     }
+    const imported = libraryView();
+    resetHistory(imported.nodes, imported.edges);
     set({
-      ...libraryView(),
+      ...imported,
       ...playbackReset,
       graphLocked: false,
       workshopShareKey: replaceActive ? current.workshopShareKey : null,
@@ -631,8 +670,10 @@ export const usePathStore = create<PathState>((set, get) => ({
     const stored = getPath(library, library.activeId);
     if (stored) workshopHold = { path: stored, locked, shareKey: shareKey ?? null };
     const keepList = current.listenView === 'list';
+    const imported = libraryView();
+    resetHistory(imported.nodes, imported.edges);
     set({
-      ...libraryView(),
+      ...imported,
       ...playbackReset,
       graphLocked: locked,
       workshopShareKey: shareKey ?? null,
@@ -646,6 +687,7 @@ export const usePathStore = create<PathState>((set, get) => ({
   pasteClipboard: (clipboard) => {
     const state = get();
     const next = applyPaste(state.nodes, state.edges, clipboard);
+    recordGraph(next.nodes, next.edges);
     saveToStorage(next.nodes, next.edges);
     set({
       nodes: next.nodes,
@@ -657,7 +699,50 @@ export const usePathStore = create<PathState>((set, get) => ({
     });
     return next.selectedIds;
   },
+  undo: () => {
+    if (get().graphLocked) return;
+    const snap = undoHistory();
+    if (!snap) return;
+    saveToStorage(snap.nodes, snap.edges);
+    set({ nodes: snap.nodes, edges: snap.edges });
+  },
+  redo: () => {
+    if (get().graphLocked) return;
+    const snap = redoHistory();
+    if (!snap) return;
+    saveToStorage(snap.nodes, snap.edges);
+    set({ nodes: snap.nodes, edges: snap.edges });
+  },
+  restoreDraft: (draft) => {
+    if (get().graphLocked) return;
+    const current = get();
+    library = saveActiveGraph(library, current.nodes, current.edges);
+    library = putImportedPath(
+      library,
+      {
+        id: draft.pathId,
+        name: draft.pathName || 'Recovered playlist',
+        visibility: 'private',
+        tags: [],
+        nodes: draft.nodes,
+        edges: draft.edges,
+        updatedAt: draft.updatedAt,
+      },
+      { persist: true, keepName: true }
+    );
+    const view = libraryView();
+    resetHistory(view.nodes, view.edges);
+    set({
+      ...view,
+      ...playbackReset,
+      graphLocked: false,
+      workshopShareKey: null,
+      listenView: 'graph',
+    });
+  },
 }));
+
+export { canUndo, canRedo };
 
 export function useGraphReadOnly(): boolean {
   return usePathStore((s) => s.graphLocked);

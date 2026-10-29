@@ -6,7 +6,7 @@ import {
   sectionIndexInFull,
 } from './tutorialCatalog';
 import { measureTarget, paddedRect, placeWindow, rectsClose, scrollTutorialTargetIntoView, watchTutorialTarget, type SpotlightRect } from './placement';
-import { useTutorialStore } from './tutorialStore';
+import { primeTutorialStep, useTutorialStore } from './tutorialStore';
 
 export default function TutorialTour() {
   const view = useTutorialStore((s) => s.view);
@@ -14,6 +14,7 @@ export default function TutorialTour() {
   const sectionId = useTutorialStore((s) => s.sectionId);
   const stepIndex = useTutorialStore((s) => s.stepIndex);
   const praise = useTutorialStore((s) => s.praise);
+  const actionSatisfied = useTutorialStore((s) => s.actionSatisfied);
   const next = useTutorialStore((s) => s.next);
   const back = useTutorialStore((s) => s.back);
   const skipSection = useTutorialStore((s) => s.skipSection);
@@ -51,6 +52,11 @@ export default function TutorialTour() {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  useEffect(() => {
+    if (view !== 'tour' || !step) return;
+    primeTutorialStep();
+  }, [view, step, sectionId, stepIndex]);
 
   useLayoutEffect(() => {
     if (view !== 'tour' || !step) return;
@@ -112,13 +118,18 @@ export default function TutorialTour() {
         <p>{step.body}</p>
         {praise ? <p className="synapse-tutorial-praise">{praise}</p> : null}
         {step.type === 'action' && !praise ? (
-          <p className="synapse-tutorial-kicker">Try it, then this continues — or press Next.</p>
+          <p className="synapse-tutorial-kicker">Do this action to continue. Skip Tour is still available.</p>
         ) : null}
         <div className="synapse-tutorial-actions">
           <button type="button" className="synapse-btn synapse-btn-ghost" onClick={back}>
             Back
           </button>
-          <button type="button" className="synapse-btn synapse-btn-play" onClick={next}>
+          <button
+            type="button"
+            className="synapse-btn synapse-btn-play"
+            onClick={next}
+            disabled={Boolean(step.type === 'action' && step.expectedAction && !actionSatisfied)}
+          >
             {runKind === 'simple' && lastStep ? 'Done' : 'Next'}
           </button>
           {runKind === 'simple' && lastStep ? (

@@ -6,6 +6,7 @@ import { addTrackToRandomizerList, moveSequenceItemBetweenRandomizers, parseSequ
 import { getTrackDisplayMeta } from '../../trackMetadata';
 import { RANDOMIZER_MODE_OPTIONS, randomizerModePatch } from '../../nodeMode';
 import { nodeCustomName, nodeTypeLabel } from '../../nodes/nodeName';
+import { useNodePlaybackClass } from '../../playback/nodeHighlight';
 
 const spinnerHideStyles = `
   input[type="number"].hide-spinners::-webkit-outer-spin-button,
@@ -31,12 +32,13 @@ interface RandomizerNodeProps {
 }
 
 function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
-  const { updateNodeData, nodes, edges, setNodes, setEdges, currentPlayingNodeId, inspectNestedTrack, inspectorNodeId } = usePathStore();
+  const { updateNodeData, nodes, edges, setNodes, setEdges, inspectNestedTrack, inspectorNodeId } = usePathStore();
   const readOnly = useGraphReadOnly();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const isPlaying = currentPlayingNodeId === id;
+  const playbackClass = useNodePlaybackClass(id);
+  const isPlaying = playbackClass === 'is-playing';
 
   const tracks = data?.tracks || [];
   const weights = data?.weights || Array(tracks.length).fill(10);
@@ -163,7 +165,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
       <style>{spinnerHideStyles}</style>
       <div
         className={`synapse-node w-80 overflow-hidden transition is-randomizer ${
-          isPlaying ? 'is-playing' : mode === 'sequence' ? 'is-sequence' : ''
+          playbackClass || (mode === 'sequence' ? 'is-sequence' : '')
         } ${isDragOver ? 'bg-[var(--bg-hover)]' : ''}`}
         data-tutorial="node-randomizer"
         data-randomizer-id={id}

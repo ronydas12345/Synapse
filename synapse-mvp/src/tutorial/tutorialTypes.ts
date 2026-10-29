@@ -22,7 +22,8 @@ export type TutorialAction =
   | { type: 'node-data'; nodeType: string; field?: string }
   | { type: 'settings-section'; id: string }
   | { type: 'theme-changed' }
-  | { type: 'account-ready' };
+  | { type: 'account-ready' }
+  | { type: 'node-count'; nodeType: string; min: number };
 
 export interface TutorialStep {
   id: string;

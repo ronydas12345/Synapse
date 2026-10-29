@@ -4743,3 +4743,248 @@ button.synapse-badge {
   }
 }
 
+.synapse-save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.synapse-save-status.is-failed {
+  color: var(--danger);
+}
+
+.synapse-save-status.is-saved {
+  color: var(--ok);
+}
+
+.synapse-save-status.is-saving {
+  color: var(--accent);
+}
+
+.synapse-validation {
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
+  font-size: 0.78rem;
+}
+
+.synapse-validation-toggle {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.synapse-validation.is-error .synapse-validation-toggle {
+  color: var(--danger);
+}
+
+.synapse-validation.is-warning .synapse-validation-toggle {
+  color: var(--warning);
+}
+
+.synapse-validation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.6rem 0.5rem;
+}
+
+.synapse-validation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  padding: 0.28rem 0.4rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.synapse-validation-item:hover,
+.synapse-validation-item:focus-visible {
+  background: var(--accent-dim);
+  outline: none;
+}
+
+.synapse-validation-sev {
+  flex: 0 0 auto;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.synapse-validation-item.is-error .synapse-validation-sev {
+  color: var(--danger);
+}
+
+.synapse-validation-item.is-warning .synapse-validation-sev {
+  color: var(--warning);
+}
+
+.synapse-validation-empty {
+  margin: 0;
+  padding: 0 1rem 0.5rem;
+  color: var(--text-muted);
+}
+
+.synapse-recovery {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg-void) 55%, transparent);
+}
+
+.synapse-recovery-card {
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 1.2rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+}
+
+.synapse-toasts {
+  position: fixed;
+  right: 1rem;
+  bottom: 6.5rem;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(22rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.synapse-toast {
+  pointer-events: auto;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+}
+
+.synapse-toast p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.synapse-toast-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.synapse-toast.is-error {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+}
+
+.synapse-toast.is-success {
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--border));
+}
+
+.synapse-toast.is-warning {
+  border-color: color-mix(in srgb, var(--warning) 45%, var(--border));
+}
+
+.synapse-shortcut-list {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.synapse-shortcut-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+  font-size: 0.85rem;
+}
+
+.synapse-shortcut-list kbd {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.synapse-whats-new-list {
+  margin: 0.4rem 0 0.8rem;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+}
+
+.synapse-play-from-here {
+  margin-top: 0.4rem;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.45rem;
+  cursor: pointer;
+}
+
+.synapse-node.is-next {
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--node-border));
+}
+
+.synapse-now-playing-pill.is-next {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: rgba(62, 207, 191, 0.35);
+}
+
+.synapse-playlist-group {
+  margin: 0.35rem 0.55rem 0.15rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.synapse-settings-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.synapse-settings-check input {
+  margin-top: 0.2rem;
+}
+
+.synapse-help-btn:focus-visible,
+.synapse-btn:focus-visible,
+.synapse-mode-btn:focus-visible,
+.synapse-playlist-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .synapse-tutorial-spotlight,
+  .synapse-tutorial-window {
+    transition: none;
+  }
+}
+

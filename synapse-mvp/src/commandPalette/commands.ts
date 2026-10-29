@@ -13,6 +13,9 @@ import { confirmDestructive } from '../settings/settingsStore';
 import { usePathStore } from '../store';
 import { allThemes, useThemeStore } from '../theme/themeStore';
 import { useTutorialStore } from '../tutorial/tutorialStore';
+import { useShortcutHelpStore } from '../ui/shortcutHelpStore';
+import { flushWorkspaceNow, getSaveSnapshot } from '../cloud/persistGate';
+import { toast } from '../ui/toastStore';
 import { commandHaystack, matchesCommandQuery, normalizeCommandQuery } from './search';
 
 export type CommandGroup =
@@ -200,6 +203,7 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       group: 'Playback',
       label: 'Play',
       keywords: 'start resume path',
+      shortcut: 'Space',
       when: (c) => c.signedIn && !c.isPlaying,
       run: () => {
         onEdit(() => usePathStore.getState().setIsPlaying(true));
@@ -236,6 +240,61 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       keywords: 'back rewind',
       when: (c) => c.signedIn && c.queueLength > 0,
       run: () => usePathStore.getState().requestPrevious(),
+    },
+    {
+      id: 'undo',
+      group: 'Editor',
+      label: 'Undo',
+      keywords: 'history back',
+      shortcut: 'Ctrl/Cmd+Z',
+      when: (c) => c.signedIn,
+      run: () => onEdit(() => usePathStore.getState().undo()),
+    },
+    {
+      id: 'redo',
+      group: 'Editor',
+      label: 'Redo',
+      keywords: 'history forward',
+      shortcut: 'Ctrl/Cmd+Shift+Z',
+      when: (c) => c.signedIn,
+      run: () => onEdit(() => usePathStore.getState().redo()),
+    },
+    {
+      id: 'save-now',
+      group: 'Editor',
+      label: 'Save now',
+      keywords: 'flush persist cloud',
+      shortcut: 'Ctrl/Cmd+S',
+      when: (c) => c.signedIn,
+      run: () => {
+        void flushWorkspaceNow().then(() => {
+          const snap = getSaveSnapshot();
+          if (snap.status === 'failed') {
+            toast(snap.error || 'Unable to save changes. Retry.', 'error', {
+              label: 'Retry',
+              onClick: () => void flushWorkspaceNow(),
+            });
+            return;
+          }
+          toast('Changes saved.', 'success');
+        });
+      },
+    },
+    {
+      id: 'shortcuts',
+      group: 'Help',
+      label: 'Keyboard shortcuts',
+      keywords: 'hotkeys keys cheatsheet',
+      shortcut: 'Ctrl/Cmd+/',
+      run: () => useShortcutHelpStore.getState().show(),
+    },
+    {
+      id: 'report',
+      group: 'Help',
+      label: 'Report a problem',
+      keywords: 'feedback bug ticket support',
+      when: (c) => c.signedIn,
+      run: () => go(APP_PATHS.settings, 'settings-support'),
     },
     {
       id: 'new-path',

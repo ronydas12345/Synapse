@@ -9,6 +9,7 @@ import {
   getSection,
 } from './tutorialCatalog';
 import { useTutorialStore } from './tutorialStore';
+import { APP_PATHS, navigateApp } from '../app/routes';
 
 export default function TutorialMenu() {
   const view = useTutorialStore((s) => s.view);
@@ -65,12 +66,12 @@ export default function TutorialMenu() {
         >
           <h2 id={titleId}>Welcome to Synapse</h2>
           <p>
-            A short tour: create an account or log in, then Music Paths, tracks,
-            and play.
+            You will build a small Music Path: add tracks, change a setting, connect
+            nodes, and play it. You can skip or resume at any time.
           </p>
           <div className="synapse-tutorial-actions">
             <button type="button" className="synapse-btn synapse-btn-play" onClick={() => startSimple()}>
-              Start Tour
+              Start building
             </button>
             <button type="button" className="synapse-btn synapse-btn-ghost" onClick={maybeLater}>
               Maybe Later
@@ -117,10 +118,10 @@ export default function TutorialMenu() {
           aria-modal="true"
           aria-labelledby={titleId}
         >
-          <h2 id={titleId}>{runKind === 'simple' ? 'That’s the loop.' : "You're ready."}</h2>
+          <h2 id={titleId}>{runKind === 'simple' ? 'You built a Music Path.' : "You're ready."}</h2>
           <p>
             {runKind === 'simple'
-              ? 'You have the Music Path essentials. Keep building from Edit, or open Listen for the same path as a list.'
+              ? 'Keep editing this path, or open another tutorial topic. Listen shows the same path as a list.'
               : 'You now know the fundamentals of Synapse. Build something of your own and experiment with the Music Path system.'}
           </p>
           <div className="synapse-tutorial-actions">
@@ -218,7 +219,7 @@ export default function TutorialMenu() {
       >
         <h2 id={titleId}>Synapse Tutorial</h2>
         <p>
-          Quick start is seven steps. The full tutorial covers node types, branches,
+          Quick start walks through building a real Music Path. The full tutorial covers node types, branches,
           themes, and the rest of the editor.
         </p>
         {progress.completedFull ? (
@@ -271,6 +272,16 @@ export default function TutorialMenu() {
           </button>
           <button type="button" className="synapse-btn synapse-btn-ghost" onClick={askSkip}>
             Skip Tutorial
+          </button>
+          <button
+            type="button"
+            className="synapse-btn synapse-btn-ghost"
+            onClick={() => {
+              close();
+              navigateApp(APP_PATHS.settings, 'settings-support');
+            }}
+          >
+            Report a problem
           </button>
         </div>
       </div>

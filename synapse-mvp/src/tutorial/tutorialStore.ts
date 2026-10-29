@@ -36,6 +36,8 @@ import type {
   TutorialStep,
   TutorialView,
 } from './tutorialTypes';
+import { snapshotPathLibrary, usePathStore } from '../store';
+import { libraryHasUserContent, uniquePathName } from '../playlists/library';
 
 interface TutorialState {
   view: TutorialView;
@@ -118,6 +120,78 @@ if (stepNeedsAccount(step) && !opts.accountReady) {
     return { path: APP_PATHS.signup, hash: '' };
   }
   return { path: APP_PATHS[step.route], hash: step.hash ?? '' };
+}
+
+let tutorialPathEnsured = false;
+
+function ensureTutorialPath(): void {
+  if (tutorialPathEnsured) return;
+  if (!accountReady()) return;
+  const state = usePathStore.getState();
+  if (state.graphLocked) return;
+  const lib = snapshotPathLibrary();
+  const active = lib.paths.find((path) => path.id === lib.activeId);
+  const emptyish = Boolean(
+    active && active.nodes.length <= 1 && active.edges.length === 0
+  );
+  if (emptyish && active) {
+    const name = uniquePathName(
+      lib.paths.filter((path) => path.id !== active.id).map((path) => path.name),
+      'My First Music Path'
+    );
+    if (active.name !== name) state.renamePlaylist(active.id, name);
+    tutorialPathEnsured = true;
+    return;
+  }
+  if (libraryHasUserContent(lib)) {
+    state.createPlaylist(
+      uniquePathName(lib.paths.map((path) => path.name), 'My First Music Path')
+    );
+  }
+  tutorialPathEnsured = true;
+}
+
+export function primeTutorialStep(): void {
+  const step = getActiveStep();
+  if (!step?.expectedAction) return;
+  const expected = step.expectedAction;
+  const state = usePathStore.getState();
+  if (expected.type === 'account-ready' && accountReady()) {
+    useTutorialStore.getState().applyEvent({ type: 'account-ready' });
+    return;
+  }
+  if (
+    expected.type === 'node-created' &&
+    state.nodes.some((node) => node.type === expected.nodeType && !node.hidden)
+  ) {
+    useTutorialStore.getState().applyEvent(expected);
+    return;
+  }
+  if (expected.type === 'node-count') {
+    const count = state.nodes.filter(
+      (node) => node.type === expected.nodeType && !node.hidden
+    ).length;
+    if (count >= expected.min) {
+      useTutorialStore.getState().applyEvent({ ...expected, min: count });
+    }
+    return;
+  }
+  if (expected.type === 'nodes-connected' && state.edges.length > 0) {
+    useTutorialStore.getState().applyEvent({ type: 'nodes-connected' });
+    return;
+  }
+  if (
+    expected.type === 'track-url' &&
+    state.nodes.some(
+      (node) => node.type === 'track' && String(node.data?.videoId || '').trim()
+    )
+  ) {
+    useTutorialStore.getState().applyEvent({ type: 'track-url' });
+    return;
+  }
+  if (expected.type === 'playing' && state.isPlaying) {
+    useTutorialStore.getState().applyEvent({ type: 'playing' });
+  }
 }
 
 function goToStepRoute(step: TutorialStep | null): void {
@@ -276,6 +350,8 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
   startSimple: (resume = false) => {
     const section = getSection(SIMPLE_TUTORIAL_ID);
     if (!section) return;
+    tutorialPathEnsured = false;
+    ensureTutorialPath();
     const { progress } = get();
     const stepIndex =
       resume && progress.lastSection === SIMPLE_TUTORIAL_ID
@@ -380,6 +456,14 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
       goToStepRoute(current);
       return;
     }
+    if (
+      current?.type === 'action' &&
+      current.expectedAction &&
+      !s.actionSatisfied
+    ) {
+      return;
+    }
+    if (s.runKind === 'simple') ensureTutorialPath();
     if (s.stepIndex + 1 < section.steps.length) {
       const stepIndex = s.stepIndex + 1;
       goToStepRoute(section.steps[stepIndex]);

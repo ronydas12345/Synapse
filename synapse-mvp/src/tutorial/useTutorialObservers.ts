@@ -47,7 +47,11 @@ export function useTutorialObservers(route: AppRoute): void {
       if (state.nodes.length > prev.nodes.length) {
         const prevIds = new Set(prev.nodes.map((n) => n.id));
         const added = state.nodes.find((n) => !prevIds.has(n.id));
-        if (added?.type) emit({ type: 'node-created', nodeType: added.type });
+        if (added?.type) {
+          emit({ type: 'node-created', nodeType: added.type });
+          const count = state.nodes.filter((n) => n.type === added.type && !n.hidden).length;
+          emit({ type: 'node-count', nodeType: added.type, min: count });
+        }
       }
       if (state.nodes.length < prev.nodes.length) emit({ type: 'node-deleted' });
       if (state.edges.length > prev.edges.length) emit({ type: 'nodes-connected' });

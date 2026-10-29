@@ -5,6 +5,11 @@ import type { SupportTicket, TicketMessage, TicketPriority } from './model';
 import { useAuthStore } from '../auth/authStore';
 import NavNotice from './NavNotice';
 import { useTicketNoticeStore } from './ticketNoticeStore';
+import {
+  clientDiagnostics,
+  FEEDBACK_CATEGORIES,
+  type FeedbackCategory,
+} from './diagnostics';
 
 export default function SupportForm() {
   const uid = useAuthStore((s) => s.user?.uid);
@@ -12,6 +17,9 @@ export default function SupportForm() {
   const unreadIds = useTicketNoticeStore((s) => s.unreadIds);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const [steps, setSteps] = useState('');
+  const [category, setCategory] = useState<FeedbackCategory>('Bug');
+  const [includeDiagnostics, setIncludeDiagnostics] = useState(true);
   const [priority, setPriority] = useState<TicketPriority>('normal');
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -50,10 +58,19 @@ export default function SupportForm() {
         onSubmit={(event) => {
           event.preventDefault();
           setBusy(true);
-          void createTicket(subject, body, priority)
+          const composed = [
+            `Category: ${category}`,
+            body.trim(),
+            steps.trim() ? `Steps to reproduce:\n${steps.trim()}` : '',
+            includeDiagnostics ? `Diagnostics:\n${clientDiagnostics()}` : '',
+          ]
+            .filter(Boolean)
+            .join('\n\n');
+          void createTicket(`[${category}] ${subject}`, composed, priority)
             .then(() => {
               setSubject('');
               setBody('');
+              setSteps('');
               return reload();
             })
             .catch((err) =>
@@ -62,6 +79,22 @@ export default function SupportForm() {
             .finally(() => setBusy(false));
         }}
       >
+        <label className="synapse-settings-field">
+          <span>Category</span>
+          <select
+            className="synapse-settings-input"
+            value={category}
+            onChange={(event) =>
+              setCategory(event.target.value as FeedbackCategory)
+            }
+          >
+            {FEEDBACK_CATEGORIES.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="synapse-settings-field">
           <span>Subject</span>
           <input
@@ -97,8 +130,25 @@ export default function SupportForm() {
             required
           />
         </label>
+        <label className="synapse-settings-field">
+          <span>Steps to reproduce (optional)</span>
+          <textarea
+            className="synapse-settings-input"
+            rows={3}
+            value={steps}
+            onChange={(event) => setSteps(event.target.value)}
+          />
+        </label>
+        <label className="synapse-settings-field synapse-settings-check">
+          <input
+            type="checkbox"
+            checked={includeDiagnostics}
+            onChange={(event) => setIncludeDiagnostics(event.target.checked)}
+          />
+          <span>Include app version, page, and save status (no Music Path contents)</span>
+        </label>
         <button type="submit" className="synapse-btn synapse-btn-play" disabled={busy}>
-          Send ticket
+          {busy ? 'Sending…' : 'Send ticket'}
         </button>
       </form>
       <ul className="synapse-staff-thread">

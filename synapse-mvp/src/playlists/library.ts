@@ -32,6 +32,7 @@ export interface PathSummary {
   visibility: PathVisibility;
   tags: string[];
   workshopId?: string;
+  updatedAt: string;
 }
 
 export function asPathVisibility(value: unknown): PathVisibility {
@@ -200,6 +201,7 @@ export function summaries(lib: PathLibrary): PathSummary[] {
     visibility: p.visibility,
     tags: p.tags,
     workshopId: p.workshopId,
+    updatedAt: p.updatedAt,
   }));
 }
 

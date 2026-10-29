@@ -27,6 +27,7 @@ interface PlayingScreenProps {
   onJump: (nodeId: string) => void;
   speed?: number;
   onSpeedChange?: (speed: number) => void;
+  onRetry?: () => void;
 }
 
 function PathRow({
@@ -129,6 +130,7 @@ export default function PlayingScreen({
   onJump,
   speed,
   onSpeedChange,
+  onRetry,
 }: PlayingScreenProps) {
   const nowRef = useRef<HTMLLIElement>(null);
   const showVisualizer = useAppSettings((s) => s.visualizer.visible);
@@ -164,6 +166,11 @@ export default function PlayingScreen({
           {queueLabel ? <p className="synapse-deck-queue">{queueLabel}</p> : null}
           {statusMessage ? (
             <p className="synapse-deck-status">{statusMessage}</p>
+          ) : null}
+          {onRetry ? (
+            <button type="button" className="synapse-btn synapse-btn-ghost" onClick={onRetry}>
+              Retry
+            </button>
           ) : null}
         </div>
 

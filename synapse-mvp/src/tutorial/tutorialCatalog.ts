@@ -21,7 +21,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
   {
     id: SIMPLE_TUTORIAL_ID,
     title: 'Quick start',
-    summary: 'Short first-run tour: Music Path, Track, connections, play, playlist.',
+    summary: 'Build a real Music Path: tracks, a setting, a connection, then play.',
     keywords:
       'quick start first run beginner simple short tour music path track connect play playlist help',
     group: 'getting-started',
@@ -40,44 +40,86 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       ),
       s(
         'qs-welcome',
-        'Music Paths',
-        'Synapse plays a graph, not a flat list. Playback walks from the Start node through the nodes you connect.',
+        'Build a Music Path',
+        'You will add tracks, change a setting, connect nodes, and press Play. The result is a real path you can keep.',
         { type: 'info', route: 'edit', target: 'workspace' }
       ),
       s(
         'qs-track',
         'Add a Track',
-        'Click Track Node in the rack, or drag it onto the canvas. Select it and paste a YouTube URL in the inspector.',
+        'Click Track Node in the rack, or drag it onto the canvas. A Track is one YouTube song on the path.',
         {
           type: 'action',
           route: 'edit',
           target: 'rack-track',
           expectedAction: { type: 'node-created', nodeType: 'track' },
-          praise: 'Track added. Paste a YouTube URL when you have one.',
+          praise: 'Track added.',
+        }
+      ),
+      s(
+        'qs-url',
+        'Choose a track',
+        'Select the Track and paste a YouTube URL in the inspector. Use a video that is allowed to embed.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'inspector',
+          expectedAction: { type: 'track-url' },
+          praise: 'Track attached.',
+        }
+      ),
+      s(
+        'qs-setting',
+        'Change a setting',
+        'In the inspector, change Volume or End time. That setting is stored on the node and applied when it plays.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'inspector',
+          expectedAction: { type: 'node-data', nodeType: 'track' },
+          praise: 'Setting applied. You will hear it when this node plays.',
+        }
+      ),
+      s(
+        'qs-track-2',
+        'Add a second Track',
+        'Add another Track node and give it a different YouTube URL. Two songs make a sequence you can hear.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'rack-track',
+          expectedAction: { type: 'node-count', nodeType: 'track', min: 2 },
+          praise: 'Second track is on the canvas.',
         }
       ),
       s(
         'qs-connect',
-        'Connect from Start',
-        'Drag from Start’s output handle to the Track’s input. Playback follows those edges.',
+        'Connect the path',
+        'Drag from Start to the first Track, then from that Track to the second. Position alone does not set order — connections do.',
         {
           type: 'action',
           route: 'edit',
           target: 'canvas',
           expectedAction: { type: 'nodes-connected' },
-          praise: 'Connected. The engine can walk that edge.',
+          praise: 'Connected. Playback can walk that edge.',
         }
       ),
       s(
         'qs-branch',
         'Optional branches',
-        'A Conditional picks one outgoing path (weights, time, weather, or date). A Randomizer shuffles tracks inside one node. Neither is required.',
+        'A Conditional picks one outgoing path. A Sequence or Randomizer holds several tracks in one node. Skip this if you only want two songs in a line.',
         { type: 'highlight', route: 'edit', target: 'sidebar' }
+      ),
+      s(
+        'qs-check',
+        'Check the path',
+        'The bar above the canvas lists missing Start nodes, unreachable tracks, and empty sequences. Open it if anything looks off.',
+        { type: 'highlight', route: 'edit', target: 'validation' }
       ),
       s(
         'qs-play',
         'Play',
-        'Press Play in the header. The engine builds a queue from Start. Listen shows the same path as a list.',
+        'Press Play in the header. The current node lights up. If the browser blocks autoplay, press Play once more.',
         {
           type: 'action',
           route: 'edit',
@@ -87,15 +129,9 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
         }
       ),
       s(
-        'qs-playlist',
-        'Your playlist',
-        'Each Music Path is stored on your signed-in account. Rename it in the top bar, or switch paths from the playlist menu.',
-        { type: 'highlight', route: 'edit', target: 'playlist-switcher' }
-      ),
-      s(
         'qs-done',
-        'That’s the loop',
-        'The tour continues in Edit. Keep building, or open Listen for the same path as a list.',
+        'Keep this path',
+        'Autosave writes this Music Path to your account. Keep editing it, or open another tutorial topic when you want.',
         { type: 'complete', route: 'edit', target: 'workspace' }
       ),
     ],

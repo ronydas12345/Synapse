@@ -1,6 +1,7 @@
 import { Handle, Position } from '@xyflow/react';
 import { CalendarDays, CloudSun, Clock, GitBranch, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePathStore, useGraphReadOnly } from '../../store';
+import { useNodePlaybackClass } from '../../playback/nodeHighlight';
 import { useState, memo } from 'react';
 import { CONDITIONAL_MODE_OPTIONS, conditionalModePatch } from '../../nodeMode';
 import { formatDatePath, formatWeatherPath } from '../../conditional/format';
@@ -20,10 +21,11 @@ const spinnerHideStyles = `
 `;
 
 function ConditionalNode({ data = {}, id }: { data?: Record<string, unknown>; id: string }) {
-  const { updateNodeData, currentPlayingNodeId } = usePathStore();
+  const { updateNodeData } = usePathStore();
   const readOnly = useGraphReadOnly();
   const [isCollapsed, setIsCollapsed] = useState(Boolean(data?.isCollapsed));
-  const isPlaying = currentPlayingNodeId === id;
+  const playbackClass = useNodePlaybackClass(id);
+  const isPlaying = playbackClass === 'is-playing';
 
   const numPaths = Number(data?.numPaths) || 2;
   const weights = (data?.weights as number[]) || Array(numPaths).fill(10);
@@ -65,7 +67,7 @@ function ConditionalNode({ data = {}, id }: { data?: Record<string, unknown>; id
   return (
     <>
       <style>{spinnerHideStyles}</style>
-      <div className={`synapse-node w-80 overflow-hidden is-conditional ${isPlaying ? 'is-playing' : ''}`} data-tutorial="node-conditional">
+      <div className={`synapse-node w-80 overflow-hidden is-conditional ${playbackClass}`} data-tutorial="node-conditional">
         <div className="synapse-node-header synapse-node-header-with-mode" onClick={toggleCollapse}>
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <div className="relative">

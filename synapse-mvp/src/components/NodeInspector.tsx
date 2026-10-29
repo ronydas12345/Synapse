@@ -34,6 +34,7 @@ import {
   padPathList,
 } from '../conditional/defaults';
 import { allThemes, useThemeStore } from '../theme/themeStore';
+import { isPlaybackStartNodeType } from '../engine/startNode';
 import {
   parseStyleNodeData,
   MAX_STYLE_DELAY_MS,
@@ -239,6 +240,8 @@ export default function NodeInspector() {
     inspectNestedTrack,
     updateNodeData,
     deleteNode,
+    setPlaybackStartNode,
+    setIsPlaying,
   } = usePathStore();
   const customThemes = useThemeStore((s) => s.customThemes);
   const nodeDefaults = useAppSettings((s) => s.nodes);
@@ -276,15 +279,29 @@ export default function NodeInspector() {
             Node Settings
           </h3>
         </div>
-        {readOnly ? null : (
-          <button
-            onClick={handleDeleteNode}
-            className="synapse-btn-danger-ghost"
-            title="Delete node"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {isPlaybackStartNodeType(selectedNode.type) ? (
+            <button
+              type="button"
+              className="synapse-btn synapse-btn-ghost"
+              onClick={() => {
+                setPlaybackStartNode(selectedNode.id);
+                setIsPlaying(true);
+              }}
+            >
+              Play from here
+            </button>
+          ) : null}
+          {readOnly ? null : (
+            <button
+              onClick={handleDeleteNode}
+              className="synapse-btn-danger-ghost"
+              title="Delete node"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
       {nestedIn.length > 0 ? (
         <div className="synapse-inspector-nested">

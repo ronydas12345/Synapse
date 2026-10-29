@@ -7,6 +7,9 @@ import { THEME_STORAGE_KEY } from '../theme/themeStore';
 import { TUTORIAL_SESSION_KEY, TUTORIAL_STORAGE_KEY } from '../tutorial/tutorialStorage';
 import { clearWeatherCache } from '../weather/client';
 import { SETTINGS_STORAGE_KEY } from './types';
+import { PATH_DRAFT_KEY } from '../canvas/drafts';
+import { PATH_ACTIVITY_KEY } from '../playlists/activity';
+import { WHATS_NEW_KEY } from '../release/notes';
 
 export const SYNAPSE_LOCAL_KEYS = [
   SETTINGS_STORAGE_KEY,
@@ -19,6 +22,9 @@ export const SYNAPSE_LOCAL_KEYS = [
   TUTORIAL_STORAGE_KEY,
   ACCOUNT_CACHE_KEY,
   COOKIE_NOTICE_KEY,
+  PATH_DRAFT_KEY,
+  PATH_ACTIVITY_KEY,
+  WHATS_NEW_KEY,
 ] as const;
 
 export function listedLocalKeys(): { key: string; present: boolean }[] {

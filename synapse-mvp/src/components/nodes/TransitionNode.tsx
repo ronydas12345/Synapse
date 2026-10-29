@@ -3,11 +3,13 @@ import { ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePathStore } from '../../store';
 import { useState } from 'react';
 import { nodeCustomName } from '../../nodes/nodeName';
+import { useNodePlaybackClass } from '../../playback/nodeHighlight';
 
 export default function TransitionNode({ data = {}, id }: any) {
-  const { updateNodeData, currentPlayingNodeId } = usePathStore();
+  const { updateNodeData } = usePathStore();
   const [isCollapsed, setIsCollapsed] = useState(data?.isCollapsed || false);
-  const isPlaying = currentPlayingNodeId === id;
+  const playbackClass = useNodePlaybackClass(id);
+  const isPlaying = playbackClass === 'is-playing';
 
   const toggleCollapse = () => {
     const newCollapsed = !isCollapsed;
@@ -21,7 +23,7 @@ export default function TransitionNode({ data = {}, id }: any) {
   const videoId = data?.videoId || '';
 
   return (
-    <div className={`synapse-node w-64 overflow-hidden is-transition ${isPlaying ? 'is-playing' : ''}`} data-tutorial="node-transition">
+    <div className={`synapse-node w-64 overflow-hidden is-transition ${playbackClass}`} data-tutorial="node-transition">
       {/* Header */}
       <div
         className="synapse-node-header"

@@ -9,9 +9,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 
 - Settings shows a red notice when an admin or superadmin replies to one of your support tickets. It clears after you open that ticket.
+- Undo and redo for Music Path edits (`Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z` or `Ctrl+Y`).
+- Save status in the workspace header, with retry when a cloud save fails.
+- Recover unsaved Music Path drafts after a refresh or interrupted save, without overwriting a newer account copy.
+- Path check bar on Edit: missing Start, unreachable tracks, empty sequences, and other issues. Saving still works when there are only warnings.
+- Play from here on a selected Track and in the inspector.
+- Keyboard shortcut list (`Ctrl/Cmd+/`), Space to play or pause, and `Ctrl/Cmd+S` to save now.
+- What’s New panel with this version’s notes and known issues. Report a problem from Help or Settings → Support, with optional diagnostics (no Music Path contents).
+- Recently played and recently edited lists in the playlist switcher.
 
 ### Changed
 
+- Quick start now walks through building a real Music Path: add tracks, change a setting, connect them, check the path, and play. Action steps wait until you actually do the step.
+- The current node still lights up while playing; the next queued node is marked Next.
+- Playback failures that used to skip immediately now offer Retry, with Skip still available.
+- Support tickets include a category, optional steps to reproduce, and optional app/page diagnostics.
 - The player deck keeps the original seek bar and puts half-width speed and volume sliders under it.
 - Public profile header leaves more space between the display name and the compact badges beside it.
 - Workshop comments show the author's photo, display name, and colored badges in their own card.

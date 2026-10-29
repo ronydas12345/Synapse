@@ -61,6 +61,18 @@ describe('tutorial engine', () => {
     expect(actionsMatch({ type: 'account-ready' }, { type: 'account-ready' })).toBe(
       true
     );
+    expect(
+      actionsMatch(
+        { type: 'node-count', nodeType: 'track', min: 2 },
+        { type: 'node-count', nodeType: 'track', min: 2 }
+      )
+    ).toBe(true);
+    expect(
+      actionsMatch(
+        { type: 'node-count', nodeType: 'track', min: 2 },
+        { type: 'node-count', nodeType: 'track', min: 1 }
+      )
+    ).toBe(false);
   });
 
   it('searches sections by keyword', () => {
@@ -88,18 +100,12 @@ describe('tutorial engine', () => {
   it('keeps a short first-run tour separate from the full walkthrough', () => {
     const simple = getSection(SIMPLE_TUTORIAL_ID);
     expect(simple).toBeDefined();
-    expect(simple!.steps.length).toBeGreaterThanOrEqual(6);
-    expect(simple!.steps.length).toBeLessThanOrEqual(8);
-    expect(simple!.steps.map((st) => st.title)).toEqual([
-      'Your account',
-      'Music Paths',
-      'Add a Track',
-      'Connect from Start',
-      'Optional branches',
-      'Play',
-      'Your playlist',
-      'That’s the loop',
-    ]);
+    expect(simple!.steps.length).toBeGreaterThanOrEqual(8);
+    expect(simple!.steps.length).toBeLessThanOrEqual(14);
+    expect(simple!.steps[0].title).toBe('Your account');
+    expect(simple!.steps.some((st) => st.expectedAction?.type === 'track-url')).toBe(true);
+    expect(simple!.steps.some((st) => st.expectedAction?.type === 'node-data')).toBe(true);
+    expect(simple!.steps.some((st) => st.expectedAction?.type === 'playing')).toBe(true);
     expect(FULL_TUTORIAL_SECTIONS).not.toContain(SIMPLE_TUTORIAL_ID);
     expect(FULL_TUTORIAL_SECTIONS[0]).toBe('getting-started');
   });

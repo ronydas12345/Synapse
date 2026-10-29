@@ -183,8 +183,10 @@ type BuildQueueOptions = {
 - Invalid `startNodeId` types (for example `comment`) yield an empty queue. Missing ids fall back to Start.
 - Origins that may start a walk: `start`, `track`, `conditional`, `splitter`, `randomizer`, `transition`, `style`, `end`.
 - Conditionals are visited once per build (same cycle protection as other nodes).
-- YouTube IFrame errors (bad id, private/deleted, embed blocked) skip to the next queue item.
+- YouTube IFrame errors (bad id, private/deleted, embed blocked) skip to the next queue item. Player-init and play failures offer Retry.
+- **Play from here** (Track node or inspector) sets `startNodeId` and rebuilds the queue. It does not change the saved graph.
 - **Pause** keeps the queue. **Stop** ends the session. The deck **loop** button repeats the current song without rebuilding the path.
+- Edit shows a validation summary (`validateGraph`) for missing Start, dangling edges, unreachable playback nodes, empty sequences, and tracks without a video. Comments are ignored. Warnings do not block save.
 - Seeded `rng` makes weighted picks deterministic in tests.
 
 ## File format
@@ -303,7 +305,7 @@ POST-less SPA + Supabase Auth
 
 - Google OAuth or email/password. Username and display name are required.
 - `/edit`, `/listen`, `/settings`, `/profile`, `/admin`, `/superadmin` require a session. Marketing pages are public.
-- Paths, themes, settings, profile extras, and tutorial progress save per user in `user_workspaces` (RLS). Sign-out clears the on-screen account; cloud playlists stay on that user.
+- Paths, themes, settings, profile extras, and tutorial progress save per user in `user_workspaces` (RLS). Sign-out clears the on-screen account; cloud playlists stay on that user. The editor also keeps a local recovery draft of the active path (no tokens). A newer local draft is offered after hydrate; a newer server copy is kept.
 - The verified owner email is Superadmin (`/superadmin` only). Other admins live in Postgres `roles` (`/admin` only). RLS still blocks Superadmin-only writes from Admin.
 - Settings → Privacy / Data: download a JSON copy, or delete the account.
 
@@ -312,6 +314,10 @@ POST-less SPA + Supabase Auth
 | Keys | Action |
 | --- | --- |
 | `Ctrl/Cmd+K` | Command palette |
+| `Ctrl/Cmd+Z` / `Shift+Z` or `Ctrl+Y` | Undo / redo |
+| `Ctrl/Cmd+S` | Save now |
+| `Ctrl/Cmd+/` | Keyboard shortcuts |
+| `Space` | Play / pause (Edit and Listen) |
 | `Shift+click` / box-select | Multi-select |
 | `Ctrl/Cmd+C` `V` `D` | Copy, paste, duplicate |
 | `Ctrl/Cmd+A` | Select visible nodes |
