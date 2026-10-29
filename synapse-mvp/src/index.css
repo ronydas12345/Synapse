@@ -4746,24 +4746,47 @@ button.synapse-badge {
 .synapse-save-status {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.3rem;
   flex: 0 0 auto;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--text-muted) 48%, transparent);
   white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
 }
 
 .synapse-save-status.is-failed {
-  color: var(--danger);
+  color: color-mix(in srgb, var(--danger) 72%, var(--text-muted));
+  pointer-events: auto;
 }
 
 .synapse-save-status.is-saved {
-  color: var(--ok);
+  animation: synapse-save-fade 1.6s ease forwards;
 }
 
-.synapse-save-status.is-saving {
-  color: var(--accent);
+.synapse-save-status-retry {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  cursor: pointer;
+}
+
+@keyframes synapse-save-fade {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 .synapse-validation {

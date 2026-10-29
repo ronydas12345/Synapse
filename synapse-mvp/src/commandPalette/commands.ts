@@ -274,9 +274,7 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
               label: 'Retry',
               onClick: () => void flushWorkspaceNow(),
             });
-            return;
           }
-          toast('Changes saved.', 'success');
         });
       },
     },

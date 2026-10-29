@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Autosave and Saved in the header are smaller and quieter, then fade away. Successful saves no longer pop a toast you have to close.
+
 ## [0.4.3] — 2026-10-28
 
 ### Added

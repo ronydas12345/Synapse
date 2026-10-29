@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import {
   getSaveSnapshot,
   retryWorkspaceSave,
@@ -11,7 +11,19 @@ export default function SaveStatus() {
     getSaveSnapshot,
     getSaveSnapshot
   );
+  const [dismissedSaved, setDismissedSaved] = useState(false);
+
+  useEffect(() => {
+    if (snap.status !== 'saved') {
+      setDismissedSaved(false);
+      return;
+    }
+    const hide = window.setTimeout(() => setDismissedSaved(true), 1600);
+    return () => window.clearTimeout(hide);
+  }, [snap.status]);
+
   if (snap.status === 'idle') return null;
+  if (snap.status === 'saved' && dismissedSaved) return null;
 
   const label =
     snap.status === 'saving'
@@ -26,13 +38,13 @@ export default function SaveStatus() {
     <div
       className={`synapse-save-status is-${snap.status}`}
       role="status"
-      aria-live={snap.status === 'unsaved' ? 'off' : 'polite'}
+      aria-live={snap.status === 'unsaved' || snap.status === 'saved' ? 'off' : 'polite'}
     >
       <span>{label}</span>
       {snap.status === 'failed' ? (
         <button
           type="button"
-          className="synapse-btn synapse-btn-ghost"
+          className="synapse-save-status-retry"
           onClick={() => void retryWorkspaceSave()}
         >
           Retry

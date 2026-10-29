@@ -37,9 +37,7 @@ export default function EditorHotkeys() {
               label: 'Retry',
               onClick: () => void flushWorkspaceNow(),
             });
-            return;
           }
-          toast('Changes saved.', 'success');
         });
         return;
       }

@@ -17,10 +17,10 @@ export default function WhatsNew() {
   const [open, setOpen] = useState(false);
   const latest = useMemo(() => {
     const versions = splitChangelogVersions(changelogRaw);
-    return (
-      versions.find((version) => version.body.split('\n').some((line) => line.startsWith('- '))) ??
-      versions[0]
-    );
+    const withNotes = (list: typeof versions) =>
+      list.find((version) => version.body.split('\n').some((line) => line.startsWith('- ')));
+    const dated = versions.filter((version) => !version.title.startsWith('[Unreleased]'));
+    return withNotes(dated) ?? withNotes(versions) ?? versions[0];
   }, []);
 
   useEffect(() => {

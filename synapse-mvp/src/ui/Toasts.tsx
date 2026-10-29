@@ -10,28 +10,32 @@ export default function Toasts() {
       {toasts.map((item) => (
         <div key={item.id} className={`synapse-toast is-${item.tone}`} role="status">
           <p>{item.message}</p>
-          <div className="synapse-toast-actions">
-            {item.action ? (
-              <button
-                type="button"
-                className="synapse-btn synapse-btn-ghost"
-                onClick={() => {
-                  item.action?.onClick();
-                  dismiss(item.id);
-                }}
-              >
-                {item.action.label}
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="synapse-btn synapse-btn-ghost"
-              aria-label="Dismiss"
-              onClick={() => dismiss(item.id)}
-            >
-              Close
-            </button>
-          </div>
+          {item.action || item.tone === 'error' ? (
+            <div className="synapse-toast-actions">
+              {item.action ? (
+                <button
+                  type="button"
+                  className="synapse-btn synapse-btn-ghost"
+                  onClick={() => {
+                    item.action?.onClick();
+                    dismiss(item.id);
+                  }}
+                >
+                  {item.action.label}
+                </button>
+              ) : null}
+              {item.tone === 'error' ? (
+                <button
+                  type="button"
+                  className="synapse-btn synapse-btn-ghost"
+                  aria-label="Dismiss"
+                  onClick={() => dismiss(item.id)}
+                >
+                  Close
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ))}
     </div>
