@@ -1,9 +1,10 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   getSaveSnapshot,
   retryWorkspaceSave,
   subscribeSaveStatus,
 } from '../cloud/persistGate';
+import { toast } from '../ui/toastStore';
 
 export default function SaveStatus() {
   const snap = useSyncExternalStore(
@@ -12,6 +13,18 @@ export default function SaveStatus() {
     getSaveSnapshot
   );
   const [dismissedSaved, setDismissedSaved] = useState(false);
+  const prevStatus = useRef(snap.status);
+
+  useEffect(() => {
+    if (prevStatus.current !== 'saved' && snap.status === 'saved') {
+      toast('Saved', 'success', undefined, {
+        id: 'workspace-saved',
+        quiet: true,
+        timeoutMs: 1800,
+      });
+    }
+    prevStatus.current = snap.status;
+  }, [snap.status]);
 
   useEffect(() => {
     if (snap.status !== 'saved') {

@@ -8,9 +8,20 @@ export default function Toasts() {
   return (
     <div className="synapse-toasts" aria-live="polite" aria-relevant="additions">
       {toasts.map((item) => (
-        <div key={item.id} className={`synapse-toast is-${item.tone}`} role="status">
+        <div
+          key={item.id}
+          className={[
+            'synapse-toast',
+            `is-${item.tone}`,
+            item.quiet ? 'is-quiet' : '',
+            item.leaving ? 'is-leaving' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          role="status"
+        >
           <p>{item.message}</p>
-          {item.action || item.tone === 'error' ? (
+          {!item.quiet && (item.action || item.tone === 'error') ? (
             <div className="synapse-toast-actions">
               {item.action ? (
                 <button
