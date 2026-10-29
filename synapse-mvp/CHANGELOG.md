@@ -6,9 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- You can hide the “No detected issues — path looks playable” bar with a small close button. It comes back if the path has a problem.
+
 ### Changed
 
-- Autosave and Saved in the header are smaller and quieter, then fade away. A small Saved notice fades in and out on its own, with no button to close.
+- The Saved notice sits above the minimap in a slightly stronger theme green, fades in and out on its own, and does not need a close button. Autosave waits a few seconds after you stop editing so Saving / Saved does not flicker and the account is written less often.
 
 ## [0.4.3] — 2026-10-28
 

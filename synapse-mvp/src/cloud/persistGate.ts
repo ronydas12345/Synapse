@@ -5,6 +5,9 @@ export interface SaveSnapshot {
   error: string | null;
 }
 
+/** Wait this long after the last change before writing the workspace. */
+export const PERSIST_DEBOUNCE_MS = 2500;
+
 let enabled = false;
 let pending = false;
 let timer: ReturnType<typeof setTimeout> | null = null;
@@ -72,7 +75,7 @@ export function scheduleWorkspacePersist(): void {
       return;
     }
     void runFlush();
-  }, 700);
+  }, PERSIST_DEBOUNCE_MS);
 }
 
 async function runFlush(): Promise<void> {
@@ -84,10 +87,17 @@ async function runFlush(): Promise<void> {
   writing = true;
   emit({ status: 'saving', error: null });
   try {
-    do {
-      queued = false;
-      await flush();
-    } while (queued);
+    queued = false;
+    await flush();
+    if (queued) {
+      emit({ status: 'unsaved', error: null });
+      scheduleWorkspacePersist();
+      return;
+    }
+    if (timer) {
+      emit({ status: 'unsaved', error: null });
+      return;
+    }
     emit({ status: 'saved', error: null });
   } catch (err) {
     emit({

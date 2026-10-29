@@ -35,7 +35,7 @@ export default function SaveStatus() {
     return () => window.clearTimeout(hide);
   }, [snap.status]);
 
-  if (snap.status === 'idle') return null;
+  if (snap.status === 'idle' || snap.status === 'unsaved') return null;
   if (snap.status === 'saved' && dismissedSaved) return null;
 
   const label =
