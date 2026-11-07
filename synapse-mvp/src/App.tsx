@@ -1,6 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
 import { Pause, Play } from 'lucide-react';
-import SaveStatus from './components/SaveStatus';
 import ValidationBar from './components/ValidationBar';
 import DraftRecovery from './components/DraftRecovery';
 import WhatsNew from './components/WhatsNew';
@@ -221,7 +220,6 @@ function WorkspaceApp({
           <TutorialHelpButton />
         </nav>
         <div className="synapse-topbar-playlist">
-          <SaveStatus />
           <PlaylistSwitcher />
         </div>
         <CommandPaletteButton />

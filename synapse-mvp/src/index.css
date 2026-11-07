@@ -278,6 +278,14 @@ body {
   flex: 0 1 auto;
 }
 
+.synapse-save-status-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 3.75rem;
+  flex: 0 0 auto;
+}
+
 .synapse-playlist-trigger {
   display: inline-flex;
   align-items: center;
@@ -4748,10 +4756,10 @@ button.synapse-badge {
   align-items: center;
   gap: 0.3rem;
   flex: 0 0 auto;
-  font-size: 0.58rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: color-mix(in srgb, var(--text-muted) 48%, transparent);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--text-muted) 72%, transparent);
   white-space: nowrap;
   pointer-events: none;
   user-select: none;

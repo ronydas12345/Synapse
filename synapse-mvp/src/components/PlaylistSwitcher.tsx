@@ -5,6 +5,7 @@ import { pathVisibilityLabel } from '../playlists/library';
 import { recentPlayedIds } from '../playlists/activity';
 import { PathLink } from '../app/AppLink';
 import { workshopItemPath } from '../app/routes';
+import SaveStatus from './SaveStatus';
 
 export function PlaylistNameField({
   id,
@@ -102,6 +103,9 @@ export default function PlaylistSwitcher() {
           className="synapse-playlist-name"
         />
       ) : null}
+      <div className="synapse-save-status-slot">
+        <SaveStatus />
+      </div>
       <div className="synapse-playlist-switcher" ref={rootRef} data-tutorial="playlist-switcher">
         <button
           type="button"
