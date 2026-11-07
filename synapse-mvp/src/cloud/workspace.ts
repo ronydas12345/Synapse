@@ -137,7 +137,6 @@ function applyWorkspace(
 async function pushWorkspace(): Promise<void> {
   const user = useAuthStore.getState().user;
   if (!user) return;
-  if (usePathStore.getState().graphLocked) return;
   const payload = {
     uid: user.uid,
     library: snapshotPathLibrary(),
@@ -260,7 +259,10 @@ export async function hydrateUserWorkspace(): Promise<void> {
     if (draft && draft.uid === user.uid) {
       const lib = snapshotPathLibrary();
       const saved = lib.paths.find((path) => path.id === draft.pathId);
-      if (draftIsNewer(draft.updatedAt, saved?.updatedAt)) {
+      if (!saved) {
+        clearPathDraft();
+        setPendingRecovery(null);
+      } else if (draftIsNewer(draft.updatedAt, saved.updatedAt)) {
         setPendingRecovery(draft);
       } else {
         clearPathDraft();

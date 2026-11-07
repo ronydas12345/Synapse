@@ -48,16 +48,20 @@ describe('persistGate', () => {
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
-  it('waits out the debounce before a second write if edits arrive during a flush', async () => {
+  it('writes again immediately if edits arrive during a flush', async () => {
     vi.stubGlobal('window', {});
     vi.useFakeTimers();
     let resolveFlush: (() => void) | undefined;
-    const flush = vi.fn(
-      () =>
-        new Promise<void>((resolve) => {
+    let calls = 0;
+    const flush = vi.fn(() => {
+      calls += 1;
+      if (calls === 1) {
+        return new Promise<void>((resolve) => {
           resolveFlush = resolve;
-        })
-    );
+        });
+      }
+      return Promise.resolve();
+    });
     registerWorkspaceFlush(flush);
     setCloudPersistEnabled(true);
     scheduleWorkspacePersist();
@@ -67,8 +71,6 @@ describe('persistGate', () => {
     resolveFlush?.();
     await Promise.resolve();
     await Promise.resolve();
-    expect(flush).toHaveBeenCalledTimes(1);
-    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS + 50);
     expect(flush).toHaveBeenCalledTimes(2);
   });
 });

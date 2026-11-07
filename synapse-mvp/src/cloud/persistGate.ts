@@ -67,6 +67,10 @@ export function scheduleWorkspacePersist(): void {
     void runFlush();
     return;
   }
+  if (writing) {
+    queued = true;
+    return;
+  }
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => {
     timer = null;
@@ -87,13 +91,10 @@ async function runFlush(): Promise<void> {
   writing = true;
   emit({ status: 'saving', error: null });
   try {
-    queued = false;
-    await flush();
-    if (queued) {
-      emit({ status: 'unsaved', error: null });
-      scheduleWorkspacePersist();
-      return;
-    }
+    do {
+      queued = false;
+      await flush();
+    } while (queued);
     if (timer) {
       emit({ status: 'unsaved', error: null });
       return;

@@ -51,6 +51,27 @@ describe('playlist library', () => {
     expect(preferStoredLibrary(undefined, null)).toEqual({});
   });
 
+  it('keeps a newer browser library so a delete is not undone by a stale account row', () => {
+    const account = {
+      schemaVersion: 1,
+      updatedAt: '2026-11-06T20:00:00.000Z',
+      activeId: 'keep',
+      paths: [
+        { id: 'keep', name: 'Keep', nodes: [], edges: [] },
+        { id: 'gone', name: 'Gone', nodes: [], edges: [] },
+      ],
+    };
+    const local = {
+      schemaVersion: 1,
+      updatedAt: '2026-11-06T20:00:05.000Z',
+      activeId: 'keep',
+      paths: [{ id: 'keep', name: 'Keep', nodes: [], edges: [] }],
+    };
+    expect(preferStoredLibrary(account, local)).toBe(local);
+    const newerAccount = { ...account, updatedAt: '2026-11-06T20:00:10.000Z' };
+    expect(preferStoredLibrary(newerAccount, local)).toBe(newerAccount);
+  });
+
   it('keeps curated playlist tags on a stored path', () => {
     const parsed = parseLibrary({
       schemaVersion: 1,
@@ -92,6 +113,7 @@ describe('playlist library', () => {
     const next = deletePath(lib, 'p2');
     expect(next.paths.map((p) => p.id)).toEqual(['p1']);
     expect(next.activeId).toBe('p1');
+    expect(next.updatedAt).toBeTruthy();
   });
 
   it('switches away when the active playlist is deleted', () => {

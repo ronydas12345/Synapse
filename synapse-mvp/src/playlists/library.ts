@@ -1,5 +1,5 @@
 import type { Edge, Node } from '@xyflow/react';
-import { scheduleWorkspacePersist } from '../cloud/persistGate';
+import { flushWorkspaceNow, scheduleWorkspacePersist } from '../cloud/persistGate';
 import { normalizeWorkspaceGraph } from '../randomizerDrop';
 import { sanitizeTagIds } from '../workshop/tags';
 
@@ -24,6 +24,8 @@ export interface PathLibrary {
   schemaVersion: 1;
   activeId: string;
   paths: StoredMusicPath[];
+  /** Bumped on every local persist so a newer browser copy can beat a stale account row. */
+  updatedAt?: string;
 }
 
 export interface PathSummary {
@@ -141,7 +143,11 @@ export function parseLibrary(raw: unknown): PathLibrary {
     typeof parsed.activeId === 'string' && paths.some((p) => p.id === parsed.activeId)
       ? parsed.activeId
       : paths[0].id;
-  return { schemaVersion: 1, activeId, paths };
+  const updatedAt =
+    typeof parsed.updatedAt === 'string' && Number.isFinite(Date.parse(parsed.updatedAt))
+      ? parsed.updatedAt
+      : undefined;
+  return { schemaVersion: 1, activeId, paths, updatedAt };
 }
 
 export function libraryHasUserContent(lib: PathLibrary): boolean {
@@ -155,9 +161,28 @@ export function hasStoredLibrary(value: unknown): boolean {
   return Array.isArray(paths) && paths.length > 0;
 }
 
-/** The account library wins. A browser copy is only used when the account has no playlists yet. */
+function libraryUpdatedAt(value: unknown): number {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return NaN;
+  const raw = (value as { updatedAt?: unknown }).updatedAt;
+  return typeof raw === 'string' ? Date.parse(raw) : NaN;
+}
+
+/**
+ * Prefer the account library unless this browser has a newer stamped copy
+ * (for example a delete that has not reached the account row yet).
+ */
 export function preferStoredLibrary(stored: unknown, legacy: unknown): unknown {
-  if (hasStoredLibrary(stored)) return stored;
+  const storedOk = hasStoredLibrary(stored);
+  const legacyOk = hasStoredLibrary(legacy);
+  if (storedOk && legacyOk) {
+    const storedAt = libraryUpdatedAt(stored);
+    const legacyAt = libraryUpdatedAt(legacy);
+    if (Number.isFinite(legacyAt) && (!Number.isFinite(storedAt) || legacyAt > storedAt + 1500)) {
+      return legacy;
+    }
+    return stored;
+  }
+  if (storedOk) return stored;
   if (legacy != null) return legacy;
   return {};
 }
@@ -167,7 +192,9 @@ export function readLegacyLibrary(): PathLibrary | null {
     const raw = localStorage.getItem(LIBRARY_KEY);
     if (raw) {
       const parsed = parseLibrary(JSON.parse(raw));
-      if (libraryHasUserContent(parsed) || parsed.paths.length > 1) return parsed;
+      if (parsed.updatedAt || libraryHasUserContent(parsed) || parsed.paths.length > 1) {
+        return parsed;
+      }
     }
   } catch {
     /* ignore */
@@ -190,8 +217,15 @@ export function readLegacyLibrary(): PathLibrary | null {
   }
 }
 
-export function persistLibrary(_lib: PathLibrary): void {
-  scheduleWorkspacePersist();
+export function persistLibrary(lib: PathLibrary, options?: { immediate?: boolean }): void {
+  lib.updatedAt = new Date().toISOString();
+  try {
+    localStorage.setItem(LIBRARY_KEY, JSON.stringify(lib));
+  } catch {
+    /* quota / private mode */
+  }
+  if (options?.immediate) void flushWorkspaceNow();
+  else scheduleWorkspacePersist();
 }
 
 export function summaries(lib: PathLibrary): PathSummary[] {
@@ -255,14 +289,19 @@ export function deletePath(lib: PathLibrary, id: string): PathLibrary {
   const remaining = lib.paths.filter((p) => p.id !== id);
   if (remaining.length === 0) {
     const next = emptyLibrary();
-    persistLibrary(next);
+    persistLibrary(next, { immediate: true });
     return next;
   }
   const activeId = remaining.some((p) => p.id === lib.activeId)
     ? lib.activeId
     : remaining[0].id;
-  const next: PathLibrary = { schemaVersion: 1, activeId, paths: remaining };
-  persistLibrary(next);
+  const next: PathLibrary = {
+    schemaVersion: 1,
+    activeId,
+    paths: remaining,
+    updatedAt: lib.updatedAt,
+  };
+  persistLibrary(next, { immediate: true });
   return next;
 }
 

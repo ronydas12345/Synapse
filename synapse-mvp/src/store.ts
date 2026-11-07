@@ -53,7 +53,7 @@ import {
   resetHistory,
   undo as undoHistory,
 } from './canvas/history';
-import { schedulePathDraft } from './canvas/drafts';
+import { clearPathDraft, readPathDraft, schedulePathDraft } from './canvas/drafts';
 import type { PathDraft } from './canvas/drafts';
 
 interface PathState {
@@ -550,6 +550,7 @@ export const usePathStore = create<PathState>((set, get) => ({
     library = saveActiveGraph(library, current.nodes, current.edges);
     const leaving = library.activeId === id;
     if (workshopHold?.path.id === id) releaseWorkshopHold();
+    if (readPathDraft()?.pathId === id) clearPathDraft();
     library = deletePath(library, id);
     const view = libraryView();
     if (leaving) resetHistory(view.nodes, view.edges);
@@ -750,6 +751,8 @@ export function useGraphReadOnly(): boolean {
 
 export function snapshotPathLibrary(): PathLibrary {
   const state = usePathStore.getState();
-  library = saveActiveGraph(library, state.nodes, state.edges);
+  if (!state.graphLocked) {
+    library = saveActiveGraph(library, state.nodes, state.edges);
+  }
   return library;
 }
