@@ -30,15 +30,13 @@ export default function SaveStatus() {
       ? 'Saving…'
       : snap.status === 'saved'
         ? 'Saved'
-        : snap.status === 'failed'
-          ? 'Save failed'
-          : 'Unsaved';
+        : 'Save failed';
 
   return (
     <div
       className={`synapse-save-status is-${snap.status}`}
       role="status"
-      aria-live={snap.status === 'unsaved' || snap.status === 'saved' ? 'off' : 'polite'}
+      aria-live={snap.status === 'saved' ? 'off' : 'polite'}
     >
       <span>{label}</span>
       {snap.status === 'failed' ? (
