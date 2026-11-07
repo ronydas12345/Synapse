@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   ALIGN_PROXIMITY_PX,
   SNAP_THRESHOLD_PX,
@@ -8,6 +8,7 @@ import {
   hoverGuides,
   nearbyNodeBoxes,
   nodeGuides,
+  resetAlignDragSnap,
   snapDraggedBox,
 } from './alignGuides';
 
@@ -71,6 +72,10 @@ describe('align guides', () => {
 });
 
 describe('alignment snap', () => {
+  afterEach(() => {
+    resetAlignDragSnap();
+  });
+
   it('snaps a dragged node to a nearby side', () => {
     const dragged = { id: 'd', x: 102, y: 80, width: 100, height: 40 };
     const snap = snapDraggedBox(dragged, [a], { zoom: 1 });
@@ -154,5 +159,39 @@ describe('alignment snap', () => {
     );
     expect(result.changes[0]?.position).toEqual({ x: 102, y: 80 });
     expect(result.guides).toEqual([]);
+  });
+
+  it('keeps the snapped position when Shift is released during a drag', () => {
+    const nodes = [
+      { id: 'a', position: { x: 0, y: 0 }, width: 100, height: 40 },
+      { id: 'd', position: { x: 100, y: 80 }, width: 100, height: 40 },
+    ];
+    const opts = {
+      zoom: 1,
+      sizeOf: (node: { width?: number; height?: number }) => ({
+        width: node.width ?? 100,
+        height: node.height ?? 40,
+      }),
+      worldOf: (node: { position: { x: number; y: number } }) => node.position,
+    };
+    applySnapToDragChanges(
+      [{ type: 'position', id: 'd', dragging: true, position: { x: 102, y: 80 } }],
+      nodes,
+      { ...opts, shift: true }
+    );
+    const released = applySnapToDragChanges(
+      [{ type: 'position', id: 'd', dragging: true, position: { x: 102, y: 80 } }],
+      nodes,
+      { ...opts, shift: false }
+    );
+    expect(released.changes[0]?.position).toEqual({ x: 100, y: 80 });
+    expect(released.guides).toEqual([]);
+    const settled = applySnapToDragChanges(
+      [{ type: 'position', id: 'd', dragging: false, position: { x: 102, y: 80 } }],
+      nodes,
+      { ...opts, shift: false }
+    );
+    expect(settled.changes[0]?.position).toEqual({ x: 100, y: 80 });
+    expect(settled.dragging).toBe(false);
   });
 });

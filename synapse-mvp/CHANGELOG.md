@@ -19,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - Deleting a playlist stays deleted after a reload.
+- Holding Shift to snap alignment no longer jumps the node when you release Shift.
 
 ## [0.4.3] — 2026-10-28
 

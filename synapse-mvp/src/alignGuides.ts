@@ -474,8 +474,47 @@ export function snapDraggedBox(
   return { dx, dy, guides };
 }
 
+type DragChange = {
+  type: string;
+  id?: string;
+  dragging?: boolean;
+  position?: { x: number; y: number };
+};
+
+let alignDragActive = false;
+let stickySnap = { dx: 0, dy: 0 };
+
+export function resetAlignDragSnap(): void {
+  alignDragActive = false;
+  stickySnap = { dx: 0, dy: 0 };
+}
+
+function isPositionChange(
+  change: DragChange
+): change is DragChange & { id: string; position: { x: number; y: number } } {
+  return change.type === 'position' && Boolean(change.id) && Boolean(change.position);
+}
+
+function applyStickyOffset<T extends DragChange>(
+  changes: T[],
+  ids: Set<string>,
+  offset: { dx: number; dy: number }
+): T[] {
+  if (offset.dx === 0 && offset.dy === 0) return changes;
+  return changes.map((change) => {
+    if (!isPositionChange(change) || !ids.has(change.id)) return change;
+    return {
+      ...change,
+      position: {
+        x: change.position.x + offset.dx,
+        y: change.position.y + offset.dy,
+      },
+    };
+  });
+}
+
 export function applySnapToDragChanges<
-  T extends { type: string; id?: string; dragging?: boolean; position?: { x: number; y: number } },
+  T extends DragChange,
   N extends {
     id: string;
     hidden?: boolean;
@@ -493,14 +532,37 @@ export function applySnapToDragChanges<
   opts: { shift: boolean; zoom: number; sizeOf: (node: N) => { width: number; height: number }; worldOf: (node: N, byId: Map<string, N>) => { x: number; y: number } }
 ): { changes: T[]; guides: OverlayGuide[]; dragging: boolean } {
   const draggingChanges = changes.filter(
-    (change) => change.type === 'position' && change.dragging && change.position && change.id
+    (change) => isPositionChange(change) && change.dragging
   );
+  const settlingChanges = changes.filter(
+    (change) => isPositionChange(change) && change.dragging === false
+  );
+  const movingIds = new Set(
+    [...draggingChanges, ...settlingChanges]
+      .map((change) => change.id)
+      .filter((id): id is string => Boolean(id))
+  );
+
   if (draggingChanges.length === 0) {
-    return { changes, guides: [], dragging: false };
+    if (settlingChanges.length === 0) {
+      return { changes, guides: [], dragging: false };
+    }
+    const next = applyStickyOffset(changes, movingIds, stickySnap);
+    resetAlignDragSnap();
+    return { changes: next, guides: [], dragging: false };
+  }
+
+  if (!alignDragActive) {
+    stickySnap = { dx: 0, dy: 0 };
+    alignDragActive = true;
   }
 
   if (!opts.shift) {
-    return { changes, guides: [], dragging: true };
+    return {
+      changes: applyStickyOffset(changes, movingIds, stickySnap),
+      guides: [],
+      dragging: true,
+    };
   }
 
   const byId = new Map(nodes.map((node) => [node.id, node]));
@@ -536,18 +598,10 @@ export function applySnapToDragChanges<
   }
 
   const snap = snapDraggedBox(dragged, others, { zoom: opts.zoom });
-  const next = changes.map((change) => {
-    if (change.type !== 'position' || !change.dragging || !change.position || !change.id) {
-      return change;
-    }
-    if (!draggingIds.has(change.id)) return change;
-    return {
-      ...change,
-      position: {
-        x: change.position.x + snap.dx,
-        y: change.position.y + snap.dy,
-      },
-    };
-  });
-  return { changes: next, guides: snap.guides, dragging: true };
+  stickySnap = { dx: snap.dx, dy: snap.dy };
+  return {
+    changes: applyStickyOffset(changes, draggingIds, stickySnap),
+    guides: snap.guides,
+    dragging: true,
+  };
 }
