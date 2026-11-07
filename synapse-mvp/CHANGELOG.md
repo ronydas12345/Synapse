@@ -13,7 +13,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Saving / Saved sits to the left of the playlist dropdown. Autosave waits a few seconds after you stop editing so it does not flicker and the account is written less often.
+- Saving / Saved sits to the left of the playlist name and dropdown. Autosave waits a few seconds after you stop editing so it does not flicker and the account is written less often.
 - On Profile, the user-info header shrinks into a compact bar when you scroll down.
 
 ### Fixed

@@ -96,6 +96,9 @@ export default function PlaylistSwitcher() {
 
   return (
     <>
+      <div className="synapse-save-status-slot">
+        <SaveStatus />
+      </div>
       {active ? (
         <PlaylistNameField
           id={active.id}
@@ -103,9 +106,6 @@ export default function PlaylistSwitcher() {
           className="synapse-playlist-name"
         />
       ) : null}
-      <div className="synapse-save-status-slot">
-        <SaveStatus />
-      </div>
       <div className="synapse-playlist-switcher" ref={rootRef} data-tutorial="playlist-switcher">
         <button
           type="button"
