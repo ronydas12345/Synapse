@@ -7,6 +7,8 @@ import {
 } from './tutorialCatalog';
 import { measureTarget, paddedRect, placeWindow, rectsClose, scrollTutorialTargetIntoView, watchTutorialTarget, type SpotlightRect } from './placement';
 import { primeTutorialStep, useTutorialStore } from './tutorialStore';
+import { stepAsksForConnection } from './connectHint';
+import TutorialConnectHint from './TutorialConnectHint';
 
 export default function TutorialTour() {
   const view = useTutorialStore((s) => s.view);
@@ -106,6 +108,10 @@ export default function TutorialTour() {
           style={{ left: 0, top: 0, width: 0, height: 0, opacity: 0 }}
         />
       )}
+      <TutorialConnectHint
+        active={stepAsksForConnection(step) && !praise}
+        reduced={reduced}
+      />
       <div
         className={`synapse-tutorial-window${instant}${pos.sheet ? ' is-sheet' : ''}`}
         role="dialog"

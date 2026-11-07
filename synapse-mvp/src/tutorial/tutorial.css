@@ -228,3 +228,72 @@ html.synapse-reduce-motion .synapse-tutorial-spotlight,
 html.synapse-reduce-motion .synapse-tutorial-window {
   transition: opacity 120ms ease;
 }
+
+.synapse-tutorial-connect {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.synapse-tutorial-connect-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.synapse-tutorial-connect-line {
+  fill: none;
+  stroke: #f5e04a;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 7 9;
+  animation: synapse-tutorial-connect-dash 0.85s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(245, 224, 74, 0.55));
+}
+
+.synapse-tutorial-connect-handle {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 999px;
+  border: 2px solid #f5e04a;
+  background: color-mix(in srgb, #f5e04a 28%, transparent);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, #f5e04a 28%, transparent),
+    0 0 16px color-mix(in srgb, #f5e04a 45%, transparent);
+  animation: synapse-tutorial-connect-pulse 1.15s ease-in-out infinite;
+}
+
+.synapse-tutorial-connect.is-instant .synapse-tutorial-connect-line,
+.synapse-tutorial-connect.is-instant .synapse-tutorial-connect-handle,
+html.synapse-reduce-motion .synapse-tutorial-connect-line,
+html.synapse-reduce-motion .synapse-tutorial-connect-handle {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="full"]) .synapse-tutorial-connect-line,
+  html:not([data-motion="full"]) .synapse-tutorial-connect-handle {
+    animation: none;
+  }
+}
+
+@keyframes synapse-tutorial-connect-dash {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+
+@keyframes synapse-tutorial-connect-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.72;
+  }
+}

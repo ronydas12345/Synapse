@@ -12,6 +12,8 @@ import {
   stepNeedsAccount,
 } from './tutorialStore';
 import { paddedRect, placeWindow, rectsClose } from './placement';
+import { findSuggestedConnection, stepAsksForConnection } from './connectHint';
+import type { Edge, Node } from '@xyflow/react';
 
 describe('tutorial engine', () => {
   it('parses stored progress and ignores junk', () => {
@@ -201,5 +203,64 @@ describe('tutorial spotlight placement', () => {
     expect(pos.sheet).toBe(false);
     expect(pos.left).toBeGreaterThan(padded.left);
     expect(pos.top).toBeGreaterThanOrEqual(12);
+  });
+});
+
+describe('tutorial connection hint', () => {
+  const node = (id: string, type: string, x: number): Node => ({
+    id,
+    type,
+    position: { x, y: 0 },
+    data: {},
+  });
+  const edge = (source: string, target: string): Edge => ({
+    id: `${source}-${target}`,
+    source,
+    target,
+  });
+
+  it('detects steps that ask the user to connect nodes', () => {
+    expect(
+      stepAsksForConnection({
+        id: 'qs-connect',
+        title: 'Connect',
+        body: '',
+        type: 'action',
+        expectedAction: { type: 'nodes-connected' },
+      })
+    ).toBe(true);
+    expect(
+      stepAsksForConnection({
+        id: 'tr-connect',
+        title: 'Connecting transitions',
+        body: '',
+        type: 'highlight',
+      })
+    ).toBe(true);
+    expect(
+      stepAsksForConnection({
+        id: 'b-disconnect',
+        title: 'Disconnect',
+        body: '',
+        type: 'highlight',
+      })
+    ).toBe(false);
+  });
+
+  it('suggests Start to the first Track, then Track to Track', () => {
+    const start = node('s', 'start', 0);
+    const t1 = node('t1', 'track', 120);
+    const t2 = node('t2', 'track', 240);
+    expect(findSuggestedConnection([start, t1, t2], [])).toEqual({
+      sourceId: 's',
+      targetId: 't1',
+    });
+    expect(findSuggestedConnection([start, t1, t2], [edge('s', 't1')])).toEqual({
+      sourceId: 't1',
+      targetId: 't2',
+    });
+    expect(
+      findSuggestedConnection([start, t1, t2], [edge('s', 't1'), edge('t1', 't2')])
+    ).toBeNull();
   });
 });
