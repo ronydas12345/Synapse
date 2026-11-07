@@ -1,5 +1,5 @@
 import { Music, GitBranch, Plus, Play, Square, Dice5, MessageSquare, ArrowRight, Palette } from 'lucide-react';
-import { useCallback, type ReactNode } from 'react';
+import { useCallback, useRef, type ReactNode } from 'react';
 import { usePathStore, useGraphReadOnly } from '../store';
 import {
   addCanvasNode,
@@ -37,17 +37,26 @@ export default function Sidebar() {
   const normalizeSplitters = usePathStore((s) => s.normalizeSplitters);
   const readOnly = useGraphReadOnly();
 
+  const skipClickAfterDrag = useRef(false);
+
   const handleAddNode = useCallback((type: CanvasNodeType) => {
     const error = addCanvasNode(type);
     if (error) alert(error);
   }, []);
 
   const onDragStart = (e: React.DragEvent<HTMLDivElement>, type: CanvasNodeType) => {
+    skipClickAfterDrag.current = true;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData(
       'application/reactflow',
       JSON.stringify(canvasNodeDragPayload(type))
     );
+  };
+
+  const onDragEnd = () => {
+    window.setTimeout(() => {
+      skipClickAfterDrag.current = false;
+    }, 0);
   };
 
   return (
@@ -68,7 +77,18 @@ export default function Sidebar() {
             <div
               draggable={!readOnly}
               onDragStart={readOnly ? undefined : (e) => onDragStart(e, nodeType.type)}
-              onClick={readOnly ? undefined : () => handleAddNode(nodeType.type)}
+              onDragEnd={readOnly ? undefined : onDragEnd}
+              onClick={
+                readOnly
+                  ? undefined
+                  : () => {
+                      if (skipClickAfterDrag.current) {
+                        skipClickAfterDrag.current = false;
+                        return;
+                      }
+                      handleAddNode(nodeType.type);
+                    }
+              }
               className={`synapse-rack-item group${readOnly ? ' is-readonly' : ''}`}
               aria-disabled={readOnly}
               data-tutorial={`rack-${nodeType.type}`}

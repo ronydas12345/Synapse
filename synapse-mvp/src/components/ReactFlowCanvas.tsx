@@ -39,6 +39,13 @@ import { documentPrefersReducedMotion } from '../settings/motion';
 import { isTypingTarget } from '../ui/isTypingTarget';
 import { FIT_VIEW_EVENT, FIT_NODES_EVENT } from '../canvas/fitEvents';
 import {
+  buildCanvasNode,
+  canvasAddError,
+  canvasPositionAtPointer,
+  isCanvasNodeType,
+  registerCanvasPlacement,
+} from '../canvas/addNode';
+import {
   canDropPlaybackMarkerOn,
   dataTransferIsPlaybackMarker,
   isPlaybackMarkerDrag,
@@ -681,12 +688,26 @@ function ReactFlowContent() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  useEffect(() => {
+    return registerCanvasPlacement(() => {
+      const pane =
+        (reactFlowRef.current?.querySelector('.react-flow') as HTMLElement | null) ??
+        reactFlowRef.current;
+      if (!pane) return { x: 240, y: 180 };
+      const rect = pane.getBoundingClientRect();
+      return screenToFlowPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+    });
+  }, [screenToFlowPosition]);
+
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
       
       const data = event.dataTransfer.getData('application/reactflow');
-      if (!data || !reactFlowRef.current) return;
+      if (!data) return;
 
       try {
         const nodeData = JSON.parse(data);
@@ -716,27 +737,26 @@ function ReactFlowContent() {
           return;
         }
 
-        // Otherwise, create new node from palette
-        if (!nodeData.defaultData) return;
+        if (!isCanvasNodeType(nodeData.type)) return;
 
-        // Prevent multiple start nodes
-        if (nodeData.type === 'start' && nodes.some(n => n.type === 'start')) {
-          alert('There can only be one start node');
+        const error = canvasAddError(nodeData.type, nodes);
+        if (error) {
+          alert(error);
           return;
         }
 
-        const rect = reactFlowRef.current.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-
-        const newNode: any = {
-          id: `${nodeData.type}-${Date.now()}`,
-          type: nodeData.type,
-          position: { x, y },
-          data: { ...nodeData.defaultData },
-        };
-
-        setNodes([...nodes, newNode]);
+        const pointer = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
+        const newNode = buildCanvasNode(
+          nodeData.type,
+          canvasPositionAtPointer(pointer, nodeData.type)
+        );
+        const next = [...nodes, newNode];
+        setNodes(next);
+        setStoreNodes(next);
+        lastSyncedNodesRef.current = next;
       } catch (e) {
         console.error('Error parsing dropped node', e);
       }

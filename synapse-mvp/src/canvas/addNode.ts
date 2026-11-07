@@ -46,6 +46,8 @@ function defaultData(type: CanvasNodeType): Record<string, unknown> {
   return { label: 'End', name: '' };
 }
 
+export type CanvasPoint = { x: number; y: number };
+
 export function canvasNodeDragPayload(type: CanvasNodeType): {
   type: CanvasNodeType;
   defaultData: Record<string, unknown>;
@@ -53,17 +55,77 @@ export function canvasNodeDragPayload(type: CanvasNodeType): {
   return { type, defaultData: defaultData(type) };
 }
 
-export function addCanvasNode(type: CanvasNodeType): string | null {
-  const { nodes, setNodes } = usePathStore.getState();
+export function isCanvasNodeType(value: unknown): value is CanvasNodeType {
+  return CANVAS_NODE_TYPES.some((item) => item.type === value);
+}
+
+export function canvasAddError(
+  type: CanvasNodeType,
+  nodes: { type?: string }[]
+): string | null {
   if (type === 'start' && nodes.some((node) => node.type === 'start')) {
     return 'There can only be one Start node.';
   }
-  const node: Node = {
+  return null;
+}
+
+const PLACE_SIZE: Record<CanvasNodeType, { width: number; height: number }> = {
+  start: { width: 160, height: 72 },
+  track: { width: 288, height: 160 },
+  conditional: { width: 220, height: 140 },
+  randomizer: { width: 224, height: 180 },
+  transition: { width: 200, height: 120 },
+  style: { width: 200, height: 120 },
+  comment: { width: 200, height: 120 },
+  end: { width: 160, height: 72 },
+};
+
+export function canvasPositionAtPointer(
+  pointer: CanvasPoint,
+  type: CanvasNodeType
+): CanvasPoint {
+  const size = PLACE_SIZE[type];
+  return {
+    x: pointer.x - size.width / 2,
+    y: pointer.y - size.height / 2,
+  };
+}
+
+export function buildCanvasNode(type: CanvasNodeType, position: CanvasPoint): Node {
+  return {
     id: `${type}-${Date.now()}`,
     type,
-    position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
+    position,
     data: defaultData(type),
   };
-  setNodes([...nodes, node]);
+}
+
+let viewportCenter: (() => CanvasPoint) | null = null;
+
+export function registerCanvasPlacement(getCenter: () => CanvasPoint): () => void {
+  viewportCenter = getCenter;
+  return () => {
+    if (viewportCenter === getCenter) viewportCenter = null;
+  };
+}
+
+function clickPlacement(): CanvasPoint {
+  return viewportCenter?.() ?? { x: 240, y: 180 };
+}
+
+export function addCanvasNode(
+  type: CanvasNodeType,
+  position?: CanvasPoint
+): string | null {
+  const { nodes, setNodes } = usePathStore.getState();
+  const error = canvasAddError(type, nodes);
+  if (error) return error;
+  setNodes([
+    ...nodes,
+    buildCanvasNode(
+      type,
+      canvasPositionAtPointer(position ?? clickPlacement(), type)
+    ),
+  ]);
   return null;
 }
