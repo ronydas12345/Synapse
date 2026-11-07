@@ -221,9 +221,9 @@ function WorkspaceApp({
           <TutorialHelpButton />
         </nav>
         <div className="synapse-topbar-playlist">
+          <SaveStatus />
           <PlaylistSwitcher />
         </div>
-        <SaveStatus />
         <CommandPaletteButton />
         <AuthControls compact />
         {showGraph || listen ? (
