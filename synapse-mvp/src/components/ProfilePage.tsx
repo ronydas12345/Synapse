@@ -66,6 +66,28 @@ interface SectionDragApi {
 
 const SectionDragContext = createContext<SectionDragApi | null>(null);
 
+function useProfileHeroCompact(scrollRef: { current: HTMLElement | null }) {
+  const [compact, setCompact] = useState(false);
+
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    let compactNow = false;
+    const onScroll = () => {
+      const y = scroller.scrollTop;
+      const next = compactNow ? y > 4 : y > 12;
+      if (next === compactNow) return;
+      compactNow = next;
+      setCompact(next);
+    };
+    onScroll();
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    return () => scroller.removeEventListener('scroll', onScroll);
+  }, [scrollRef]);
+
+  return compact;
+}
+
 function SectionDragProvider({
   editing,
   children,
@@ -811,6 +833,8 @@ export default function ProfilePage() {
   const [shareCode, setShareCode] = useState('');
   const [decoReady, setDecoReady] = useState(false);
   const [avatarError, setAvatarError] = useState('');
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const heroCompact = useProfileHeroCompact(bodyRef);
 
   const userErr = usernameError(profile.username);
   const nameErr = displayNameError(profile.displayName);
@@ -882,7 +906,10 @@ export default function ProfilePage() {
 
   return (
     <div className="synapse-profile" data-tutorial="profile" id="workspace-main">
-      <div className="synapse-profile-hero" data-deco={deco.id}>
+      <div
+        className={`synapse-profile-hero${heroCompact ? ' is-compact' : ''}`}
+        data-deco={deco.id}
+      >
         <div className="synapse-profile-identity">
           <DecorationFrame id={displayDeco} className="synapse-profile-deco">
             <button
@@ -964,7 +991,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="synapse-profile-body">
+      <div className="synapse-profile-body" ref={bodyRef}>
       {needsSetup && editing ? (
         <p className="synapse-settings-lead">
           Username and display name are required. Everything else is optional
