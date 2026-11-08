@@ -18,6 +18,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - On Profile, the user-info header shrinks into a compact bar when you scroll down.
 - Opening a playlist no longer shrinks the whole graph to fit by default. Basic keeps a readable zoom around Start. Fit view is still on the canvas controls.
 - The header playlist menu lists the same playlists as Settings, in the same order. The open playlist is marked in bold accent color instead of a Current label.
+- Graph errors (only one Start, connection rules, files over 5MB) and delete confirmations (connections, nodes, remove all, replace playlist) use in-app messages instead of the browser’s alert and confirm windows.
 
 ### Fixed
 

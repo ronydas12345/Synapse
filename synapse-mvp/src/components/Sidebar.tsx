@@ -10,6 +10,7 @@ import {
 import { BringOntoPageButtons } from './inspector/InspectorChrome';
 import { NODE_BLURBS } from '../editorExperience/config';
 import { useEditorExperience } from '../editorExperience/useEditorExperience';
+import { toast } from '../ui/toastStore';
 
 const NODE_ICONS: Record<CanvasNodeType, ReactNode> = {
   start: <Play className="w-4 h-4" />,
@@ -44,7 +45,7 @@ export default function Sidebar() {
 
   const handleAddNode = useCallback((type: CanvasNodeType) => {
     const error = addCanvasNode(type);
-    if (error) alert(error);
+    if (error) toast(error, 'error');
   }, []);
 
   const onDragStart = (e: React.DragEvent<HTMLDivElement>, type: CanvasNodeType) => {

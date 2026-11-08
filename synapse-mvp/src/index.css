@@ -5296,7 +5296,7 @@ button.synapse-badge {
   position: fixed;
   right: 1.15rem;
   bottom: calc(11.5rem + 200px);
-  z-index: 55;
+  z-index: 70;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;

@@ -125,6 +125,14 @@
   background: color-mix(in srgb, var(--bg-void) 45%, transparent);
 }
 
+.synapse-confirm-layer {
+  z-index: 92;
+}
+
+.synapse-confirm-body {
+  white-space: pre-wrap;
+}
+
 .synapse-tutorial-dialog {
   width: min(26rem, 100%);
   max-height: min(36rem, calc(100vh - 2rem));

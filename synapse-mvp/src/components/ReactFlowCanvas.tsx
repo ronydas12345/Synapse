@@ -35,6 +35,8 @@ import { getAlignOverlay, setAlignOverlay } from '../alignGuideStore';
 import { getAppliedEdgeType, subscribeAppliedTheme } from '../theme/applyTheme';
 import { toReactFlowEdgeType } from '../theme/edgeType';
 import { confirmDestructive, useAppSettings } from '../settings/settingsStore';
+import { toast } from '../ui/toastStore';
+import { connectionBlockReason } from '../canvas/connectRules';
 import { documentPrefersReducedMotion } from '../settings/motion';
 import { isTypingTarget } from '../ui/isTypingTarget';
 import {
@@ -824,7 +826,7 @@ function ReactFlowContent() {
 
         const error = canvasAddError(nodeData.type, nodes);
         if (error) {
-          alert(error);
+          toast(error, 'error');
           return;
         }
 
@@ -975,60 +977,24 @@ function ReactFlowContent() {
         return;
       }
 
-      if (sourceNode.type === 'comment' || targetNode.type === 'comment') {
-        window.alert('Comment nodes cannot be part of the play path.');
+      const reason = connectionBlockReason({
+        sourceId: connection.source,
+        targetId: connection.target,
+        sourceType: sourceNode.type,
+        targetType: targetNode.type,
+        sourceData: sourceNode.data,
+        targetData: targetNode.data,
+        sourceHandle: connection.sourceHandle,
+        edges: edges.map((edge) => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          sourceHandle: edge.sourceHandle,
+        })),
+      });
+      if (reason) {
+        toast(reason, 'error');
         return;
-      }
-
-      // Prevent multiple outgoing edges from non-branching nodes
-      const isSourceBranching =
-        sourceNode.type === 'splitter' ||
-        sourceNode.type === 'conditional' ||
-        sourceNode.type === 'randomizer';
-
-      if (!isSourceBranching) {
-        const existingOutgoing = edges.filter(
-          (e) => e.source === connection.source && !e.id.startsWith('dashed-')
-        );
-        if (existingOutgoing.length > 0) {
-          window.alert(
-            `"${sourceNode.type}" already has an outgoing connection.\n\n` +
-              'For a chain like Start → Track 1 → Track 2:\n' +
-              '• Drag from Track 1’s RIGHT handle to Track 2’s LEFT handle\n' +
-              '• Or click the old line and press Delete, then reconnect'
-          );
-          return;
-        }
-      } else {
-        const existingFromHandle = edges.filter(
-          (e) =>
-            e.source === connection.source &&
-            e.sourceHandle === connection.sourceHandle &&
-            !e.id.startsWith('dashed-')
-        );
-        if (existingFromHandle.length > 0) {
-          window.alert('That output path is already connected. Delete the existing line first.');
-          return;
-        }
-      }
-
-      const allowsMultipleInputs =
-        targetNode.type === 'track' ||
-        targetNode.type === 'end' ||
-        targetNode.type === 'randomizer' ||
-        targetNode.type === 'transition' ||
-        targetNode.type === 'style';
-
-      if (!allowsMultipleInputs) {
-        const existingIncoming = edges.filter(
-          (e) => e.target === connection.target && !e.id.startsWith('dashed-')
-        );
-        if (existingIncoming.length > 0) {
-          window.alert(
-            `This ${targetNode.type} node already has an incoming connection. Delete it first, or use a Track/Randomizer as the target.`
-          );
-          return;
-        }
       }
 
       storeOnConnect(connection);
@@ -1039,28 +1005,66 @@ function ReactFlowContent() {
   const onEdgeClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
       event.stopPropagation();
-      // Prevent deleting dashed comment edges
       if (edge.id.startsWith('dashed-')) {
         return;
       }
-      if (!confirmDestructive('Delete this connection?')) {
-        return;
-      }
-      setEdges((prevEdges) => prevEdges.filter((e) => e.id !== edge.id));
-      deleteEdge(edge.id);
+      void (async () => {
+        const ok = await confirmDestructive('This removes the line. Playback will no longer follow it.', {
+          title: 'Delete this connection?',
+        });
+        if (!ok) return;
+        setEdges((prevEdges) => prevEdges.filter((e) => e.id !== edge.id));
+        deleteEdge(edge.id);
+      })();
     },
     [setEdges, deleteEdge]
   );
 
   const handleRemoveAll = useCallback(() => {
-    if (!confirmDestructive('Remove all nodes and connections?')) return;
-    setNodes([]);
-    setEdges([]);
-    setStoreNodes([]);
-    setStoreEdges([]);
-    usePathStore.getState().setSelection([]);
-    usePathStore.getState().setPlaybackStartNode(null);
+    void (async () => {
+      const ok = await confirmDestructive(
+        'This clears every node and connection on the canvas.',
+        { title: 'Remove all nodes and connections?', confirmLabel: 'Remove all' }
+      );
+      if (!ok) return;
+      setNodes([]);
+      setEdges([]);
+      setStoreNodes([]);
+      setStoreEdges([]);
+      usePathStore.getState().setSelection([]);
+      usePathStore.getState().setPlaybackStartNode(null);
+    })();
   }, [setNodes, setEdges, setStoreNodes, setStoreEdges]);
+
+  const handleBeforeDelete = useCallback(
+    async ({ nodes: deletingNodes, edges: deletingEdges }: { nodes: Node[]; edges: Edge[] }) => {
+      if (readOnly) return false;
+      const realEdges = deletingEdges.filter((edge) => !edge.id.startsWith('dashed-'));
+      const nodeCount = deletingNodes.length;
+      const edgeCount = realEdges.length;
+      if (nodeCount === 0 && edgeCount === 0) return false;
+      if (nodeCount > 0 && edgeCount > 0) {
+        return confirmDestructive('This removes the selected nodes and their connections.', {
+          title: 'Delete selected items?',
+        });
+      }
+      if (nodeCount > 0) {
+        return confirmDestructive('This removes the node and its connections.', {
+          title: nodeCount === 1 ? 'Delete this node?' : 'Delete selected nodes?',
+        });
+      }
+      return confirmDestructive(
+        edgeCount === 1
+          ? 'This removes the line. Playback will no longer follow it.'
+          : 'This removes the selected connections. Playback will no longer follow them.',
+        {
+          title:
+            edgeCount === 1 ? 'Delete this connection?' : 'Delete selected connections?',
+        }
+      );
+    },
+    [readOnly]
+  );
 
   const onNodeClickHandler = useCallback(
     (_: any, node: any) => {
@@ -1161,6 +1165,7 @@ function ReactFlowContent() {
             : onEdgesChange
         }
         onConnect={readOnly ? undefined : handleConnect}
+        onBeforeDelete={readOnly ? undefined : handleBeforeDelete}
         onNodeDragStop={
           readOnly
             ? undefined

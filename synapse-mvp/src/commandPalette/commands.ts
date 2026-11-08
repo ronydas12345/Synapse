@@ -379,16 +379,25 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       when: (c) => c.signedIn,
       run: () =>
         onEdit(() => {
-          const { selectedNodeId, selectedNodeIds, deleteNode } =
-            usePathStore.getState();
-          const ids = selectedNodeIds.length
-            ? selectedNodeIds
-            : selectedNodeId
-              ? [selectedNodeId]
-              : [];
-          if (!ids.length) return;
-          if (!confirmDestructive('Delete the selected node(s)?')) return;
-          ids.forEach((id) => deleteNode(id));
+          void (async () => {
+            const { selectedNodeId, selectedNodeIds, deleteNode } =
+              usePathStore.getState();
+            const ids = selectedNodeIds.length
+              ? selectedNodeIds
+              : selectedNodeId
+                ? [selectedNodeId]
+                : [];
+            if (!ids.length) return;
+            const ok = await confirmDestructive(
+              'This removes the node and its connections.',
+              {
+                title:
+                  ids.length === 1 ? 'Delete this node?' : 'Delete selected nodes?',
+              }
+            );
+            if (!ok) return;
+            ids.forEach((id) => deleteNode(id));
+          })();
         }),
     },
     {
@@ -399,12 +408,18 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       when: (c) => c.signedIn,
       run: () =>
         onEdit(() => {
-          if (!confirmDestructive('Remove all nodes and connections?')) return;
-          const store = usePathStore.getState();
-          store.setNodes([]);
-          store.setEdges([]);
-          store.setSelection([]);
-          store.setPlaybackStartNode(null);
+          void (async () => {
+            const ok = await confirmDestructive(
+              'This clears every node and connection on the canvas.',
+              { title: 'Remove all nodes and connections?', confirmLabel: 'Remove all' }
+            );
+            if (!ok) return;
+            const store = usePathStore.getState();
+            store.setNodes([]);
+            store.setEdges([]);
+            store.setSelection([]);
+            store.setPlaybackStartNode(null);
+          })();
         }),
     },
     {
@@ -449,7 +464,11 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       label: `Add ${type.label} node`,
       keywords: `create ${type.type} rack`,
       when: (c) => c.signedIn,
-      run: () => onEdit(() => addCanvasNode(type.type)),
+      run: () =>
+        onEdit(() => {
+          const error = addCanvasNode(type.type);
+          if (error) toast(error, 'error');
+        }),
     });
   }
 

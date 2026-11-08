@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { scheduleWorkspacePersist } from '../cloud/persistGate';
+import { requestConfirm } from '../ui/confirmStore';
 import { applyMotionPreference } from './motion';
 import { defaultSettings, parseSettings, parseSettingsJson, settingsToJson } from './parse';
 import { SETTINGS_STORAGE_KEY, type AppSettings } from './types';
@@ -113,9 +114,17 @@ export function getAppSettings(): AppSettings {
   return pickSettings(useAppSettings.getState());
 }
 
-export function confirmDestructive(message: string): boolean {
+export async function confirmDestructive(
+  message: string,
+  options?: { title?: string; confirmLabel?: string }
+): Promise<boolean> {
   if (!getAppSettings().general.confirmDestructive) return true;
-  return window.confirm(message);
+  return requestConfirm({
+    title: options?.title ?? 'Are you sure?',
+    body: message,
+    confirmLabel: options?.confirmLabel ?? 'Delete',
+    danger: true,
+  });
 }
 
 if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {

@@ -17,6 +17,7 @@ import { signOut } from '../auth/client';
 import { deleteOwnAccount, exportMyAccount } from '../admin/privacy';
 import { useProfileStore } from '../profile/profileStore';
 import { useAppSettings } from '../settings/settingsStore';
+import { toast } from '../ui/toastStore';
 import SupportForm from '../admin/SupportForm';
 import NavNotice from '../admin/NavNotice';
 import { useTicketNoticeStore } from '../admin/ticketNoticeStore';
@@ -821,10 +822,11 @@ function PrivacySection() {
           onClick={() => {
             const removed = clearMetadataCache();
             setMetaCount(creditsCacheSize());
-            window.alert(
+            toast(
               removed
                 ? `Cleared ${removed} cached track credit ${removed === 1 ? 'entry' : 'entries'}.`
-                : 'Song-metadata cache was already empty.'
+                : 'Song-metadata cache was already empty.',
+              removed ? 'success' : 'info'
             );
           }}
         >

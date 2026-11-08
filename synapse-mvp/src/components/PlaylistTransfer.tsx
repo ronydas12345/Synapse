@@ -122,13 +122,12 @@ export default function PlaylistTransfer() {
             e.target.value = '';
             if (!file) return;
             const replaceActive = importMode.current === 'replace';
-            if (
-              replaceActive &&
-              !confirmDestructive(
-                `Replace everything in the current playlist with “${file.name}”?`
-              )
-            ) {
-              return;
+            if (replaceActive) {
+              const ok = await confirmDestructive(
+                `Replace everything in the current playlist with “${file.name}”?`,
+                { title: 'Replace current playlist?', confirmLabel: 'Replace' }
+              );
+              if (!ok) return;
             }
             const bytes = new Uint8Array(await file.arrayBuffer());
             if (looksLikeZipBytes(bytes)) {

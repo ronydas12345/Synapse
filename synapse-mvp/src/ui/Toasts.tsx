@@ -18,7 +18,7 @@ export default function Toasts() {
           ]
             .filter(Boolean)
             .join(' ')}
-          role="status"
+          role={item.tone === 'error' ? 'alert' : 'status'}
         >
           <p>{item.message}</p>
           {!item.quiet && (item.action || item.tone === 'error') ? (

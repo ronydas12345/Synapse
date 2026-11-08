@@ -1,7 +1,8 @@
 import { Trash2, ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { usePathStore, useGraphReadOnly } from '../store';
-import { useAppSettings } from '../settings/settingsStore';
+import { confirmDestructive, useAppSettings } from '../settings/settingsStore';
+import { toast } from '../ui/toastStore';
 import { RevertibleNumberInput, RevertibleTextInput, RevertibleTextarea } from './fields/RevertibleField';
 import {
   BringOntoPageButtons,
@@ -260,9 +261,12 @@ export default function NodeInspector() {
   if (!selectedNode) return null;
 
   const handleDeleteNode = () => {
-    if (window.confirm('Delete this node?')) {
-      deleteNode(selectedNode.id);
-    }
+    void (async () => {
+      const ok = await confirmDestructive('This removes the node and its connections.', {
+        title: 'Delete this node?',
+      });
+      if (ok) deleteNode(selectedNode.id);
+    })();
   };
 
   const isTrack = selectedNode.type === 'track';
@@ -794,7 +798,7 @@ export default function NodeInspector() {
                           const file = e.target.files?.[0];
                           if (file) {
                             if (file.size > 5 * 1024 * 1024) {
-                              alert('File must be smaller than 5MB');
+                              toast('File must be smaller than 5MB.', 'error');
                               return;
                             }
                             const reader = new FileReader();
@@ -821,7 +825,7 @@ export default function NodeInspector() {
                         const file = e.target.files?.[0];
                         if (file) {
                           if (file.size > 5 * 1024 * 1024) {
-                            alert('File must be smaller than 5MB');
+                            toast('File must be smaller than 5MB.', 'error');
                             return;
                           }
                           const reader = new FileReader();
