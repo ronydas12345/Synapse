@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resetNewUserTestModeForTests, setNewUserTestMode } from '../dev/testModeFlag';
 import {
   flushWorkspaceNow,
   PERSIST_DEBOUNCE_MS,
@@ -9,6 +10,7 @@ import {
 
 describe('persistGate', () => {
   afterEach(() => {
+    resetNewUserTestModeForTests();
     setCloudPersistEnabled(false);
     registerWorkspaceFlush(() => undefined);
     vi.useRealTimers();
@@ -72,5 +74,17 @@ describe('persistGate', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(flush).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not flush while new-user test mode is on', async () => {
+    const flush = vi.fn();
+    registerWorkspaceFlush(flush);
+    setCloudPersistEnabled(true);
+    setNewUserTestMode(true);
+    scheduleWorkspacePersist();
+    await flushWorkspaceNow();
+    expect(flush).not.toHaveBeenCalled();
+    setCloudPersistEnabled(true);
+    expect(flush).not.toHaveBeenCalled();
   });
 });

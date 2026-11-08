@@ -79,6 +79,9 @@ export interface TutorialProgress {
   lastSection: string | null;
   lastStep: number;
   dismissedWelcome: boolean;
+  onboardingCompleted: boolean;
+  onboardingVersion: number;
+  onboardingLastStep: number;
 }
 
 export type TutorialView =

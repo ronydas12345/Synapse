@@ -54,6 +54,9 @@ import { SETTINGS_STORAGE_KEY } from '../settings/types';
 import { THEME_STORAGE_KEY } from '../theme/themeStore';
 import { PROFILE_ACCOUNTS_KEY, PROFILE_STORAGE_KEY } from '../profile/profileStore';
 import { httpsPhoto } from '../admin/model';
+import { isNewUserTestMode } from '../dev/testModeFlag';
+import { discardNewUserTestMode } from '../dev/newUserTestMode';
+import { maybeOfferOnboarding } from '../onboarding/onboardingStore';
 
 interface WorkspaceRow {
   library: unknown;
@@ -158,7 +161,7 @@ registerWorkspaceFlush(() => pushWorkspace());
 
 registerDraftWriter(() => {
   const user = useAuthStore.getState().user;
-  if (!user) return null;
+  if (!user || isNewUserTestMode()) return null;
   const state = usePathStore.getState();
   if (state.graphLocked) return null;
   const lib = snapshotPathLibrary();
@@ -289,6 +292,7 @@ export async function hydrateUserWorkspace(): Promise<void> {
 
     wipeLegacyProductKeys();
     await applyAvatarStateToProfile();
+    maybeOfferOnboarding();
 
     const googlePhoto = httpsPhoto(user.photoURL);
     const avatar = useProfileStore.getState().profile;
@@ -316,6 +320,7 @@ export async function resetUserWorkspace(): Promise<void> {
   replaceThemeState({});
   useProfileStore.getState().clearAccount();
   replaceTutorialProgress({});
+  discardNewUserTestMode();
   useAuthStore.getState().setWorkspaceStatus('ready');
 }
 

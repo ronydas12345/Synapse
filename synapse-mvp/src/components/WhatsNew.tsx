@@ -10,10 +10,15 @@ import {
 } from '../release/notes';
 import { useAuthStore } from '../auth/authStore';
 import { useTutorialStore } from '../tutorial/tutorialStore';
+import { useOnboardingStore } from '../onboarding/onboardingStore';
+import { needsOnboarding } from '../onboarding/onboardingProgress';
+import { isNewUserTestMode } from '../dev/testModeFlag';
 
 export default function WhatsNew() {
   const signedIn = Boolean(useAuthStore((s) => s.user));
   const tutorialView = useTutorialStore((s) => s.view);
+  const onboardingOpen = useOnboardingStore((s) => s.open);
+  const progress = useTutorialStore((s) => s.progress);
   const [open, setOpen] = useState(false);
   const latest = useMemo(() => {
     const versions = splitChangelogVersions(changelogRaw);
@@ -26,9 +31,10 @@ export default function WhatsNew() {
   useEffect(() => {
     if (!signedIn) return;
     if (tutorialView !== 'closed') return;
+    if (onboardingOpen || needsOnboarding(progress) || isNewUserTestMode()) return;
     if (isWhatsNewDismissed()) return;
     setOpen(true);
-  }, [signedIn, tutorialView]);
+  }, [signedIn, tutorialView, onboardingOpen, progress]);
 
   if (!open || !latest) return null;
 

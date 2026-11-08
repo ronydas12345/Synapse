@@ -1,0 +1,104 @@
+.synapse-onboarding-layer {
+  z-index: 87;
+}
+
+.synapse-onboarding-dialog {
+  width: min(34rem, 100%);
+}
+
+.synapse-onboarding-kicker {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.synapse-onboarding-graph {
+  width: 100%;
+  height: 7.5rem;
+  margin: 0 0 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-deep);
+}
+
+.synapse-onboarding-graph .is-flow {
+  stroke-dasharray: 6 8;
+  animation: synapse-onboarding-flow 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .synapse-onboarding-graph .is-flow {
+    animation: none;
+  }
+}
+
+@keyframes synapse-onboarding-flow {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+.synapse-onboarding-choices {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0 0 0.95rem;
+}
+
+.synapse-onboarding-choice {
+  display: grid;
+  gap: 0.15rem;
+  text-align: left;
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.synapse-onboarding-choice:hover,
+.synapse-onboarding-choice.is-active {
+  border-color: var(--accent);
+}
+
+.synapse-onboarding-choice strong {
+  font-size: 0.92rem;
+}
+
+.synapse-onboarding-choice span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.synapse-test-mode-banner {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 88;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.28rem 0.4rem 0.28rem 0.75rem;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: var(--warning);
+  color: var(--bg-void);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.synapse-test-mode-banner .synapse-btn {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+  color: var(--bg-void);
+  border-color: color-mix(in srgb, var(--bg-void) 28%, transparent);
+}

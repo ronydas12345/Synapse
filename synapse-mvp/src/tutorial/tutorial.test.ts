@@ -32,6 +32,20 @@ describe('tutorial engine', () => {
     expect(parsed.lastSection).toBe('randomizer');
     expect(parsed.lastStep).toBe(2);
     expect(parsed.dismissedWelcome).toBe(true);
+    expect(parsed.onboardingCompleted).toBe(false);
+    expect(parsed.onboardingVersion).toBe(0);
+    expect(parsed.onboardingLastStep).toBe(0);
+    expect(
+      parseProgress({
+        onboardingCompleted: true,
+        onboardingVersion: 1.8,
+        onboardingLastStep: 2,
+      })
+    ).toMatchObject({
+      onboardingCompleted: true,
+      onboardingVersion: 1,
+      onboardingLastStep: 2,
+    });
   });
 
   it('marks a section complete once', () => {

@@ -1,7 +1,18 @@
-import { describe, expect, it } from 'vitest';
-import { parseLibrary, nextUntitledName, uniquePathName, deletePath, putImportedPath, emptyLibrary, linkPathWorkshop, findPathForWorkshop, replaceActiveGraph, preferStoredLibrary } from './library';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resetNewUserTestModeForTests, setNewUserTestMode } from '../dev/testModeFlag';
+import { parseLibrary, nextUntitledName, uniquePathName, deletePath, putImportedPath, emptyLibrary, linkPathWorkshop, findPathForWorkshop, replaceActiveGraph, preferStoredLibrary, persistLibrary, LIBRARY_KEY } from './library';
 
 describe('playlist library', () => {
+  afterEach(() => {
+    resetNewUserTestModeForTests();
+    vi.unstubAllGlobals();
+    try {
+      localStorage.removeItem(LIBRARY_KEY);
+    } catch {
+      /* ignore */
+    }
+  });
+
   it('names new playlists without colliding', () => {
     expect(nextUntitledName([])).toBe('Untitled playlist');
     expect(nextUntitledName(['Untitled playlist'])).toBe('Untitled playlist 2');
@@ -325,5 +336,17 @@ describe('playlist library', () => {
     expect(next.paths[0].visibility).toBe('public');
     expect(next.paths[0].nodes.map((n) => n.id)).toEqual(['start', 't1']);
     expect(next.paths[0].edges).toHaveLength(1);
+  });
+
+  it('does not write the library while new-user test mode is on', () => {
+    const setItem = vi.fn();
+    vi.stubGlobal('localStorage', {
+      getItem: () => null,
+      setItem,
+      removeItem: () => undefined,
+    });
+    setNewUserTestMode(true);
+    persistLibrary(emptyLibrary());
+    expect(setItem).not.toHaveBeenCalled();
   });
 });

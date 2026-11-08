@@ -1,3 +1,5 @@
+import { isNewUserTestMode } from '../dev/testModeFlag';
+
 export type CloudSaveStatus = 'idle' | 'unsaved' | 'saving' | 'saved' | 'failed';
 
 export interface SaveSnapshot {
@@ -38,6 +40,7 @@ export function registerWorkspaceFlush(fn: () => void | Promise<void>): void {
 }
 
 export function setCloudPersistEnabled(on: boolean): void {
+  if (on && isNewUserTestMode()) return;
   enabled = on;
   if (!on && timer) {
     clearTimeout(timer);
@@ -55,6 +58,7 @@ export function isCloudPersistEnabled(): boolean {
 }
 
 export function scheduleWorkspacePersist(): void {
+  if (isNewUserTestMode()) return;
   if (!flush) return;
   if (snapshot.status !== 'saving') {
     emit({ status: 'unsaved', error: null });
@@ -111,6 +115,7 @@ async function runFlush(): Promise<void> {
 }
 
 export async function flushWorkspaceNow(): Promise<void> {
+  if (isNewUserTestMode()) return;
   if (timer) {
     clearTimeout(timer);
     timer = null;

@@ -12,6 +12,8 @@ import {
 } from './tutorialCatalog';
 import { useTutorialStore } from './tutorialStore';
 import { APP_PATHS, navigateApp } from '../app/routes';
+import { useOnboardingStore } from '../onboarding/onboardingStore';
+import { useAuthStore } from '../auth/authStore';
 
 export default function TutorialMenu() {
   const view = useTutorialStore((s) => s.view);
@@ -28,6 +30,7 @@ export default function TutorialMenu() {
   const close = useTutorialStore((s) => s.close);
   const maybeLater = useTutorialStore((s) => s.maybeLater);
   const route = useAppRoute();
+  const signedIn = Boolean(useAuthStore((s) => s.user));
   const titleId = useId();
   const [query, setQuery] = useState('');
 
@@ -279,6 +282,18 @@ export default function TutorialMenu() {
           <button type="button" className="synapse-btn synapse-btn-ghost" onClick={openTopics}>
             {progress.completedFull || canResumeFull ? 'Review Topics' : 'Choose a Topic'}
           </button>
+          {signedIn ? (
+            <button
+              type="button"
+              className="synapse-btn synapse-btn-ghost"
+              onClick={() => {
+                close();
+                useOnboardingStore.getState().openOnboarding();
+              }}
+            >
+              Replay Welcome
+            </button>
+          ) : null}
           <button type="button" className="synapse-btn synapse-btn-ghost" onClick={askSkip}>
             Skip Tutorial
           </button>

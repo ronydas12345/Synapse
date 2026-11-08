@@ -5,6 +5,7 @@ import DraftRecovery from './components/DraftRecovery';
 import WhatsNew from './components/WhatsNew';
 import Toasts from './ui/Toasts';
 import ConfirmDialog from './ui/ConfirmDialog';
+import NewUserTestModeHost from './dev/NewUserTestModeHost';
 import ShortcutHelp from './ui/ShortcutHelp';
 import EditorHotkeys from './ui/EditorHotkeys';
 import { flushWorkspaceNow } from './cloud/persistGate';
@@ -376,6 +377,7 @@ export default function App() {
       <ShortcutHelp />
       <Toasts />
       <ConfirmDialog />
+      <NewUserTestModeHost />
     </>
   );
 }

@@ -15,6 +15,8 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_MEASUREMENT_ID?: string;
   /** Comma-separated extra superadmin emails. Owner email is always included. */
   readonly VITE_SUPERADMIN_EMAILS?: string;
+  /** Set to "1" to allow New User Test Mode outside local development. Superadmin still required. */
+  readonly VITE_NEW_USER_TEST_MODE?: string;
 }
 
 interface ImportMeta {

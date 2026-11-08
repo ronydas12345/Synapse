@@ -19,6 +19,7 @@ import { confirmDestructive } from '../settings/settingsStore';
 import { usePathStore } from '../store';
 import { allThemes, useThemeStore } from '../theme/themeStore';
 import { useTutorialStore } from '../tutorial/tutorialStore';
+import { useOnboardingStore } from '../onboarding/onboardingStore';
 import { useShortcutHelpStore } from '../ui/shortcutHelpStore';
 import { flushWorkspaceNow, getSaveSnapshot } from '../cloud/persistGate';
 import { toast } from '../ui/toastStore';
@@ -435,6 +436,14 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       label: 'Manage tutorials',
       keywords: 'topics lessons guide',
       run: () => useTutorialStore.getState().openTopics(),
+    },
+    {
+      id: 'replay-welcome',
+      group: 'Help',
+      label: 'Replay Welcome',
+      keywords: 'onboarding intro first time',
+      when: (c) => c.signedIn,
+      run: () => useOnboardingStore.getState().openOnboarding(),
     },
     {
       id: 'sign-out',

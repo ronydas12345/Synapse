@@ -2,6 +2,9 @@ import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useAppRoute } from '../app/AppLink';
 import { useAuthStore } from '../auth/authStore';
+import { useProfileStore } from '../profile/profileStore';
+import { maybeOfferOnboarding } from '../onboarding/onboardingStore';
+import OnboardingFlow from '../onboarding/OnboardingFlow';
 import './tutorial.css';
 import TutorialMenu from './TutorialMenu';
 import TutorialTour from './TutorialTour';
@@ -25,12 +28,20 @@ function offerHomeFirstRun(): void {
 export default function TutorialProvider({ children }: { children: ReactNode }) {
   const route = useAppRoute();
   const signedIn = Boolean(useAuthStore((s) => s.user));
+  const workspaceStatus = useAuthStore((s) => s.workspaceStatus);
+  const username = useProfileStore((s) => s.profile.username);
+  const displayName = useProfileStore((s) => s.profile.displayName);
   useTutorialObservers(route);
   const offer = shouldOfferFirstRun(route, signedIn);
 
   useEffect(() => {
     useTutorialStore.getState().resumeSavedRun();
   }, []);
+
+  useEffect(() => {
+    if (!signedIn || workspaceStatus !== 'ready') return;
+    maybeOfferOnboarding();
+  }, [signedIn, workspaceStatus, username, displayName, route]);
 
   useEffect(() => {
     if (!offer) return;
@@ -60,6 +71,7 @@ export default function TutorialProvider({ children }: { children: ReactNode }) 
   return (
     <>
       {children}
+      <OnboardingFlow />
       <TutorialMenu />
       <TutorialTour />
     </>

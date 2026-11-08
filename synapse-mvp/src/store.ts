@@ -114,7 +114,7 @@ interface PathState {
   deleteEdge: (edgeId: string) => void;
   deleteNode: (nodeId: string) => void;
   initializeFromStorage: () => void;
-  replaceLibrary: (next: PathLibrary) => void;
+  replaceLibrary: (next: PathLibrary, options?: { dropHold?: boolean }) => void;
   normalizeSplitters: () => void;
   createPlaylist: (name?: string) => void;
   switchPlaylist: (id: string) => void;
@@ -504,7 +504,8 @@ export const usePathStore = create<PathState>((set, get) => ({
       listenView: workshopHold?.locked && usePathStore.getState().listenView === 'list' ? 'list' : 'graph',
     });
   },
-  replaceLibrary: (next) => {
+  replaceLibrary: (next, options) => {
+    if (options?.dropHold) releaseWorkshopHold();
     library = restoreWorkshopHold(next);
     const view = libraryView();
     resetHistory(view.nodes, view.edges);

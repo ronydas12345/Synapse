@@ -19,6 +19,9 @@ export const emptyProgress = (): TutorialProgress => ({
   lastSection: null,
   lastStep: 0,
   dismissedWelcome: false,
+  onboardingCompleted: false,
+  onboardingVersion: 0,
+  onboardingLastStep: 0,
 });
 
 export function parseProgress(raw: unknown): TutorialProgress {
@@ -38,6 +41,13 @@ export function parseProgress(raw: unknown): TutorialProgress {
       ? Math.max(0, Math.floor(Number(v.lastStep)))
       : 0,
     dismissedWelcome: Boolean(v.dismissedWelcome),
+    onboardingCompleted: Boolean(v.onboardingCompleted),
+    onboardingVersion: Number.isFinite(Number(v.onboardingVersion))
+      ? Math.max(0, Math.floor(Number(v.onboardingVersion)))
+      : 0,
+    onboardingLastStep: Number.isFinite(Number(v.onboardingLastStep))
+      ? Math.max(0, Math.floor(Number(v.onboardingLastStep)))
+      : 0,
   };
 }
 

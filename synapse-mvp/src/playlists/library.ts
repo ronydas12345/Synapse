@@ -1,5 +1,6 @@
 import type { Edge, Node } from '@xyflow/react';
 import { flushWorkspaceNow, scheduleWorkspacePersist } from '../cloud/persistGate';
+import { isNewUserTestMode } from '../dev/testModeFlag';
 import { normalizeWorkspaceGraph } from '../randomizerDrop';
 import { sanitizeTagIds } from '../workshop/tags';
 
@@ -219,6 +220,7 @@ export function readLegacyLibrary(): PathLibrary | null {
 
 export function persistLibrary(lib: PathLibrary, options?: { immediate?: boolean }): void {
   lib.updatedAt = new Date().toISOString();
+  if (isNewUserTestMode()) return;
   try {
     localStorage.setItem(LIBRARY_KEY, JSON.stringify(lib));
   } catch {
