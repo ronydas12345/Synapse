@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parsePathActivity } from './activity';
+import { activityWithoutPath, parsePathActivity } from './activity';
 
 describe('path activity', () => {
   it('keeps valid played rows and drops junk', () => {
@@ -11,5 +11,18 @@ describe('path activity', () => {
       ],
     });
     expect(parsed.played.map((row) => row.id)).toEqual(['a', 'b']);
+  });
+
+  it('drops a deleted playlist from recently played', () => {
+    const next = activityWithoutPath(
+      {
+        played: [
+          { id: 'keep', at: '2026-10-26T00:00:00.000Z' },
+          { id: 'drop', at: '2026-10-26T01:00:00.000Z' },
+        ],
+      },
+      'drop'
+    );
+    expect(next.played.map((row) => row.id)).toEqual(['keep']);
   });
 });

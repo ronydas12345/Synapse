@@ -54,3 +54,19 @@ export function recentPlayedIds(existingIds: Set<string>): string[] {
     .played.filter((row) => existingIds.has(row.id))
     .map((row) => row.id);
 }
+
+export function activityWithoutPath(activity: PathActivity, pathId: string): PathActivity {
+  const id = pathId.trim();
+  if (!id) return activity;
+  return { played: activity.played.filter((row) => row.id !== id) };
+}
+
+export function forgetPlayedPath(pathId: string): PathActivity {
+  const next = activityWithoutPath(readPathActivity(), pathId);
+  try {
+    localStorage.setItem(PATH_ACTIVITY_KEY, JSON.stringify(next));
+  } catch {
+    /* quota / private mode */
+  }
+  return next;
+}

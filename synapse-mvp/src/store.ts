@@ -26,6 +26,7 @@ import {
   summaries,
   type PathLibrary,
 } from './playlists/library';
+import { forgetPlayedPath } from './playlists/activity';
 import {
   collectDependentCustomThemes,
   parsePlaylistFile,
@@ -551,6 +552,7 @@ export const usePathStore = create<PathState>((set, get) => ({
     const leaving = library.activeId === id;
     if (workshopHold?.path.id === id) releaseWorkshopHold();
     if (readPathDraft()?.pathId === id) clearPathDraft();
+    forgetPlayedPath(id);
     library = deletePath(library, id);
     const view = libraryView();
     if (leaving) resetHistory(view.nodes, view.edges);

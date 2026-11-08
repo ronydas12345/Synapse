@@ -270,12 +270,16 @@ export default function SettingsPage() {
                 {pathSummaries.map((path) => {
                   const current = path.id === activePathId;
                   return (
-                    <li key={path.id} className="synapse-settings-playlist-block">
+                    <li
+                      key={path.id}
+                      className={`synapse-settings-playlist-block${current ? ' is-current' : ''}`}
+                      aria-current={current ? 'true' : undefined}
+                    >
                       <div className="synapse-settings-playlist-row">
                         <PlaylistNameField
                           id={path.id}
                           name={path.name}
-                          className="synapse-settings-input"
+                          className={`synapse-settings-input${current ? ' is-current-playlist' : ''}`}
                         />
                         <select
                           className="synapse-settings-input synapse-settings-playlist-vis"
@@ -295,7 +299,7 @@ export default function SettingsPage() {
                         </select>
                         <div className="synapse-settings-playlist-actions">
                           {current ? (
-                            <span className="synapse-settings-hint">Current</span>
+                            <span className="synapse-settings-playlist-switch-slot" aria-hidden="true" />
                           ) : (
                             <button
                               type="button"

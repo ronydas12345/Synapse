@@ -350,6 +350,11 @@ body {
   font-weight: 600;
 }
 
+.synapse-playlist-option.is-active .synapse-playlist-option-name {
+  font-weight: 700;
+  color: var(--accent);
+}
+
 .synapse-playlist-option-meta {
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -2910,21 +2915,49 @@ html.synapse-reduce-motion .synapse-listen-play:hover {
 }
 
 .synapse-settings-playlist-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 9.5rem auto;
   gap: 0.55rem;
   align-items: center;
 }
 
 .synapse-settings-playlist-row .synapse-settings-input {
-  flex: 1 1 12rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.synapse-settings-playlist-row .synapse-settings-input.is-current-playlist {
+  font-weight: 700;
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-strong));
 }
 
 .synapse-settings-playlist-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 5.5rem auto auto;
   align-items: center;
   gap: 0.45rem;
+}
+
+.synapse-settings-playlist-actions .synapse-btn {
+  width: 100%;
+  min-width: 0;
+}
+
+.synapse-settings-playlist-switch-slot {
+  display: block;
+  min-height: 2.35rem;
+}
+
+@media (max-width: 860px) {
+  .synapse-settings-playlist-row {
+    grid-template-columns: minmax(0, 1fr) 9.5rem;
+  }
+
+  .synapse-settings-playlist-actions {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
 }
 
 .synapse-settings-playlist-delete {

@@ -17,10 +17,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Saving / Saved sits to the left of the playlist name and dropdown. Autosave waits a few seconds after you stop editing so it does not flicker and the account is written less often.
 - On Profile, the user-info header shrinks into a compact bar when you scroll down.
 - Opening a playlist no longer shrinks the whole graph to fit by default. Basic keeps a readable zoom around Start. Fit view is still on the canvas controls.
+- The header playlist menu lists the same playlists as Settings, in the same order. The open playlist is marked in bold accent color instead of a Current label.
 
 ### Fixed
 
 - Deleting a playlist stays deleted after a reload.
+- Deleting a playlist removes it from the header dropdown as well as Settings. Settings playlist rows keep Switch / Export / Delete lined up.
 - Holding Shift to snap alignment no longer jumps the node when you release Shift.
 - Dragging a node from the rack drops it under the cursor. Clicking one places it in the middle of the workspace.
 
