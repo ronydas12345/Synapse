@@ -26,7 +26,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Deleting a playlist stays deleted after a reload.
 - Deleting a playlist removes it from the header dropdown as well as Settings. Settings playlist rows keep Switch / Export / Delete lined up.
 - Holding Shift to snap alignment no longer jumps the node when you release Shift.
-- Dragging a node from the rack drops it under the cursor. Clicking one places it in the middle of the workspace.
+- Dragging a node from the rack drops it under the cursor. Clicking one places it in a clear spot in the middle of the workspace instead of stacking on top of another node.
 
 ## [0.4.3] — 2026-10-28
 

@@ -1,4 +1,5 @@
 import type { Node } from '@xyflow/react';
+import { overlapArea, type FlowRect } from '../randomizerDrop';
 import { defaultStyleNodeData } from '../styleNode/parse';
 import { defaultTrackNodeData } from '../settings/nodeDefaults';
 import { usePathStore } from '../store';
@@ -80,6 +81,13 @@ const PLACE_SIZE: Record<CanvasNodeType, { width: number; height: number }> = {
   end: { width: 160, height: 72 },
 };
 
+const PLACE_GAP = 32;
+const PLACE_STEP = 56;
+
+export function canvasNodeSize(type: CanvasNodeType): { width: number; height: number } {
+  return PLACE_SIZE[type];
+}
+
 export function canvasPositionAtPointer(
   pointer: CanvasPoint,
   type: CanvasNodeType
@@ -91,9 +99,80 @@ export function canvasPositionAtPointer(
   };
 }
 
-export function buildCanvasNode(type: CanvasNodeType, position: CanvasPoint): Node {
+function occupiedRect(node: {
+  type?: string;
+  position: CanvasPoint;
+  hidden?: boolean;
+  width?: number;
+  height?: number;
+  measured?: { width?: number; height?: number };
+}): FlowRect | null {
+  if (node.hidden) return null;
+  const fallback =
+    node.type && node.type in PLACE_SIZE
+      ? PLACE_SIZE[node.type as CanvasNodeType]
+      : { width: 200, height: 150 };
   return {
-    id: `${type}-${Date.now()}`,
+    x: node.position.x,
+    y: node.position.y,
+    width: node.measured?.width ?? node.width ?? fallback.width,
+    height: node.measured?.height ?? node.height ?? fallback.height,
+  };
+}
+
+function overlapsExisting(candidate: FlowRect, occupied: FlowRect[]): boolean {
+  const padded: FlowRect = {
+    x: candidate.x - PLACE_GAP / 2,
+    y: candidate.y - PLACE_GAP / 2,
+    width: candidate.width + PLACE_GAP,
+    height: candidate.height + PLACE_GAP,
+  };
+  return occupied.some((rect) => overlapArea(padded, rect) > 1);
+}
+
+/** Top-left of `type` near `center`, shifted so it does not cover existing nodes. */
+export function clearCanvasPosition(
+  center: CanvasPoint,
+  type: CanvasNodeType,
+  nodes: Parameters<typeof occupiedRect>[0][]
+): CanvasPoint {
+  const size = PLACE_SIZE[type];
+  const origin = canvasPositionAtPointer(center, type);
+  const occupied = nodes
+    .map(occupiedRect)
+    .filter((rect): rect is FlowRect => rect != null);
+  const fits = (pos: CanvasPoint) =>
+    !overlapsExisting({ x: pos.x, y: pos.y, width: size.width, height: size.height }, occupied);
+  if (fits(origin)) return origin;
+
+  for (let ring = 1; ring <= 20; ring++) {
+    const step = PLACE_STEP * ring;
+    const candidates: CanvasPoint[] = [];
+    for (let y = -ring; y <= ring; y++) {
+      candidates.push({ x: origin.x + step, y: origin.y + y * PLACE_STEP });
+    }
+    for (let x = ring - 1; x >= -ring; x--) {
+      candidates.push({ x: origin.x + x * PLACE_STEP, y: origin.y + step });
+    }
+    for (let y = ring - 1; y >= -ring; y--) {
+      candidates.push({ x: origin.x - step, y: origin.y + y * PLACE_STEP });
+    }
+    for (let x = -ring + 1; x < ring; x++) {
+      candidates.push({ x: origin.x + x * PLACE_STEP, y: origin.y - step });
+    }
+    for (const pos of candidates) {
+      if (fits(pos)) return pos;
+    }
+  }
+  return origin;
+}
+
+let placeSeq = 0;
+
+export function buildCanvasNode(type: CanvasNodeType, position: CanvasPoint): Node {
+  placeSeq += 1;
+  return {
+    id: `${type}-${Date.now()}-${placeSeq}`,
     type,
     position,
     data: defaultData(type),
@@ -120,12 +199,9 @@ export function addCanvasNode(
   const { nodes, setNodes } = usePathStore.getState();
   const error = canvasAddError(type, nodes);
   if (error) return error;
-  setNodes([
-    ...nodes,
-    buildCanvasNode(
-      type,
-      canvasPositionAtPointer(position ?? clickPlacement(), type)
-    ),
-  ]);
+  const topLeft = position
+    ? canvasPositionAtPointer(position, type)
+    : clearCanvasPosition(clickPlacement(), type, nodes);
+  setNodes([...nodes, buildCanvasNode(type, topLeft)]);
   return null;
 }
