@@ -8,6 +8,8 @@ import {
   type CanvasNodeType,
 } from '../canvas/addNode';
 import { BringOntoPageButtons } from './inspector/InspectorChrome';
+import { NODE_BLURBS } from '../editorExperience/config';
+import { useEditorExperience } from '../editorExperience/useEditorExperience';
 
 const NODE_ICONS: Record<CanvasNodeType, ReactNode> = {
   start: <Play className="w-4 h-4" />,
@@ -36,6 +38,7 @@ export default function Sidebar() {
   const selectedNodeIds = usePathStore((s) => s.selectedNodeIds);
   const normalizeSplitters = usePathStore((s) => s.normalizeSplitters);
   const readOnly = useGraphReadOnly();
+  const rackDescriptions = useEditorExperience().rackDescriptions;
 
   const skipClickAfterDrag = useRef(false);
 
@@ -98,8 +101,12 @@ export default function Sidebar() {
                 <p className="text-sm font-medium text-[var(--text)] m-0">
                   {NODE_LABELS[nodeType.type]}
                 </p>
-                <p className="text-[0.65rem] text-[var(--text-faint)] m-0 mt-0.5 font-mono tracking-wide">
-                  {readOnly ? 'View only' : 'Drag or click'}
+                <p className="text-[0.65rem] text-[var(--text-faint)] m-0 mt-0.5 tracking-wide">
+                  {readOnly
+                    ? 'View only'
+                    : rackDescriptions
+                      ? NODE_BLURBS[nodeType.type]
+                      : 'Drag or click'}
                 </p>
               </div>
               {readOnly ? null : (

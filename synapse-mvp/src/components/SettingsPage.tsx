@@ -23,7 +23,8 @@ import { useTicketNoticeStore } from '../admin/ticketNoticeStore';
 import PublishForm from '../workshop/PublishForm';
 import TagPicker from '../workshop/TagPicker';
 import { setWorkshopVisibility } from '../workshop/api';
-import { GRID_SIZE_OPTIONS } from '../settings/types';
+import { GRID_SIZE_OPTIONS, isEditorExperienceMode } from '../settings/types';
+import { EDITOR_EXPERIENCE_OPTIONS } from '../editorExperience/config';
 import {
   clearMetadataCache,
   listedLocalKeys,
@@ -43,7 +44,7 @@ const SECTIONS = [
   { id: 'appearance', label: 'Appearance', keywords: 'motion reduce animation theme light dark' },
   { id: 'playlists', label: 'Playlists', keywords: 'rename library path name export visibility public private tags workshop delete remove' },
   { id: 'general', label: 'General', keywords: 'language english startup edit listen confirm delete' },
-  { id: 'canvas', label: 'Canvas / Workspace', keywords: 'grid zoom minimap snap fit view' },
+  { id: 'canvas', label: 'Canvas / Workspace', keywords: 'grid zoom minimap snap fit view experience basic intermediate advanced' },
   { id: 'connections', label: 'Connections / Arrows', keywords: 'arrow edge bezier rectangular straight triangular' },
   { id: 'nodes', label: 'Nodes', keywords: 'track volume play count default' },
   { id: 'playback', label: 'Playback', keywords: 'queue skip master volume youtube' },
@@ -515,10 +516,29 @@ function GeneralSection() {
 
 function CanvasSection() {
   const canvas = useAppSettings((s) => s.canvas);
+  const editorExperience = useAppSettings((s) => s.general.editorExperience);
   const updateCanvas = useAppSettings((s) => s.updateCanvas);
+  const updateGeneral = useAppSettings((s) => s.updateGeneral);
   return (
     <section id="settings-canvas" className="synapse-settings-section" data-tutorial="settings-canvas">
       <h2>Canvas / Workspace</h2>
+      <SettingsSelect
+        label="Editor experience"
+        value={editorExperience}
+        onChange={(value) => {
+          if (isEditorExperienceMode(value)) updateGeneral({ editorExperience: value });
+        }}
+      >
+        {EDITOR_EXPERIENCE_OPTIONS.map((option) => (
+          <option key={option.mode} value={option.mode}>
+            {option.label}
+          </option>
+        ))}
+      </SettingsSelect>
+      <p className="synapse-settings-hint">
+        Changes how the editor is presented — guidance, density, and canvas
+        defaults. It does not limit nodes, settings, or graph complexity.
+      </p>
       <SettingsToggle
         label="Show minimap"
         hint="The canvas collapse control writes the same setting."
@@ -544,6 +564,7 @@ function CanvasSection() {
       </SettingsSelect>
       <SettingsToggle
         label="Fit view when switching playlists"
+        hint="Off by default so graphs stay readable. Fit view is still on the canvas controls."
         checked={canvas.fitViewOnPlaylistSwitch}
         onChange={(fitViewOnPlaylistSwitch) =>
           updateCanvas({ fitViewOnPlaylistSwitch })

@@ -10,11 +10,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - You can hide the “No detected issues — path looks playable” bar with a small close button. It comes back if the path has a problem.
 - Tutorial steps that ask you to connect two nodes highlight both connection points and draw a yellow dotted line between them.
+- Editor experience on the workspace (Basic, Intermediate, Advanced). It changes guidance and canvas density, not what you can build. Switch from the bottom-left control or Settings → Canvas. Playlists remember zoom, and Fit view / Focus selected / restore previous view stay available.
 
 ### Changed
 
 - Saving / Saved sits to the left of the playlist name and dropdown. Autosave waits a few seconds after you stop editing so it does not flicker and the account is written less often.
 - On Profile, the user-info header shrinks into a compact bar when you scroll down.
+- Opening a playlist no longer shrinks the whole graph to fit by default. Basic keeps a readable zoom around Start. Fit view is still on the canvas controls.
 
 ### Fixed
 

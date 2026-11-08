@@ -7,6 +7,8 @@ import {
   searchHits,
   TUTORIAL_GROUPS,
   getSection,
+  tutorialDifficulty,
+  tutorialMinutes,
 } from './tutorialCatalog';
 import { useTutorialStore } from './tutorialStore';
 import { APP_PATHS, navigateApp } from '../app/routes';
@@ -192,8 +194,13 @@ export default function TutorialMenu() {
                     className={`synapse-tutorial-topic${done ? ' is-done' : ''}`}
                     onClick={() => startSection(id)}
                   >
-                    {section.title}
-                    {done ? ' · done' : ''}
+                    <span className="synapse-tutorial-topic-title">
+                      {section.title}
+                      {done ? ' · done' : ''}
+                    </span>
+                    <span className="synapse-tutorial-topic-meta">
+                      {tutorialDifficulty(section.group)} · {tutorialMinutes(section.steps.length)} min
+                    </span>
                   </button>
                 );
               })}

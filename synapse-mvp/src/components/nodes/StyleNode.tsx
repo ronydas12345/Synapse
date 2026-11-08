@@ -4,6 +4,7 @@ import { allThemes, useThemeStore } from '../../theme/themeStore';
 import { parseStyleNodeData, styleThemeDisplayName, formatStyleNodeTiming } from '../../styleNode/parse';
 import { nodeCustomName } from '../../nodes/nodeName';
 import { useNodePlaybackClass } from '../../playback/nodeHighlight';
+import NodeCaption from '../../editorExperience/NodeCaption';
 
 export default function StyleNode({ data = {}, id }: { data?: unknown; id: string }) {
   const customThemes = useThemeStore((s) => s.customThemes);
@@ -30,6 +31,7 @@ export default function StyleNode({ data = {}, id }: { data?: unknown; id: strin
           </strong>
         </div>
       </div>
+      <NodeCaption nodeType="style" />
       <div className="px-3 py-3">
         <p className="text-xs text-[var(--text)] truncate">{themeName}</p>
         <p className="text-xs text-[var(--text-muted)] mt-1">{formatStyleNodeTiming(parsed)}</p>

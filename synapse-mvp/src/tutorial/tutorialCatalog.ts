@@ -1094,11 +1094,11 @@ export const TUTORIAL_GROUPS: TutorialGroup[] = [
     ],
   },
   { id: 'customization', label: 'Customization', sectionIds: ['styles-themes', 'overlays'] },
-  { id: 'play', label: 'Play', sectionIds: ['play-mode'] },
+  { id: 'play', label: 'Playback', sectionIds: ['play-mode'] },
   { id: 'community', label: 'Community', sectionIds: ['workshop', 'collaboration'] },
   {
     id: 'advanced',
-    label: 'Advanced',
+    label: 'Advanced Features',
     sectionIds: ['import-export', 'account-settings', 'pro'],
   },
 ];
@@ -1159,4 +1159,16 @@ export function searchHits(query: string): { section: TutorialSection; label: st
     seen.add(key);
     return true;
   });
+}
+
+export function tutorialDifficulty(
+  group: TutorialSection['group']
+): 'Beginner' | 'Intermediate' | 'Advanced' {
+  if (group === 'getting-started') return 'Beginner';
+  if (group === 'advanced') return 'Advanced';
+  return 'Intermediate';
+}
+
+export function tutorialMinutes(stepCount: number): number {
+  return Math.max(2, Math.round(stepCount * 0.75));
 }

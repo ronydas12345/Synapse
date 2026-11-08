@@ -8,6 +8,7 @@ import { formatDatePath, formatWeatherPath } from '../../conditional/format';
 import { parsePathDateRules, parsePathWeather } from '../../conditional/parse';
 import type { DateRule, WeatherState } from '../../conditional/types';
 import { nodeCustomName } from '../../nodes/nodeName';
+import NodeCaption from '../../editorExperience/NodeCaption';
 
 const spinnerHideStyles = `
   input[type="number"].hide-spinners::-webkit-outer-spin-button,
@@ -102,6 +103,7 @@ function ConditionalNode({ data = {}, id }: { data?: Record<string, unknown>; id
             ))}
           </select>
         </div>
+        <NodeCaption nodeType="conditional" />
 
         {!isCollapsed && (
           <div className="p-3 space-y-2">

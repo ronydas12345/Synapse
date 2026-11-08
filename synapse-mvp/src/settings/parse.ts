@@ -11,6 +11,7 @@ import {
   type PlaybackSettings,
   type VisualizerSettings,
   type WorkspaceStart,
+  isEditorExperienceMode,
 } from './types';
 
 export function clampInt(n: unknown, min: number, max: number, fallback: number): number {
@@ -30,12 +31,13 @@ export function defaultSettings(): AppSettings {
       lastWorkspace: 'edit',
       confirmDestructive: true,
       motion: 'system',
+      editorExperience: 'basic',
     },
     canvas: {
       showMinimap: true,
       snapToGrid: false,
       gridSize: 24,
-      fitViewOnPlaylistSwitch: true,
+      fitViewOnPlaylistSwitch: false,
     },
     nodes: {
       defaultVolume: 100,
@@ -95,6 +97,9 @@ function parseGeneral(raw: unknown, fallback: GeneralSettings): GeneralSettings 
       ? fallback.confirmDestructive
       : Boolean(src.confirmDestructive),
     motion: pickMotion(src.motion, fallback.motion),
+    editorExperience: isEditorExperienceMode(src.editorExperience)
+      ? src.editorExperience
+      : fallback.editorExperience,
   };
 }
 

@@ -2,6 +2,7 @@ import { usePathStore, useGraphReadOnly } from '../../store';
 import { Link2 } from 'lucide-react';
 import { nodeCustomName } from '../../nodes/nodeName';
 import { RevertibleTextarea } from '../fields/RevertibleField';
+import NodeCaption from '../../editorExperience/NodeCaption';
 
 export default function CommentNode({ data = {}, id }: any) {
   const { updateNodeData, nodes, commentLinkingId, setCommentLinkingId } = usePathStore();
@@ -37,6 +38,7 @@ export default function CommentNode({ data = {}, id }: any) {
         </button>
         )}
       </div>
+      <NodeCaption nodeType="comment" />
 
       {/* Linked Node Info */}
       {linkedNode && !isLinking && (

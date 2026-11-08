@@ -1,6 +1,7 @@
 import { Handle, Position } from '@xyflow/react';
 import { Play } from 'lucide-react';
 import { nodeDisplayName } from '../../nodes/nodeName';
+import NodeCaption from '../../editorExperience/NodeCaption';
 
 export default function StartNode({ data }: { data?: Record<string, unknown> }) {
   return (
@@ -11,6 +12,7 @@ export default function StartNode({ data }: { data?: Record<string, unknown> }) 
       <strong className="text-sm tracking-tight truncate max-w-full px-1" style={{ fontFamily: 'var(--font-display)' }}>
         {nodeDisplayName('start', data)}
       </strong>
+      <NodeCaption nodeType="start" />
       <Handle
         type="source"
         position={Position.Right}

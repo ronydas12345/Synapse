@@ -4,6 +4,8 @@ import { usePathStore, useGraphReadOnly } from '../../store';
 import { getTrackDisplayMeta } from '../../trackMetadata';
 import { useNodePlaybackClass } from '../../playback/nodeHighlight';
 import { isPlaybackStartNodeType } from '../../engine/startNode';
+import NodeCaption from '../../editorExperience/NodeCaption';
+import { useEditorExperience } from '../../editorExperience/useEditorExperience';
 
 function CreditLine({
   value,
@@ -29,6 +31,7 @@ export default function TrackNode({ data = {}, id }: any) {
   const setIsPlaying = usePathStore((s) => s.setIsPlaying);
   const meta = getTrackDisplayMeta(data);
   const canPlayFromHere = isPlaybackStartNodeType('track');
+  const trackDetail = useEditorExperience().trackDetail;
 
   return (
     <div
@@ -62,22 +65,29 @@ export default function TrackNode({ data = {}, id }: any) {
       </div>
 
       <div className="px-3 pb-3 pt-2 space-y-0.5 border-t border-[var(--border)]">
+        <NodeCaption nodeType="track" />
         <CreditLine
           value={meta.artist}
           emptyLabel="No artist"
           className="text-xs text-[var(--text-muted)]"
         />
-        <CreditLine
-          value={meta.album}
-          emptyLabel="No album"
-          className="text-[0.65rem] text-[var(--text-faint)]"
-        />
-        <p className="text-[0.65rem] text-[var(--text-faint)] break-all m-0 font-mono">
-          ID: {data?.videoId || 'Not set'}
-        </p>
-        <p className="text-[0.65rem] text-[var(--text-faint)] m-0 font-mono">
-          Play ×{data?.playCount || 1}
-        </p>
+        {trackDetail === 'simple' ? null : (
+          <CreditLine
+            value={meta.album}
+            emptyLabel="No album"
+            className="text-[0.65rem] text-[var(--text-faint)]"
+          />
+        )}
+        {trackDetail === 'full' ? (
+          <>
+            <p className="text-[0.65rem] text-[var(--text-faint)] break-all m-0 font-mono">
+              ID: {data?.videoId || 'Not set'}
+            </p>
+            <p className="text-[0.65rem] text-[var(--text-faint)] m-0 font-mono">
+              Play ×{data?.playCount || 1}
+            </p>
+          </>
+        ) : null}
         {selected && canPlayFromHere && !readOnly ? (
           <button
             type="button"

@@ -8,7 +8,13 @@ import { APP_PATHS, listenPath, navigateApp, pathToRoute, workshopItemPath, type
 import { signOut } from '../auth/client';
 import type { AuthRole } from '../auth/session';
 import { addCanvasNode, CANVAS_NODE_TYPES } from '../canvas/addNode';
-import { FIT_VIEW_EVENT } from '../canvas/fitEvents';
+import {
+  FIT_VIEW_EVENT,
+  FOCUS_SELECTED_EVENT,
+  RESTORE_VIEWPORT_EVENT,
+} from '../canvas/fitEvents';
+import { EDITOR_EXPERIENCE_OPTIONS } from '../editorExperience/config';
+import { setEditorExperience } from '../editorExperience/useEditorExperience';
 import { confirmDestructive } from '../settings/settingsStore';
 import { usePathStore } from '../store';
 import { allThemes, useThemeStore } from '../theme/themeStore';
@@ -51,7 +57,7 @@ const SETTINGS: { id: string; label: string; keywords: string }[] = [
   { id: 'appearance', label: 'Appearance', keywords: 'motion reduce animation' },
   { id: 'playlists', label: 'Playlists', keywords: 'library rename tags delete remove' },
   { id: 'general', label: 'General', keywords: 'language startup confirm' },
-  { id: 'canvas', label: 'Canvas / Workspace', keywords: 'grid snap minimap zoom' },
+  { id: 'canvas', label: 'Canvas / Workspace', keywords: 'grid snap minimap zoom experience basic intermediate advanced' },
   { id: 'connections', label: 'Connections / Arrows', keywords: 'edge bezier' },
   { id: 'nodes', label: 'Nodes', keywords: 'volume play count speed defaults' },
   { id: 'playback', label: 'Playback', keywords: 'volume skip youtube' },
@@ -323,6 +329,24 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
         onEdit(() => window.dispatchEvent(new Event(FIT_VIEW_EVENT))),
     },
     {
+      id: 'focus-selected',
+      group: 'Editor',
+      label: 'Focus selected',
+      keywords: 'zoom selected node center',
+      when: (c) => c.signedIn,
+      run: () =>
+        onEdit(() => window.dispatchEvent(new Event(FOCUS_SELECTED_EVENT))),
+    },
+    {
+      id: 'restore-viewport',
+      group: 'Editor',
+      label: 'Restore previous view',
+      keywords: 'undo zoom pan viewport',
+      when: (c) => c.signedIn,
+      run: () =>
+        onEdit(() => window.dispatchEvent(new Event(RESTORE_VIEWPORT_EVENT))),
+    },
+    {
       id: 'bring-selected',
       group: 'Editor',
       label: 'Bring selected onto page',
@@ -391,6 +415,13 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       run: () => useTutorialStore.getState().openMenu(),
     },
     {
+      id: 'tutorials',
+      group: 'Help',
+      label: 'Manage tutorials',
+      keywords: 'topics lessons guide',
+      run: () => useTutorialStore.getState().openTopics(),
+    },
+    {
       id: 'sign-out',
       group: 'Account',
       label: 'Sign out',
@@ -399,6 +430,17 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       run: () => void signOut(),
     },
   ];
+
+  for (const option of EDITOR_EXPERIENCE_OPTIONS) {
+    commands.push({
+      id: `experience-${option.mode}`,
+      group: 'Editor',
+      label: `Editor experience: ${option.label}`,
+      keywords: `mode ${option.mode} presentation ${option.summary}`,
+      when: (c) => c.signedIn,
+      run: () => setEditorExperience(option.mode),
+    });
+  }
 
   for (const type of CANVAS_NODE_TYPES) {
     commands.push({

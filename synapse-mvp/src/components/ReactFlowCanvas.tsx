@@ -37,7 +37,20 @@ import { toReactFlowEdgeType } from '../theme/edgeType';
 import { confirmDestructive, useAppSettings } from '../settings/settingsStore';
 import { documentPrefersReducedMotion } from '../settings/motion';
 import { isTypingTarget } from '../ui/isTypingTarget';
-import { FIT_VIEW_EVENT, FIT_NODES_EVENT } from '../canvas/fitEvents';
+import {
+  FIT_VIEW_EVENT,
+  FIT_NODES_EVENT,
+  FOCUS_SELECTED_EVENT,
+  RESTORE_VIEWPORT_EVENT,
+} from '../canvas/fitEvents';
+import { experienceConfig, resolveOpenViewport } from '../editorExperience/config';
+import EditorChrome from '../editorExperience/EditorChrome';
+import {
+  pushUndoViewport,
+  readPathViewport,
+  takeUndoViewport,
+  writePathViewport,
+} from '../editorExperience/viewports';
 import {
   buildCanvasNode,
   canvasAddError,
@@ -336,13 +349,14 @@ const MemoizedCustomMinimap = React.memo(CustomMinimap);
 function ReactFlowContent() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { nodes: storeNodes, edges: storeEdges, setNodes: setStoreNodes, setEdges: setStoreEdges, deleteEdge, onConnect: storeOnConnect, updateNodeData } = usePathStore();
-  const { screenToFlowPosition, getViewport, fitView } = useReactFlow();
+  const { screenToFlowPosition, getViewport, fitView, setViewport, setCenter } = useReactFlow();
   const snapToGrid = useAppSettings((s) => s.canvas.snapToGrid);
   const gridSize = useAppSettings((s) => s.canvas.gridSize);
-  const fitViewOnSwitch = useAppSettings((s) => s.canvas.fitViewOnPlaylistSwitch);
+  const editorExperience = useAppSettings((s) => s.general.editorExperience);
+  const experience = experienceConfig(editorExperience);
   const activePathId = usePathStore((s) => s.activePathId);
   const readOnly = useGraphReadOnly();
-  const skipFitRef = useRef(true);
+  const prevPathRef = useRef(activePathId);
 
   const [nodes, setNodes] = useNodesState(storeNodes as Node[]);
   // Keep only "real" edges in state. Dashed comment-link edges are derived and should not
@@ -500,46 +514,115 @@ function ReactFlowContent() {
   }, [graphSig, setNodes, setEdges, setStoreNodes, setStoreEdges]);
 
   useEffect(() => {
-    if (skipFitRef.current) {
-      skipFitRef.current = false;
-      return;
+    const prev = prevPathRef.current;
+    if (prev && prev !== activePathId) {
+      writePathViewport(prev, getViewport());
     }
-    if (!fitViewOnSwitch) return;
+    prevPathRef.current = activePathId;
     const id = window.setTimeout(() => {
-      fitView({
-        padding: 0.2,
-        duration: documentPrefersReducedMotion() ? 0 : 200,
+      const startNode = usePathStore
+        .getState()
+        .nodes.find((node) => node.type === 'start' && !node.hidden);
+      const plan = resolveOpenViewport({
+        saved: activePathId ? readPathViewport(activePathId) : null,
+        start: startNode
+          ? {
+              x: startNode.position.x,
+              y: startNode.position.y,
+              width: 160,
+              height: 72,
+            }
+          : null,
+        config: experienceConfig(useAppSettings.getState().general.editorExperience),
+        fitOnSwitch: useAppSettings.getState().canvas.fitViewOnPlaylistSwitch,
       });
+      const duration = documentPrefersReducedMotion() ? 0 : 200;
+      if (plan.type === 'restore') {
+        void setViewport({ x: plan.x, y: plan.y, zoom: plan.zoom }, { duration: 0 });
+        return;
+      }
+      if (plan.type === 'start') {
+        void setCenter(plan.x, plan.y, { zoom: plan.zoom, duration: 0 });
+        return;
+      }
+      if (plan.type === 'fit') {
+        void fitView({ padding: 0.2, duration });
+      }
     }, 50);
     return () => window.clearTimeout(id);
-  }, [activePathId, fitViewOnSwitch, fitView]);
+  }, [activePathId, fitView, getViewport, setCenter, setViewport]);
 
   useEffect(() => {
+    const motionDuration = () => (documentPrefersReducedMotion() ? 0 : 200);
     const onFit = () => {
-      fitView({
+      pushUndoViewport(getViewport());
+      void fitView({
         padding: 0.2,
-        duration: documentPrefersReducedMotion() ? 0 : 200,
+        duration: motionDuration(),
       });
     };
     const onFitNodes = (event: Event) => {
       const ids = (event as CustomEvent<{ nodeIds?: string[] }>).detail?.nodeIds;
+      pushUndoViewport(getViewport());
       if (ids?.length) {
-        fitView({
+        void fitView({
           nodes: ids.map((id) => ({ id })),
           padding: 0.24,
-          duration: documentPrefersReducedMotion() ? 0 : 200,
+          duration: motionDuration(),
         });
         return;
       }
       onFit();
     };
+    const onFocusSelected = () => {
+      const store = usePathStore.getState();
+      const ids = store.selectedNodeIds.length
+        ? store.selectedNodeIds
+        : store.selectedNodeId
+          ? [store.selectedNodeId]
+          : [];
+      pushUndoViewport(getViewport());
+      if (ids.length === 1) {
+        const node = store.nodes.find((item) => item.id === ids[0]);
+        if (!node) return;
+        void setCenter(node.position.x + 80, node.position.y + 40, {
+          zoom: Math.max(getViewport().zoom, 0.85),
+          duration: motionDuration(),
+        });
+        return;
+      }
+      if (ids.length > 1) {
+        void fitView({
+          nodes: ids.map((id) => ({ id })),
+          padding: 0.24,
+          duration: motionDuration(),
+        });
+        return;
+      }
+      const start = store.nodes.find((node) => node.type === 'start' && !node.hidden);
+      if (start) {
+        void setCenter(start.position.x + 80, start.position.y + 36, {
+          zoom: 1,
+          duration: motionDuration(),
+        });
+      }
+    };
+    const onRestore = () => {
+      const previous = takeUndoViewport();
+      if (!previous) return;
+      void setViewport(previous, { duration: motionDuration() });
+    };
     window.addEventListener(FIT_VIEW_EVENT, onFit);
     window.addEventListener(FIT_NODES_EVENT, onFitNodes);
+    window.addEventListener(FOCUS_SELECTED_EVENT, onFocusSelected);
+    window.addEventListener(RESTORE_VIEWPORT_EVENT, onRestore);
     return () => {
       window.removeEventListener(FIT_VIEW_EVENT, onFit);
       window.removeEventListener(FIT_NODES_EVENT, onFitNodes);
+      window.removeEventListener(FOCUS_SELECTED_EVENT, onFocusSelected);
+      window.removeEventListener(RESTORE_VIEWPORT_EVENT, onRestore);
     };
-  }, [fitView]);
+  }, [fitView, getViewport, setCenter, setViewport]);
 
   // Sync store changes to React Flow (when settings are updated or nodes deleted from sidebar)
   // IMPORTANT: This only runs when structure or data actually changes, not on every position update
@@ -1058,7 +1141,12 @@ function ReactFlowContent() {
   }, [copySelectionToClipboard, pasteFromClipboard, setNodes, setEdges]);
 
   return (
-    <div ref={reactFlowRef} className="synapse-canvas-wrap" data-tutorial="canvas">
+    <div
+      ref={reactFlowRef}
+      className="synapse-canvas-wrap"
+      data-tutorial="canvas"
+      data-editor-experience={experience.mode}
+    >
       <ReactFlow
         nodes={nodes}
         edges={themedEdges}
@@ -1125,13 +1213,20 @@ function ReactFlowContent() {
         nodesConnectable={!readOnly}
         elementsSelectable={true}
         selectNodesOnDrag={false}
-        selectionOnDrag={!readOnly}
-        panOnDrag={[1, 2]}
+        selectionOnDrag={!readOnly && !experience.leftDragPans}
+        panOnDrag={experience.leftDragPans ? true : [1, 2]}
+        zoomOnScroll
+        zoomOnPinch
+        panOnScroll={false}
         multiSelectionKeyCode="Shift"
         selectionKeyCode={readOnly ? null : 'Shift'}
         snapToGrid={snapToGrid}
         snapGrid={[gridSize, gridSize]}
-        fitView
+        onMoveEnd={
+          activePathId
+            ? (_event, viewport) => writePathViewport(activePathId, viewport)
+            : undefined
+        }
         defaultEdgeOptions={{
           type: rfEdgeType,
           style: { stroke: 'var(--edge-color)', strokeWidth: 2 },
@@ -1157,6 +1252,7 @@ function ReactFlowContent() {
       </div>
 
       <MemoizedCustomMinimap />
+      <EditorChrome />
     </div>
   );
 }

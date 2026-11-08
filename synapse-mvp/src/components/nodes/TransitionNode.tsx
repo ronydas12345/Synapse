@@ -4,6 +4,7 @@ import { usePathStore } from '../../store';
 import { useState } from 'react';
 import { nodeCustomName } from '../../nodes/nodeName';
 import { useNodePlaybackClass } from '../../playback/nodeHighlight';
+import NodeCaption from '../../editorExperience/NodeCaption';
 
 export default function TransitionNode({ data = {}, id }: any) {
   const { updateNodeData } = usePathStore();
@@ -44,6 +45,7 @@ export default function TransitionNode({ data = {}, id }: any) {
           <ChevronUp className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />
         )}
       </div>
+      <NodeCaption nodeType="transition" />
 
       {/* Info */}
       <div className="px-3 pt-3 pb-2">

@@ -4,6 +4,11 @@ export const SETTINGS_STORAGE_KEY = 'synapse_app_settings';
 
 export type MotionPreference = 'system' | 'reduce' | 'full';
 export type WorkspaceStart = 'edit' | 'listen';
+export type EditorExperienceMode = 'basic' | 'intermediate' | 'advanced';
+
+export function isEditorExperienceMode(value: unknown): value is EditorExperienceMode {
+  return value === 'basic' || value === 'intermediate' || value === 'advanced';
+}
 
 export const GRID_SIZE_OPTIONS = [8, 16, 24, 32, 48] as const;
 
@@ -14,6 +19,7 @@ export interface GeneralSettings {
   lastWorkspace: WorkspaceStart;
   confirmDestructive: boolean;
   motion: MotionPreference;
+  editorExperience: EditorExperienceMode;
 }
 
 export interface CanvasSettings {

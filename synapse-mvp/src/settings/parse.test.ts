@@ -21,6 +21,7 @@ describe('app settings schema', () => {
     });
     expect(parsed.general.language).toBe('en');
     expect(parsed.general.motion).toBe('system');
+    expect(parsed.general.editorExperience).toBe('basic');
     expect(parsed.general.confirmDestructive).toBe(false);
     expect(parsed.canvas.gridSize).toBe(16);
     expect(parsed.canvas.snapToGrid).toBe(true);
@@ -37,6 +38,22 @@ describe('app settings schema', () => {
     const ok = parseSettingsJson(settingsToJson(defaultSettings()));
     expect(ok?.type).toBe('synapse-settings');
     expect(ok?.canvas.showMinimap).toBe(true);
+    expect(ok?.canvas.fitViewOnPlaylistSwitch).toBe(false);
+    expect(ok?.general.editorExperience).toBe('basic');
+  });
+
+  it('keeps a saved editor experience', () => {
+    const parsed = parseSettings({
+      type: 'synapse-settings',
+      general: { editorExperience: 'advanced' },
+    });
+    expect(parsed.general.editorExperience).toBe('advanced');
+    expect(
+      parseSettings({
+        type: 'synapse-settings',
+        general: { editorExperience: 'expert' },
+      }).general.editorExperience
+    ).toBe('basic');
   });
 
   it('scales node volume by master volume', () => {

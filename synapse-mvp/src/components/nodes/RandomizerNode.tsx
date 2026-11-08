@@ -7,6 +7,7 @@ import { getTrackDisplayMeta } from '../../trackMetadata';
 import { RANDOMIZER_MODE_OPTIONS, randomizerModePatch } from '../../nodeMode';
 import { nodeCustomName, nodeTypeLabel } from '../../nodes/nodeName';
 import { useNodePlaybackClass } from '../../playback/nodeHighlight';
+import NodeCaption from '../../editorExperience/NodeCaption';
 
 const spinnerHideStyles = `
   input[type="number"].hide-spinners::-webkit-outer-spin-button,
@@ -221,6 +222,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
             ))}
           </select>
         </div>
+        <NodeCaption nodeType="randomizer" />
 
         {!isCollapsed && (
           <div className="p-3 space-y-2">
