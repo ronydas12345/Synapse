@@ -21,7 +21,12 @@ export default function CanvasNavExtras() {
   }, [getViewport]);
 
   return (
-    <div className="synapse-canvas-nav-extras" role="group" aria-label="Canvas view">
+    <div
+      className="synapse-canvas-nav-extras"
+      role="group"
+      aria-label="Canvas view"
+      data-tutorial="canvas-focus"
+    >
       <span className="synapse-canvas-zoom-readout" aria-live="polite">
         {Math.round(zoom * 100)}%
       </span>

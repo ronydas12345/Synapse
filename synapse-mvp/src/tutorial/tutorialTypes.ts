@@ -10,7 +10,7 @@ export type TutorialStepType =
 
 export type TutorialAction =
   | { type: 'node-created'; nodeType: string }
-  | { type: 'nodes-connected' }
+  | { type: 'nodes-connected'; sourceType?: string; targetType?: string }
   | { type: 'node-selected'; nodeType?: string }
   | { type: 'node-deleted' }
   | { type: 'edge-deleted' }
@@ -18,12 +18,16 @@ export type TutorialAction =
   | { type: 'paused' }
   | { type: 'skip' }
   | { type: 'route'; route: AppRoute }
-  | { type: 'track-url' }
+  | { type: 'track-url'; min?: number }
   | { type: 'node-data'; nodeType: string; field?: string }
   | { type: 'settings-section'; id: string }
   | { type: 'theme-changed' }
   | { type: 'account-ready' }
-  | { type: 'node-count'; nodeType: string; min: number };
+  | { type: 'node-count'; nodeType: string; min: number }
+  | { type: 'viewport-changed'; kind?: 'pan' | 'zoom' | 'fit' }
+  | { type: 'playlist-renamed' }
+  | { type: 'node-moved' }
+  | { type: 'track-parked'; min?: number };
 
 export interface TutorialStep {
   id: string;
@@ -36,6 +40,10 @@ export interface TutorialStep {
   hash?: string;
   expectedAction?: TutorialAction;
   praise?: string;
+  hint?: string;
+  basicBody?: string;
+  advancedBody?: string;
+  recovery?: string;
 }
 
 export interface TutorialSection {

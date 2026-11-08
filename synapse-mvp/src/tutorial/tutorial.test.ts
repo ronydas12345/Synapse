@@ -12,6 +12,7 @@ import {
   stepNeedsAccount,
 } from './tutorialStore';
 import { paddedRect, placeWindow, rectsClose } from './placement';
+import { playlistLooksNamed, stepBody } from './tutorialCopy';
 import { findSuggestedConnection, stepAsksForConnection } from './connectHint';
 import type { Edge, Node } from '@xyflow/react';
 
@@ -75,6 +76,36 @@ describe('tutorial engine', () => {
         { type: 'node-count', nodeType: 'track', min: 1 }
       )
     ).toBe(false);
+    expect(
+      actionsMatch(
+        { type: 'track-url', min: 3 },
+        { type: 'track-url', min: 3 }
+      )
+    ).toBe(true);
+    expect(
+      actionsMatch(
+        { type: 'track-url', min: 3 },
+        { type: 'track-url', min: 2 }
+      )
+    ).toBe(false);
+    expect(
+      actionsMatch(
+        { type: 'nodes-connected', sourceType: 'start', targetType: 'randomizer' },
+        { type: 'nodes-connected', sourceType: 'start', targetType: 'randomizer' }
+      )
+    ).toBe(true);
+    expect(
+      actionsMatch(
+        { type: 'nodes-connected', sourceType: 'start', targetType: 'randomizer' },
+        { type: 'nodes-connected', sourceType: 'track', targetType: 'randomizer' }
+      )
+    ).toBe(false);
+    expect(
+      actionsMatch(
+        { type: 'viewport-changed', kind: 'pan' },
+        { type: 'viewport-changed', kind: 'zoom' }
+      )
+    ).toBe(false);
   });
 
   it('searches sections by keyword', () => {
@@ -102,12 +133,14 @@ describe('tutorial engine', () => {
   it('keeps a short first-run tour separate from the full walkthrough', () => {
     const simple = getSection(SIMPLE_TUTORIAL_ID);
     expect(simple).toBeDefined();
-    expect(simple!.steps.length).toBeGreaterThanOrEqual(8);
-    expect(simple!.steps.length).toBeLessThanOrEqual(14);
+    expect(simple!.steps.length).toBeGreaterThanOrEqual(16);
+    expect(simple!.steps.length).toBeLessThanOrEqual(28);
     expect(simple!.steps[0].title).toBe('Your account');
     expect(simple!.steps.some((st) => st.expectedAction?.type === 'track-url')).toBe(true);
-    expect(simple!.steps.some((st) => st.expectedAction?.type === 'node-data')).toBe(true);
+    expect(simple!.steps.some((st) => st.expectedAction?.type === 'track-parked')).toBe(true);
     expect(simple!.steps.some((st) => st.expectedAction?.type === 'playing')).toBe(true);
+    expect(simple!.steps.some((st) => st.id === 'qs-randomizer')).toBe(true);
+    expect(simple!.steps.some((st) => st.hint)).toBe(true);
     expect(FULL_TUTORIAL_SECTIONS).not.toContain(SIMPLE_TUTORIAL_ID);
     expect(FULL_TUTORIAL_SECTIONS[0]).toBe('getting-started');
   });
@@ -185,6 +218,15 @@ describe('tutorial engine', () => {
       })
     ).toEqual({ path: '/edit', hash: '' });
   });
+
+  it('picks mode-specific copy and treats First Steps as a named playlist', () => {
+    const step = getSection(SIMPLE_TUTORIAL_ID)!.steps.find((st) => st.id === 'qs-pan')!;
+    expect(stepBody(step, 'basic')).toMatch(/left-drag/i);
+    expect(stepBody(step, 'advanced')).toMatch(/Pan the canvas/i);
+    expect(stepBody(step, 'intermediate')).toMatch(/Right-drag/i);
+    expect(playlistLooksNamed('First Steps')).toBe(true);
+    expect(playlistLooksNamed('Untitled playlist')).toBe(false);
+  });
 });
 
 describe('tutorial spotlight placement', () => {
@@ -199,6 +241,12 @@ describe('tutorial spotlight placement', () => {
   it('pads the spotlight and keeps the window on screen', () => {
     const padded = paddedRect({ left: 40, top: 80, width: 120, height: 50 });
     expect(padded).toEqual({ left: 32, top: 72, width: 136, height: 66 });
+    expect(paddedRect({ left: 40, top: 80, width: 120, height: 50 }, 14)).toEqual({
+      left: 26,
+      top: 66,
+      width: 148,
+      height: 78,
+    });
     const pos = placeWindow(padded, 1280, 800, false);
     expect(pos.sheet).toBe(false);
     expect(pos.left).toBeGreaterThan(padded.left);
@@ -245,6 +293,20 @@ describe('tutorial connection hint', () => {
         type: 'highlight',
       })
     ).toBe(false);
+  });
+
+  it('prefers Start to Randomizer when both exist', () => {
+    const start = node('s', 'start', 0);
+    const rand = node('r', 'randomizer', 180);
+    const end = node('e', 'end', 360);
+    expect(findSuggestedConnection([start, rand, end], [])).toEqual({
+      sourceId: 's',
+      targetId: 'r',
+    });
+    expect(findSuggestedConnection([start, rand, end], [edge('s', 'r')])).toEqual({
+      sourceId: 'r',
+      targetId: 'e',
+    });
   });
 
   it('suggests Start to the first Track, then Track to Track', () => {

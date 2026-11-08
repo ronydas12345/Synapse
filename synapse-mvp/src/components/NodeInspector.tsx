@@ -861,7 +861,7 @@ export default function NodeInspector() {
         )}
         {selectedNode.type === 'randomizer' && (
           <>
-            <div id="inspector-mode">
+            <div id="inspector-mode" data-tutorial="randomizer-mode">
               <label className="text-[var(--text)] block mb-1">Playback Mode</label>
               <select
                 className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
@@ -893,7 +893,7 @@ export default function NodeInspector() {
               />
               <p className="text-xs text-[var(--text-faint)] mt-1 mb-3">How many times to play all tracks</p>
             </div>
-            <div id="inspector-seq-tracks">
+            <div id="inspector-seq-tracks" data-tutorial="randomizer-weights">
               <p className="text-xs text-[var(--text-muted)] leading-relaxed m-0 mb-3">
                 Drag a track onto this {selectedNode.data?.mode === 'randomizer' ? 'randomizer' : 'sequence'} to move it in. Click a track in the list to edit its settings without dragging it back out.
               </p>

@@ -21,117 +21,342 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
   {
     id: SIMPLE_TUTORIAL_ID,
     title: 'Quick start',
-    summary: 'Build a real Music Path: tracks, a setting, a connection, then play.',
+    summary:
+      'Build First Steps: your own songs, a Randomizer, connections, then play and keep it.',
     keywords:
-      'quick start first run beginner simple short tour music path track connect play playlist help',
+      'quick start first run beginner first steps tour music path track randomizer connect play playlist pan zoom save',
     group: 'getting-started',
     steps: [
       s(
         'qs-account',
         'Your account',
-        'Create an account or log in so your Music Path can save. Google or email both work. Then the canvas opens.',
+        'Create an account or log in so this playlist can save. Google or email both work. Then the editor opens.',
         {
           type: 'action',
           route: 'signup',
           target: 'auth-panel',
           expectedAction: { type: 'account-ready' },
           praise: 'You’re in. Next is the canvas.',
+          hint: 'Use Sign up in the header if you do not have an account yet.',
         }
       ),
       s(
         'qs-welcome',
-        'Build a Music Path',
-        'You will add tracks, change a setting, connect nodes, and press Play. The result is a real path you can keep.',
-        { type: 'info', route: 'edit', target: 'workspace' }
+        'Build something real',
+        'By the end you will have a working playlist with a Start, several of your songs, a Randomizer, and an End. You keep it when the tour finishes.',
+        {
+          type: 'info',
+          route: 'edit',
+          target: 'workspace',
+          basicBody:
+            'The big grid in the middle is the canvas. The left column adds nodes. Play is in the top bar. We will not auto-build this playlist — you will click each step.',
+          advancedBody:
+            'You will wire Start → Randomizer → End and park your own tracks inside the Randomizer. The playlist stays when you finish.',
+        }
+      ),
+      s(
+        'qs-canvas',
+        'Canvas vs nodes',
+        'Empty grid is the view. Dragging a node moves that node. Clicking a node selects it and opens the inspector on the right. These are three different actions.',
+        {
+          type: 'info',
+          route: 'edit',
+          target: 'canvas',
+          basicBody:
+            'Look at the empty grid. That is the canvas. Dragging empty space moves the view (pan). Dragging a node moves only that node. Clicking a node selects it so the right panel shows its settings.',
+          advancedBody:
+            'Pan the view, drag nodes separately, click to select. Playback follows connections, not layout.',
+        }
+      ),
+      s(
+        'qs-pan',
+        'Pan the view',
+        'Right-drag or middle-drag empty canvas to pan. Left-drag on empty space draws a selection box.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'canvas',
+          expectedAction: { type: 'viewport-changed', kind: 'pan' },
+          praise: 'That is panning — the nodes stayed put, the camera moved.',
+          hint: 'If a node moves instead, you grabbed the node. Click empty grid, then drag.',
+          basicBody:
+            'In Basic, left-drag empty canvas to slide the view. Try it until the camera moves and the nodes stay where they are.',
+          advancedBody: 'Pan the canvas (right-drag or middle-drag on empty grid).',
+          recovery: 'If you moved a node, press Ctrl+Z (Cmd+Z) to undo, then drag empty grid instead.',
+        }
+      ),
+      s(
+        'qs-zoom',
+        'Zoom',
+        'Scroll the mouse wheel over the canvas to zoom. The + / − buttons on the bottom-left canvas controls do the same.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'canvas-controls',
+          expectedAction: { type: 'viewport-changed', kind: 'zoom' },
+          praise: 'Zoom only changes how close you are. It does not change playback.',
+          hint: 'Hover the grid, then roll the wheel. Or click + / − on the bottom-left control stack.',
+          advancedBody: 'Wheel-zoom or use the bottom-left + / −.',
+        }
+      ),
+      s(
+        'qs-controls',
+        'Fit and focus',
+        'On the bottom-left stack, Fit view is the dashed-square. Focus selected (the target icon beside the zoom %) frames the node you have selected.',
+        {
+          type: 'highlight',
+          route: 'edit',
+          target: 'canvas-controls',
+          hint: 'You do not have to click them now. Use Fit view later if the graph drifts off-screen.',
+          advancedBody: 'Fit view and Focus selected sit on the bottom-left canvas chrome.',
+        }
+      ),
+      s(
+        'qs-start',
+        'Start node',
+        'The Start node is already on the canvas — the gold card labeled Start. Playback begins there. You can have only one. If it is missing, click Start in the left rack.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'node-start',
+          expectedAction: { type: 'node-count', nodeType: 'start', min: 1 },
+          praise: 'Start is the entrance to the path.',
+          hint: 'If you do not see Start, click Start in the left module rack. A second Start is blocked on purpose.',
+          basicBody:
+            'Find the gold Start card on the canvas. That is where playback begins. The left rack’s Start button adds one only if it is missing — Synapse allows a single Start.',
+          advancedBody: 'Confirm the Start node is on the canvas (only one is allowed).',
+          recovery: 'If you added the wrong node, select it and press Delete, then add Start from the left rack.',
+        }
       ),
       s(
         'qs-track',
-        'Add a Track',
-        'Click Track Node in the rack, or drag it onto the canvas. A Track is one YouTube song on the path.',
+        'Add your first Track',
+        'In the left rack, click Track (or drag it onto the canvas). A Track is one YouTube song.',
         {
           type: 'action',
           route: 'edit',
           target: 'rack-track',
           expectedAction: { type: 'node-created', nodeType: 'track' },
-          praise: 'Track added.',
+          praise: 'Track added. Next you will pick a song you actually like.',
+          hint: 'The rack is the left column. The row labeled Track is the one you want — not Randomizer or Comment.',
+          recovery: 'Wrong node? Select it and press Delete (or Ctrl+Z), then click Track in the left rack.',
         }
       ),
       s(
         'qs-url',
-        'Choose a track',
-        'Select the Track and paste a YouTube URL in the inspector. Use a video that is allowed to embed.',
+        'Pick a song',
+        'Click the Track, then in the right inspector paste a YouTube URL or 11-character video ID. Use a video that is allowed to embed.',
         {
           type: 'action',
           route: 'edit',
-          target: 'inspector',
-          expectedAction: { type: 'track-url' },
-          praise: 'Track attached.',
+          target: 'track-url',
+          expectedAction: { type: 'track-url', min: 1 },
+          praise: 'Song attached. Playback uses this video, not the title text.',
+          hint: 'If the inspector is empty, click the Track card first. The URL field is under YouTube.',
+          basicBody:
+            'Click your new Track card so it is selected. On the right, find YouTube URL / ID and paste a watch link for a song you like. Title and artist are display-only.',
         }
       ),
       s(
-        'qs-setting',
-        'Change a setting',
-        'In the inspector, change Volume or End time. That setting is stored on the node and applied when it plays.',
-        {
-          type: 'action',
-          route: 'edit',
-          target: 'inspector',
-          expectedAction: { type: 'node-data', nodeType: 'track' },
-          praise: 'Setting applied. You will hear it when this node plays.',
-        }
-      ),
-      s(
-        'qs-track-2',
-        'Add a second Track',
-        'Add another Track node and give it a different YouTube URL. Two songs make a sequence you can hear.',
+        'qs-track-more',
+        'Add two more Tracks',
+        'Click Track in the left rack twice more so you have three Track cards. Each one will be a different song in the pool.',
         {
           type: 'action',
           route: 'edit',
           target: 'rack-track',
-          expectedAction: { type: 'node-count', nodeType: 'track', min: 2 },
-          praise: 'Second track is on the canvas.',
+          expectedAction: { type: 'node-count', nodeType: 'track', min: 3 },
+          praise: 'Three tracks on the canvas.',
+          hint: 'Click Track in the rack again. You need three Track cards before this step continues.',
         }
       ),
       s(
-        'qs-connect',
-        'Connect the path',
-        'Drag from Start to the first Track, then from that Track to the second. Position alone does not set order — connections do.',
+        'qs-url-more',
+        'Give each Track a song',
+        'Select each remaining Track and paste a different YouTube URL. Pick music you would actually play.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'track-url',
+          expectedAction: { type: 'track-url', min: 3 },
+          praise: 'All three tracks have songs.',
+          hint: 'Click a Track with no title yet, paste a URL, then click the next one.',
+        }
+      ),
+      s(
+        'qs-randomizer',
+        'Add a Randomizer',
+        'In the left rack, click Randomizer. Place it to the right of Start. This node holds a pool of songs and picks one when playback reaches it.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'rack-randomizer',
+          expectedAction: { type: 'node-created', nodeType: 'randomizer' },
+          praise: 'Randomizer added. Tracks will live inside it, not as a line of cards.',
+          hint: 'The rack row is Randomizer — the dice-style item under Conditional.',
+          recovery: 'If you added a Conditional instead, delete it and click Randomizer in the rack.',
+          advancedBody: 'Add a Randomizer from the rack.',
+        }
+      ),
+      s(
+        'qs-connect-start',
+        'Connect Start to the Randomizer',
+        'Drag from the small handle on the right of Start onto the left handle of the Randomizer. A line should appear. That line is the play path — layout is not.',
         {
           type: 'action',
           route: 'edit',
           target: 'canvas',
-          expectedAction: { type: 'nodes-connected' },
-          praise: 'Connected. Playback can walk that edge.',
+          expectedAction: {
+            type: 'nodes-connected',
+            sourceType: 'start',
+            targetType: 'randomizer',
+          },
+          praise: 'Connected. Playback will enter the Randomizer from Start.',
+          hint: 'Grab the dot on the right side of Start, keep the mouse down, and drop on the left dot of the Randomizer.',
+          recovery:
+            'A Track-to-Randomizer line parks that Track inside the pool instead. Undo if that was accidental, then drag Start’s output to the Randomizer.',
         }
       ),
       s(
-        'qs-branch',
-        'Optional branches',
-        'A Conditional picks one outgoing path. A Sequence or Randomizer holds several tracks in one node. Skip this if you only want two songs in a line.',
-        { type: 'highlight', route: 'edit', target: 'sidebar' }
+        'qs-park',
+        'Park tracks in the pool',
+        'Drag each Track card onto the Randomizer until the Track disappears into its list. You need at least two songs in the pool. Dragging is the Synapse way — those tracks are not a separate line on the graph.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'node-randomizer',
+          expectedAction: { type: 'track-parked', min: 2 },
+          praise: 'Those songs now live in the Randomizer.',
+          hint: 'Drag a Track until it overlaps the Randomizer, then release. Repeat for a second Track.',
+          basicBody:
+            'Click and drag a Track card onto the Randomizer card. It should vanish from the canvas and show up in the Randomizer list. Do that with at least two tracks.',
+        }
       ),
       s(
-        'qs-check',
-        'Check the path',
-        'The bar above the canvas lists missing Start nodes, unreachable tracks, and empty sequences. Open it if anything looks off.',
-        { type: 'highlight', route: 'edit', target: 'validation' }
+        'qs-rand-mode',
+        'Switch to weighted random',
+        'Click the Randomizer, then in the inspector set Playback Mode to Randomizer. Sequence plays the list in order; Randomizer picks with weights — that is the feature that makes this playlist different from a normal list.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'randomizer-mode',
+          expectedAction: { type: 'node-data', nodeType: 'randomizer', field: 'mode' },
+          praise: 'Mode saved. Next playthrough can pick a different song from the pool.',
+          hint: 'Select the Randomizer first. Playback Mode is at the top of the right inspector.',
+        }
+      ),
+      s(
+        'qs-rand-weight',
+        'Change a weight',
+        'Still on the Randomizer, raise or lower a Weight next to one parked song. Higher weight is more likely when the pool is reached.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'randomizer-weights',
+          expectedAction: { type: 'node-data', nodeType: 'randomizer', field: 'weights' },
+          praise: 'Weight changed. You will hear the difference over several plays, not in one listen.',
+          hint: 'Weights appear only in Randomizer mode, under the parked track list.',
+        }
+      ),
+      s(
+        'qs-end',
+        'Add an End',
+        'Click End in the left rack. End is a clear stop so playback does not wander off the graph.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'rack-end',
+          expectedAction: { type: 'node-created', nodeType: 'end' },
+          praise: 'End added.',
+          hint: 'End is the last item in the left rack.',
+          recovery: 'Wrong node? Delete it, then click End in the rack.',
+        }
+      ),
+      s(
+        'qs-connect-end',
+        'Connect Randomizer to End',
+        'Drag from the Randomizer’s right handle to the End’s left handle. After the pool picks a song, playback continues to End and stops.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'canvas',
+          expectedAction: {
+            type: 'nodes-connected',
+            sourceType: 'randomizer',
+            targetType: 'end',
+          },
+          praise: 'The path is Start → Randomizer → End.',
+          hint: 'Yellow dots on both cards mark the handles. Drag Randomizer output onto End input.',
+        }
+      ),
+      s(
+        'qs-organize',
+        'Tidy the graph',
+        'Drag Start, Randomizer, and End into a left-to-right line. Connections stay attached. Layout is for you — the engine only follows the lines.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'canvas',
+          expectedAction: { type: 'node-moved' },
+          praise: 'Connections stayed on the nodes. You can rearrange anytime.',
+          hint: 'Drag a node by its body, not by the small handle (the handle draws a new line).',
+          advancedBody: 'Nudge the nodes into a readable left-to-right path.',
+        }
+      ),
+      s(
+        'qs-comment',
+        'Optional: a Comment',
+        'Comments are notes. They never play. Click Comment in the left rack if you want a label, or press Next to skip.',
+        {
+          type: 'highlight',
+          route: 'edit',
+          target: 'rack-comment',
+          hint: 'After adding one, type in the inspector. Comments have no play-path handles.',
+        }
+      ),
+      s(
+        'qs-minimap',
+        'Minimap',
+        'The small map in the bottom-right shows the whole graph. Use it when nodes sit off-screen. You can collapse it with the map button.',
+        {
+          type: 'highlight',
+          route: 'edit',
+          target: 'minimap',
+          advancedBody: 'Minimap is bottom-right if you need it later.',
+        }
       ),
       s(
         'qs-play',
-        'Play',
-        'Press Play in the header. The current node lights up. If the browser blocks autoplay, press Play once more.',
+        'Play First Steps',
+        'Press Play in the top bar. The current node lights up. When the Randomizer is reached, one parked song is chosen. If the browser blocks autoplay, press Play once more. YouTube must be allowed to embed the video.',
         {
           type: 'action',
           route: 'edit',
           target: 'header-play',
           expectedAction: { type: 'playing' },
-          praise: 'Playback started.',
+          praise: 'Playback started. Pause from the same button or the deck at the bottom.',
+          hint: 'Play is in the header, to the right of Edit / Listen. The bottom deck also has transport controls.',
+          basicBody:
+            'Click the Play button in the top bar. Watch which node lights up. At the Randomizer, one of your parked songs plays. Pause with the same control. If nothing starts, click Play again — some browsers block the first autoplay.',
+        }
+      ),
+      s(
+        'qs-name',
+        'Name it First Steps',
+        'Click the playlist name in the top bar (left of the dropdown) and type First Steps, then press Enter. Autosave already writes this path to your account. You can rename it later.',
+        {
+          type: 'action',
+          route: 'edit',
+          target: 'playlist-name',
+          expectedAction: { type: 'playlist-renamed' },
+          praise: 'Name saved. This playlist stays in your library after the tutorial.',
+          hint: 'The name field is in the header, to the right of Saving / Saved. If First Steps is taken, First Steps copy is fine.',
         }
       ),
       s(
         'qs-done',
-        'Keep this path',
-        'Autosave writes this Music Path to your account. Keep editing it, or open another tutorial topic when you want.',
+        'Keep going',
+        'You built a real playlist: a start, your songs in a weighted pool, and an end. Keep using it, change the songs, or open another tutorial topic from the ? button.',
         { type: 'complete', route: 'edit', target: 'workspace' }
       ),
     ],

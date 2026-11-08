@@ -29,6 +29,27 @@ export function actionsMatch(
         expected.nodeType === event.nodeType &&
         event.min >= expected.min
       );
+    case 'track-url':
+      return (
+        event.type === 'track-url' &&
+        (event.min ?? 1) >= (expected.min ?? 1)
+      );
+    case 'track-parked':
+      return (
+        event.type === 'track-parked' &&
+        (event.min ?? 1) >= (expected.min ?? 1)
+      );
+    case 'nodes-connected':
+      return (
+        event.type === 'nodes-connected' &&
+        (!expected.sourceType || expected.sourceType === event.sourceType) &&
+        (!expected.targetType || expected.targetType === event.targetType)
+      );
+    case 'viewport-changed':
+      return (
+        event.type === 'viewport-changed' &&
+        (!expected.kind || expected.kind === event.kind)
+      );
     default:
       return true;
   }

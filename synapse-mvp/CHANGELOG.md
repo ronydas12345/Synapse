@@ -19,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Opening a playlist no longer shrinks the whole graph to fit by default. Basic keeps a readable zoom around Start. Fit view is still on the canvas controls.
 - The header playlist menu lists the same playlists as Settings, in the same order. The open playlist is marked in bold accent color instead of a Current label.
 - Graph errors (only one Start, connection rules, files over 5MB) and delete confirmations (connections, nodes, remove all, replace playlist) use in-app messages instead of the browser’s alert and confirm windows.
+- Quick start now walks you through building First Steps: pan and zoom, your own songs, a Randomizer pool, an End, play, and a name. Highlights, hints, and copy follow Basic / Intermediate / Advanced. The playlist stays when you finish.
 
 ### Fixed
 

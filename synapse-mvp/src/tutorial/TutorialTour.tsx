@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { usePrefersReducedMotion } from '../site/motion';
+import { useEditorExperience } from '../editorExperience/useEditorExperience';
 import {
   FULL_TUTORIAL_SECTIONS,
   getSection,
@@ -7,6 +8,7 @@ import {
 } from './tutorialCatalog';
 import { measureTarget, paddedRect, placeWindow, rectsClose, scrollTutorialTargetIntoView, watchTutorialTarget, type SpotlightRect } from './placement';
 import { primeTutorialStep, useTutorialStore } from './tutorialStore';
+import { showHintByDefault, spotlightPad, stepBody } from './tutorialCopy';
 import { stepAsksForConnection } from './connectHint';
 import TutorialConnectHint from './TutorialConnectHint';
 
@@ -22,7 +24,11 @@ export default function TutorialTour() {
   const skipSection = useTutorialStore((s) => s.skipSection);
   const exitTour = useTutorialStore((s) => s.exitTour);
   const openFullTutorial = useTutorialStore((s) => s.openFullTutorial);
+  const restartTour = useTutorialStore((s) => s.restartTour);
+  const recovery = useTutorialStore((s) => s.recovery);
+  const experience = useEditorExperience();
   const reduced = usePrefersReducedMotion();
+  const [hintOpen, setHintOpen] = useState(false);
   const [rect, setRect] = useState<SpotlightRect | null>(null);
   const [vw, setVw] = useState(() =>
     typeof window === 'undefined' ? 1200 : window.innerWidth
@@ -33,6 +39,11 @@ export default function TutorialTour() {
 
   const section = sectionId ? getSection(sectionId) : undefined;
   const step = section?.steps[stepIndex];
+  const body = step ? stepBody(step, experience.mode) : '';
+
+  useEffect(() => {
+    setHintOpen(showHintByDefault(experience.mode));
+  }, [step?.id, experience.mode]);
 
   useEffect(() => {
     if (view !== 'tour') return;
@@ -71,7 +82,8 @@ export default function TutorialTour() {
   }, [view, step, sectionId, stepIndex]);
 
   const mobile = vw <= 720;
-  const spot = useMemo(() => (rect ? paddedRect(rect) : null), [rect]);
+  const pad = spotlightPad(experience.mode);
+  const spot = useMemo(() => (rect ? paddedRect(rect, pad) : null), [rect, pad]);
   const pos = useMemo(
     () => placeWindow(spot, vw, vh, mobile),
     [spot, vw, vh, mobile]
@@ -121,10 +133,26 @@ export default function TutorialTour() {
       >
         <p className="synapse-tutorial-kicker">{kicker}</p>
         <h2 id="synapse-tutorial-title">{step.title}</h2>
-        <p>{step.body}</p>
+        <p>{body}</p>
         {praise ? <p className="synapse-tutorial-praise">{praise}</p> : null}
+        {recovery ? <p className="synapse-tutorial-recovery">{recovery}</p> : null}
+        {step.hint ? (
+          hintOpen ? (
+            <p className="synapse-tutorial-hint">{step.hint}</p>
+          ) : (
+            <button
+              type="button"
+              className="synapse-tutorial-hint-toggle"
+              onClick={() => setHintOpen(true)}
+            >
+              Need a hint?
+            </button>
+          )
+        ) : null}
         {step.type === 'action' && !praise ? (
-          <p className="synapse-tutorial-kicker">Do this action to continue. Skip Tour is still available.</p>
+          <p className="synapse-tutorial-kicker">
+            Do this action to continue. Skip and Exit stay available.
+          </p>
         ) : null}
         <div className="synapse-tutorial-actions">
           <button type="button" className="synapse-btn synapse-btn-ghost" onClick={back}>
@@ -145,6 +173,9 @@ export default function TutorialTour() {
           ) : null}
           <button type="button" className="synapse-btn synapse-btn-ghost" onClick={skipSection}>
             {runKind === 'simple' ? 'Skip Tour' : 'Skip Section'}
+          </button>
+          <button type="button" className="synapse-btn synapse-btn-ghost" onClick={restartTour}>
+            Restart Tutorial
           </button>
           <button type="button" className="synapse-btn synapse-btn-ghost" onClick={exitTour}>
             Exit Tutorial

@@ -38,6 +38,9 @@ import type {
 } from './tutorialTypes';
 import { snapshotPathLibrary, usePathStore } from '../store';
 import { libraryHasUserContent, uniquePathName } from '../playlists/library';
+import { playlistLooksNamed } from './tutorialCopy';
+
+export const TUTORIAL_PLAYLIST_NAME = 'First Steps';
 
 interface TutorialState {
   view: TutorialView;
@@ -47,6 +50,7 @@ interface TutorialState {
   progress: TutorialProgress;
   actionSatisfied: boolean;
   praise: string | null;
+  recovery: string | null;
   openMenu: () => void;
   openTopics: () => void;
   close: () => void;
@@ -64,9 +68,11 @@ interface TutorialState {
   skipSection: () => void;
   exitTour: () => void;
   applyEvent: (event: TutorialAction) => void;
+  satisfyCurrentStep: (advance: boolean) => void;
   resetProgress: () => void;
   showWelcomeAgain: () => void;
   resumeSavedRun: () => void;
+  restartTour: () => void;
 }
 
 function persist(progress: TutorialProgress): TutorialProgress {
@@ -135,17 +141,12 @@ function ensureTutorialPath(): void {
     active && active.nodes.length <= 1 && active.edges.length === 0
   );
   if (emptyish && active) {
-    const name = uniquePathName(
-      lib.paths.filter((path) => path.id !== active.id).map((path) => path.name),
-      'My First Music Path'
-    );
-    if (active.name !== name) state.renamePlaylist(active.id, name);
     tutorialPathEnsured = true;
     return;
   }
   if (libraryHasUserContent(lib)) {
     state.createPlaylist(
-      uniquePathName(lib.paths.map((path) => path.name), 'My First Music Path')
+      uniquePathName(lib.paths.map((path) => path.name), TUTORIAL_PLAYLIST_NAME)
     );
   }
   tutorialPathEnsured = true;
@@ -157,14 +158,14 @@ export function primeTutorialStep(): void {
   const expected = step.expectedAction;
   const state = usePathStore.getState();
   if (expected.type === 'account-ready' && accountReady()) {
-    useTutorialStore.getState().applyEvent({ type: 'account-ready' });
+    useTutorialStore.getState().satisfyCurrentStep(false);
     return;
   }
   if (
     expected.type === 'node-created' &&
     state.nodes.some((node) => node.type === expected.nodeType && !node.hidden)
   ) {
-    useTutorialStore.getState().applyEvent(expected);
+    useTutorialStore.getState().satisfyCurrentStep(false);
     return;
   }
   if (expected.type === 'node-count') {
@@ -172,26 +173,57 @@ export function primeTutorialStep(): void {
       (node) => node.type === expected.nodeType && !node.hidden
     ).length;
     if (count >= expected.min) {
-      useTutorialStore.getState().applyEvent({ ...expected, min: count });
+      useTutorialStore.getState().satisfyCurrentStep(false);
     }
     return;
   }
-  if (expected.type === 'nodes-connected' && state.edges.length > 0) {
-    useTutorialStore.getState().applyEvent({ type: 'nodes-connected' });
+  if (expected.type === 'nodes-connected') {
+    const match = state.edges.some((edge) => {
+      const source = state.nodes.find((node) => node.id === edge.source);
+      const target = state.nodes.find((node) => node.id === edge.target);
+      if (expected.sourceType && source?.type !== expected.sourceType) return false;
+      if (expected.targetType && target?.type !== expected.targetType) return false;
+      return true;
+    });
+    if (match && state.edges.length > 0) {
+      useTutorialStore.getState().satisfyCurrentStep(false);
+    }
     return;
   }
-  if (
-    expected.type === 'track-url' &&
-    state.nodes.some(
+  if (expected.type === 'track-url') {
+    const count = state.nodes.filter(
       (node) => node.type === 'track' && String(node.data?.videoId || '').trim()
-    )
-  ) {
-    useTutorialStore.getState().applyEvent({ type: 'track-url' });
+    ).length;
+    if (count >= (expected.min ?? 1)) {
+      useTutorialStore.getState().satisfyCurrentStep(false);
+    }
+    return;
+  }
+  if (expected.type === 'track-parked') {
+    const count = parkedTrackCount(state.nodes);
+    if (count >= (expected.min ?? 1)) {
+      useTutorialStore.getState().satisfyCurrentStep(false);
+    }
+    return;
+  }
+  if (expected.type === 'playlist-renamed') {
+    const active = state.pathSummaries.find((path) => path.id === state.activePathId);
+    if (active && playlistLooksNamed(active.name)) {
+      useTutorialStore.getState().satisfyCurrentStep(false);
+    }
     return;
   }
   if (expected.type === 'playing' && state.isPlaying) {
-    useTutorialStore.getState().applyEvent({ type: 'playing' });
+    useTutorialStore.getState().satisfyCurrentStep(false);
   }
+}
+
+export function parkedTrackCount(nodes: { type?: string; data?: { tracks?: unknown } }[]): number {
+  return nodes.reduce((sum, node) => {
+    if (node.type !== 'randomizer') return sum;
+    const tracks = Array.isArray(node.data?.tracks) ? node.data.tracks : [];
+    return sum + tracks.length;
+  }, 0);
 }
 
 function goToStepRoute(step: TutorialStep | null): void {
@@ -238,6 +270,7 @@ function finishSection(
         stepIndex: 0,
         actionSatisfied: false,
         praise: null,
+        recovery: null,
       };
     }
     return {
@@ -245,6 +278,7 @@ function finishSection(
       progress: persist(progress),
       actionSatisfied: false,
       praise: null,
+      recovery: null,
       sectionId: null,
       stepIndex: 0,
     };
@@ -256,6 +290,7 @@ function finishSection(
       progress: persist(progress),
       actionSatisfied: false,
       praise: null,
+      recovery: null,
     };
   }
 
@@ -275,6 +310,7 @@ function finishSection(
       stepIndex: 0,
       actionSatisfied: false,
       praise: null,
+      recovery: null,
     };
   }
 
@@ -288,6 +324,7 @@ function finishSection(
     progress,
     actionSatisfied: false,
     praise: null,
+    recovery: null,
   };
 }
 
@@ -299,12 +336,14 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
   progress: loadProgress(),
   actionSatisfied: false,
   praise: null,
+  recovery: null,
 
   openMenu: () =>
     set({
       view: 'menu',
       actionSatisfied: false,
       praise: null,
+      recovery: null,
     }),
 
   openTopics: () => set({ view: 'topics' }),
@@ -314,6 +353,7 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
       view: 'closed',
       actionSatisfied: false,
       praise: null,
+      recovery: null,
       progress: persist({
         ...s.progress,
         lastSection: s.sectionId ?? s.progress.lastSection,
@@ -366,6 +406,7 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
       stepIndex,
       actionSatisfied: false,
       praise: null,
+      recovery: null,
       progress: persist({
         ...progress,
         skipped: false,
@@ -401,6 +442,7 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
       stepIndex,
       actionSatisfied: false,
       praise: null,
+      recovery: null,
       progress: persist({
         ...progress,
         skipped: false,
@@ -437,6 +479,7 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
       stepIndex: idx,
       actionSatisfied: false,
       praise: null,
+      recovery: null,
       progress: persist({
         ...s.progress,
         dismissedWelcome: true,
@@ -471,6 +514,7 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
         stepIndex,
         actionSatisfied: false,
         praise: null,
+        recovery: null,
         progress: persist({
           ...s.progress,
           lastSection: s.sectionId,
@@ -493,6 +537,7 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
         stepIndex,
         actionSatisfied: false,
         praise: null,
+        recovery: null,
         progress: persist({
           ...s.progress,
           lastSection: s.sectionId,
@@ -514,6 +559,7 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
       stepIndex,
       actionSatisfied: false,
       praise: null,
+      recovery: null,
       progress: persist({
         ...s.progress,
         lastSection: prevId,
@@ -535,12 +581,40 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
     if (s.view !== 'tour') return;
     const step = currentStep(s.sectionId, s.stepIndex);
     if (!step?.expectedAction) return;
-    if (!actionsMatch(step.expectedAction, event)) return;
     if (s.actionSatisfied) return;
+    if (!actionsMatch(step.expectedAction, event)) {
+      if (
+        event.type === 'node-created' &&
+        step.expectedAction.type === 'node-created' &&
+        event.nodeType !== step.expectedAction.nodeType
+      ) {
+        set({
+          recovery:
+            step.recovery ||
+            'That was a different node. Undo (Ctrl/Cmd+Z) or delete it, then add the one this step asks for.',
+        });
+      } else if (event.type === 'node-deleted' && step.type === 'action') {
+        set({
+          recovery:
+            step.recovery ||
+            'If that delete was a mistake, press Ctrl/Cmd+Z. Your other nodes stay on the canvas.',
+        });
+      }
+      return;
+    }
+    get().satisfyCurrentStep(true);
+  },
+
+  satisfyCurrentStep: (advance) => {
+    const s = get();
+    if (s.view !== 'tour' || s.actionSatisfied) return;
+    const step = currentStep(s.sectionId, s.stepIndex);
     set({
       actionSatisfied: true,
-      praise: step.praise ?? 'Nice.',
+      praise: advance ? step?.praise ?? 'Nice.' : null,
+      recovery: null,
     });
+    if (!advance) return;
     window.setTimeout(() => {
       const cur = get();
       if (cur.view !== 'tour' || !cur.actionSatisfied) return;
@@ -585,7 +659,21 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
       stepIndex,
       actionSatisfied: false,
       praise: null,
+      recovery: null,
     });
+  },
+
+  restartTour: () => {
+    const s = get();
+    if (s.runKind === 'simple') {
+      get().startSimple(false);
+      return;
+    }
+    if (s.runKind === 'full') {
+      get().startFull(false);
+      return;
+    }
+    if (s.sectionId) get().startSection(s.sectionId, 0);
   },
 }));
 

@@ -40,8 +40,16 @@ export function findSuggestedConnection(
 ): ConnectPair | null {
   const visible = nodes.filter((node) => !node.hidden && node.type !== 'comment');
   const start = visible.find((node) => node.type === 'start');
+  const randomizer = visible.find((node) => node.type === 'randomizer');
+  const end = visible.find((node) => node.type === 'end');
   const tracks = visible.filter((node) => node.type === 'track').sort(byCanvasOrder);
 
+  if (start && randomizer && !hasDirected(edges, start.id, randomizer.id)) {
+    return { sourceId: start.id, targetId: randomizer.id };
+  }
+  if (randomizer && end && !hasDirected(edges, randomizer.id, end.id)) {
+    return { sourceId: randomizer.id, targetId: end.id };
+  }
   if (start && tracks[0] && !hasDirected(edges, start.id, tracks[0].id)) {
     return { sourceId: start.id, targetId: tracks[0].id };
   }
@@ -58,6 +66,10 @@ export function findSuggestedConnection(
   }
   if (transitions[0] && tracks[1] && !hasDirected(edges, transitions[0].id, tracks[1].id)) {
     return { sourceId: transitions[0].id, targetId: tracks[1].id };
+  }
+
+  if (!randomizer && !end && transitions.length === 0) {
+    return null;
   }
 
   const sources = visible.filter((node) => node.type !== 'end');

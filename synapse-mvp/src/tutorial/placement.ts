@@ -7,7 +7,7 @@ export interface SpotlightRect {
 
 const PAD = 8;
 const WIN_W = 360;
-const WIN_H = 280;
+const WIN_H = 360;
 const GAP = 14;
 
 export function queryTutorialTarget(id: string | undefined): HTMLElement | null {
@@ -100,12 +100,12 @@ export function watchTutorialTarget(
   };
 }
 
-export function paddedRect(rect: SpotlightRect): SpotlightRect {
+export function paddedRect(rect: SpotlightRect, pad = PAD): SpotlightRect {
   return {
-    left: rect.left - PAD,
-    top: rect.top - PAD,
-    width: rect.width + PAD * 2,
-    height: rect.height + PAD * 2,
+    left: rect.left - pad,
+    top: rect.top - pad,
+    width: rect.width + pad * 2,
+    height: rect.height + pad * 2,
   };
 }
 

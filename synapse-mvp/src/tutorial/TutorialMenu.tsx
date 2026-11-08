@@ -68,8 +68,9 @@ export default function TutorialMenu() {
         >
           <h2 id={titleId}>Welcome to Synapse</h2>
           <p>
-            You will build a small Music Path: add tracks, change a setting, connect
-            nodes, and play it. You can skip or resume at any time.
+            Instead of a tour of buttons, you will build First Steps — a real
+            playlist with your songs and a Randomizer. Skip or resume anytime.
+            Your work stays if you leave.
           </p>
           <div className="synapse-tutorial-actions">
             <button type="button" className="synapse-btn synapse-btn-play" onClick={() => startSimple()}>
@@ -120,10 +121,10 @@ export default function TutorialMenu() {
           aria-modal="true"
           aria-labelledby={titleId}
         >
-          <h2 id={titleId}>{runKind === 'simple' ? 'You built a Music Path.' : "You're ready."}</h2>
+          <h2 id={titleId}>{runKind === 'simple' ? 'You built First Steps.' : "You're ready."}</h2>
           <p>
             {runKind === 'simple'
-              ? 'Keep editing this path, or open another tutorial topic. Listen shows the same path as a list.'
+              ? 'It has a starting point, your tracks in a randomized pool, and a complete playback path. Keep it, rename it, or keep experimenting in the editor.'
               : 'You now know the fundamentals of Synapse. Build something of your own and experiment with the Music Path system.'}
           </p>
           <div className="synapse-tutorial-actions">
@@ -226,8 +227,9 @@ export default function TutorialMenu() {
       >
         <h2 id={titleId}>Synapse Tutorial</h2>
         <p>
-          Quick start walks through building a real Music Path. The full tutorial covers node types, branches,
-          themes, and the rest of the editor.
+          Quick start walks you through building First Steps — your own songs, a
+          Randomizer, and a path you can keep. The full tutorial covers node types,
+          branches, themes, and the rest of the editor.
         </p>
         {progress.completedFull ? (
           <p className="synapse-tutorial-praise">Tutorial complete</p>

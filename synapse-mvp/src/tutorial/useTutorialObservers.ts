@@ -8,6 +8,7 @@ import { useAuthStore } from '../auth/authStore';
 import { useProfileStore } from '../profile/profileStore';
 import type { TutorialAction } from './tutorialTypes';
 import { pathToRoute, type AppRoute } from '../app/routes';
+import { parkedTrackCount } from './tutorialStore';
 
 function emit(event: TutorialAction): void {
   useTutorialStore.getState().applyEvent(event);
@@ -54,8 +55,32 @@ export function useTutorialObservers(route: AppRoute): void {
         }
       }
       if (state.nodes.length < prev.nodes.length) emit({ type: 'node-deleted' });
-      if (state.edges.length > prev.edges.length) emit({ type: 'nodes-connected' });
+      if (state.edges.length > prev.edges.length) {
+        const prevIds = new Set(prev.edges.map((e) => e.id));
+        const added = state.edges.find((e) => !prevIds.has(e.id));
+        const source = added
+          ? state.nodes.find((n) => n.id === added.source)
+          : undefined;
+        const target = added
+          ? state.nodes.find((n) => n.id === added.target)
+          : undefined;
+        emit({
+          type: 'nodes-connected',
+          sourceType: source?.type,
+          targetType: target?.type,
+        });
+      }
       if (state.edges.length < prev.edges.length) emit({ type: 'edge-deleted' });
+      const prevParked = parkedTrackCount(prev.nodes);
+      const nextParked = parkedTrackCount(state.nodes);
+      if (nextParked > prevParked) {
+        emit({ type: 'track-parked', min: nextParked });
+      }
+      const prevName = prev.pathSummaries.find((p) => p.id === prev.activePathId)?.name;
+      const nextName = state.pathSummaries.find((p) => p.id === state.activePathId)?.name;
+      if (prevName && nextName && prevName !== nextName) {
+        emit({ type: 'playlist-renamed' });
+      }
       if (state.selectedNodeId && state.selectedNodeId !== prev.selectedNodeId) {
         const node = state.nodes.find((n) => n.id === state.selectedNodeId);
         emit({ type: 'node-selected', nodeType: node?.type });
@@ -68,7 +93,19 @@ export function useTutorialObservers(route: AppRoute): void {
       for (const node of state.nodes) {
         const old = beforeNodes.get(node.id);
         if (!old) continue;
-        if (trackUrlFilled(old, node)) emit({ type: 'track-url' });
+        if (
+          old.position &&
+          node.position &&
+          (old.position.x !== node.position.x || old.position.y !== node.position.y)
+        ) {
+          emit({ type: 'node-moved' });
+        }
+        if (trackUrlFilled(old, node)) {
+          const count = state.nodes.filter(
+            (n) => n.type === 'track' && String(n.data?.videoId || '').trim()
+          ).length;
+          emit({ type: 'track-url', min: count });
+        }
         const oldData = (old.data ?? {}) as Record<string, unknown>;
         const newData = (node.data ?? {}) as Record<string, unknown>;
         for (const field of Object.keys(newData)) {

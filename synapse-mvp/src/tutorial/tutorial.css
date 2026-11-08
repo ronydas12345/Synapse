@@ -103,6 +103,35 @@
   font-weight: 600;
 }
 
+.synapse-tutorial-recovery,
+.synapse-tutorial-hint {
+  margin: -0.35rem 0 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.synapse-tutorial-recovery {
+  color: var(--accent-warm);
+}
+
+.synapse-tutorial-hint {
+  color: var(--text-muted);
+}
+
+.synapse-tutorial-hint-toggle {
+  display: inline-block;
+  margin: -0.2rem 0 0.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
 .synapse-tutorial-actions {
   display: flex;
   flex-wrap: wrap;

@@ -35,6 +35,7 @@ import { getAlignOverlay, setAlignOverlay } from '../alignGuideStore';
 import { getAppliedEdgeType, subscribeAppliedTheme } from '../theme/applyTheme';
 import { toReactFlowEdgeType } from '../theme/edgeType';
 import { confirmDestructive, useAppSettings } from '../settings/settingsStore';
+import { useTutorialStore } from '../tutorial/tutorialStore';
 import { toast } from '../ui/toastStore';
 import { connectionBlockReason } from '../canvas/connectRules';
 import { documentPrefersReducedMotion } from '../settings/motion';
@@ -251,7 +252,7 @@ function CustomMinimap() {
   // Guard against NaN values
   if (isNaN(zoom) || isNaN(vpX) || isNaN(vpY)) {
     return (
-      <div ref={minimapRef} className="synapse-minimap-wrap">
+      <div ref={minimapRef} className="synapse-minimap-wrap" data-tutorial="minimap">
         {collapsed ? (
           collapseBtn
         ) : (
@@ -283,7 +284,7 @@ function CustomMinimap() {
   if (!isFinite(viewportHeight)) viewportHeight = 50;
 
   return (
-    <div ref={minimapRef} className="synapse-minimap-wrap">
+    <div ref={minimapRef} className="synapse-minimap-wrap" data-tutorial="minimap">
       {collapsed ? (
         collapseBtn
       ) : (
@@ -359,6 +360,9 @@ function ReactFlowContent() {
   const activePathId = usePathStore((s) => s.activePathId);
   const readOnly = useGraphReadOnly();
   const prevPathRef = useRef(activePathId);
+  const lastTutorialViewport = useRef<{ x: number; y: number; zoom: number } | null>(
+    null
+  );
 
   const [nodes, setNodes] = useNodesState(storeNodes as Node[]);
   // Keep only "real" edges in state. Dashed comment-link edges are derived and should not
@@ -514,6 +518,19 @@ function ReactFlowContent() {
       setStoreEdges(normalized.edges as Edge[]);
     }
   }, [graphSig, setNodes, setEdges, setStoreNodes, setStoreEdges]);
+
+  useEffect(() => {
+    const root = reactFlowRef.current;
+    if (!root) return;
+    const stamp = () => {
+      root
+        .querySelector('.react-flow__controls')
+        ?.setAttribute('data-tutorial', 'canvas-controls');
+    };
+    stamp();
+    const id = window.setTimeout(stamp, 50);
+    return () => window.clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     const prev = prevPathRef.current;
@@ -1227,11 +1244,30 @@ function ReactFlowContent() {
         selectionKeyCode={readOnly ? null : 'Shift'}
         snapToGrid={snapToGrid}
         snapGrid={[gridSize, gridSize]}
-        onMoveEnd={
-          activePathId
-            ? (_event, viewport) => writePathViewport(activePathId, viewport)
-            : undefined
-        }
+        onMoveEnd={(_event, viewport) => {
+          if (activePathId) writePathViewport(activePathId, viewport);
+          const prev = lastTutorialViewport.current;
+          lastTutorialViewport.current = {
+            x: viewport.x,
+            y: viewport.y,
+            zoom: viewport.zoom,
+          };
+          if (!prev) return;
+          if (Math.abs(viewport.zoom - prev.zoom) > 0.05) {
+            useTutorialStore.getState().applyEvent({
+              type: 'viewport-changed',
+              kind: 'zoom',
+            });
+          } else if (
+            Math.abs(viewport.x - prev.x) > 24 ||
+            Math.abs(viewport.y - prev.y) > 24
+          ) {
+            useTutorialStore.getState().applyEvent({
+              type: 'viewport-changed',
+              kind: 'pan',
+            });
+          }
+        }}
         defaultEdgeOptions={{
           type: rfEdgeType,
           style: { stroke: 'var(--edge-color)', strokeWidth: 2 },

@@ -39,6 +39,7 @@ export function PlaylistNameField({
       value={draft}
       maxLength={60}
       readOnly={readOnly}
+      data-tutorial="playlist-name"
       aria-label="Playlist name"
       onChange={(e) => {
         if (readOnly) return;
