@@ -24,6 +24,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- The Example path from first-time welcome spaces comments, Start, tracks, the Randomizer, and End so they no longer sit on top of each other.
 - Deleting a playlist stays deleted after a reload.
 - Deleting a playlist removes it from the header dropdown as well as Settings. Settings playlist rows keep Switch / Export / Delete lined up.
 - Holding Shift to snap alignment no longer jumps the node when you release Shift.

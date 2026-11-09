@@ -19,52 +19,17 @@ function track(id: string, title: string, position: { x: number; y: number }, ex
   };
 }
 
+/** Visible sizes used to keep the example graph from stacking nodes. */
+export const EXAMPLE_NODE_SIZE: Record<string, { width: number; height: number }> = {
+  start: { width: 160, height: 110 },
+  end: { width: 160, height: 110 },
+  track: { width: 288, height: 180 },
+  randomizer: { width: 320, height: 480 },
+  comment: { width: 256, height: 280 },
+};
+
 export function buildExamplePath(): StoredMusicPath {
   const nodes: Node[] = [
-    {
-      id: 'ex-start',
-      type: 'start',
-      position: { x: 80, y: 200 },
-      data: { label: 'Start', name: '' },
-    },
-    track('ex-track-a', 'First song', { x: 80, y: 360 }),
-    {
-      id: 'ex-rand',
-      type: 'randomizer',
-      position: { x: 440, y: 280 },
-      data: {
-        name: 'A or B',
-        tracks: ['ex-track-b', 'ex-track-c'],
-        weights: [10, 10],
-        isCollapsed: false,
-        playCount: 1,
-        mode: 'randomizer',
-      },
-    },
-    track('ex-track-b', 'Pool song A', { x: 440, y: 80 }, {
-      hidden: true,
-      data: {
-        ...defaultTrackNodeData(),
-        songTitle: 'Pool song A',
-        name: 'Pool song A',
-        embeddedIn: 'ex-rand',
-      },
-    }),
-    track('ex-track-c', 'Pool song B', { x: 700, y: 80 }, {
-      hidden: true,
-      data: {
-        ...defaultTrackNodeData(),
-        songTitle: 'Pool song B',
-        name: 'Pool song B',
-        embeddedIn: 'ex-rand',
-      },
-    }),
-    {
-      id: 'ex-end',
-      type: 'end',
-      position: { x: 760, y: 300 },
-      data: { label: 'End', name: '' },
-    },
     {
       id: 'ex-comment-start',
       type: 'comment',
@@ -76,14 +41,58 @@ export function buildExamplePath(): StoredMusicPath {
       },
     },
     {
+      id: 'ex-start',
+      type: 'start',
+      position: { x: 80, y: 380 },
+      data: { label: 'Start', name: '' },
+    },
+    track('ex-track-a', 'First song', { x: 80, y: 560 }),
+    {
+      id: 'ex-rand',
+      type: 'randomizer',
+      position: { x: 460, y: 360 },
+      data: {
+        name: 'A or B',
+        tracks: ['ex-track-b', 'ex-track-c'],
+        weights: [10, 10],
+        isCollapsed: false,
+        playCount: 1,
+        mode: 'randomizer',
+      },
+    },
+    track('ex-track-b', 'Pool song A', { x: 460, y: 40 }, {
+      hidden: true,
+      data: {
+        ...defaultTrackNodeData(),
+        songTitle: 'Pool song A',
+        name: 'Pool song A',
+        embeddedIn: 'ex-rand',
+      },
+    }),
+    track('ex-track-c', 'Pool song B', { x: 720, y: 40 }, {
+      hidden: true,
+      data: {
+        ...defaultTrackNodeData(),
+        songTitle: 'Pool song B',
+        name: 'Pool song B',
+        embeddedIn: 'ex-rand',
+      },
+    }),
+    {
       id: 'ex-comment-rand',
       type: 'comment',
-      position: { x: 440, y: 500 },
+      position: { x: 840, y: 40 },
       data: {
         name: '',
         text: 'A Randomizer picks one parked track each visit. This is an example, not your playlist.',
         linkedNodeId: 'ex-rand',
       },
+    },
+    {
+      id: 'ex-end',
+      type: 'end',
+      position: { x: 880, y: 500 },
+      data: { label: 'End', name: '' },
     },
   ];
   const edges: Edge[] = [
