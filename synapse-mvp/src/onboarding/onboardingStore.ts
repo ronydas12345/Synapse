@@ -13,7 +13,7 @@ import { openExamplePlaylist } from './examplePlaylist';
 import { needsOnboarding, ONBOARDING_VERSION } from './onboardingProgress';
 
 export type OnboardingStage = 'welcome' | 'concept' | 'start-path' | 'experience';
-export type OnboardingIntent = 'quickstart' | 'explore' | 'example';
+export type OnboardingIntent = 'quickstart' | 'explore' | 'example' | 'workshop';
 
 const STAGES: OnboardingStage[] = ['welcome', 'concept', 'start-path', 'experience'];
 
@@ -57,6 +57,10 @@ function rememberStage(stage: OnboardingStage): void {
 function applyFinish(intent: OnboardingIntent, experience: EditorExperienceMode): void {
   markOnboardingComplete();
   setEditorExperience(experience);
+  if (intent === 'workshop') {
+    navigateApp(APP_PATHS.workshop);
+    return;
+  }
   navigateApp(APP_PATHS.edit);
   if (intent === 'example') openExamplePlaylist();
   if (intent === 'quickstart') {

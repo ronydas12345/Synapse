@@ -11,7 +11,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - You can hide the “No detected issues — path looks playable” bar with a small close button. It comes back if the path has a problem.
 - Tutorial steps that ask you to connect two nodes highlight both connection points and draw a yellow dotted line between them.
 - Editor experience on the workspace (Basic, Intermediate, Advanced). It changes guidance and canvas density, not what you can build. Switch from the bottom-left control or Settings → Canvas. Playlists remember zoom, and Fit view / Focus selected / restore previous view stay available.
-- First-time welcome after you finish setting up your account: what Synapse is, how paths work, then Build my first playlist, Explore, or an example path, plus Basic / Intermediate / Advanced. Replay Welcome is in Help. Returning accounts are not interrupted.
+- First-time welcome after you finish setting up your account: what Synapse is, how paths work, then Build my first playlist, Explore, an example path, or see what others are making in Workshop, plus Basic / Intermediate / Advanced. Replay Welcome is in Help. Returning accounts are not interrupted.
 
 ### Changed
 

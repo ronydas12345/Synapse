@@ -128,6 +128,14 @@ export default function OnboardingFlow() {
                 <strong>Show me an example</strong>
                 <span>Open a labeled example path with comments. It is not your first playlist.</span>
               </button>
+              <button
+                type="button"
+                className={`synapse-onboarding-choice${intent === 'workshop' ? ' is-active' : ''}`}
+                onClick={() => setIntent('workshop')}
+              >
+                <strong>See what others are making</strong>
+                <span>Browse Workshop — playlists people have shared. Listen, remix, then make your own.</span>
+              </button>
             </div>
             <div className="synapse-tutorial-actions">
               <button type="button" className="synapse-btn synapse-btn-ghost" onClick={back}>
