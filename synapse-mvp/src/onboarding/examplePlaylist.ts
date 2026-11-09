@@ -9,13 +9,26 @@ import { snapshotPathLibrary, usePathStore } from '../store';
 
 export const EXAMPLE_PLAYLIST_NAME = 'Example path';
 
-function track(id: string, title: string, position: { x: number; y: number }, extra?: Partial<Node>): Node {
+function track(
+  id: string,
+  song: { title: string; artist: string; videoId: string },
+  position: { x: number; y: number },
+  extra?: Partial<Node>
+): Node {
+  const { data: extraData, ...rest } = extra ?? {};
   return {
     id,
     type: 'track',
     position,
-    data: { ...defaultTrackNodeData(), songTitle: title, name: title },
-    ...extra,
+    data: {
+      ...defaultTrackNodeData(),
+      videoId: song.videoId,
+      songTitle: song.title,
+      artist: song.artist,
+      name: song.title,
+      ...extraData,
+    },
+    ...rest,
   };
 }
 
@@ -46,7 +59,11 @@ export function buildExamplePath(): StoredMusicPath {
       position: { x: 80, y: 380 },
       data: { label: 'Start', name: '' },
     },
-    track('ex-track-a', 'First song', { x: 80, y: 560 }),
+    track(
+      'ex-track-a',
+      { title: 'Take On Me', artist: 'a-ha', videoId: 'djV11Xbc914' },
+      { x: 80, y: 560 }
+    ),
     {
       id: 'ex-rand',
       type: 'randomizer',
@@ -54,37 +71,31 @@ export function buildExamplePath(): StoredMusicPath {
       data: {
         name: 'A or B',
         tracks: ['ex-track-b', 'ex-track-c'],
-        weights: [10, 10],
+        weights: [30, 10],
         isCollapsed: false,
         playCount: 1,
         mode: 'randomizer',
       },
     },
-    track('ex-track-b', 'Pool song A', { x: 460, y: 40 }, {
-      hidden: true,
-      data: {
-        ...defaultTrackNodeData(),
-        songTitle: 'Pool song A',
-        name: 'Pool song A',
-        embeddedIn: 'ex-rand',
-      },
-    }),
-    track('ex-track-c', 'Pool song B', { x: 720, y: 40 }, {
-      hidden: true,
-      data: {
-        ...defaultTrackNodeData(),
-        songTitle: 'Pool song B',
-        name: 'Pool song B',
-        embeddedIn: 'ex-rand',
-      },
-    }),
+    track(
+      'ex-track-b',
+      { title: 'Bohemian Rhapsody', artist: 'Queen', videoId: 'fJ9rUzIMcZQ' },
+      { x: 460, y: 40 },
+      { hidden: true, data: { embeddedIn: 'ex-rand' } }
+    ),
+    track(
+      'ex-track-c',
+      { title: 'Africa', artist: 'Toto', videoId: 'FTQbiNvZqaY' },
+      { x: 720, y: 40 },
+      { hidden: true, data: { embeddedIn: 'ex-rand' } }
+    ),
     {
       id: 'ex-comment-rand',
       type: 'comment',
       position: { x: 840, y: 40 },
       data: {
         name: '',
-        text: 'A Randomizer picks one parked track each visit. This is an example, not your playlist.',
+        text: 'A Randomizer picks one parked track each visit. Bohemian Rhapsody is weighted higher than Africa. This is an example, not your playlist.',
         linkedNodeId: 'ex-rand',
       },
     },

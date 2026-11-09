@@ -34,6 +34,15 @@ describe('example playlist', () => {
       (node) => node.type === 'track' && Boolean((node.data as { embeddedIn?: string }).embeddedIn)
     );
     expect(parked).toHaveLength(2);
+    const videos = path.nodes
+      .filter((node) => node.type === 'track')
+      .map((node) => String((node.data as { videoId?: string }).videoId || ''));
+    expect(videos.every((id) => /^[\w-]{11}$/.test(id))).toBe(true);
+    expect(new Set(videos).size).toBe(3);
+    const randomizer = path.nodes.find((node) => node.type === 'randomizer');
+    const weights = (randomizer?.data as { weights?: number[] }).weights ?? [];
+    expect(weights).toHaveLength(2);
+    expect(weights[0]).not.toBe(weights[1]);
   });
 
   it('keeps visible nodes from covering each other, including an expanded Randomizer', () => {
