@@ -4,22 +4,24 @@ import PathDemo from './PathDemo';
 
 export default function Hero() {
   return (
-    <section className="synapse-mkt-hero" aria-labelledby="hero-title">
+    <section className="synapse-mkt-hero" id="hero" aria-labelledby="hero-title">
       <div className="synapse-mkt-hero-copy">
         <p className="synapse-mkt-kicker">Music paths for YouTube</p>
         <h1 id="hero-title">Build your music path.</h1>
         <p className="synapse-mkt-lead">
           Connect tracks, conditions, randomizers, and transitions on a canvas.
-          Then press play.
+          Playback follows the graph you draw — not a fixed list of songs.
         </p>
         <div className="synapse-mkt-actions">
-          <OpenWorkspaceLink className="synapse-btn synapse-btn-play">
-            Open Synapse
-          </OpenWorkspaceLink>
+          <OpenWorkspaceLink className="synapse-btn synapse-btn-play" />
           <AppLink to="workshop" className="synapse-btn synapse-btn-ghost">
-            Workshop
+            Explore Workshop
           </AppLink>
         </div>
+        <p className="synapse-mkt-hero-note">
+          Workshop is where you browse playlists, themes, and profiles other
+          people have shared.
+        </p>
       </div>
       <div className="synapse-mkt-hero-viz">
         <PathDemo

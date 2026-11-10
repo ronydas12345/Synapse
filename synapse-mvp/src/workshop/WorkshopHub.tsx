@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AppLink } from '../app/AppLink';
 import { useAuthStore } from '../auth/authStore';
 import { APP_PATHS, navigateApp } from '../app/routes';
 import { listSavedCreators, listPublicCreators, readPublicCreatorsByUids, type PublicCreator } from '../profiles/api';
@@ -209,8 +210,9 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
     >
       <h2 id="workshop-title">Workshop</h2>
       <p className="synapse-mkt-lead">
-        Public playlists, themes, and profiles. Unlisted items open with an ID
-        or a link.
+        Explore playlists, themes, and profiles created by other Synapse users.
+        Discover new ideas or share your own. Unlisted items open with an ID or
+        a link.
       </p>
       {preview ? null : (
         <div className="synapse-workshop-tabs" role="tablist" aria-label="Workshop views">
@@ -386,6 +388,13 @@ export default function WorkshopHub({ preview = false }: { preview?: boolean }) 
             <WorkshopCard key={card.id} card={card} author={authorFor(authors, card)} />
           ))}
         </div>
+      ) : null}
+      {preview ? (
+        <p className="synapse-mkt-actions">
+          <AppLink to="workshop" className="synapse-btn synapse-btn-ghost">
+            Browse Workshop
+          </AppLink>
+        </p>
       ) : null}
     </section>
   );

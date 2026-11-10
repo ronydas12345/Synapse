@@ -29,6 +29,7 @@ export default function CreatorCard({ creator }: { creator: PublicCreator }) {
           </div>
         </div>
         {creator.bio ? <p>{creator.bio}</p> : null}
+        <span className="synapse-workshop-open">Open profile</span>
       </PathLink>
       <p className="synapse-workshop-meta">
         {creator.featuredBadge ? <FeaturedBadgeMark id={creator.featuredBadge} /> : null}

@@ -505,7 +505,7 @@ function GeneralSection() {
       </SettingsSelect>
       <SettingsToggle
         label="Remember last workspace"
-        hint="Home’s Open Synapse button uses Edit or Listen from your last visit. Direct URLs are unchanged."
+        hint="Home’s Get Started / Open Synapse button uses Edit or Listen from your last visit. Direct URLs are unchanged."
         checked={general.rememberLastWorkspace}
         onChange={(rememberLastWorkspace) => updateGeneral({ rememberLastWorkspace })}
       />

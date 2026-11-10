@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- Homepage: Get Started for guests (sign up, then first-time welcome) and Open Synapse for signed-in users; Explore Workshop as the secondary action. Section order is concept, how it works, features, uses, Workshop, themes, about, then pricing. Navigation, card hover, and graph demos no longer look clickable unless they do something. Body text is larger, How it works is not clipped, and theme previews scroll with arrows.
 - Saving / Saved sits to the left of the playlist name and dropdown. Autosave waits a few seconds after you stop editing so it does not flicker and the account is written less often.
 - On Profile, the user-info header shrinks into a compact bar when you scroll down.
 - Opening a playlist no longer shrinks the whole graph to fit by default. Basic keeps a readable zoom around Start. Fit view is still on the canvas controls.

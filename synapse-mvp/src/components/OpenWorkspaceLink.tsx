@@ -13,13 +13,17 @@ export function defaultWorkspacePath(): AppPath {
   return mode === 'listen' ? APP_PATHS.listen : APP_PATHS.edit;
 }
 
+export function primaryCtaLabel(signedIn: boolean): string {
+  return signedIn ? 'Open Synapse' : 'Get Started';
+}
+
 export default function OpenWorkspaceLink({
   className,
   children,
   onNavigate,
 }: {
   className?: string;
-  children: ReactNode;
+  children?: ReactNode;
   onNavigate?: () => void;
 }) {
   const { user, complete } = useAuthAccess();
@@ -30,7 +34,7 @@ export default function OpenWorkspaceLink({
   const workspacePath =
     workspace === 'listen' ? APP_PATHS.listen : APP_PATHS.edit;
   const signedIn = Boolean(user && complete);
-  const to = signedIn ? workspace : 'login';
+  const to = signedIn ? workspace : 'signup';
 
   return (
     <AppLink
@@ -41,7 +45,7 @@ export default function OpenWorkspaceLink({
         onNavigate?.();
       }}
     >
-      {children}
+      {children ?? primaryCtaLabel(signedIn)}
     </AppLink>
   );
 }

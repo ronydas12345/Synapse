@@ -3,34 +3,34 @@ import Reveal from './Reveal';
 const CASES = [
   {
     title: 'Personal listening',
-    body: 'Dynamic systems for everyday music. Morning → calmer tracks. Weekend → unwind. Rainy days → a different mix. Time, weather, and day/date conditionals are live.',
+    body: 'Morning, weekend, or rainy-day mixes using time, weather, and day/date branches.',
   },
   {
     title: 'Mood-based listening',
-    body: 'Branch between moods or genres with weighted random, so the mix can lean without locking you in.',
+    body: 'Lean a mix toward a mood or genre with weighted random, without locking into one track.',
   },
   {
     title: 'Background music',
-    body: 'Build paths meant to stay out of the way: study, game, work, relax, sleep — a pool that keeps going under your rules.',
+    body: 'Study, game, work, or sleep paths that keep going under your rules.',
   },
   {
     title: 'Dynamic playlists',
-    body: 'Stop lining up every next song. Design the system once and let Synapse choose within it.',
+    body: 'Design the system once. Synapse chooses the next song within it.',
   },
   {
     title: 'Community creations',
-    body: 'Workshop hosts public Music Paths from other people. Publish, like, remix, and follow from the live catalog.',
+    body: 'Browse public Music Paths, themes, and profiles in Workshop.',
   },
 ] as const;
 
 export default function UseCases() {
   return (
     <section className="synapse-mkt-section" id="solutions" aria-labelledby="solutions-title">
+      <h2 id="solutions-title">Uses</h2>
       <Reveal>
-        <h2 id="solutions-title">Uses</h2>
         <div className="synapse-mkt-cards synapse-mkt-cards-3">
           {CASES.map((c) => (
-            <article key={c.title} className="synapse-mkt-card">
+            <article key={c.title} className="synapse-mkt-card synapse-mkt-card-info">
               <h3>{c.title}</h3>
               <p>{c.body}</p>
             </article>

@@ -75,8 +75,8 @@ export default function About() {
       id="about"
       aria-labelledby="about-title"
     >
+      <h2 id="about-title">About</h2>
       <Reveal>
-        <h2 id="about-title">About</h2>
         <div className="synapse-mkt-about-grid">
           <div className="synapse-mkt-avatar">
             <PathLink
@@ -87,7 +87,7 @@ export default function About() {
               <img src={CREATOR.photoSrc} alt={CREATOR.photoAlt} />
             </PathLink>
           </div>
-          <div>
+          <div className="synapse-mkt-about-copy">
             <p>{CREATOR.bio}</p>
             {CREATOR.why ? <p>{CREATOR.why}</p> : null}
             <div className="synapse-mkt-connect">

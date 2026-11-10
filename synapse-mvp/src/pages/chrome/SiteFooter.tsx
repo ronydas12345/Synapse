@@ -27,6 +27,11 @@ export default function SiteFooter() {
               </AppLink>
             </li>
             <li>
+              <AppLink to="home" hash="solutions">
+                Uses
+              </AppLink>
+            </li>
+            <li>
               <AppLink to="workshop">Workshop</AppLink>
             </li>
             <li>

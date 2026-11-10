@@ -1,37 +1,76 @@
-import PathDemo from './PathDemo';
+import { useState } from 'react';
+import PathDemo, { type PathScene } from './PathDemo';
 import Reveal from './Reveal';
 
+const IDEAS: {
+  scene: PathScene;
+  title: string;
+  body: string;
+  label: string;
+  animate?: boolean;
+}[] = [
+  {
+    scene: 'build',
+    title: 'Build',
+    body: 'Drop nodes onto the canvas and connect them.',
+    label: 'A start node connected to a track node.',
+  },
+  {
+    scene: 'control',
+    title: 'Branch',
+    body: 'Conditions, randomizers, and transitions determine what happens next.',
+    label: 'A conditional, randomizer, and transition highlighted on the path.',
+  },
+  {
+    scene: 'experience',
+    title: 'Play',
+    body: 'Press Play. The path chooses the next song.',
+    label: 'The full path with a playback marker.',
+    animate: true,
+  },
+];
+
 export default function ValueProposition() {
+  const [idea, setIdea] = useState(0);
+  const current = IDEAS[idea];
+
   return (
     <section className="synapse-mkt-section" id="value" aria-labelledby="value-title">
+      <h2 id="value-title">A playlist is a list. A Music Path is a graph.</h2>
+      <p className="synapse-mkt-lead">
+        You draw what can happen next. Playback follows the connections.
+      </p>
       <Reveal>
-        <h2 id="value-title">A playlist is a list. A Music Path is a graph.</h2>
-        <p className="synapse-mkt-lead">
-          You draw what can happen next. Playback follows the connections.
-        </p>
-        <div className="synapse-mkt-triple">
-          <article>
-            <PathDemo scene="build" label="A start node connected to a track node." />
-            <h3>Build</h3>
-            <p>Drop nodes on the canvas and connect them.</p>
-          </article>
-          <article>
+        <div className="synapse-mkt-value">
+          <div className="synapse-mkt-value-picks" role="tablist" aria-label="How a music path works">
+            {IDEAS.map((item, i) => (
+              <button
+                key={item.title}
+                type="button"
+                role="tab"
+                aria-selected={i === idea}
+                id={`value-tab-${i}`}
+                aria-controls="value-panel"
+                className={i === idea ? 'is-active' : ''}
+                onClick={() => setIdea(i)}
+              >
+                <strong>{item.title}</strong>
+                <span>{item.body}</span>
+              </button>
+            ))}
+          </div>
+          <div
+            id="value-panel"
+            role="tabpanel"
+            aria-labelledby={`value-tab-${idea}`}
+            className="synapse-mkt-value-panel"
+          >
             <PathDemo
-              scene="control"
-              label="A conditional, randomizer, and transition highlighted on the path."
+              scene={current.scene}
+              animate={Boolean(current.animate)}
+              label={current.label}
             />
-            <h3>Branch</h3>
-            <p>Conditions, randomizers, and transitions pick the next step.</p>
-          </article>
-          <article>
-            <PathDemo
-              scene="experience"
-              animate
-              label="The full path with a playback marker."
-            />
-            <h3>Play</h3>
-            <p>Press play. The path chooses the next song.</p>
-          </article>
+          </div>
         </div>
       </Reveal>
     </section>

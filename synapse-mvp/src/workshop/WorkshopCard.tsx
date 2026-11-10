@@ -56,6 +56,9 @@ export default function WorkshopCard({
           {card.description ||
             (card.kind === 'theme' ? 'A published theme.' : 'A published Music Path.')}
         </p>
+        <span className="synapse-workshop-open">
+          {card.kind === 'theme' ? 'Open theme' : 'Open playlist'}
+        </span>
       </PathLink>
       <p className="synapse-workshop-meta">
         {username ? (

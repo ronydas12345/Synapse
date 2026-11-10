@@ -3,22 +3,22 @@ import Reveal from './Reveal';
 const FEATURES = [
   {
     title: 'Visual Music Paths',
-    body: 'Build playback systems on a canvas instead of managing a long, brittle playlist.',
+    body: 'Build playback systems on a canvas instead of managing a long, linear playlist.',
     status: 'Available',
   },
   {
     title: 'Conditional playback',
-    body: 'Branch with weighted random, time of day, local weather, or day/date rules. Each path can list one or more matching states.',
+    body: 'Branch according to conditions such as time of day, local weather, or other available context.',
     status: 'Available',
   },
   {
     title: 'Randomization',
-    body: 'Sequence, weighted random, and play-count limits. Controlled pools instead of a shuffled bag.',
+    body: 'Use sequences, weighted randomization, and playback-count limits to control how tracks are selected.',
     status: 'Available',
   },
   {
     title: 'Transitions',
-    body: 'Insert silence, a custom audio clip, or a YouTube clip between tracks.',
+    body: 'Insert silence, custom audio clips, or YouTube clips between tracks.',
     status: 'Available',
   },
   {
@@ -28,12 +28,12 @@ const FEATURES = [
   },
   {
     title: 'Overlays',
-    body: 'Images, GIFs, and animated effects on the canvas. Planned — not in this release.',
+    body: 'Images, GIFs, and animated effects on the canvas. Not in this release.',
     status: 'Planned',
   },
   {
     title: 'Workshop',
-    body: 'Discover and share Music Paths and themes. Publish from Settings with curated tags, browse /workshop, follow creators, and share public or unlisted items by ID or link.',
+    body: 'Discover and share Music Paths and themes. Publish from Settings, browse Workshop, and share public or unlisted items by ID or link.',
     status: 'Available',
   },
 ] as const;
@@ -41,13 +41,17 @@ const FEATURES = [
 export default function Features() {
   return (
     <section className="synapse-mkt-section" id="features" aria-labelledby="features-title">
+      <h2 id="features-title">Features</h2>
       <Reveal>
-        <h2 id="features-title">Features</h2>
         <div className="synapse-mkt-cards">
           {FEATURES.map((f) => (
-            <article key={f.title} className="synapse-mkt-card">
-              <p className="synapse-mkt-status">{f.status}</p>
+            <article
+              key={f.title}
+              className="synapse-mkt-card synapse-mkt-card-info"
+              data-status={f.status.toLowerCase()}
+            >
               <h3>{f.title}</h3>
+              <p className="synapse-mkt-status">{f.status}</p>
               <p>{f.body}</p>
             </article>
           ))}
