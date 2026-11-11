@@ -31,6 +31,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Listen shows the playlist list again. The graph editor stays on Edit. Published view-only paths still have Graph and List.
 - The Example path from first-time welcome spaces comments, Start, tracks, the Randomizer, and End so they no longer sit on top of each other.
 - The Example path includes real YouTube songs you can play. The Randomizer weights the two pool tracks differently.
 - Deleting a playlist stays deleted after a reload.

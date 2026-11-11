@@ -745,7 +745,8 @@ export default function Player() {
   const seekStart = Number(currentNode?.data?.startTime) || 0;
   const seekEnd = Number(currentNode?.data?.endTime) || 0;
   const queueActive = playbackQueue.length > 0;
-  const listListen = uiMode === 'listen' && listenView === 'list' && graphReadOnly;
+  const listListen =
+    uiMode === 'listen' && (!graphReadOnly || listenView === 'list');
 
   const previewQueue = useMemo(() => {
     if (playbackQueue.length > 0) return playbackQueue;
@@ -884,7 +885,7 @@ export default function Player() {
   return (
     <>
     <div
-      className={`synapse-deck ${listListen ? 'is-listen' : ''} ${minimized ? 'is-minimized' : ''}`}
+      className={`synapse-deck ${listListen ? 'is-listen' : ''} ${minimized && !listListen ? 'is-minimized' : ''}`}
       data-tutorial="player"
       id={listListen ? 'workspace-main' : undefined}
     >
@@ -893,6 +894,7 @@ export default function Player() {
         className="synapse-deck-screen"
         aria-label="YouTube player"
       />
+      {listListen ? null : (
       <button
         type="button"
         className="synapse-deck-min-btn"
@@ -902,6 +904,7 @@ export default function Player() {
       >
         {minimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
       </button>
+      )}
       {listListen ? (
         <PlayingScreen
           nowPlaying={nowPlaying}

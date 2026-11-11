@@ -131,7 +131,7 @@ function WorkspaceApp({
   const edit = route === 'edit';
   const readOnly = graphLocked;
   const guestListen = listen && readOnly;
-  const showGraph = edit || (listen && (!readOnly || listenView === 'graph'));
+  const showGraph = edit || (listen && readOnly && listenView === 'graph');
   const listenHref = listenPath(workshopShareKey ?? workshopId ?? activePathId);
   const listingKey =
     workshopShareKey ||
@@ -155,7 +155,7 @@ function WorkspaceApp({
       data-tutorial="workspace"
       data-listen={listen ? '' : undefined}
       data-readonly={readOnly ? '' : undefined}
-      data-listen-view={listen ? (readOnly ? listenView : 'graph') : undefined}
+      data-listen-view={listen ? (readOnly ? listenView : 'list') : undefined}
     >
       <a className="synapse-mkt-skip" href="#workspace-main">
         Skip to workspace
