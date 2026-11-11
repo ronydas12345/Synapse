@@ -518,17 +518,33 @@ body:has(.synapse-mkt),
 
 .synapse-mkt-value {
   display: grid;
+  grid-template-columns: minmax(16rem, 0.82fr) minmax(0, 1.2fr);
   gap: 1.15rem;
+  align-items: start;
   margin-top: 1.5rem;
 }
 
 .synapse-mkt-value-picks {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 0.75rem;
 }
 
-.synapse-mkt-value-picks button,
+.synapse-mkt-value-pick {
+  text-align: left;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: inherit;
+  padding: 0.95rem 1.05rem;
+  cursor: default;
+}
+
+.synapse-mkt-value-pick.is-active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
 .synapse-mkt-how-steps button {
   font: inherit;
   text-align: left;
@@ -540,12 +556,10 @@ body:has(.synapse-mkt),
   cursor: pointer;
 }
 
-.synapse-mkt-value-picks button:hover,
 .synapse-mkt-how-steps button:hover {
   border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
 }
 
-.synapse-mkt-value-picks button.is-active,
 .synapse-mkt-how-steps button.is-active {
   border-color: var(--accent);
   background: var(--accent-dim);
@@ -1198,6 +1212,272 @@ body:has(.synapse-mkt),
   }
 }
 
+.synapse-value-demo .synapse-path-node,
+.synapse-value-demo .synapse-value-drag,
+.synapse-value-demo .synapse-value-cursor {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.synapse-value-rack {
+  opacity: 0;
+}
+
+.synapse-value-rack rect {
+  fill: color-mix(in srgb, var(--bg-panel) 88%, transparent);
+  stroke: var(--border);
+}
+
+.synapse-value-rack text {
+  fill: var(--text-muted);
+  font-family: var(--font-node);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.synapse-value-cursor,
+.synapse-value-demo .is-node-b,
+.synapse-value-demo .is-node-fx,
+.synapse-value-demo .is-node-rnd,
+.synapse-value-demo .is-node-c,
+.synapse-value-demo .is-node-d,
+.synapse-value-demo .is-edge-up,
+.synapse-value-demo .is-edge-mid,
+.synapse-value-demo .is-edge-down,
+.synapse-value-demo .is-edge-c,
+.synapse-value-demo .is-edge-d {
+  opacity: 0;
+}
+
+.synapse-value-edge {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.synapse-value-demo[data-beat='build'] .is-edge-start-track,
+.synapse-value-demo[data-beat='build'] .is-edge-track-if,
+.synapse-value-demo[data-beat='branch'] .is-edge-start-track,
+.synapse-value-demo[data-beat='branch'] .is-edge-track-if,
+.synapse-value-demo[data-beat='play'] .synapse-value-edge {
+  stroke-dashoffset: 0;
+}
+
+.synapse-value-demo[data-beat='branch'] .is-node-b,
+.synapse-value-demo[data-beat='branch'] .is-node-fx,
+.synapse-value-demo[data-beat='branch'] .is-node-rnd,
+.synapse-value-demo[data-beat='branch'] .is-node-c,
+.synapse-value-demo[data-beat='branch'] .is-node-d,
+.synapse-value-demo[data-beat='branch'] .is-edge-up,
+.synapse-value-demo[data-beat='branch'] .is-edge-mid,
+.synapse-value-demo[data-beat='branch'] .is-edge-down,
+.synapse-value-demo[data-beat='branch'] .is-edge-c,
+.synapse-value-demo[data-beat='branch'] .is-edge-d,
+.synapse-value-demo[data-beat='play'] .is-node-b,
+.synapse-value-demo[data-beat='play'] .is-node-fx,
+.synapse-value-demo[data-beat='play'] .is-node-rnd,
+.synapse-value-demo[data-beat='play'] .is-node-c,
+.synapse-value-demo[data-beat='play'] .is-node-d,
+.synapse-value-demo[data-beat='play'] .is-edge-up,
+.synapse-value-demo[data-beat='play'] .is-edge-mid,
+.synapse-value-demo[data-beat='play'] .is-edge-down,
+.synapse-value-demo[data-beat='play'] .is-edge-c,
+.synapse-value-demo[data-beat='play'] .is-edge-d {
+  opacity: 1;
+}
+
+.synapse-value-demo[data-beat='build'][data-active='true'][data-reduced='false'] .synapse-value-rack {
+  animation: synapse-value-rack-out 2s ease both;
+}
+
+.synapse-value-demo[data-beat='build'][data-active='true'][data-reduced='false'] .is-node-start {
+  animation: synapse-value-drop 0.45s ease both;
+}
+
+.synapse-value-demo[data-beat='build'][data-active='true'][data-reduced='false'] .is-drag-track {
+  animation: synapse-value-drag-track 1.2s cubic-bezier(0.22, 0.72, 0.28, 1) 0.5s both;
+}
+
+.synapse-value-demo[data-beat='build'][data-active='true'][data-reduced='false'] .is-drag-if {
+  animation: synapse-value-drag-if 1.15s cubic-bezier(0.22, 0.72, 0.28, 1) 2.3s both;
+}
+
+.synapse-value-demo[data-beat='build'][data-active='true'][data-reduced='false'] .is-drag-track .synapse-value-cursor {
+  animation: synapse-value-cursor-lift 1.35s ease 0.5s both;
+}
+
+.synapse-value-demo[data-beat='build'][data-active='true'][data-reduced='false'] .is-drag-if .synapse-value-cursor {
+  animation: synapse-value-cursor-lift 1.3s ease 2.3s both;
+}
+
+.synapse-value-demo[data-beat='build'][data-active='true'][data-reduced='false'] .is-edge-start-track {
+  stroke-dashoffset: 1;
+  animation: synapse-value-stroke 0.45s ease 1.75s both;
+}
+
+.synapse-value-demo[data-beat='build'][data-active='true'][data-reduced='false'] .is-edge-track-if {
+  stroke-dashoffset: 1;
+  animation: synapse-value-stroke 0.45s ease 3.5s both;
+}
+
+.synapse-value-demo[data-beat='branch'][data-active='true'][data-reduced='false'] .is-edge-up {
+  opacity: 1;
+  stroke-dashoffset: 1;
+  animation: synapse-value-stroke 0.55s ease 0.35s both;
+}
+
+.synapse-value-demo[data-beat='branch'][data-active='true'][data-reduced='false'] .is-edge-mid {
+  opacity: 1;
+  stroke-dashoffset: 1;
+  animation: synapse-value-stroke 0.55s ease 1.2s both;
+}
+
+.synapse-value-demo[data-beat='branch'][data-active='true'][data-reduced='false'] .is-edge-down {
+  opacity: 1;
+  stroke-dashoffset: 1;
+  animation: synapse-value-stroke 0.55s ease 2.05s both;
+}
+
+.synapse-value-demo[data-beat='branch'][data-active='true'][data-reduced='false'] .is-edge-c {
+  opacity: 1;
+  stroke-dashoffset: 1;
+  animation: synapse-value-stroke 0.45s ease 2.95s both;
+}
+
+.synapse-value-demo[data-beat='branch'][data-active='true'][data-reduced='false'] .is-edge-d {
+  opacity: 1;
+  stroke-dashoffset: 1;
+  animation: synapse-value-stroke 0.45s ease 3.55s both;
+}
+
+.synapse-value-demo[data-beat='branch'][data-active='true'][data-reduced='false'] .is-node-b {
+  animation: synapse-value-pop 0.4s ease 0.75s both;
+}
+
+.synapse-value-demo[data-beat='branch'][data-active='true'][data-reduced='false'] .is-node-fx {
+  animation: synapse-value-pop 0.4s ease 1.6s both;
+}
+
+.synapse-value-demo[data-beat='branch'][data-active='true'][data-reduced='false'] .is-node-rnd {
+  animation: synapse-value-pop 0.4s ease 2.45s both;
+}
+
+.synapse-value-demo[data-beat='branch'][data-active='true'][data-reduced='false'] .is-node-c {
+  animation: synapse-value-pop 0.35s ease 3.3s both;
+}
+
+.synapse-value-demo[data-beat='branch'][data-active='true'][data-reduced='false'] .is-node-d {
+  animation: synapse-value-pop 0.35s ease 3.9s both;
+}
+
+.synapse-value-demo[data-beat='branch'][data-active='true'][data-reduced='false'] .is-node-if {
+  animation: synapse-value-pulse 0.9s ease 4.2s both;
+}
+
+@keyframes synapse-value-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes synapse-value-drag-track {
+  0% {
+    transform: translate(-170px, -164px);
+  }
+  62% {
+    transform: translate(-36px, -72px);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes synapse-value-drag-if {
+  0% {
+    opacity: 0;
+    transform: translate(128px, -160px);
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes synapse-value-cursor-lift {
+  0%,
+  78% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(12px, -16px);
+  }
+}
+
+@keyframes synapse-value-stroke {
+  from {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes synapse-value-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes synapse-value-pulse {
+  0%,
+  100% {
+    filter: none;
+  }
+  40% {
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 55%, transparent));
+  }
+}
+
+@keyframes synapse-value-rack-out {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.synapse-value-demo[data-beat='build'][data-active='false'] .is-edge-start-track,
+.synapse-value-demo[data-beat='build'][data-active='false'] .is-edge-track-if,
+.synapse-value-demo[data-beat='build'][data-reduced='true'] .is-edge-start-track,
+.synapse-value-demo[data-beat='build'][data-reduced='true'] .is-edge-track-if {
+  stroke-dashoffset: 0;
+}
+
+.synapse-value-demo[data-beat='branch'][data-active='false'] .synapse-value-edge,
+.synapse-value-demo[data-beat='branch'][data-reduced='true'] .synapse-value-edge,
+.synapse-value-demo[data-beat='play'] .synapse-value-edge {
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+
 @media (max-width: 1140px) {
   .synapse-mkt-header-inner {
     grid-template-columns: max-content minmax(0, 1fr);
@@ -1231,8 +1511,13 @@ body:has(.synapse-mkt),
   .synapse-mkt-pricing,
   .synapse-mkt-footer-grid,
   .synapse-mkt-triple,
+  .synapse-mkt-value,
   .synapse-mkt-value-picks {
     grid-template-columns: 1fr;
+  }
+
+  .synapse-mkt-value-panel {
+    order: -1;
   }
 
   .synapse-mkt-hero {
