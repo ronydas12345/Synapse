@@ -74,10 +74,13 @@ export default function ValueProposition() {
   }, [beat, animKey, visible, reduced]);
 
   return (
-    <section className="synapse-mkt-section" id="value" aria-labelledby="value-title">
-      <h2 id="value-title">A playlist is a list. A Music Path is a graph.</h2>
+    <section className="synapse-mkt-section synapse-mkt-value-section" id="value" aria-labelledby="value-title">
+      <h2 id="value-title">More Than an Ordinary Playlist.</h2>
+      <p className="synapse-mkt-subhead">
+        Build your Custom Music Path in a few simple steps.
+      </p>
       <p className="synapse-mkt-lead">
-        You draw what can happen next. Playback follows the connections.
+        You draw what happens next; playback follows the connections.
       </p>
       <Reveal>
         <div className="synapse-mkt-value" ref={hostRef}>

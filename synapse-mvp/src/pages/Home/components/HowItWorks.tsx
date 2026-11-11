@@ -1,29 +1,25 @@
 import { useState, type KeyboardEvent } from 'react';
-import PathDemo, { type PathScene } from './PathDemo';
+import HowItWorksScene from './HowItWorksScene';
 import Reveal from './Reveal';
 
-const STEPS: { scene: PathScene; title: string; body: string }[] = [
+const STEPS = [
   {
-    scene: 'step1',
     title: 'Start with a song',
     body: 'Drag a track node onto the canvas and select the music you want to use.',
   },
   {
-    scene: 'step2',
     title: 'Build the path',
     body: 'Connect nodes to determine what plays next. Create sequences, branches, and random paths.',
   },
   {
-    scene: 'step3',
     title: 'Add personality',
     body: 'Add transitions, style nodes, and configure how your playlist behaves.',
   },
   {
-    scene: 'step4',
     title: 'Press Play',
     body: 'Start playback and let your graph determine the next song.',
   },
-];
+] as const;
 
 export default function HowItWorks() {
   const [step, setStep] = useState(0);
@@ -92,11 +88,7 @@ export default function HowItWorks() {
             aria-labelledby={`how-tab-${step}`}
             className="synapse-mkt-how-panel"
           >
-            <PathDemo
-              scene={current.scene}
-              animate={step === 3}
-              label={current.body}
-            />
+            <HowItWorksScene key={step} step={step} label={current.body} />
           </div>
         </div>
       </Reveal>

@@ -7,6 +7,7 @@ body:has(.synapse-mkt),
 
 .synapse-mkt {
   min-height: 100vh;
+  overflow-x: clip;
   background:
     radial-gradient(1200px 480px at 10% -10%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
     radial-gradient(900px 420px at 90% 0%, color-mix(in srgb, var(--accent-warm) 12%, transparent), transparent 55%),
@@ -376,8 +377,19 @@ body:has(.synapse-mkt),
 }
 
 .synapse-mkt-how h2,
-.synapse-mkt-hero h1 {
+.synapse-mkt-hero h1,
+.synapse-mkt-value-section h2 {
   max-width: none;
+}
+
+.synapse-mkt-subhead {
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+  letter-spacing: -0.03em;
+  line-height: 1.35;
+  color: var(--text);
+  margin: -0.25rem 0 0.7rem;
+  max-width: 36rem;
 }
 
 .synapse-mkt h3 {
@@ -421,22 +433,81 @@ body:has(.synapse-mkt),
 }
 
 .synapse-mkt-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-  gap: 2rem;
+  --hero-banner-image: none;
+  position: relative;
+  isolation: isolate;
+  display: flex;
   align-items: center;
-  padding: 2.5rem 0 1rem;
+  box-sizing: border-box;
+  width: 100vw;
+  max-width: 100vw;
+  min-height: 28rem;
+  margin: -1.5rem calc(50% - 50vw) 0;
+  padding: 4.25rem 0 4rem;
+  overflow: hidden;
 }
 
-.synapse-mkt-hero-viz {
-  min-width: 0;
+.synapse-mkt-hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   pointer-events: none;
-  cursor: default;
+  background-color: var(--bg-deep);
+  background-image: var(--hero-banner-image);
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
 }
 
-.synapse-mkt-hero-viz .synapse-path-demo,
-.synapse-mkt-value-panel .synapse-path-demo,
-.synapse-mkt-how-panel .synapse-path-demo {
+.synapse-mkt-hero-media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 80% at 78% 42%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%),
+    radial-gradient(ellipse 46% 50% at 92% 88%, color-mix(in srgb, var(--accent-warm) 10%, transparent), transparent 58%);
+}
+
+.synapse-mkt-hero-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      var(--bg-void) 0%,
+      color-mix(in srgb, var(--bg-void) 86%, transparent) 36%,
+      color-mix(in srgb, var(--bg-void) 48%, transparent) 64%,
+      color-mix(in srgb, var(--bg-void) 62%, transparent) 100%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-void) 22%, transparent) 0%,
+      color-mix(in srgb, var(--bg-void) 18%, transparent) 42%,
+      color-mix(in srgb, var(--bg-void) 78%, transparent) 100%
+    );
+}
+
+.synapse-mkt-hero-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  box-sizing: border-box;
+}
+
+.synapse-mkt-hero-copy {
+  max-width: 38rem;
+}
+
+.synapse-mkt-hero .synapse-mkt-lead,
+.synapse-mkt-hero-note {
+  color: color-mix(in srgb, var(--text) 78%, var(--text-muted));
+}
+
+.synapse-mkt-value-panel .synapse-path-demo {
   pointer-events: none;
 }
 
@@ -454,6 +525,50 @@ body:has(.synapse-mkt),
 
 .synapse-mkt-cards-3 {
   grid-template-columns: repeat(auto-fill, minmax(16.5rem, 1fr));
+}
+
+.synapse-mkt-features .synapse-mkt-cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.synapse-mkt-benefits {
+  margin-top: 2.25rem;
+}
+
+.synapse-mkt-benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.synapse-mkt-benefit {
+  min-height: 100%;
+}
+
+.synapse-mkt-benefit-icon {
+  display: grid;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  margin-bottom: 0.8rem;
+  border-radius: 8px;
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.synapse-mkt-benefit-icon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.synapse-mkt-benefit-icon[data-accent='warm'] {
+  background: var(--accent-warm-dim);
+  color: var(--accent-warm);
+}
+
+.synapse-mkt-benefit-icon[data-accent='ok'] {
+  background: color-mix(in srgb, var(--ok) 16%, transparent);
+  color: var(--ok);
 }
 
 .synapse-mkt-triple article,
@@ -644,6 +759,434 @@ body:has(.synapse-mkt),
   color: var(--text-muted);
   font-size: 1.02rem;
   line-height: 1.5;
+}
+
+.synapse-mkt-how-panel {
+  min-width: 0;
+  min-height: 22.5rem;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.synapse-mkt-how-scene {
+  height: 100%;
+  min-height: 22.5rem;
+  pointer-events: none;
+}
+
+.synapse-mkt-how-scene.is-motion {
+  animation: synapse-mkt-how-in 280ms ease;
+}
+
+@keyframes synapse-mkt-how-in {
+  from {
+    opacity: 0.35;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.synapse-how-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.45rem;
+}
+
+.synapse-how-add,
+.synapse-how-personality {
+  display: grid;
+  grid-template-columns: minmax(10rem, 0.9fr) minmax(0, 1.2fr);
+  gap: 0.85rem;
+  align-items: stretch;
+  min-height: 22.5rem;
+  padding: 0.95rem;
+}
+
+.synapse-how-personality {
+  grid-template-columns: minmax(8.2rem, 0.55fr) minmax(0, 1.45fr);
+  align-items: center;
+}
+
+.synapse-how-personality .synapse-how-inspector {
+  align-self: stretch;
+}
+
+.synapse-how-rack,
+.synapse-how-inspector {
+  background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 0.9rem;
+}
+
+.synapse-how-rack-heading {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  margin: 0 0 0.7rem;
+}
+
+.synapse-how-rack-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.5rem;
+  margin-bottom: 0.4rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.synapse-how-rack-item.is-active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.synapse-how-rack-icon {
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 7px;
+  background: var(--accent-warm-dim);
+  color: var(--accent-warm);
+  flex-shrink: 0;
+}
+
+.synapse-how-rack-icon svg,
+.synapse-how-rack-plus,
+.synapse-how-field svg,
+.synapse-how-ctrl svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.synapse-how-rack-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.synapse-how-rack-copy strong,
+.synapse-how-field-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.synapse-how-rack-copy em {
+  display: block;
+  font-style: normal;
+  font-size: 0.68rem;
+  color: var(--text-faint);
+}
+
+.synapse-how-rack-plus {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.synapse-how-field-label {
+  margin: 0.65rem 0 0.35rem;
+}
+
+.synapse-how-field {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.synapse-how-select::after {
+  content: "▾";
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: 0.7rem;
+}
+
+.synapse-how-chip {
+  display: inline-flex;
+  margin-top: 0.65rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #06110f;
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.synapse-how-results {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+}
+
+.synapse-how-results li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.synapse-how-results em {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.synapse-how-results li.is-selected {
+  background: var(--accent-dim);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.synapse-how-connect {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 22.5rem;
+  padding: 1.4rem 1.1rem;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: center;
+}
+
+.synapse-how-node {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 7.4rem;
+  padding: 0.7rem 0.85rem 0.8rem;
+  background: var(--node-bg);
+  border: 1px solid var(--node-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+}
+
+.synapse-how-node span {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.synapse-how-node strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+}
+
+.synapse-how-node.is-start { border-color: var(--node-start); }
+.synapse-how-node.is-track { border-color: var(--node-track); }
+.synapse-how-node.is-randomizer { border-color: var(--node-randomizer); }
+
+.synapse-how-node.is-lit {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 0 18px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.synapse-how-port {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  border: 2px solid var(--bg-void);
+  transform: translateY(-50%);
+}
+
+.synapse-how-port.is-in { left: -6px; }
+.synapse-how-port.is-out { right: -6px; }
+
+.synapse-how-wire {
+  flex: 1;
+  height: 2px;
+  min-width: 1.4rem;
+  position: relative;
+  background: color-mix(in srgb, var(--edge-color) 80%, transparent);
+}
+
+.synapse-how-wire.is-drawing {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--accent) 0 7px,
+    transparent 7px 12px
+  );
+}
+
+.synapse-how-cursor {
+  position: absolute;
+  top: 50%;
+  right: -2px;
+  width: 0;
+  height: 0;
+  border-left: 9px solid var(--text);
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  transform: translate(2px, -8px) rotate(18deg);
+  filter: drop-shadow(0 0 1px var(--bg-void));
+}
+
+.synapse-mkt-how-scene.is-motion .synapse-how-cursor {
+  animation: synapse-how-drag 1.7s ease-in-out infinite alternate;
+}
+
+@keyframes synapse-how-drag {
+  from { right: 78%; }
+  to { right: -2px; }
+}
+
+.synapse-how-weight {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.2rem 0.5rem;
+  margin: 0.45rem 0 0.7rem;
+  font-size: 0.82rem;
+}
+
+.synapse-how-weight b {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.synapse-how-weight i {
+  display: block;
+  grid-column: 1 / -1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.synapse-how-swatches {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.synapse-how-swatches i {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+}
+
+.synapse-how-swatches i.is-void { background: #141821; }
+.synapse-how-swatches i.is-teal { background: #1b3d3a; }
+.synapse-how-swatches i.is-warm { background: #3a2b1c; }
+.synapse-how-swatches i.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.synapse-how-play {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 22.5rem;
+  padding: 1.6rem 1.4rem;
+}
+
+.synapse-how-track-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  letter-spacing: -0.04em;
+  margin: 0.15rem 0 0.2rem;
+  color: var(--text);
+}
+
+.synapse-how-track-artist {
+  margin: 0 0 1.15rem;
+  color: var(--text-muted);
+}
+
+.synapse-how-transport {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+}
+
+.synapse-how-ctrl {
+  display: grid;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.synapse-how-ctrl.is-play {
+  width: 2.55rem;
+  height: 2.55rem;
+  background: var(--bg-elevated);
+  border-color: rgba(62, 207, 191, 0.45);
+  color: var(--accent);
+}
+
+.synapse-how-progress {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.55rem;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.synapse-how-progress span {
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+
+.synapse-how-progress-fill {
+  display: block;
+  width: 32%;
+  height: 100%;
+  background: var(--accent);
+}
+
+.synapse-mkt-how-scene.is-motion .synapse-how-progress-fill {
+  animation: synapse-how-seek 8s linear infinite;
+}
+
+@keyframes synapse-how-seek {
+  from { width: 18%; }
+  to { width: 72%; }
+}
+
+.synapse-how-next {
+  margin: 1rem 0 0;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.synapse-how-next strong {
+  color: var(--accent-warm);
+  font-weight: 650;
 }
 
 .synapse-mkt-about-grid {
@@ -1319,7 +1862,6 @@ body:has(.synapse-mkt),
 }
 
 @media (max-width: 960px) {
-  .synapse-mkt-hero,
   .synapse-mkt-how-grid,
   .synapse-mkt-about-grid,
   .synapse-mkt-principles,
@@ -1327,8 +1869,14 @@ body:has(.synapse-mkt),
   .synapse-mkt-footer-grid,
   .synapse-mkt-triple,
   .synapse-mkt-value,
-  .synapse-mkt-value-picks {
+  .synapse-mkt-value-picks,
+  .synapse-how-add,
+  .synapse-how-personality {
     grid-template-columns: 1fr;
+  }
+
+  .synapse-mkt-features .synapse-mkt-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .synapse-mkt-value-panel {
@@ -1336,8 +1884,24 @@ body:has(.synapse-mkt),
   }
 
   .synapse-mkt-hero {
-    gap: 1.25rem;
-    padding-top: 1.2rem;
+    min-height: 24rem;
+    padding-top: 3.2rem;
+    padding-bottom: 3rem;
+  }
+
+  .synapse-how-add,
+  .synapse-how-personality,
+  .synapse-how-connect,
+  .synapse-how-play,
+  .synapse-mkt-how-scene,
+  .synapse-mkt-how-panel {
+    min-height: 0;
+  }
+
+  .synapse-how-connect {
+    flex-wrap: wrap;
+    justify-content: center;
+    min-height: 16rem;
   }
 
   .synapse-mkt-cta {
@@ -1348,6 +1912,76 @@ body:has(.synapse-mkt),
 }
 
 @media (max-width: 640px) {
+  .synapse-mkt-features .synapse-mkt-cards,
+  .synapse-mkt-benefits-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .synapse-mkt-hero {
+    min-height: 0;
+    padding-top: 2.6rem;
+    padding-bottom: 2.4rem;
+  }
+
+  .synapse-how-node {
+    min-width: 6.2rem;
+  }
+
+  .synapse-how-connect {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.15rem;
+    padding: 1rem 0.85rem;
+  }
+
+  .synapse-how-wire {
+    width: 2px;
+    height: 1.35rem;
+    min-width: 0;
+    flex: 0 0 1.35rem;
+    align-self: center;
+    background: color-mix(in srgb, var(--edge-color) 80%, transparent);
+  }
+
+  .synapse-how-wire.is-drawing {
+    background: repeating-linear-gradient(
+      180deg,
+      var(--accent) 0 7px,
+      transparent 7px 12px
+    );
+  }
+
+  .synapse-how-cursor {
+    right: auto;
+    left: 50%;
+    top: auto;
+    bottom: -4px;
+    transform: translate(-50%, 0) rotate(90deg);
+  }
+
+  .synapse-mkt-how-scene.is-motion .synapse-how-cursor {
+    animation-name: synapse-how-drag-vert;
+  }
+
+  @keyframes synapse-how-drag-vert {
+    from { bottom: 72%; }
+    to { bottom: -4px; }
+  }
+
+  .synapse-mkt-hero-media::after {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--bg-void) 42%, transparent) 0%,
+        color-mix(in srgb, var(--bg-void) 78%, transparent) 100%
+      ),
+      linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--bg-void) 70%, transparent) 0%,
+        color-mix(in srgb, var(--bg-void) 40%, transparent) 100%
+      );
+  }
+
   .synapse-mkt-header-actions .synapse-mkt-text-link,
   .synapse-mkt-header-actions .synapse-mkt-staff-link {
     display: none;
@@ -1397,7 +2031,10 @@ body:has(.synapse-mkt),
   }
 
   html:not([data-motion="full"]) .synapse-path-route,
-  html:not([data-motion="full"]) .synapse-path-playhead {
+  html:not([data-motion="full"]) .synapse-path-playhead,
+  html:not([data-motion="full"]) .synapse-mkt-how-scene,
+  html:not([data-motion="full"]) .synapse-how-cursor,
+  html:not([data-motion="full"]) .synapse-how-progress-fill {
     animation: none;
   }
 }
@@ -1416,6 +2053,12 @@ html.synapse-reduce-motion .synapse-path-node rect {
 html.synapse-reduce-motion .synapse-mkt-reveal {
   opacity: 1;
   transform: none;
+}
+
+html.synapse-reduce-motion .synapse-mkt-how-scene,
+html.synapse-reduce-motion .synapse-how-cursor,
+html.synapse-reduce-motion .synapse-how-progress-fill {
+  animation: none;
 }
 
 .synapse-workshop-tabs {

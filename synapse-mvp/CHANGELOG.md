@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Homepage Benefits under the hero: Extreme Personalization, Dynamic Playback, and A Powerful Free Tier.
+- Features lists Real-Time Collaboration & Version History as Planned · Pro. It is not available to use yet.
 - Conditional branches can be named. Those names show on the node, in the inspector, and in Listen.
 - Choice is a new Conditional type. Playback pauses with an in-app multiple-choice popup of the named paths. Click a path or press the key you assigned to it — you do not need to drag the play circle.
 - You can hide the “No detected issues — path looks playable” bar with a small close button. It comes back if the path has a problem.
@@ -17,7 +19,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Homepage: Get Started for guests (sign up, then first-time welcome) and Open Synapse for signed-in users; Explore Workshop as the secondary action. Section order is concept, how it works, features, uses, Workshop, themes, about, then pricing. Navigation, card hover, and graph demos no longer look clickable unless they do something. Body text is larger, How it works is not clipped, and theme previews scroll with arrows.
+- Homepage hero is a full-width banner with a dark placeholder for a later background image, instead of the graph illustration. Benefits sit directly under it. More Than an Ordinary Playlist keeps the graph carousel. How it works now shows adding a song, connecting nodes, customization, and playback.
+- Homepage: Get Started for guests (sign up, then first-time welcome) and Open Synapse for signed-in users; Explore Workshop as the secondary action. Section order is benefits, concept, how it works, features, uses, Workshop, themes, about, then pricing. Navigation, card hover, and graph demos no longer look clickable unless they do something. Body text is larger, How it works is not clipped, and theme previews scroll with arrows.
 - Build, Branch, and Play on the homepage cycle after each demo finishes. Dots and the three cards jump to a scene. Build drags every node in from the left (Start, Track, and If, then the rest faster) with editor-style ports. Branch draws each connection under the cursor, then a play icon flashes. Play follows the edges, pauses on each node, stops at End, box-selects the path, and clears it so the loop can start again.
 - Saving / Saved sits to the left of the playlist name and dropdown. Autosave waits a few seconds after you stop editing so it does not flicker and the account is written less often.
 - On Profile, the user-info header shrinks into a compact bar when you scroll down.

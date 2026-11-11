@@ -36,11 +36,24 @@ const FEATURES = [
     body: 'Discover and share Music Paths and themes. Publish from Settings, browse Workshop, and share public or unlisted items by ID or link.',
     status: 'Available',
   },
+  {
+    title: 'Real-Time Collaboration & Version History',
+    body: 'Build Music Paths together in real time. See collaborators\' changes as they happen, work on shared playlists, and revisit earlier versions with version history.',
+    status: 'Planned · Pro',
+  },
 ] as const;
+
+function featureAvailability(status: string): 'available' | 'planned' {
+  return status.toLowerCase().startsWith('planned') ? 'planned' : 'available';
+}
 
 export default function Features() {
   return (
-    <section className="synapse-mkt-section" id="features" aria-labelledby="features-title">
+    <section
+      className="synapse-mkt-section synapse-mkt-features"
+      id="features"
+      aria-labelledby="features-title"
+    >
       <h2 id="features-title">Features</h2>
       <Reveal>
         <div className="synapse-mkt-cards">
@@ -48,7 +61,7 @@ export default function Features() {
             <article
               key={f.title}
               className="synapse-mkt-card synapse-mkt-card-info"
-              data-status={f.status.toLowerCase()}
+              data-status={featureAvailability(f.status)}
             >
               <h3>{f.title}</h3>
               <p className="synapse-mkt-status">{f.status}</p>
