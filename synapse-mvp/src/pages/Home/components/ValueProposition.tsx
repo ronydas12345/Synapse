@@ -13,29 +13,35 @@ const IDEAS: { beat: ValueBeat; title: string; body: string; label: string }[] =
   {
     beat: 'build',
     title: 'Build',
-    body: 'Drop nodes onto the canvas and connect them.',
-    label: 'A Start node, then a Track node dragged onto the canvas and connected.',
+    body: 'Drag nodes onto the canvas from the left. Ports stay visible until you connect them.',
+    label: 'Nodes dragged in from the left: Start, Track, and If, then the rest, including End on the right.',
   },
   {
     beat: 'branch',
     title: 'Branch',
-    body: 'Conditions, randomizers, and transitions determine what happens next.',
-    label: 'Branches drawing from a Conditional to other tracks, a transition, and a randomizer.',
+    body: 'Draw connections from port to port. A play control flashes when the path is wired.',
+    label: 'A cursor drawing connections between every node, then a brief play icon.',
   },
   {
     beat: 'play',
     title: 'Play',
-    body: 'Press Play. The path chooses the next song.',
-    label: 'The full path with a playback marker following the graph.',
+    body: 'Playback follows the edges, pauses on each node, and stops at End.',
+    label: 'A playback marker traveling along connections through each node to End, then a box select that clears the path.',
   },
 ];
 
 export default function ValueProposition() {
   const reduced = usePrefersReducedMotion();
   const [beat, setBeat] = useState<ValueBeat>('build');
+  const [animKey, setAnimKey] = useState(0);
   const [visible, setVisible] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null);
   const current = IDEAS[VALUE_BEATS.indexOf(beat)];
+
+  const selectBeat = (next: ValueBeat) => {
+    setBeat(next);
+    setAnimKey((key) => key + 1);
+  };
 
   useEffect(() => {
     const el = hostRef.current;
@@ -60,9 +66,12 @@ export default function ValueProposition() {
   useEffect(() => {
     if (!visible) return;
     const ms = reduced ? VALUE_BEAT_MS_REDUCED : VALUE_BEAT_MS[beat];
-    const timer = window.setTimeout(() => setBeat((now) => nextValueBeat(now)), ms);
+    const timer = window.setTimeout(() => {
+      setBeat((now) => nextValueBeat(now));
+      setAnimKey((key) => key + 1);
+    }, ms);
     return () => window.clearTimeout(timer);
-  }, [beat, visible, reduced]);
+  }, [beat, animKey, visible, reduced]);
 
   return (
     <section className="synapse-mkt-section" id="value" aria-labelledby="value-title">
@@ -72,17 +81,23 @@ export default function ValueProposition() {
       </p>
       <Reveal>
         <div className="synapse-mkt-value" ref={hostRef}>
-          <div className="synapse-mkt-value-picks" role="list" aria-label="How a music path works">
+          <div
+            className="synapse-mkt-value-picks"
+            role="tablist"
+            aria-label="How a music path works"
+          >
             {IDEAS.map((item) => (
-              <div
+              <button
                 key={item.title}
-                role="listitem"
+                type="button"
+                role="tab"
+                aria-selected={item.beat === beat}
                 className={`synapse-mkt-value-pick${item.beat === beat ? ' is-active' : ''}`}
-                aria-current={item.beat === beat ? 'true' : undefined}
+                onClick={() => selectBeat(item.beat)}
               >
                 <strong>{item.title}</strong>
                 <span>{item.body}</span>
-              </div>
+              </button>
             ))}
           </div>
           <div
@@ -91,11 +106,24 @@ export default function ValueProposition() {
             aria-atomic="true"
           >
             <ValuePathDemo
+              key={`${beat}-${animKey}`}
               beat={beat}
               active={visible}
               reduced={reduced}
               label={current.label}
             />
+            <div className="synapse-mkt-value-dots">
+              {IDEAS.map((item) => (
+                <button
+                  key={item.beat}
+                  type="button"
+                  aria-label={item.title}
+                  aria-pressed={item.beat === beat}
+                  className={`synapse-mkt-value-dot${item.beat === beat ? ' is-active' : ''}`}
+                  onClick={() => selectBeat(item.beat)}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </Reveal>
