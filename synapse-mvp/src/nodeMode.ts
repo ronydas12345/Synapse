@@ -6,6 +6,11 @@ import {
   defaultPathWeather,
   padPathList,
 } from './conditional/defaults';
+import {
+  defaultPathKey,
+  storedPathKeys,
+  storedPathNames,
+} from './conditional/pathMeta';
 import type { DateRule, WeatherState } from './conditional/types';
 
 export const CONDITIONAL_MODE_OPTIONS = [
@@ -13,6 +18,7 @@ export const CONDITIONAL_MODE_OPTIONS = [
   { value: 'timeRange', label: 'Time Range' },
   { value: 'weather', label: 'Weather' },
   { value: 'day', label: 'Day / Date' },
+  { value: 'choice', label: 'Choice' },
 ] as const;
 
 export function conditionalModeLabel(mode: string | undefined): string {
@@ -53,6 +59,12 @@ export function conditionalModePatch(
   if (newMode === 'day' && !data?.pathDateRules) {
     return { mode: newMode, pathDateRules: defaultPathDateRules(numPaths) };
   }
+  if (newMode === 'choice' && !Array.isArray(data?.pathKeys)) {
+    return {
+      mode: newMode,
+      pathKeys: Array.from({ length: numPaths }, (_, i) => defaultPathKey(i)),
+    };
+  }
   return { mode: newMode };
 }
 
@@ -74,6 +86,8 @@ export function resizeConditionalPaths(
     pathTimeRanges: Array.from({ length: n }, (_, i) => oldTimeRanges[i] || [{ start: 0, end: 23 }]),
     pathWeather: padPathList(oldWeather, n, (i) => weatherDefaults[i] || ['other']),
     pathDateRules: padPathList(oldDates, n, (i) => dateDefaults[i] || [defaultCatchAllRule()]),
+    pathNames: storedPathNames(data?.pathNames, n),
+    pathKeys: storedPathKeys(data?.pathKeys, n),
   };
 }
 

@@ -5,6 +5,11 @@ import { nodeCustomName, nodeTypeLabel } from './nodes/nodeName';
 import { conditionalModeLabel } from './nodeMode';
 import { formatDatePath, formatWeatherPath } from './conditional/format';
 import { parsePathDateRules, parsePathWeather } from './conditional/parse';
+import {
+  formatPathKeyHint,
+  parsePathKeys,
+  parsePathNames,
+} from './conditional/pathMeta';
 import { parseStyleNodeData, styleThemeDisplayName } from './styleNode/parse';
 import { allThemes, useThemeStore } from './theme/themeStore';
 
@@ -147,6 +152,8 @@ export function branchesFromNode(
     );
     const weather = parsePathWeather(node.data?.pathWeather, numPaths);
     const dates = parsePathDateRules(node.data?.pathDateRules, numPaths);
+    const names = parsePathNames(node.data?.pathNames, numPaths);
+    const keys = parsePathKeys(node.data?.pathKeys, numPaths);
     const options: ListenBranchOption[] = [];
     for (let i = 0; i < numPaths; i++) {
       const handle = pathLetter(i);
@@ -166,10 +173,12 @@ export function branchesFromNode(
         detail = formatWeatherPath(weather[i]);
       } else if (mode === 'day') {
         detail = formatDatePath(dates[i]);
+      } else if (mode === 'choice') {
+        detail = formatPathKeyHint(keys[i]) || 'Click';
       }
       options.push({
         nodeId: edge.target,
-        label: `${handle} · ${label.title}`,
+        label: `${names[i]} · ${label.title}`,
         detail,
         chosen: false,
       });
@@ -282,6 +291,10 @@ export function findSplitOwners(
   const push = (node: Node | undefined) => {
     if (node && !owners.some((o) => o.id === node.id)) owners.push(node);
   };
+  const self = nodes.find((n) => n.id === nodeId);
+  if (self && (self.type === 'conditional' || self.type === 'splitter')) {
+    push(self);
+  }
   const randomizer = nodes.find(
     (n) =>
       n.type === 'randomizer' &&
@@ -442,6 +455,7 @@ export function buildListenRows(args: {
     const node = nodes.find((n) => n.id === item.nodeId);
     const remainingIds = parsed.slice(index).map((p) => p.nodeId);
     emitSplit(item.nodeId, remainingIds, phase);
+    if (item.kind === 'choice') return;
     rows.push(describeItem(phase, item.nodeId, node, item.kind));
   };
 

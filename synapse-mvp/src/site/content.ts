@@ -42,7 +42,7 @@ export const PRICING = {
       'Visual Music Path editor',
       'Listen mode',
       'YouTube track playback',
-      'Weighted, time-of-day, weather, and day/date conditionals',
+      'Weighted, time-of-day, weather, day/date, and Choice conditionals',
       'Sequence and weighted randomizers, with play-count limits',
       'Silence, audio, and YouTube transitions',
       'Preset and custom themes',
@@ -128,7 +128,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Can I name sequences and gather them on the canvas?',
-    a: 'Yes. Every node has a Name field in the inspector (travel, childhood, techno, and so on). Bring selected onto page keeps their spacing and moves them to one page; Bring all onto page packs named groups together. Speed for the current song is on the bottom deck.',
+    a: 'Yes. Every node has a Name field in the inspector (travel, childhood, techno, and so on). Conditional branches can be named too — those labels show on the node, in Listen, and in the Choice popup. Bring selected onto page keeps their spacing and moves them to one page; Bring all onto page packs named groups together. Speed for the current song is on the bottom deck.',
   },
   {
     q: 'Can I hide the bottom player?',

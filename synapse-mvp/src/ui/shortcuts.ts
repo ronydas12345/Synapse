@@ -15,6 +15,7 @@ export const EDITOR_SHORTCUTS: ShortcutRow[] = [
   { keys: 'Ctrl/Cmd+A', action: 'Select visible nodes', when: 'edit' },
   { keys: 'Delete / Backspace', action: 'Delete selected nodes', when: 'edit' },
   { keys: 'Space', action: 'Play / pause' },
+  { keys: 'Assigned keys', action: 'Pick a Choice path while its popup is open' },
   { keys: 'Ctrl/Cmd+K', action: 'Command palette' },
   { keys: 'Ctrl/Cmd+/', action: 'Keyboard shortcuts' },
   { keys: 'Esc', action: 'Close dialogs or exit the tutorial' },

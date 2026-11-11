@@ -27,7 +27,13 @@ import {
 } from '../nodeMode';
 import WeatherPathEditor from './conditional/WeatherPathEditor';
 import DayPathEditor from './conditional/DayPathEditor';
+import PathKeyBind from './conditional/PathKeyBind';
 import { parsePathDateRules, parsePathWeather } from '../conditional/parse';
+import {
+  parsePathKeys,
+  parsePathNames,
+  storedPathNames,
+} from '../conditional/pathMeta';
 import {
   defaultCatchAllRule,
   defaultPathDateRules,
@@ -597,6 +603,55 @@ export default function NodeInspector() {
               />
             </div>
 
+            {selectedNode.data?.mode === 'choice' ? (
+              <p className="text-xs text-[var(--text-muted)] m-0 pt-2">
+                Playback pauses here and shows these named paths. The listener
+                picks one without moving the play circle. Optional keys work
+                while that popup is open.
+              </p>
+            ) : null}
+
+            {Array.from({ length: Number(selectedNode.data?.numPaths) || 2 }).map(
+              (_, i) => {
+                const n = Number(selectedNode.data?.numPaths) || 2;
+                const storedNames = storedPathNames(selectedNode.data?.pathNames, n);
+                const keys = parsePathKeys(selectedNode.data?.pathKeys, n);
+                return (
+                  <div key={`path-meta-${i}`} className="border-t border-[var(--border)] pt-3">
+                    <label className="text-[var(--text)] block mb-1">
+                      Path {String.fromCharCode(65 + i)} name
+                    </label>
+                    <RevertibleTextInput
+                      allowEmpty
+                      placeholder={`Path ${String.fromCharCode(65 + i)}`}
+                      className="w-full p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded text-[var(--text)]"
+                      value={storedNames[i] || ''}
+                      onCommit={(name) => {
+                        const next = storedPathNames(selectedNode.data?.pathNames, n);
+                        next[i] = name.trim();
+                        updateNodeData(selectedNode.id, { pathNames: next });
+                      }}
+                    />
+                    {selectedNode.data?.mode === 'choice' ? (
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <label className="text-xs text-[var(--text-muted)] m-0">
+                          Key
+                        </label>
+                        <PathKeyBind
+                          value={keys[i] || ''}
+                          onChange={(key) => {
+                            const next = parsePathKeys(selectedNode.data?.pathKeys, n);
+                            next[i] = key;
+                            updateNodeData(selectedNode.id, { pathKeys: next });
+                          }}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              }
+            )}
+
             {selectedNode.data?.mode === 'random' && (
               <>
                 {Array.from({ length: selectedNode.data?.numPaths || 2 }).map((_, i) => {
@@ -604,10 +659,14 @@ export default function NodeInspector() {
                   const weight = weights[i] || 10;
                   const totalWeight = weights.reduce((a: number, b: number) => a + b, 0) || 1;
                   const percentage = Math.round((weight / totalWeight) * 100);
+                  const pathLabel = parsePathNames(
+                    selectedNode.data?.pathNames,
+                    Number(selectedNode.data?.numPaths) || 2
+                  )[i];
 
                   return (
                     <div key={`path-${i}`} className="border-t border-[var(--border)] pt-3">
-                      <label className="text-[var(--text)] block mb-1">Path {String.fromCharCode(65 + i)} Weight</label>
+                      <label className="text-[var(--text)] block mb-1">{pathLabel} Weight</label>
                       <div className="flex items-center gap-2">
                         <RevertibleNumberInput
                           min={1}
@@ -639,7 +698,11 @@ export default function NodeInspector() {
                   return (
                     <div key={`path-time-${pathIdx}`} className="border-t border-[var(--border)] pt-3">
                       <label className="text-[var(--text)] block mb-2 font-semibold text-sm">
-                        Path {String.fromCharCode(65 + pathIdx)} Time Ranges
+                        {parsePathNames(
+                          selectedNode.data?.pathNames,
+                          Number(selectedNode.data?.numPaths) || 2
+                        )[pathIdx]}{' '}
+                        Time Ranges
                       </label>
                       <div className="space-y-2">
                         {timeRanges.map((range, rangeIdx) => (
@@ -716,6 +779,10 @@ export default function NodeInspector() {
 
             {selectedNode.data?.mode === 'weather' && (
               <WeatherPathEditor
+                pathLabels={parsePathNames(
+                  selectedNode.data?.pathNames,
+                  Number(selectedNode.data?.numPaths) || 2
+                )}
                 pathWeather={(() => {
                   const n = Number(selectedNode.data?.numPaths) || 2;
                   const rows = parsePathWeather(selectedNode.data?.pathWeather, n);
@@ -731,6 +798,10 @@ export default function NodeInspector() {
 
             {selectedNode.data?.mode === 'day' && (
               <DayPathEditor
+                pathLabels={parsePathNames(
+                  selectedNode.data?.pathNames,
+                  Number(selectedNode.data?.numPaths) || 2
+                )}
                 pathDateRules={(() => {
                   const n = Number(selectedNode.data?.numPaths) || 2;
                   const rows = parsePathDateRules(selectedNode.data?.pathDateRules, n);

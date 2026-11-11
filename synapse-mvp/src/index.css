@@ -2109,6 +2109,29 @@ button.synapse-node-row-title {
   text-align: center;
 }
 
+.synapse-path-key-bind {
+  min-width: 4.5rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.synapse-path-key-bind:hover,
+.synapse-path-key-bind:focus-visible {
+  border-color: var(--accent);
+}
+
+.synapse-path-key-bind.is-listening {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
 .synapse-node-field.is-wide {
   width: 100%;
   padding: 0.35rem 0.5rem;

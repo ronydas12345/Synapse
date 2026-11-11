@@ -127,7 +127,7 @@ export default function Sidebar() {
           <button
             onClick={normalizeSplitters}
             className="synapse-btn-secondary"
-            title="Flatten stacked weighted-random conditionals, keeping path odds. Weather, time, and day conditionals stay separate."
+            title="Flatten stacked weighted-random conditionals, keeping path odds. Weather, time, day, and Choice conditionals stay separate."
           >
             Normalize Conditionals
           </button>

@@ -88,7 +88,7 @@ export const NODE_CAPTIONS: Record<string, string> = {
   start: 'Playback begins from this node.',
   end: 'Playback stops here.',
   track: 'A YouTube song on your music path.',
-  conditional: 'Chooses a path from rules you set.',
+  conditional: 'Chooses a path from rules you set, or a Choice popup.',
   randomizer: 'Chooses one of several next tracks.',
   transition: 'A gap between songs.',
   style: 'Changes the look during playback.',
@@ -98,7 +98,7 @@ export const NODE_CAPTIONS: Record<string, string> = {
 export const NODE_BLURBS: Record<CanvasNodeType, string> = {
   start: 'Playback begins here.',
   track: 'Add a song to your music path.',
-  conditional: 'Choose a path using rules.',
+  conditional: 'Choose a path using rules, or let the listener pick.',
   randomizer: 'Choose between multiple possible next tracks.',
   transition: 'Add a gap between songs.',
   style: 'Change the look during playback.',

@@ -1,7 +1,11 @@
 import { usePathStore, useGraphReadOnly } from './store';
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import type { Node } from '@xyflow/react';
-import { buildPlaybackQueueResult, parseQueueKey } from './engine';
+import {
+  buildPlaybackQueueResult,
+  continuePlaybackFromChoice,
+  parseQueueKey,
+} from './engine';
 import {
   YouTubeIframeAdapter,
   extractYouTubeId,
@@ -13,7 +17,14 @@ import { clampTrackTimes } from './playback/trackTimes';
 import DeckTransport from './components/DeckTransport';
 import AudioVisualizer from './components/AudioVisualizer';
 import PlayingScreen from './components/PlayingScreen';
-import { buildListenRows } from './listenPath';
+import ChoiceDialog, { type ChoiceDialogOption } from './components/ChoiceDialog';
+import { buildListenRows, nodeListLabel } from './listenPath';
+import { nodeCustomName } from './nodes/nodeName';
+import {
+  connectedPathTargetId,
+  parsePathKeys,
+  parsePathNames,
+} from './conditional/pathMeta';
 import { useProfileStore } from './profile/profileStore';
 import {
   graphNeedsWeather,
@@ -124,6 +135,7 @@ export default function Player() {
   const advanceRef = useRef<() => void>(() => {});
   const replayRef = useRef<() => boolean>(() => false);
   const skipLoopRef = useRef(false);
+  const pickingChoiceRef = useRef(false);
   const [loopTrack, setLoopTrack] = useState(false);
   const loopTrackRef = useRef(false);
   loopTrackRef.current = loopTrack;
@@ -212,6 +224,14 @@ export default function Player() {
     const state = usePathStore.getState();
     if (state.playbackQueue.length === 0) return;
 
+    const current = parseQueueKey(
+      state.playbackQueue[state.currentTrackIndex] || ''
+    );
+    if (current?.kind === 'choice') {
+      setStatusMessage('Choose a path to continue');
+      return;
+    }
+
     if (!state.isPlaying) {
       state.setIsPlaying(true);
     }
@@ -274,6 +294,7 @@ export default function Player() {
     sessionActiveRef.current = false;
     advancingRef.current = false;
     activeItemKeyRef.current = null;
+    pickingChoiceRef.current = false;
     clearSilenceTimer();
     stopLocalAudio();
     adapterRef.current?.stop();
@@ -509,7 +530,9 @@ export default function Player() {
           ? 'Style missing — skipping'
           : kind === 'transition'
             ? 'Transition missing — skipping'
-            : 'Track missing — skipping'
+            : kind === 'choice'
+              ? 'Choice missing — skipping'
+              : 'Track missing — skipping'
       );
       silenceTimerRef.current = window.setTimeout(() => advance(), 400);
       return () => clearSilenceTimer();
@@ -561,6 +584,12 @@ export default function Player() {
       setStatusMessage('Empty transition — skipping');
       silenceTimerRef.current = window.setTimeout(() => advance(), 400);
       return () => clearSilenceTimer();
+    }
+
+    if (kind === 'choice') {
+      adapterRef.current?.stop();
+      setStatusMessage('Choose a path to continue');
+      return;
     }
 
     if (kind === 'style') {
@@ -703,6 +732,12 @@ export default function Player() {
           artist: String(currentNode?.data?.type || 'silence'),
           album: '',
         }
+      : currentParsed?.kind === 'choice'
+        ? {
+            title: nodeCustomName(currentNode?.data) || 'Choose a path',
+            artist: 'Choice',
+            album: '',
+          }
       : currentNode
         ? getTrackDisplayMeta(currentNode.data)
         : null;
@@ -774,6 +809,66 @@ export default function Player() {
     adapterRef.current?.setPlaybackRate(speedPct / 100);
   }, [currentNode?.data?.speed]);
 
+  const pickChoice = useCallback((pathIndex: number) => {
+    if (pickingChoiceRef.current) return;
+    pickingChoiceRef.current = true;
+    void (async () => {
+      const state = usePathStore.getState();
+      const key = state.playbackQueue[state.currentTrackIndex];
+      const parsed = key ? parseQueueKey(key) : null;
+      if (parsed?.kind !== 'choice') {
+        pickingChoiceRef.current = false;
+        return;
+      }
+      const weatherState = await resolvePlaybackWeather(state.nodes);
+      const result = continuePlaybackFromChoice(
+        { nodes: state.nodes, edges: state.edges },
+        parsed.nodeId,
+        pathIndex,
+        { weatherState, now: new Date() }
+      );
+      const latest = usePathStore.getState();
+      const still = parseQueueKey(
+        latest.playbackQueue[latest.currentTrackIndex] || ''
+      );
+      if (still?.kind !== 'choice' || still.nodeId !== parsed.nodeId) {
+        pickingChoiceRef.current = false;
+        return;
+      }
+      latest.setPlaybackQueue([
+        ...latest.playbackQueue.slice(0, latest.currentTrackIndex + 1),
+        ...result.items.map((item) => item.key),
+      ]);
+      if (!latest.isPlaying) latest.setIsPlaying(true);
+      advancingRef.current = false;
+      activeItemKeyRef.current = null;
+      advanceRef.current();
+      pickingChoiceRef.current = false;
+    })().catch(() => {
+      pickingChoiceRef.current = false;
+    });
+  }, []);
+
+  const choiceOptions = useMemo((): ChoiceDialogOption[] => {
+    if (currentParsed?.kind !== 'choice' || !currentNode) return [];
+    const numPaths = Math.max(Number(currentNode.data?.numPaths) || 2, 2);
+    const names = parsePathNames(currentNode.data?.pathNames, numPaths);
+    const keys = parsePathKeys(currentNode.data?.pathKeys, numPaths);
+    return Array.from({ length: numPaths }, (_, index) => {
+      const targetId = connectedPathTargetId(currentNode.id, index, edges);
+      const target = targetId
+        ? nodes.find((node) => node.id === targetId)
+        : undefined;
+      return {
+        index,
+        name: names[index],
+        key: keys[index] || '',
+        targetTitle: target ? nodeListLabel(target).title : 'Not connected',
+        connected: Boolean(targetId),
+      };
+    });
+  }, [currentParsed?.kind, currentNode, nodes, edges]);
+
   const toggleMinimized = () => {
     setMinimized((current) => {
       const next = !current;
@@ -787,6 +882,7 @@ export default function Player() {
   };
 
   return (
+    <>
     <div
       className={`synapse-deck ${listListen ? 'is-listen' : ''} ${minimized ? 'is-minimized' : ''}`}
       data-tutorial="player"
@@ -918,5 +1014,13 @@ export default function Player() {
         </>
       )}
     </div>
+    {currentParsed?.kind === 'choice' && choiceOptions.length > 0 ? (
+      <ChoiceDialog
+        title={nodeCustomName(currentNode?.data) || 'Choose a path'}
+        options={choiceOptions}
+        onPick={pickChoice}
+      />
+    ) : null}
+    </>
   );
 }

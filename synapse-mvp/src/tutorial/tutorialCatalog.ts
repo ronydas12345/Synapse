@@ -626,9 +626,9 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
   {
     id: 'conditionals',
     title: 'Conditional / Splitter Nodes',
-    summary: 'Branches, weighted random, time range, weather, and day/date rules.',
+    summary: 'Branches, named paths, weighted random, time range, weather, day/date, and Choice popups.',
     keywords:
-      'conditional splitter branch weighted random time range weather day date rules path fork',
+      'conditional splitter branch named path weighted random time range weather day date rules path fork choice popup key',
     group: 'building',
     steps: [
       s(
@@ -646,7 +646,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'c-outputs',
         'Connecting multiple outputs',
-        'Each numbered handle is one path. Connect each handle to the next node (Track, Randomizer, another Conditional, and so on).',
+        'Each lettered handle is one path (A, B, …). Connect each handle to the next node (Track, Randomizer, another Conditional, and so on). Name branches in the inspector — those names show on the node and in the Choice popup.',
         { type: 'highlight', route: 'edit', target: 'node-conditional' }
       ),
       s(
@@ -674,9 +674,15 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
         { type: 'highlight', route: 'edit', target: 'conditional-mode' }
       ),
       s(
+        'c-choice',
+        'Choice mode',
+        'Choice does not auto-pick. When playback reaches this node, a popup lists the named paths. Click one, or press the key you assigned in the inspector. You do not drag the play circle to choose.',
+        { type: 'highlight', route: 'edit', target: 'conditional-mode' }
+      ),
+      s(
         'c-select',
         'Understanding branch selection',
-        'The engine picks one outgoing path when it reaches the Conditional — it does not play every branch. Listen still lists the other forks so you can jump.',
+        'Weighted, time, weather, and day Conditionals pick one outgoing path when the walk reaches them — they do not play every branch. Choice waits for the listener. Listen still lists the other forks so you can jump.',
         { type: 'info', route: 'listen', target: 'listen-path' }
       ),
     ],

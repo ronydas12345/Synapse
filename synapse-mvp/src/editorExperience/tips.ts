@@ -42,7 +42,7 @@ export const FIRST_USE_TIPS: Record<FirstUseTipId, FirstUseTip> = {
   conditional: {
     id: 'conditional',
     title: 'Conditional',
-    body: 'Chooses a path from rules you set.',
+    body: 'Chooses a path from rules you set, or a Choice popup the listener picks.',
     tutorialId: 'conditionals',
   },
   randomizer: {

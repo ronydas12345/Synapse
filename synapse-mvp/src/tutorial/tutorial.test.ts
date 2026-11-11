@@ -131,6 +131,8 @@ describe('tutorial engine', () => {
     );
     const weather = searchSections('weather');
     expect(weather.some((s) => s.id === 'conditionals')).toBe(true);
+    const choice = searchSections('choice');
+    expect(choice.some((s) => s.id === 'conditionals')).toBe(true);
     const align = searchSections('center line');
     expect(align.some((s) => s.id === 'align-guides')).toBe(true);
     expect(TUTORIAL_SECTIONS.some((s) => s.steps.some((st) => st.id === 'ag-center'))).toBe(true);

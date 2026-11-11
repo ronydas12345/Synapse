@@ -150,4 +150,16 @@ describe('normalizeStackedConditionals', () => {
     const next = normalizeStackedConditionals(nodes, edges);
     expect(next.nodes.map((item) => item.id).sort()).toEqual(['day', 't1', 'weather']);
   });
+
+  it('does not flatten Choice conditionals into weighted random parents', () => {
+    const nodes = [
+      node('parent', 'conditional', { mode: 'random', numPaths: 2, weights: [50, 50] }),
+      node('child', 'conditional', { mode: 'choice', numPaths: 2 }),
+      node('t1', 'track', {}),
+    ];
+    const edges = [edge('parent', 'child', 'A'), edge('child', 't1', 'A')];
+    const next = normalizeStackedConditionals(nodes, edges);
+    expect(next.nodes.some((item) => item.id === 'child')).toBe(true);
+    expect(next.nodes.find((item) => item.id === 'child')?.data?.mode).toBe('choice');
+  });
 });

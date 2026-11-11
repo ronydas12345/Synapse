@@ -2,6 +2,7 @@ export {
   buildPlaybackQueue,
   buildPlaybackQueueKeys,
   buildPlaybackQueueResult,
+  continuePlaybackFromChoice,
   DEFAULT_MAX_QUEUE_ITEMS,
   DEFAULT_MAX_TRAVERSE_STEPS,
   DEFAULT_MAX_PLAY_COUNT,

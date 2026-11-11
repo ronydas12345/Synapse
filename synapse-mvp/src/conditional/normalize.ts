@@ -1,6 +1,6 @@
 import type { Edge, Node } from '@xyflow/react';
 
-export type ConditionalKind = 'random' | 'timeRange' | 'weather' | 'day';
+export type ConditionalKind = 'random' | 'timeRange' | 'weather' | 'day' | 'choice';
 
 function gcd(a: number, b: number): number {
   let x = Math.abs(a);
@@ -25,7 +25,14 @@ function isConditionalNode(node: Node | undefined): boolean {
 export function conditionalKind(node: Node | undefined): ConditionalKind | null {
   if (!isConditionalNode(node)) return null;
   const mode = node?.data?.mode;
-  if (mode === 'timeRange' || mode === 'weather' || mode === 'day') return mode;
+  if (
+    mode === 'timeRange' ||
+    mode === 'weather' ||
+    mode === 'day' ||
+    mode === 'choice'
+  ) {
+    return mode;
+  }
   return 'random';
 }
 
@@ -86,7 +93,7 @@ function flattenRandomChild(
 
 /**
  * Flatten nested weighted-random conditionals into the parent, multiplying
- * path weights. Weather, time-range, and day conditionals are left intact.
+ * path weights. Weather, time-range, day, and Choice conditionals are left intact.
  */
 export function normalizeStackedConditionals(
   nodesIn: Node[],

@@ -158,6 +158,18 @@ function walkGraph(
         }
       }
     } else if (isBranchingType(node.type)) {
+      if ((node.data?.mode as string) === 'choice') {
+        if (canPush()) {
+          queue.push({
+            kind: 'choice',
+            nodeId,
+            key: toQueueKey('choice', nodeId),
+          });
+          if (haltReason === 'ok') haltReason = 'choice';
+        }
+        return;
+      }
+
       const selectedPathIndex = selectConditionalPathIndex(
         node.data as Record<string, unknown> | undefined,
         { rng, currentHour, now, weatherState }
@@ -212,4 +224,27 @@ export function buildPlaybackQueueKeys(
   options?: BuildQueueOptions
 ): string[] {
   return buildPlaybackQueue(graph, options).map((item) => item.key);
+}
+
+/**
+ * After the listener picks a Choice branch, walk from that handle's target.
+ * Does not re-queue the Choice node itself.
+ */
+export function continuePlaybackFromChoice(
+  graph: GraphSnapshot,
+  choiceNodeId: string,
+  pathIndex: number,
+  options: BuildQueueOptions = {}
+): BuildQueueResult {
+  const handle = String.fromCharCode(65 + Math.max(0, Math.floor(pathIndex)));
+  const outgoingEdge = graph.edges.find(
+    (edge) => edge.source === choiceNodeId && edge.sourceHandle === handle
+  );
+  if (!outgoingEdge?.target) {
+    return { items: [], haltReason: 'ok' };
+  }
+  return buildPlaybackQueueResult(graph, {
+    ...options,
+    startNodeId: outgoingEdge.target,
+  });
 }

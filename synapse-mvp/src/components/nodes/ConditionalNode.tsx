@@ -1,5 +1,13 @@
 import { Handle, Position } from '@xyflow/react';
-import { CalendarDays, CloudSun, Clock, GitBranch, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  CalendarDays,
+  CloudSun,
+  Clock,
+  GitBranch,
+  ListChecks,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { usePathStore, useGraphReadOnly } from '../../store';
 import { useNodePlaybackClass } from '../../playback/nodeHighlight';
 import { useState, memo } from 'react';
@@ -7,6 +15,11 @@ import { CONDITIONAL_MODE_OPTIONS, conditionalModePatch } from '../../nodeMode';
 import { formatDatePath, formatWeatherPath } from '../../conditional/format';
 import { parsePathDateRules, parsePathWeather } from '../../conditional/parse';
 import type { DateRule, WeatherState } from '../../conditional/types';
+import {
+  formatPathKeyHint,
+  parsePathKeys,
+  parsePathNames,
+} from '../../conditional/pathMeta';
 import { nodeCustomName } from '../../nodes/nodeName';
 import NodeCaption from '../../editorExperience/NodeCaption';
 
@@ -54,16 +67,29 @@ function ConditionalNode({ data = {}, id }: { data?: Record<string, unknown>; id
     updateNodeData(id, { weights: next });
   };
 
+  const pathNames = parsePathNames(data?.pathNames, numPaths);
+  const pathKeys = parsePathKeys(data?.pathKeys, numPaths);
+
   const ModeIcon =
-    mode === 'timeRange' ? Clock : mode === 'weather' ? CloudSun : mode === 'day' ? CalendarDays : GitBranch;
+    mode === 'choice'
+      ? ListChecks
+      : mode === 'timeRange'
+        ? Clock
+        : mode === 'weather'
+          ? CloudSun
+          : mode === 'day'
+            ? CalendarDays
+            : GitBranch;
   const iconClass =
-    mode === 'timeRange'
-      ? 'text-[var(--ok)]'
-      : mode === 'weather'
-        ? 'text-[var(--warning)]'
-        : mode === 'day'
-          ? 'text-[var(--accent-warm)]'
-          : 'text-[var(--accent)]';
+    mode === 'choice'
+      ? 'text-[var(--accent-warm)]'
+      : mode === 'timeRange'
+        ? 'text-[var(--ok)]'
+        : mode === 'weather'
+          ? 'text-[var(--warning)]'
+          : mode === 'day'
+            ? 'text-[var(--accent-warm)]'
+            : 'text-[var(--accent)]';
 
   return (
     <>
@@ -112,13 +138,21 @@ function ConditionalNode({ data = {}, id }: { data?: Record<string, unknown>; id
                 const weight = weights[i] || 10;
                 const percentage = percentages[i];
                 const timeRanges = pathTimeRanges[i] || [{ start: 0, end: 23 }];
-                const pathLabel = `Path ${String.fromCharCode(65 + i)}`;
+                const pathLabel = pathNames[i];
+                const keyHint = formatPathKeyHint(pathKeys[i]);
                 return (
                   <div
                     key={i}
                     className={`synapse-node-row ${mode !== 'random' ? 'is-ok' : ''}`}
                   >
-                    <div className="synapse-node-row-title">{pathLabel}</div>
+                    <div className="synapse-node-row-title truncate" title={pathLabel}>
+                      {pathLabel}
+                    </div>
+                    {mode === 'choice' && (
+                      <span className="synapse-node-muted">
+                        {keyHint ? keyHint : 'No key'}
+                      </span>
+                    )}
                     {mode === 'random' && (
                       <div className="flex items-center gap-1">
                         <input

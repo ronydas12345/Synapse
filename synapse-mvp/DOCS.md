@@ -29,7 +29,7 @@ Rules:
 | --- | --- | --- |
 | `start` | Walk origin | No |
 | `track` | YouTube video | `track:{id}` |
-| `conditional` | Branch | No (picks a path, then continues) |
+| `conditional` | Branch | No, except Choice (`choice:{id}`) until the listener picks |
 | `randomizer` | Ordered or weighted pool | Nested tracks, then continue |
 | `transition` | Gap between songs | `transition:{id}` |
 | `style` | Theme cue on the walk | `style:{id}` |
@@ -73,12 +73,14 @@ Dragging a track onto a Sequence or Randomizer **moves** it into that node’s `
 {
   numPaths: number
   weights: number[]           // mode === 'random'
-  mode: 'random' | 'timeRange' | 'weather' | 'day'
+  mode: 'random' | 'timeRange' | 'weather' | 'day' | 'choice'
+  pathNames?: string[]        // display names; empty → Path A, Path B, …
+  pathKeys?: string[]         // Choice keybinds (`KeyboardEvent.key`)
   pathTimeRanges?: { start: number; end: number }[][]  // hours 0–23
 }
 ```
 
-Outgoing handles are `"0"`, `"1"`, … `numPaths - 1`.
+Outgoing handles are `"A"`, `"B"`, … for `numPaths`. Display names live in `pathNames` and do not change handle ids.
 
 | `mode` | How a path is chosen |
 | --- | --- |
@@ -86,6 +88,7 @@ Outgoing handles are `"0"`, `"1"`, … `numPaths - 1`.
 | `timeRange` | Local hour in `pathTimeRanges[i]` |
 | `weather` | Normalized weather enum (below) |
 | `day` | Day / date clauses (`all` or `any`) |
+| `choice` | Playback pauses and shows an in-app multiple-choice popup. The listener clicks a named path or presses its key. The play circle does not need to move. |
 
 Weather is a closed enum. The engine never sees provider strings:
 
@@ -157,16 +160,23 @@ function buildPlaybackQueueResult(
   graph: { nodes: Node[]; edges: Edge[] },
   options?: BuildQueueOptions
 ): { items: QueueItem[]; haltReason: BuildQueueHaltReason }
+
+function continuePlaybackFromChoice(
+  graph: { nodes: Node[]; edges: Edge[] },
+  choiceNodeId: string,
+  pathIndex: number,
+  options?: BuildQueueOptions
+): { items: QueueItem[]; haltReason: BuildQueueHaltReason }
 ```
 
 ```ts
 type QueueItem = {
-  kind: 'track' | 'transition' | 'style'
+  kind: 'track' | 'transition' | 'style' | 'choice'
   nodeId: string
   key: string  // `${kind}:${nodeId}`
 }
 
-type BuildQueueHaltReason = 'ok' | 'no_start' | 'max_steps' | 'max_queue'
+type BuildQueueHaltReason = 'ok' | 'no_start' | 'max_steps' | 'max_queue' | 'choice'
 
 type BuildQueueOptions = {
   rng?: () => number
@@ -182,7 +192,7 @@ type BuildQueueOptions = {
 
 - Invalid `startNodeId` types (for example `comment`) yield an empty queue. Missing ids fall back to Start.
 - Origins that may start a walk: `start`, `track`, `conditional`, `splitter`, `randomizer`, `transition`, `style`, `end`.
-- Conditionals are visited once per build (same cycle protection as other nodes).
+- Conditionals are visited once per build (same cycle protection as other nodes). Choice conditionals push `choice:{id}` and halt that walk. After a pick, `continuePlaybackFromChoice` walks from the chosen handle’s target.
 - YouTube IFrame errors (bad id, private/deleted, embed blocked) skip to the next queue item. Player-init and play failures offer Retry.
 - **Play from here** (Track node or inspector) sets `startNodeId` and rebuilds the queue. It does not change the saved graph.
 - **Pause** keeps the queue. **Stop** ends the session. The deck **loop** button repeats the current song without rebuilding the path.

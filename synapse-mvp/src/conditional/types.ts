@@ -104,5 +104,11 @@ export type DateRule = {
   clauses: DateClause[];
 };
 
-export const CONDITIONAL_MODES = ['random', 'timeRange', 'weather', 'day'] as const;
+export const CONDITIONAL_MODES = [
+  'random',
+  'timeRange',
+  'weather',
+  'day',
+  'choice',
+] as const;
 export type ConditionalModeValue = (typeof CONDITIONAL_MODES)[number];

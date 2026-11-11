@@ -39,7 +39,28 @@ describe('listenPath', () => {
     const edges = [makeEdge('spl', 'a', 'A'), makeEdge('spl', 'b', 'B')];
     const split = branchesFromNode(spl, [a, b, spl], edges);
     expect(split?.options[0].label).toContain('Left');
+    expect(split?.options[0].label).toContain('Path A');
     expect(split?.options[1].detail).toBe('30%');
+  });
+
+  it('lists named Choice branches with key hints', () => {
+    const a = makeNode('a', 'track', { songTitle: 'Verse song' });
+    const b = makeNode('b', 'track', { songTitle: 'Chorus song' });
+    const spl = makeNode('spl', 'conditional', {
+      mode: 'choice',
+      numPaths: 2,
+      pathNames: ['Verse', 'Chorus'],
+      pathKeys: ['v', 'c'],
+    });
+    const split = branchesFromNode(
+      spl,
+      [a, b, spl],
+      [makeEdge('spl', 'a', 'A'), makeEdge('spl', 'b', 'B')]
+    );
+    expect(split?.modeLabel).toBe('Choice');
+    expect(split?.options[0].label).toBe('Verse · Verse song');
+    expect(split?.options[0].detail).toBe('V');
+    expect(split?.options[1].label).toBe('Chorus · Chorus song');
   });
 
   it('lists weather and day/date branch details', () => {

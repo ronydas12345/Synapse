@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Conditional branches can be named. Those names show on the node, in the inspector, and in Listen.
+- Choice is a new Conditional type. Playback pauses with an in-app multiple-choice popup of the named paths. Click a path or press the key you assigned to it — you do not need to drag the play circle.
 - You can hide the “No detected issues — path looks playable” bar with a small close button. It comes back if the path has a problem.
 - Tutorial steps that ask you to connect two nodes highlight both connection points and draw a yellow dotted line between them.
 - Editor experience on the workspace (Basic, Intermediate, Advanced). It changes guidance and canvas density, not what you can build. Switch from the bottom-left control or Settings → Canvas. Playlists remember zoom, and Fit view / Focus selected / restore previous view stay available.

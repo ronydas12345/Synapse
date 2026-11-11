@@ -158,6 +158,66 @@
   z-index: 92;
 }
 
+.synapse-choice-layer {
+  z-index: 90;
+}
+
+.synapse-choice-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0.85rem 0 0;
+}
+
+.synapse-choice-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+
+.synapse-choice-option:hover,
+.synapse-choice-option:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.synapse-choice-option:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.synapse-choice-option-name {
+  display: block;
+  font-weight: 600;
+}
+
+.synapse-choice-option-target {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.synapse-choice-option-key {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.12rem 0.4rem;
+}
+
 .synapse-confirm-body {
   white-space: pre-wrap;
 }

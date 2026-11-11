@@ -38,9 +38,11 @@ export function WeatherStatusBanner() {
 
 export default function WeatherPathEditor({
   pathWeather,
+  pathLabels,
   onChange,
 }: {
   pathWeather: WeatherState[][];
+  pathLabels?: string[];
   onChange: (next: WeatherState[][]) => void;
 }) {
   const toggle = (pathIdx: number, state: WeatherState) => {
@@ -64,7 +66,8 @@ export default function WeatherPathEditor({
       {pathWeather.map((states, pathIdx) => (
         <div key={`weather-${pathIdx}`} className="border-t border-[var(--border)] pt-3">
           <label className="text-[var(--text)] block mb-2 font-semibold text-sm">
-            Path {String.fromCharCode(65 + pathIdx)} weather
+            {pathLabels?.[pathIdx] || `Path ${String.fromCharCode(65 + pathIdx)}`}{' '}
+            weather
           </label>
           <p className="text-xs text-[var(--text-muted)] mb-2 m-0">
             This branch plays when current weather matches any checked state.

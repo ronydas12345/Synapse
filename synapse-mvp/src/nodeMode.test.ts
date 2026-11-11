@@ -27,6 +27,7 @@ describe('mode dropdown patches', () => {
       'timeRange',
       'weather',
       'day',
+      'choice',
     ]);
   });
 
@@ -86,5 +87,14 @@ describe('mode dropdown patches', () => {
     expect((resized.pathWeather as string[][]).length).toBe(3);
     expect((resized.pathDateRules as unknown[]).length).toBe(3);
     expect((resized.weights as number[]).length).toBe(3);
+    expect((resized.pathNames as string[]).length).toBe(3);
+    expect((resized.pathKeys as string[]).length).toBe(3);
+  });
+
+  it('initializes Choice keys when switching modes', () => {
+    const data = { mode: 'random', weights: [10, 10], numPaths: 2 };
+    const patch = conditionalModePatch(data, 'choice');
+    expect(patch.mode).toBe('choice');
+    expect(patch.pathKeys).toEqual(['1', '2']);
   });
 });

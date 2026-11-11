@@ -3,6 +3,7 @@ import {
   buildPlaybackQueue,
   buildPlaybackQueueKeys,
   buildPlaybackQueueResult,
+  continuePlaybackFromChoice,
 } from './buildPlaybackQueue';
 import { graph, makeEdge, makeNode } from './graphFixtures';
 import { createSeededRng } from './rng';
@@ -481,5 +482,47 @@ describe('buildPlaybackQueue', () => {
     expect(buildPlaybackQueueKeys(g, { startNodeId: 'gone' })).toEqual([
       'track:t1',
     ]);
+  });
+
+  it('halts at a Choice conditional instead of auto-picking a branch', () => {
+    const choice = makeNode('split', 'conditional', {
+      mode: 'choice',
+      numPaths: 2,
+      pathNames: ['Verse', 'Chorus'],
+    });
+    const g = graph(
+      [start(), track('intro'), choice, track('a'), track('b')],
+      [
+        makeEdge('start', 'intro'),
+        makeEdge('intro', 'split'),
+        makeEdge('split', 'a', 'A'),
+        makeEdge('split', 'b', 'B'),
+      ]
+    );
+    const result = buildPlaybackQueueResult(g);
+    expect(result.items.map((item) => item.key)).toEqual([
+      'track:intro',
+      'choice:split',
+    ]);
+    expect(result.haltReason).toBe('choice');
+  });
+
+  it('continues from the chosen Choice handle', () => {
+    const choice = makeNode('split', 'conditional', { mode: 'choice', numPaths: 2 });
+    const g = graph(
+      [start(), choice, track('a'), track('b')],
+      [
+        makeEdge('start', 'split'),
+        makeEdge('split', 'a', 'A'),
+        makeEdge('split', 'b', 'B'),
+      ]
+    );
+    expect(
+      continuePlaybackFromChoice(g, 'split', 1).items.map((item) => item.key)
+    ).toEqual(['track:b']);
+    expect(
+      continuePlaybackFromChoice(g, 'split', 0).items.map((item) => item.key)
+    ).toEqual(['track:a']);
+    expect(continuePlaybackFromChoice(g, 'split', 5).items).toEqual([]);
   });
 });

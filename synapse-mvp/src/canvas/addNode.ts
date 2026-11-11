@@ -26,6 +26,8 @@ function defaultData(type: CanvasNodeType): Record<string, unknown> {
       numPaths: 2,
       weights: [10, 10],
       mode: 'random',
+      pathNames: ['', ''],
+      pathKeys: ['1', '2'],
       pathTimeRanges: [[{ start: 0, end: 23 }], [{ start: 0, end: 23 }]],
     };
   }

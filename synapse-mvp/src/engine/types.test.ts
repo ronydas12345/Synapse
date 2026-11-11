@@ -18,6 +18,11 @@ describe('queue keys', () => {
       nodeId: 'st',
       key: 'style:st',
     });
+    expect(parseQueueKey(toQueueKey('choice', 'c1'))).toEqual({
+      kind: 'choice',
+      nodeId: 'c1',
+      key: 'choice:c1',
+    });
   });
 
   it('rejects malformed keys', () => {

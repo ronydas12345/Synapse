@@ -5,6 +5,7 @@ import { usePathStore } from '../store';
 import { toast } from './toastStore';
 import { useShortcutHelpStore } from './shortcutHelpStore';
 import { pathToRoute } from '../app/routes';
+import { parseQueueKey } from '../engine';
 
 export default function EditorHotkeys() {
   useEffect(() => {
@@ -47,6 +48,10 @@ export default function EditorHotkeys() {
         return;
       }
       if (event.key === ' ' && (route === 'edit' || route === 'listen')) {
+        const current = parseQueueKey(
+          store.playbackQueue[store.currentTrackIndex] || ''
+        );
+        if (current?.kind === 'choice') return;
         event.preventDefault();
         store.setIsPlaying(!store.isPlaying);
       }

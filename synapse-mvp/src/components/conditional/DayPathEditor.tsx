@@ -365,9 +365,11 @@ function ClauseEditor({
 
 export default function DayPathEditor({
   pathDateRules,
+  pathLabels,
   onChange,
 }: {
   pathDateRules: DateRule[][];
+  pathLabels?: string[];
   onChange: (next: DateRule[][]) => void;
 }) {
   const setPath = (pathIdx: number, rules: DateRule[]) => {
@@ -381,7 +383,8 @@ export default function DayPathEditor({
       {pathDateRules.map((rules, pathIdx) => (
         <div key={`day-${pathIdx}`} className="border-t border-[var(--border)] pt-3 space-y-2">
           <label className="text-[var(--text)] block font-semibold text-sm">
-            Path {String.fromCharCode(65 + pathIdx)} day / date
+            {pathLabels?.[pathIdx] || `Path ${String.fromCharCode(65 + pathIdx)}`}{' '}
+            day / date
           </label>
           <p className="text-xs text-[var(--text-muted)] m-0">
             This branch plays if any rule matches. Use one value, several values,

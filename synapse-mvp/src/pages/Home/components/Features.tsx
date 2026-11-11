@@ -8,7 +8,7 @@ const FEATURES = [
   },
   {
     title: 'Conditional playback',
-    body: 'Branch according to conditions such as time of day, local weather, or other available context.',
+    body: 'Branch by time of day, local weather, day or date, or a live Choice the listener picks from named paths.',
     status: 'Available',
   },
   {

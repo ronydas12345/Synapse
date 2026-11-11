@@ -12,9 +12,16 @@ type TextProps = Omit<
 > & {
   value: string;
   onCommit: (next: string) => void;
+  allowEmpty?: boolean;
 };
 
-export function RevertibleTextInput({ value, onCommit, onKeyDown, ...rest }: TextProps) {
+export function RevertibleTextInput({
+  value,
+  onCommit,
+  allowEmpty = false,
+  onKeyDown,
+  ...rest
+}: TextProps) {
   const [draft, setDraft] = useState(value);
 
   useEffect(() => {
@@ -22,6 +29,11 @@ export function RevertibleTextInput({ value, onCommit, onKeyDown, ...rest }: Tex
   }, [value]);
 
   const commit = () => {
+    if (allowEmpty && draft.trim() === '') {
+      setDraft('');
+      if (value !== '') onCommit('');
+      return;
+    }
     const next = commitOrRevert(draft, value);
     setDraft(next);
     if (next !== value) onCommit(next);
