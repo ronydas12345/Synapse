@@ -19,7 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Homepage hero is a full-width banner with a dark placeholder for a later background image, instead of the graph illustration. Benefits sit directly under it. More Than an Ordinary Playlist keeps the graph carousel. How it works now shows adding a song, connecting nodes, customization, and playback.
+- Homepage hero is a full-width banner with orbit artwork on the right, instead of the graph illustration. Benefits sit directly under it. More Than an Ordinary Playlist keeps the graph carousel. How it works now shows adding a song, connecting nodes, customization, and playback.
 - Homepage: Get Started for guests (sign up, then first-time welcome) and Open Synapse for signed-in users; Explore Workshop as the secondary action. Section order is benefits, concept, how it works, features, uses, Workshop, themes, about, then pricing. Navigation, card hover, and graph demos no longer look clickable unless they do something. Body text is larger, How it works is not clipped, and theme previews scroll with arrows.
 - Build, Branch, and Play on the homepage cycle after each demo finishes. Dots and the three cards jump to a scene. Build drags every node in from the left (Start, Track, and If, then the rest faster) with editor-style ports. Branch draws each connection under the cursor, then a play icon flashes. Play follows the edges, pauses on each node, stops at End, box-selects the path, and clears it so the loop can start again.
 - Saving / Saved sits to the left of the playlist name and dropdown. Autosave waits a few seconds after you stop editing so it does not flicker and the account is written less often.

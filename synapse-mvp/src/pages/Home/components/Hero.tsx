@@ -9,7 +9,7 @@ export default function Hero() {
 
   return (
     <section
-      className="synapse-mkt-hero"
+      className={`synapse-mkt-hero${HERO_BANNER_SRC ? ' has-banner' : ''}`}
       id="hero"
       aria-labelledby="hero-title"
       style={banner}

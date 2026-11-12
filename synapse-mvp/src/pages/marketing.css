@@ -488,6 +488,28 @@ body:has(.synapse-mkt),
     );
 }
 
+.synapse-mkt-hero.has-banner .synapse-mkt-hero-media::before {
+  background:
+    radial-gradient(ellipse 55% 70% at 76% 44%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 64%);
+}
+
+.synapse-mkt-hero.has-banner .synapse-mkt-hero-media::after {
+  background:
+    linear-gradient(
+      90deg,
+      var(--bg-void) 0%,
+      color-mix(in srgb, var(--bg-void) 78%, transparent) 30%,
+      color-mix(in srgb, var(--bg-void) 22%, transparent) 58%,
+      transparent 82%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-void) 18%, transparent) 0%,
+      transparent 38%,
+      color-mix(in srgb, var(--bg-void) 42%, transparent) 100%
+    );
+}
+
 .synapse-mkt-hero-inner {
   position: relative;
   z-index: 1;
@@ -1979,6 +2001,20 @@ body:has(.synapse-mkt),
         90deg,
         color-mix(in srgb, var(--bg-void) 70%, transparent) 0%,
         color-mix(in srgb, var(--bg-void) 40%, transparent) 100%
+      );
+  }
+
+  .synapse-mkt-hero.has-banner .synapse-mkt-hero-media::after {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--bg-void) 28%, transparent) 0%,
+        color-mix(in srgb, var(--bg-void) 62%, transparent) 100%
+      ),
+      linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--bg-void) 55%, transparent) 0%,
+        color-mix(in srgb, var(--bg-void) 18%, transparent) 100%
       );
   }
 
