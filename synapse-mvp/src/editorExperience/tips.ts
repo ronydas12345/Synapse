@@ -48,7 +48,7 @@ export const FIRST_USE_TIPS: Record<FirstUseTipId, FirstUseTip> = {
   randomizer: {
     id: 'randomizer',
     title: 'Randomizer',
-    body: 'Chooses one of several next tracks.',
+    body: 'Picks from a pool of tracks. Set how many times to randomize, and optionally turn off repeats.',
     tutorialId: 'randomizer',
   },
   transition: {

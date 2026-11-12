@@ -127,9 +127,15 @@ export function branchesFromNode(
         chosen: false,
       };
     });
+    const noRepeats = Boolean(node.data?.noRepeats);
     return {
       title: nodeListLabel(node).title,
-      modeLabel: mode === 'sequence' ? 'Sequence' : 'Weighted Random',
+      modeLabel:
+        mode === 'sequence'
+          ? 'Sequence'
+          : noRepeats
+            ? 'Weighted Random · No repeats'
+            : 'Weighted Random',
       options,
     };
   }

@@ -18,16 +18,32 @@ function isBranchingType(type: string | undefined): boolean {
   return type === 'splitter' || type === 'conditional';
 }
 
-function selectFromRandomizer(
+function remainingRandomizerTracks(
   randomizerNode: Node,
-  rng: Rng
-): string | null {
+  used: ReadonlySet<string>
+): { tracks: string[]; weights: number[] } {
   const tracks = (randomizerNode.data?.tracks as string[]) || [];
-  if (tracks.length === 0) return null;
-
   const weights =
     (randomizerNode.data?.weights as number[]) ||
-    Array(tracks.length).fill(100 / tracks.length);
+    Array(tracks.length).fill(100 / Math.max(tracks.length, 1));
+  const nextTracks: string[] = [];
+  const nextWeights: number[] = [];
+  for (let i = 0; i < tracks.length; i++) {
+    const id = tracks[i];
+    if (!id || used.has(id)) continue;
+    nextTracks.push(id);
+    nextWeights.push(weights[i] ?? 10);
+  }
+  return { tracks: nextTracks, weights: nextWeights };
+}
+
+function selectFromRandomizer(
+  randomizerNode: Node,
+  rng: Rng,
+  used: ReadonlySet<string> = new Set()
+): string | null {
+  const { tracks, weights } = remainingRandomizerTracks(randomizerNode, used);
+  if (tracks.length === 0) return null;
 
   const index = pickWeightedIndex(weights, rng);
   return tracks[index] ?? tracks[tracks.length - 1] ?? null;
@@ -146,9 +162,12 @@ function walkGraph(
           }
         }
       } else {
+        const noRepeats = Boolean(node.data?.noRepeats);
+        const used = new Set<string>();
         for (let i = 0; i < playCount; i++) {
-          const selected = selectFromRandomizer(node, rng);
-          if (!selected) continue;
+          const selected = selectFromRandomizer(node, rng, used);
+          if (!selected) break;
+          if (noRepeats) used.add(selected);
           if (!canPush()) return;
           queue.push({
             kind: 'track',

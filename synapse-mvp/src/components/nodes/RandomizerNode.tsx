@@ -27,6 +27,7 @@ interface RandomizerNodeProps {
     isCollapsed?: boolean;
     playCount?: number;
     isForever?: boolean;
+    noRepeats?: boolean;
     mode?: 'sequence' | 'randomizer';
   };
   id: string;
@@ -46,6 +47,7 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
   const isCollapsed = data?.isCollapsed || false;
   const playCount = data?.playCount || 1;
   const isForever = data?.isForever || false;
+  const noRepeats = Boolean(data?.noRepeats);
   const mode = data?.mode || 'sequence';
   const showWeights = mode === 'randomizer';
 
@@ -226,17 +228,37 @@ function RandomizerNode({ data = {}, id }: RandomizerNodeProps) {
 
         {!isCollapsed && (
           <div className="p-3 space-y-2">
-            <div className="nodrag nopan synapse-node-count space-y-2">
+            <div
+              className="nodrag nopan synapse-node-count space-y-2"
+              data-tutorial="randomizer-count"
+            >
               <div className="flex items-center justify-between gap-2">
-                <label className="synapse-node-row-title">Play Count:</label>
-                <button
-                  type="button"
-                  disabled={readOnly}
-                  onClick={() => updateNodeData(id, { isForever: !isForever })}
-                  className={`synapse-node-chip ${isForever ? 'is-on' : ''}`}
-                >
-                  {isForever ? '∞' : 'Loop'}
-                </button>
+                <label className="synapse-node-row-title">
+                  {showWeights ? 'Randomize:' : 'Play Count:'}
+                </label>
+                <div className="flex items-center gap-1">
+                  {showWeights ? (
+                    <button
+                      type="button"
+                      disabled={readOnly}
+                      aria-pressed={noRepeats}
+                      data-tutorial="randomizer-norepeats"
+                      title="A picked song cannot be picked again until playback returns to this node"
+                      onClick={() => updateNodeData(id, { noRepeats: !noRepeats })}
+                      className={`synapse-node-chip ${noRepeats ? 'is-on' : ''}`}
+                    >
+                      No repeats
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    disabled={readOnly}
+                    onClick={() => updateNodeData(id, { isForever: !isForever })}
+                    className={`synapse-node-chip ${isForever ? 'is-on' : ''}`}
+                  >
+                    {isForever ? '∞' : 'Loop'}
+                  </button>
+                </div>
               </div>
               {!isForever && (
                 <input

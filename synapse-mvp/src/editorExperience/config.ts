@@ -89,7 +89,7 @@ export const NODE_CAPTIONS: Record<string, string> = {
   end: 'Playback stops here.',
   track: 'A YouTube song on your music path.',
   conditional: 'Chooses a path from rules you set, or a Choice popup.',
-  randomizer: 'Chooses one of several next tracks.',
+  randomizer: 'Picks from a pool of tracks. Play count and No repeats live on the node.',
   transition: 'A gap between songs.',
   style: 'Changes the look during playback.',
   comment: 'A note on the canvas. Not in the queue.',

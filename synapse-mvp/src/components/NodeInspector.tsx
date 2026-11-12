@@ -951,8 +951,12 @@ export default function NodeInspector() {
                 ))}
               </select>
             </div>
-            <div id="inspector-seq-count">
-              <label className="text-[var(--text)] block mb-1">Play Count</label>
+            <div id="inspector-seq-count" data-tutorial="randomizer-count">
+              <label className="text-[var(--text)] block mb-1">
+                {selectedNode.data?.mode === 'randomizer'
+                  ? 'How many times to randomize'
+                  : 'Play Count'}
+              </label>
               <RevertibleNumberInput
                 min={1}
                 max={100}
@@ -962,7 +966,33 @@ export default function NodeInspector() {
                   updateNodeData(selectedNode.id, { playCount: Math.max(1, playCount) })
                 }
               />
-              <p className="text-xs text-[var(--text-faint)] mt-1 mb-3">How many times to play all tracks</p>
+              <p className="text-xs text-[var(--text-faint)] mt-1 mb-3">
+                {selectedNode.data?.mode === 'randomizer'
+                  ? 'How many tracks to pick from this pool before continuing.'
+                  : 'How many times to play the list before continuing.'}
+              </p>
+              {selectedNode.data?.mode === 'randomizer' ? (
+                <label
+                  className="flex items-start gap-2 text-xs text-[var(--text)] mb-3"
+                  data-tutorial="randomizer-norepeats"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={Boolean(selectedNode.data?.noRepeats)}
+                    onChange={(e) =>
+                      updateNodeData(selectedNode.id, { noRepeats: e.target.checked })
+                    }
+                  />
+                  <span>
+                    <span className="block">No repeats</span>
+                    <span className="text-[var(--text-faint)]">
+                      Once a song is picked, it cannot be picked again until playback
+                      returns to this node.
+                    </span>
+                  </span>
+                </label>
+              ) : null}
             </div>
             <div id="inspector-seq-tracks" data-tutorial="randomizer-weights">
               <p className="text-xs text-[var(--text-muted)] leading-relaxed m-0 mb-3">

@@ -17,6 +17,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Tutorial steps that ask you to connect two nodes highlight both connection points and draw a yellow dotted line between them.
 - Editor experience on the workspace (Basic, Intermediate, Advanced). It changes guidance and canvas density, not what you can build. Switch from the bottom-left control or Settings → Canvas. Playlists remember zoom, and Fit view / Focus selected / restore previous view stay available.
 - First-time welcome after you finish setting up your account: what Synapse is, how paths work, then Build my first playlist, Explore, an example path, or see what others are making in Workshop, plus Basic / Intermediate / Advanced. Replay Welcome is in Help. Returning accounts are not interrupted.
+- Weighted Random nodes have a No repeats toggle. A song picked from that node cannot be picked again until playback returns to it.
 
 ### Changed
 

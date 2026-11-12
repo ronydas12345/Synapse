@@ -29,6 +29,20 @@ describe('listenPath', () => {
     expect(split?.options.map((o) => o.detail)).toEqual(['70%', '30%']);
   });
 
+  it('labels a no-repeat randomizer in Listen', () => {
+    const a = makeNode('a', 'track', { songTitle: 'Track A' });
+    const b = makeNode('b', 'track', { songTitle: 'Track B' });
+    const rnd = makeNode('r', 'randomizer', {
+      mode: 'randomizer',
+      tracks: ['a', 'b'],
+      weights: [50, 50],
+      noRepeats: true,
+    });
+    expect(branchesFromNode(rnd, [a, b, rnd], [])?.modeLabel).toBe(
+      'Weighted Random · No repeats'
+    );
+  });
+
   it('lists conditional branches with path letters', () => {
     const a = makeNode('a', 'track', { songTitle: 'Left' });
     const b = makeNode('b', 'track', { songTitle: 'Right' });

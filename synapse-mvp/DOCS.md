@@ -102,14 +102,15 @@ Day / date clauses may be a single value, a list, a range, a calendar date, a da
 
 ```ts
 {
-  tracks: { nodeId: string }[]
+  tracks: string[]
   weights: number[]
-  playCount: number  // visits before the walk continues
-  mode: 'sequence' | 'weighted'
+  playCount: number  // picks (weighted) or list repeats (sequence) before the walk continues
+  mode: 'sequence' | 'randomizer'
+  noRepeats?: boolean  // weighted only: skip already-picked tracks until this node is entered again
 }
 ```
 
-Sequence plays `tracks` in order. Weighted picks by `weights`. `playCount` is how many times this node is visited in one queue build (capped at 100). There is no separate “forever” flag.
+Sequence plays `tracks` in order `playCount` times. Weighted Random picks by `weights`, `playCount` times (capped at 100). When `noRepeats` is on, a track already chosen in this visit is not eligible until playback enters this node again. If the pool is exhausted before `playCount` is met, the walk continues. There is no separate “forever” flag.
 
 ### transition
 

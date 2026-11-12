@@ -38,6 +38,7 @@ function defaultData(type: CanvasNodeType): Record<string, unknown> {
       weights: [],
       isCollapsed: false,
       playCount: 1,
+      noRepeats: false,
       mode: 'sequence',
     };
   }

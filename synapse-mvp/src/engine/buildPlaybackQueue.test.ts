@@ -293,6 +293,81 @@ describe('buildPlaybackQueue', () => {
     ]);
   });
 
+  it('can pick the same randomizer track twice when noRepeats is off', () => {
+    const rnd = makeNode('rnd', 'randomizer', {
+      mode: 'randomizer',
+      tracks: ['t1', 't2', 't3'],
+      weights: [1, 1, 1],
+      playCount: 3,
+    });
+    const g = graph(
+      [start(), rnd, track('t1'), track('t2'), track('t3')],
+      [makeEdge('start', 'rnd')]
+    );
+    expect(buildPlaybackQueueKeys(g, { rng: () => 0 })).toEqual([
+      'track:t1',
+      'track:t1',
+      'track:t1',
+    ]);
+  });
+
+  it('skips already-picked randomizer tracks when noRepeats is on', () => {
+    const rnd = makeNode('rnd', 'randomizer', {
+      mode: 'randomizer',
+      tracks: ['t1', 't2', 't3'],
+      weights: [1, 1, 1],
+      playCount: 5,
+      noRepeats: true,
+    });
+    const g = graph(
+      [start(), rnd, track('t1'), track('t2'), track('t3')],
+      [makeEdge('start', 'rnd')]
+    );
+    expect(buildPlaybackQueueKeys(g, { rng: () => 0 })).toEqual([
+      'track:t1',
+      'track:t2',
+      'track:t3',
+    ]);
+  });
+
+  it('continues after a no-repeat randomizer when the pool is exhausted', () => {
+    const rnd = makeNode('rnd', 'randomizer', {
+      mode: 'randomizer',
+      tracks: ['t1', 't2'],
+      weights: [1, 1],
+      playCount: 8,
+      noRepeats: true,
+    });
+    const g = graph(
+      [start(), rnd, track('t1'), track('t2'), track('after')],
+      [makeEdge('start', 'rnd'), makeEdge('rnd', 'after')]
+    );
+    expect(buildPlaybackQueueKeys(g, { rng: () => 0 })).toEqual([
+      'track:t1',
+      'track:t2',
+      'track:after',
+    ]);
+  });
+
+  it('ignores noRepeats in sequence mode', () => {
+    const rnd = makeNode('rnd', 'randomizer', {
+      mode: 'sequence',
+      tracks: ['t1', 't2'],
+      playCount: 2,
+      noRepeats: true,
+    });
+    const g = graph(
+      [start(), rnd, track('t1'), track('t2')],
+      [makeEdge('start', 'rnd')]
+    );
+    expect(buildPlaybackQueueKeys(g)).toEqual([
+      'track:t1',
+      'track:t2',
+      'track:t1',
+      'track:t2',
+    ]);
+  });
+
   it('caps forever randomizers at a single pass through sequence mode', () => {
     const rnd = makeNode('rnd', 'randomizer', {
       mode: 'sequence',

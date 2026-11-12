@@ -690,9 +690,9 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
   {
     id: 'randomizer',
     title: 'Randomizer Nodes',
-    summary: 'Sequence vs weighted pool, parked tracks, reorder, play count.',
+    summary: 'Sequence vs weighted pool, parked tracks, reorder, play count, no repeats.',
     keywords:
-      'randomizer sequence weighted random tracks reorder drag out play count forever pool',
+      'randomizer sequence weighted random tracks reorder drag out play count forever pool no repeats',
     group: 'building',
     steps: [
       s(
@@ -728,8 +728,14 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
       s(
         'r-count',
         'Play count',
-        'Play count is how many times the node is visited in the queue before continuing. Raise it to loop the pool or sequence.',
-        { type: 'highlight', route: 'edit', target: 'inspector' }
+        'Play count is how many times Weighted Random picks a track, or how many times Sequence plays the list, before continuing. Raise it to loop the pool.',
+        { type: 'highlight', route: 'edit', target: 'randomizer-count' }
+      ),
+      s(
+        'r-norepeats',
+        'No repeats',
+        'On Weighted Random, turn on No repeats so a song already picked from this node cannot be picked again until playback returns to it. Sequence mode still plays the list in order.',
+        { type: 'highlight', route: 'edit', target: 'randomizer-norepeats' }
       ),
       s(
         'r-forever',
