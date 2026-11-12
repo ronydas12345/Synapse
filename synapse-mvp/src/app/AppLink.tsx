@@ -1,32 +1,23 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useSyncExternalStore, type ReactNode } from 'react';
 import {
   APP_PATHS,
   appHref,
-  ensureAppPath,
+  getAppLocationKey,
   navigateApp,
   parseAppLocation,
+  subscribeAppLocation,
   type AppLocation,
   type AppRoute,
   type StaticAppRoute,
 } from './routes';
 
 export function useAppLocation(): AppLocation {
-  const [location, setLocation] = useState<AppLocation>(() => {
-    ensureAppPath();
-    return parseAppLocation(window.location.pathname);
-  });
-
-  useEffect(() => {
-    const sync = () => {
-      ensureAppPath();
-      setLocation(parseAppLocation(window.location.pathname));
-    };
-    sync();
-    window.addEventListener('popstate', sync);
-    return () => window.removeEventListener('popstate', sync);
-  }, []);
-
-  return location;
+  const path = useSyncExternalStore(
+    subscribeAppLocation,
+    getAppLocationKey,
+    () => '/'
+  );
+  return parseAppLocation(path);
 }
 
 export function useAppRoute(): AppRoute {

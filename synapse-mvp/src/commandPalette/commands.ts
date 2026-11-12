@@ -111,7 +111,11 @@ export function buildCommands(ctx: CommandContext): PaletteCommand[] {
       when: (c) => c.signedIn || Boolean(c.workshopWorkspace),
       run: () => {
         const s = usePathStore.getState();
-        go(listenPath(s.workshopShareKey ?? s.activePathId));
+        go(
+          s.graphLocked
+            ? listenPath(s.workshopShareKey ?? s.activePathId)
+            : APP_PATHS.listen
+        );
       },
     },
     {

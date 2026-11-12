@@ -44,6 +44,7 @@ import { scaleVolume } from './settings/parse';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { DECK_MINIMIZED_KEY } from './site/legal';
 import { recordPlayedPath } from './playlists/activity';
+import { useAppRoute } from './app/AppLink';
 
 function nodeToPlayable(node: Node | undefined, nodeId: string): PlayableMedia | null {
   if (!node) return null;
@@ -86,12 +87,12 @@ export default function Player() {
     requestPrevious,
     updateNodeData,
     playbackOriginRequestId,
-    uiMode,
     selectedPlaybackStartNodeId,
     setPlaybackStartNode,
     listenView,
   } = usePathStore();
   const graphReadOnly = useGraphReadOnly();
+  const route = useAppRoute();
 
   const retryPlayback = () => {
     setRetryable(false);
@@ -746,7 +747,7 @@ export default function Player() {
   const seekEnd = Number(currentNode?.data?.endTime) || 0;
   const queueActive = playbackQueue.length > 0;
   const listListen =
-    uiMode === 'listen' && (!graphReadOnly || listenView === 'list');
+    route === 'listen' && (!graphReadOnly || listenView === 'list');
 
   const previewQueue = useMemo(() => {
     if (playbackQueue.length > 0) return playbackQueue;

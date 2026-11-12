@@ -34,9 +34,7 @@ export function usePublishedListen(id: string | undefined): void {
     if (!id) return;
     if (alreadyLoaded(id)) {
       const state = usePathStore.getState();
-      if (!state.graphLocked) {
-        if (state.listenView !== 'graph') state.setListenView('graph');
-      } else if (state.listenView !== 'list') {
+      if (state.graphLocked && state.listenView !== 'list') {
         state.setListenView('graph');
       }
       return;
@@ -54,7 +52,6 @@ export function usePublishedListen(id: string | undefined): void {
         const own = Boolean(uid && uid === item.creatorUid);
         if (own) {
           openOwnedWorkshopPlaylist(item, key);
-          usePathStore.getState().setListenView('graph');
           return;
         }
         markWorkshopGuestSession();

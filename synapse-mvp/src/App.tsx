@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, type ReactNode } from 'react';
 import { Pause, Play } from 'lucide-react';
 import ValidationBar from './components/ValidationBar';
 import DraftRecovery from './components/DraftRecovery';
@@ -22,12 +22,12 @@ import { SynapseWordmark } from './pages/chrome/SynapseMark';
 import { usePathStore } from './store';
 import { AppLink, PathLink, useAppLocation } from './app/AppLink';
 import {
+  APP_PATHS,
   isAuthRoute,
   isMarketingRoute,
   isStaffRoute,
   isWorkspaceRoute,
   listenPath,
-  navigateApp,
   routeToUiMode,
   workshopItemPath,
   type AppLocation,
@@ -132,7 +132,10 @@ function WorkspaceApp({
   const readOnly = graphLocked;
   const guestListen = listen && readOnly;
   const showGraph = edit || (listen && readOnly && listenView === 'graph');
-  const listenHref = listenPath(workshopShareKey ?? workshopId ?? activePathId);
+  const listenHref =
+    readOnly && (workshopShareKey || workshopId)
+      ? listenPath(workshopShareKey ?? workshopId)
+      : APP_PATHS.listen;
   const listingKey =
     workshopShareKey ||
     workshopId ||
@@ -141,13 +144,6 @@ function WorkspaceApp({
   const workshopHref = listingKey ? workshopItemPath(listingKey) : null;
 
   usePublishedListen(listen ? workshopId : undefined);
-
-  useEffect(() => {
-    if (!listen) return;
-    if (workshopId) return;
-    if (listenHref === '/listen') return;
-    navigateApp(listenHref, '', true);
-  }, [listen, workshopId, listenHref]);
 
   return (
     <div
@@ -325,7 +321,7 @@ export default function App() {
   const route = location.route;
   useSyncOwnWorkshopListings();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     usePathStore.getState().setUiMode(routeToUiMode(route));
     void flushWorkspaceNow();
   }, [route]);

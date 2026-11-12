@@ -251,21 +251,53 @@ function scrollToHash(hash: string): void {
   });
 }
 
+/** In-app navigations fire this so the workspace can sync even if `popstate` is ignored. */
+export const APP_NAV_EVENT = 'synapse-navigate';
+
+function pathKey(pathname: string): string {
+  return pathname.replace(/\/+$/, '') || '/';
+}
+
+export function getAppLocationKey(): string {
+  if (typeof window === 'undefined') return '/';
+  return pathKey(window.location.pathname);
+}
+
+export function subscribeAppLocation(onChange: () => void): () => void {
+  const sync = () => {
+    ensureAppPath();
+    onChange();
+  };
+  window.addEventListener('popstate', sync);
+  window.addEventListener(APP_NAV_EVENT, sync);
+  return () => {
+    window.removeEventListener('popstate', sync);
+    window.removeEventListener(APP_NAV_EVENT, sync);
+  };
+}
+
+function notifyAppLocation(): void {
+  window.dispatchEvent(new PopStateEvent('popstate'));
+  window.dispatchEvent(new Event(APP_NAV_EVENT));
+}
+
 export function navigateApp(
   path: string,
   hash = '',
   replace = false
 ): void {
-  const next = appHref(path, hash);
-  const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+  const nextPath = pathKey(path);
+  const next = appHref(nextPath, hash);
+  const currentPath = pathKey(window.location.pathname);
   const currentHash = window.location.hash.replace(/^#/, '');
-  if (currentPath === path && currentHash === hash) {
+  if (currentPath === nextPath && currentHash === hash) {
     if (hash) scrollToHash(hash);
+    window.dispatchEvent(new Event(APP_NAV_EVENT));
     return;
   }
   if (replace) window.history.replaceState({}, '', next);
   else window.history.pushState({}, '', next);
-  window.dispatchEvent(new PopStateEvent('popstate'));
+  notifyAppLocation();
   if (hash) {
     window.requestAnimationFrame(() => scrollToHash(hash));
   }
