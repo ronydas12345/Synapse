@@ -31,6 +31,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Homepage hero banner uses a high-resolution image so the orbit artwork stays sharp on large screens.
 - Listen shows the playlist list again. The graph editor stays on Edit. Published view-only paths still have Graph and List.
 - Clicking Listen in the header opens Play Mode. It no longer only changes the address bar.
 - The Example path from first-time welcome spaces comments, Start, tracks, the Randomizer, and End so they no longer sit on top of each other.

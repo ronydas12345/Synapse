@@ -459,6 +459,16 @@ body:has(.synapse-mkt),
   background-repeat: no-repeat;
 }
 
+.synapse-mkt-hero-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center right;
+  image-rendering: auto;
+}
+
 .synapse-mkt-hero-media::before {
   content: "";
   position: absolute;
