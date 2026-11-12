@@ -28,8 +28,8 @@ const FEATURES = [
   },
   {
     title: 'Overlays',
-    body: 'Images, GIFs, and animated effects on the canvas. Not in this release.',
-    status: 'Planned',
+    body: 'Images, GIFs, and animated effects on the canvas. Planned as a Pro feature. Not in this release.',
+    status: 'Planned · Pro',
   },
   {
     title: 'Workshop',
@@ -40,6 +40,11 @@ const FEATURES = [
     title: 'Real-Time Collaboration & Version History',
     body: 'Build Music Paths together in real time. See collaborators\' changes as they happen, work on shared playlists, and revisit earlier versions with version history.',
     status: 'Planned · Pro',
+  },
+  {
+    title: 'AI-powered path generation',
+    body: 'Describe a playlist and generate a Music Path. Free accounts get a limited number of generations. Pro includes more tokens. Not in this release.',
+    status: 'Planned · Limited free',
   },
 ] as const;
 

@@ -56,6 +56,7 @@ export const PRICING = {
       'Collaborative playlists',
       'Advanced Workshop publishing',
       'Image overlays and animations',
+      'More AI path-generation tokens',
       'No banner or mid-roll ads, once ads exist',
       'Other Pro features as they ship',
     ],
