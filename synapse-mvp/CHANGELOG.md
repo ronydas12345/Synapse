@@ -21,6 +21,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- Homepage banner sits behind the hero and benefit cards, then fades from the artwork into the page background.
 - Homepage benefit cards put the icon beside the title instead of above it.
 - Features lists Overlays as Planned · Pro.
 - Homepage hero is a full-width banner with orbit artwork on the right, instead of the graph illustration. Benefits sit directly under it. More Than an Ordinary Playlist keeps the graph carousel. How it works now shows adding a song, connecting nodes, customization, and playback.

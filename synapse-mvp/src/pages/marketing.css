@@ -432,19 +432,25 @@ body:has(.synapse-mkt),
   text-decoration: none;
 }
 
-.synapse-mkt-hero {
-  --hero-banner-image: none;
+.synapse-mkt-banner-stage {
+  --hero-banner-floor: #080c25;
   position: relative;
   isolation: isolate;
-  display: flex;
-  align-items: center;
   box-sizing: border-box;
   width: 100vw;
   max-width: 100vw;
-  min-height: 28rem;
   margin: -1.5rem calc(50% - 50vw) 0;
-  padding: 4.25rem 0 4rem;
   overflow: hidden;
+}
+
+.synapse-mkt-hero {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 28rem;
+  padding: 4.25rem 0 2.25rem;
 }
 
 .synapse-mkt-hero-media {
@@ -452,11 +458,7 @@ body:has(.synapse-mkt),
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-color: var(--bg-deep);
-  background-image: var(--hero-banner-image);
-  background-size: cover;
-  background-position: center right;
-  background-repeat: no-repeat;
+  background-color: var(--hero-banner-floor);
 }
 
 .synapse-mkt-hero-media img {
@@ -474,50 +476,29 @@ body:has(.synapse-mkt),
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 80% at 78% 42%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%),
-    radial-gradient(ellipse 46% 50% at 92% 88%, color-mix(in srgb, var(--accent-warm) 10%, transparent), transparent 58%);
-}
-
-.synapse-mkt-hero-media::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      90deg,
-      var(--bg-void) 0%,
-      color-mix(in srgb, var(--bg-void) 86%, transparent) 36%,
-      color-mix(in srgb, var(--bg-void) 48%, transparent) 64%,
-      color-mix(in srgb, var(--bg-void) 62%, transparent) 100%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--bg-void) 22%, transparent) 0%,
-      color-mix(in srgb, var(--bg-void) 18%, transparent) 42%,
-      color-mix(in srgb, var(--bg-void) 78%, transparent) 100%
-    );
-}
-
-.synapse-mkt-hero.has-banner .synapse-mkt-hero-media::before {
-  background:
-    radial-gradient(ellipse 55% 70% at 76% 44%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 64%);
-}
-
-.synapse-mkt-hero.has-banner .synapse-mkt-hero-media::after {
-  background:
+    radial-gradient(ellipse 55% 70% at 76% 44%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 64%),
     linear-gradient(
       90deg,
       var(--bg-void) 0%,
       color-mix(in srgb, var(--bg-void) 78%, transparent) 30%,
       color-mix(in srgb, var(--bg-void) 22%, transparent) 58%,
       transparent 82%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--bg-void) 18%, transparent) 0%,
-      transparent 38%,
-      color-mix(in srgb, var(--bg-void) 42%, transparent) 100%
     );
+}
+
+.synapse-mkt-banner-stage.has-banner .synapse-mkt-hero-media::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 7.5rem;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--hero-banner-floor) 46%,
+    var(--bg-void) 100%
+  );
 }
 
 .synapse-mkt-hero-inner {
@@ -564,7 +545,13 @@ body:has(.synapse-mkt),
 }
 
 .synapse-mkt-benefits {
-  margin-top: 2.25rem;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: min(72rem, 100%);
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.25rem 5.5rem;
 }
 
 .synapse-mkt-benefits-grid {
@@ -575,6 +562,10 @@ body:has(.synapse-mkt),
 
 .synapse-mkt-benefit {
   min-height: 100%;
+}
+
+.synapse-mkt-banner-stage .synapse-mkt-benefit {
+  background: color-mix(in srgb, var(--bg-panel) 74%, transparent);
 }
 
 .synapse-mkt-benefit-head {
@@ -2011,30 +2002,16 @@ body:has(.synapse-mkt),
     to { bottom: -4px; }
   }
 
-  .synapse-mkt-hero-media::after {
-    background:
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--bg-void) 42%, transparent) 0%,
-        color-mix(in srgb, var(--bg-void) 78%, transparent) 100%
-      ),
-      linear-gradient(
-        90deg,
-        color-mix(in srgb, var(--bg-void) 70%, transparent) 0%,
-        color-mix(in srgb, var(--bg-void) 40%, transparent) 100%
-      );
-  }
-
-  .synapse-mkt-hero.has-banner .synapse-mkt-hero-media::after {
+  .synapse-mkt-hero-media::before {
     background:
       linear-gradient(
         180deg,
         color-mix(in srgb, var(--bg-void) 28%, transparent) 0%,
-        color-mix(in srgb, var(--bg-void) 62%, transparent) 100%
+        transparent 42%
       ),
       linear-gradient(
         90deg,
-        color-mix(in srgb, var(--bg-void) 55%, transparent) 0%,
+        color-mix(in srgb, var(--bg-void) 62%, transparent) 0%,
         color-mix(in srgb, var(--bg-void) 18%, transparent) 100%
       );
   }

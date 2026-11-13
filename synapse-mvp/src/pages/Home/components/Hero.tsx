@@ -1,26 +1,9 @@
 import { AppLink } from '../../../app/AppLink';
 import OpenWorkspaceLink from '../../../components/OpenWorkspaceLink';
-import { HERO_BANNER_SRC } from '../heroBanner';
 
 export default function Hero() {
   return (
-    <section
-      className={`synapse-mkt-hero${HERO_BANNER_SRC ? ' has-banner' : ''}`}
-      id="hero"
-      aria-labelledby="hero-title"
-    >
-      <div className="synapse-mkt-hero-media" aria-hidden="true">
-        {HERO_BANNER_SRC ? (
-          <img
-            src={HERO_BANNER_SRC}
-            alt=""
-            width={4096}
-            height={1356}
-            decoding="async"
-            fetchPriority="high"
-          />
-        ) : null}
-      </div>
+    <section className="synapse-mkt-hero" id="hero" aria-labelledby="hero-title">
       <div className="synapse-mkt-hero-inner">
         <div className="synapse-mkt-hero-copy">
           <p className="synapse-mkt-kicker">Music paths for YouTube</p>
