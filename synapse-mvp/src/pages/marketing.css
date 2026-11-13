@@ -577,12 +577,23 @@ body:has(.synapse-mkt),
   min-height: 100%;
 }
 
+.synapse-mkt-benefit-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0 0 0.45rem;
+}
+
+.synapse-mkt-benefit-head h3 {
+  margin: 0;
+}
+
 .synapse-mkt-benefit-icon {
   display: grid;
   place-items: center;
+  flex: 0 0 2.15rem;
   width: 2.15rem;
   height: 2.15rem;
-  margin-bottom: 0.8rem;
   border-radius: 8px;
   background: var(--accent-dim);
   color: var(--accent);

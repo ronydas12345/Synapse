@@ -45,14 +45,16 @@ export default function Benefits() {
               key={item.title}
               className="synapse-mkt-card synapse-mkt-card-info synapse-mkt-benefit"
             >
-              <span
-                className="synapse-mkt-benefit-icon"
-                data-accent={item.accent}
-                aria-hidden="true"
-              >
-                {item.icon}
-              </span>
-              <h3>{item.title}</h3>
+              <div className="synapse-mkt-benefit-head">
+                <span
+                  className="synapse-mkt-benefit-icon"
+                  data-accent={item.accent}
+                  aria-hidden="true"
+                >
+                  {item.icon}
+                </span>
+                <h3>{item.title}</h3>
+              </div>
               <p>{item.body}</p>
             </article>
           ))}

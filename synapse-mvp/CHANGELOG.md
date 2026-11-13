@@ -21,6 +21,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- Homepage benefit cards put the icon beside the title instead of above it.
 - Features lists Overlays as Planned · Pro.
 - Homepage hero is a full-width banner with orbit artwork on the right, instead of the graph illustration. Benefits sit directly under it. More Than an Ordinary Playlist keeps the graph carousel. How it works now shows adding a song, connecting nodes, customization, and playback.
 - Homepage: Get Started for guests (sign up, then first-time welcome) and Open Synapse for signed-in users; Explore Workshop as the secondary action. Section order is benefits, concept, how it works, features, uses, Workshop, themes, about, then pricing. Navigation, card hover, and graph demos no longer look clickable unless they do something. Body text is larger, How it works is not clipped, and theme previews scroll with arrows.
